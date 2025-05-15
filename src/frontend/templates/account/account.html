@@ -26,14 +26,10 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 </head>
 <body>
+  <script type="module" src="{{ url_for('static', filename='js/i18n/languageManager.js') }}"></script>
   <div class="account-container">
     <div class="account-header">
-      <a href="/dashboard" class="back-link">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
-          <path d="m15 18-6-6 6-6"></path>
-        </svg>
-        Back to Dashboard
-      </a>
+      <a href="/dashboard" class="back-link"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="m15 18-6-6 6-6"></path></svg><span data-i18n="backToDashboard">Back to Dashboard</span></a>
     </div>
 
     <div class="account-settings-wrapper">
@@ -41,43 +37,15 @@
       <aside class="sidebar">
         <nav>
           <ul>
-            <li class="sidebar-item active" data-target="profile-section" tabindex="0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              Profile
-            </li>
-            <li class="sidebar-item" data-target="settings-purchases" tabindex="0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
-                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                <line x1="2" y1="10" x2="22" y2="10"></line>
-                <circle cx="7" cy="15" r="2"></circle>
-                <circle cx="16" cy="15" r="2"></circle>
-              </svg>
-              Purchases
-            </li>
-            <li class="sidebar-item" data-toggle="submenu" tabindex="0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
-                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              Settings
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron">
-                <path d="m9 18 6-6-6-6"></path>
-              </svg>
-            </li>
+            <li class="sidebar-item active" data-target="profile-section" tabindex="0"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span data-i18n="profile">Profile</span></li>
+            <li class="sidebar-item" data-target="settings-purchases" tabindex="0"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line><circle cx="7" cy="15" r="2"></circle><circle cx="16" cy="15" r="2"></circle></svg><span data-i18n="purchases">Purchases</span></li>
+            <li class="sidebar-item" data-toggle="submenu" tabindex="0"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3"></circle></svg><span data-i18n="settings">Settings</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron"><path d="m9 18 6-6-6-6"></path></svg></li>
             <ul class="submenu">
-              <li class="submenu-item" data-target="profile-section" tabindex="0">Edit Profile</li>
-              <li class="submenu-item" data-target="settings-delete" tabindex="0">Delete Account</li>
-              <li class="submenu-item" data-target="subscription-change" tabindex="0">Payment Method</li>
+              <li class="submenu-item" data-target="profile-section" tabindex="0" data-i18n="editProfile">Edit Profile</li>
+              <li class="submenu-item" data-target="settings-delete" tabindex="0" data-i18n="deleteAccount">Delete Account</li>
+              <li class="submenu-item" data-target="subscription-change" tabindex="0" data-i18n="paymentMethod">Payment Method</li>
             </ul>
-            <button id="back-to-main-menu" class="back-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
-                <path d="m15 18-6-6 6-6"></path>
-              </svg>
-              Back to Main Menu
-            </button>
+            <button id="back-to-main-menu" class="back-button"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="m15 18-6-6 6-6"></path></svg><span data-i18n="backToMainMenu">Back to Main Menu</span></button>
           </ul>
         </nav>
       </aside>
@@ -90,17 +58,15 @@
             <div class="profile-content">
               <div class="profile-pic-container">
                 <div class="profile-pic-wrapper">
-                  <img id="profile-pic" src="{{ profile_pic_url or url_for('static', filename='images/profilepic.png') }}" alt="Profile Picture">
+                  <img id="profile-pic" src="{{ profile_pic_url or url_for('static', filename='images/profilepic.png') }}" alt="Profile Picture" data-i18n-alt="profilePicture">
                   <div class="profile-pic-overlay">
                     <i class="fas fa-camera"></i>
-                    <span>Change Photo</span>
+                    <span data-i18n="changePhoto">Change Photo</span>
                   </div>
                   <!-- Ensure this hidden file input exists -->
                   <input type="file" id="profile-pic-input" accept="image/*" style="display: none;"> 
                 </div>
-                <button id="upload-pic" class="btn btn-secondary upload-btn">
-                  <i class="fas fa-upload"></i> Change Photo
-                </button>
+                <button id="upload-pic" class="btn btn-secondary upload-btn"><i class="fas fa-upload"></i> <span data-i18n="changePhoto">Change Photo</span></button>
               </div>
             </div>
             
@@ -110,58 +76,58 @@
             <!-- Profile Information Card -->
             <div class="profile-info-card">
               <div class="profile-info-item">
-                <div class="info-label">Full Name</div>
-                <div class="info-value" id="display-full-name">Loading...</div>
+                <div class="info-label" data-i18n="fullName">Full Name</div>
+                <div class="info-value" id="display-full-name" data-i18n="loading">Loading...</div>
               </div>
               
               <div class="profile-info-item">
-                <div class="info-label">Email Address</div>
-                <div class="info-value" id="display-email">Loading...</div>
+                <div class="info-label" data-i18n="emailAddress">Email Address</div>
+                <div class="info-value" id="display-email" data-i18n="loading">Loading...</div>
               </div>
               
               <div class="profile-info-item">
-                <div class="info-label">Phone Number</div>
-                <div class="info-value" id="display-phone">Not provided</div>
+                <div class="info-label" data-i18n="phoneNumber">Phone Number</div>
+                <div class="info-value" id="display-phone" data-i18n="notProvided">Not provided</div>
               </div>
             </div>
             
             <!-- Edit Profile Button -->
             <div class="profile-actions">
-              <button type="button" class="primary-button" id="edit-profile-btn">Edit Profile</button>
+              <button type="button" class="primary-button" id="edit-profile-btn" data-i18n="editProfile">Edit Profile</button>
             </div>
             
             <!-- Hidden form for editing mode -->
             <form id="profile-form" class="profile-form" style="display: none;">
               <div class="form-group">
-                <label for="full-name">Full Name <span class="required required-profile">*</span></label>
+                <label for="full-name" data-i18n="fullName">Full Name <span class="required required-profile">*</span></label>
                 <input type="text" id="full-name" name="full_name" required>
-                <div class="form-hint">This name will be displayed on your profile</div>
+                <div class="form-hint" data-i18n="fullNameHint">This name will be displayed on your profile</div>
               </div>
               
               <div class="form-group">
-                <label for="email">Email Address <span class="required required-profile">*</span></label>
+                <label for="email" data-i18n="emailAddress">Email Address <span class="required required-profile">*</span></label>
                 <input type="email" id="email" name="email" required>
               </div>
               
               <div class="form-group">
-                <label for="phone">Phone Number</label>
+                <label for="phone" data-i18n="phoneNumber">Phone Number</label>
                 <input type="text" id="phone" name="phone">
-                <div class="form-hint">Used for account recovery and important notifications</div>
+                <div class="form-hint" data-i18n="phoneHint">Used for account recovery and important notifications</div>
               </div>
 
-              <button type="submit" class="primary-button save-profile-btn">Save Changes</button>
+              <button type="submit" class="primary-button save-profile-btn" data-i18n="saveChanges">Save Changes</button>
             </form>
 
             <!-- Newsletter Subscription Form -->
             <div class="subscription-form-container">
-              <h3>Subscribe to our newsletter</h3>
+              <h3 data-i18n="subscribeNewsletter">Subscribe to our newsletter</h3>
               <form class="subscription-form">
                 <div class="form-group">
-                  <label for="subscription-email">Email Address</label>
-                  <input type="email" id="subscription-email" name="email" placeholder="your.email@example.com">
+                  <label for="subscription-email" data-i18n="emailAddress">Email Address</label>
+                  <input type="email" id="subscription-email" name="email" placeholder="your.email@example.com" data-i18n-placeholder="emailPlaceholder">
                 </div>
                 <div class="form-actions">
-                  <button type="submit" class="primary-button">Subscribe</button>
+                  <button type="submit" class="primary-button" data-i18n="subscribe">Subscribe</button>
                 </div>
               </form>
             </div>

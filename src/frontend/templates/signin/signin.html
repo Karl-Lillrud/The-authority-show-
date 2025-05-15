@@ -33,11 +33,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   </head>
   <body>
+    <!-- Language Switcher -->
+    <div class="language-switcher" role="group" aria-label="Language Selection">
+      <button onclick="window.languageManager.setLanguage('en')" class="lang-btn" data-i18n-title="switchToEnglish">English</button>
+      <button onclick="window.languageManager.setLanguage('ar')" class="lang-btn" data-i18n-title="switchToArabic">العربية</button>
+    </div>
+
     <!-- Logo -->
     <div class="logo-container">
       <img
         src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
         alt="PodManager Logo"
+        data-i18n-alt="podManagerLogo"
       />
     </div>
 
@@ -45,13 +52,14 @@
       <img
         src="{{ url_for('static', filename='images/podmanager_extended_background.webp') }}"
         alt="PodManager Background"
+        data-i18n-alt="podManagerBackground"
       />
     </div>
 
     <div class="overlay"></div>
 
     <div class="sliding-container">
-      <button class="close-button" aria-label="Close">
+      <button class="close-button" aria-label="Close" data-i18n-aria-label="close">
         <i class="fas fa-times"></i>
       </button>
       <div class="popup-header">
@@ -103,8 +111,8 @@
         </li>
       </ul>
 
-      <a href="{{ url_for('frontend.about_page') }}" class="learn-more-link">
-        Find out more about all our features
+      <a href="{{ url_for('frontend.about_page') }}" class="learn-more-link" data-i18n-title="learnMore">
+        <span data-i18n="findOutMore">Find out more about all our features</span>
         <i class="fas fa-arrow-right"></i>
       </a>
     </div>
@@ -124,8 +132,10 @@
             id="email"
             name="email"
             class="input"
+            data-i18n-placeholder="email"
             placeholder="Email"
             required
+            aria-label="Email"
           />
         </div>
 
@@ -134,6 +144,8 @@
             type="button"
             id="send-login-link-button"
             class="button button-primary"
+            data-i18n="getLoginLink"
+            data-i18n-aria-label="getLoginLink"
           >
             <span>Log In</span>
             <i class="fas fa-arrow-right"></i>
@@ -141,30 +153,26 @@
         </div>
         
         <div class="policy-links">
-          <a href="{{ url_for('frontend.terms_of_service_page') }}" class="link"
-            >Terms of Service</a
-          >
+          <a href="{{ url_for('frontend.terms_of_service_page') }}" class="link" data-i18n="termsOfService" data-i18n-title="termsOfService">Terms of Service</a>
           |
-          <a href="{{ url_for('frontend.privacy_policy_page') }}" class="link"
-            >Privacy Policy</a
-          >
+          <a href="{{ url_for('frontend.privacy_policy_page') }}" class="link" data-i18n="privacyPolicy" data-i18n-title="privacyPolicy">Privacy Policy</a>
           |
-          <a href="{{ url_for('frontend.about_page') }}" class="link"
-            >About PodManager</a
-          >
+          <a href="{{ url_for('frontend.about_page') }}" class="link" data-i18n="aboutPodManager" data-i18n-title="aboutPodManager">About PodManager</a>
         </div>
         
         <!-- Community Links Section -->
         <div class="community-links">
-          <p>Follow our development and join our discord</p>
+          <p data-i18n="followDevelopment">Follow our development and join our discord</p>
           <div class="social-icons">
-            <a href="https://discord.gg/vwdhqFxhVm" target="_blank" title="Join our Discord">
+            <a href="https://discord.gg/vwdhqFxhVm" target="_blank" data-i18n-title="joinDiscord">
               <i class="fab fa-discord"></i>
             </a>
           </div>
         </div>
       </form>
     </div>
+    <script type="module" src="{{ url_for('static', filename='js/i18n/translations.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/i18n/languageManager.js') }}"></script>
     <!-- Use correct static path for signin.js -->
     <script type="module" src="{{ url_for('static', filename='js/signin/signin.js') }}"></script>
   </body>

@@ -15,7 +15,7 @@ endblock %} {% block content %}
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PodManager.ai Store</title>
+  <title data-i18n="store">PodManager Store</title>
   <link
     rel="stylesheet"
     href="{{ url_for('static', filename='css/store/store.css') }}"
@@ -27,14 +27,16 @@ endblock %} {% block content %}
   />
 </head>
 <body>
+  <script type="module" src="{{ url_for('static', filename='js/i18n/languageManager.js') }}"></script>
   <!-- Include Notification Templates -->
   {% include "/components/notifications.html" %}
   <!-- Successful Purchase Popup -->
   <div id="success-popup" class="popup" style="display: none;">
     <div class="popup-content">
-      <svg fill="#388E3C" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="92px" height="92px" viewBox="0 0 305.002 305.002" xml:space="preserve" stroke="#388E3C"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g> <path d="M152.502,0.001C68.412,0.001,0,68.412,0,152.501s68.412,152.5,152.502,152.5c84.089,0,152.5-68.411,152.5-152.5 S236.591,0.001,152.502,0.001z M152.502,280.001C82.197,280.001,25,222.806,25,152.501c0-70.304,57.197-127.5,127.502-127.5 c70.304,0,127.5,57.196,127.5,127.5C280.002,222.806,222.806,280.001,152.502,280.001z"></path> <path d="M218.473,93.97l-90.546,90.547l-41.398-41.398c-4.882-4.881-12.796-4.881-17.678,0c-4.881,4.882-4.881,12.796,0,17.678 l50.237,50.237c2.441,2.44,5.64,3.661,8.839,3.661c3.199,0,6.398-1.221,8.839-3.661l99.385-99.385 c4.881-4.882,4.881-12.796,0-17.678C231.269,89.089,223.354,89.089,218.473,93.97z"></path> </g> </g> </g></svg>          <h2>Purchase Successful!</h2>
-      <p>Your purchase has been completed successfully.</p>
-      <button class="Awsome-btn" id="continueShoppingBtn">Awsome!</button>
+      <svg fill="#388E3C" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="92px" height="92px" viewBox="0 0 305.002 305.002" xml:space="preserve" stroke="#388E3C"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g> <path d="M152.502,0.001C68.412,0.001,0,68.412,0,152.501s68.412,152.5,152.502,152.5c84.089,0,152.5-68.411,152.5-152.5 S236.591,0.001,152.502,0.001z M152.502,280.001C82.197,280.001,25,222.806,25,152.501c0-70.304,57.197-127.5,127.502-127.5 c70.304,0,127.5,57.196,127.5,127.5C280.002,222.806,222.806,280.001,152.502,280.001z"></path> <path d="M218.473,93.97l-90.546,90.547l-41.398-41.398c-4.882-4.881-12.796-4.881-17.678,0c-4.881,4.882-4.881,12.796,0,17.678 l50.237,50.237c2.441,2.44,5.64,3.661,8.839,3.661c3.199,0,6.398-1.221,8.839-3.661l99.385-99.385 c4.881-4.882,4.881-12.796,0-17.678C231.269,89.089,223.354,89.089,218.473,93.97z"></path> </g> </g> </g></svg>          
+      <h2 data-i18n="purchaseSuccessful">Purchase Successful!</h2>
+      <p data-i18n="purchaseCompleted">Your purchase has been completed successfully.</p>
+      <button class="Awsome-btn" id="continueShoppingBtn" data-i18n="awesome">Awesome!</button>
     </div>
   </div>
   
@@ -45,11 +47,10 @@ endblock %} {% block content %}
         <div class="store-actions">
           <button class="action-button view-history">
             <span class="svg-placeholder history-icon"></span>
-            Purchase History
+            <span data-i18n="purchaseHistory">Purchase History</span>
           </button>
         </div>
       </div>
-
 
       <!-- Main Content -->
       <main class="main-content">
@@ -59,10 +60,8 @@ endblock %} {% block content %}
             <!-- Subscription Upgrades Section -->
             <section class="store-section subscription-section">
               <div class="section-header">
-                <h2>Subscriptions</h2>
-                <span class="section-description"
-                  >Enhance your PodManager experience!</span
-                >
+                <h2 data-i18n="subscriptions">Subscriptions</h2>
+                <span class="section-description" data-i18n="enhanceExperience">Enhance your PodManager experience!</span>
               </div>
               <div class="cards-container">
                 <div
@@ -77,27 +76,23 @@ endblock %} {% block content %}
                         class="svg-placeholder subscription-pro-icon"
                       ></span>
                     </div>
-                    <h3>Pro Subscription</h3>
+                    <h3 data-i18n="proSubscription">Pro Subscription</h3>
                   </div>
                   <div class="product-price">
                     <span class="price-amount">$29.99</span>
-                    <span class="price-period">/month</span>
+                    <span class="price-period" data-i18n="perMonth">/month</span>
                   </div>
                   <div class="product-features">
                     <ul>
-                      <li>
-                        10,000 Credits at Month's Start<br />(resets monthly, no
-                        carry-over)
-                      </li>
-                      <li>3 Episode Slots / Month (Max. 5 Total Slots)</li>
-                      <li>
-                        Free Podcast Landing Page (Option to Host on Own Domain)
-                      </li>
+                      <li data-i18n="proSubscriptionFeatures.0">10,000 Credits at Month's Start (resets monthly, no carry-over)</li>
+                      <li data-i18n="proSubscriptionFeatures.1">3 Episode Slots / Month (Max. 5 Total Slots)</li>
+                      <li data-i18n="proSubscriptionFeatures.2">Free Podcast Landing Page (Option to Host on Own Domain)</li>
                     </ul>
                   </div>
                   <button
                     class="add-to-cart-btn"
                     data-product-id="sub-standard"
+                    data-i18n="addToCart"
                   >
                     Add to Cart
                   </button>
@@ -109,32 +104,27 @@ endblock %} {% block content %}
                   data-product-type="subscription"
                   data-price="69.00"
                 >
-                  <div class="product-badge">Best Value</div>
+                  <div class="product-badge" data-i18n="bestValue">Best Value</div>
                   <div class="product-header">
                     <div class="product-icon subscription-icon">
                       <span
                         class="svg-placeholder subscription-team-icon"
                       ></span>
                     </div>
-                    <h3>Studio Subscription</h3>
+                    <h3 data-i18n="studioSubscription">Studio Subscription</h3>
                   </div>
                   <div class="product-price">
                     <span class="price-amount">$69.00</span>
-                    <span class="price-period">/month</span>
+                    <span class="price-period" data-i18n="perMonth">/month</span>
                   </div>
                   <div class="product-features">
                     <ul>
-                      <li>
-                        20,000 Credits at Month's Start <br />(resets monthly,
-                        no carry-over)
-                      </li>
-                      <li>4 Episode Slots / Month (Max. 6 Total Slots)</li>
-                      <li>
-                        Free Podcast Landing Page (Option to Host on Own Domain)
-                      </li>
+                      <li data-i18n="studioSubscriptionFeatures.0">20,000 Credits at Month's Start (resets monthly, no carry-over)</li>
+                      <li data-i18n="studioSubscriptionFeatures.1">4 Episode Slots / Month (Max. 6 Total Slots)</li>
+                      <li data-i18n="studioSubscriptionFeatures.2">Free Podcast Landing Page (Option to Host on Own Domain)</li>
                     </ul>
                   </div>
-                  <button class="add-to-cart-btn" data-product-id="sub-pro">
+                  <button class="add-to-cart-btn" data-product-id="sub-pro" data-i18n="addToCart">
                     Add to Cart
                   </button>
                 </div>
@@ -151,25 +141,26 @@ endblock %} {% block content %}
                         class="svg-placeholder subscription-enterprise-icon"
                       ></span>
                     </div>
-                    <h3>Enterprise Subscription</h3>
+                    <h3 data-i18n="enterpriseSubscription">Enterprise Subscription</h3>
                   </div>
                   <div class="product-price">
-                    <span class="price-amount">Contact Us</span>
-                    <span class="price-period">for pricing</span>
+                    <span class="price-amount" data-i18n="contactUs">Contact Us</span>
+                    <span class="price-period" data-i18n="forPricing">for pricing</span>
                   </div>
                   <div class="product-features">
                     <ul>
-                      <li>Pricing Based on Annual Episodes</li>
-                      <li>Total Unlock of Pricings</li>
-                      <li>All The Episode Slots You Need</li>
-                      <li>Team Collaboration</li>
-                      <li>Yearly Re-Contracting</li>
-                      <li>Landing Page On Your Own Domain</li>
+                      <li data-i18n="enterpriseSubscriptionFeatures.0">Pricing Based on Annual Episodes</li>
+                      <li data-i18n="enterpriseSubscriptionFeatures.1">Total Unlock of Pricings</li>
+                      <li data-i18n="enterpriseSubscriptionFeatures.2">All The Episode Slots You Need</li>
+                      <li data-i18n="enterpriseSubscriptionFeatures.3">Team Collaboration</li>
+                      <li data-i18n="enterpriseSubscriptionFeatures.4">Yearly Re-Contracting</li>
+                      <li data-i18n="enterpriseSubscriptionFeatures.5">Landing Page On Your Own Domain</li>
                     </ul>
                   </div>
                   <button
                     class="add-to-cart-btn"
                     data-product-id="sub-enterprise"
+                    data-i18n="contactUs"
                   >
                     Contact Us
                   </button>
@@ -180,10 +171,8 @@ endblock %} {% block content %}
             <!-- Credit Packs Section -->
             <section class="store-section credit-packs-section">
               <div class="section-header">
-                <h2>Credit Packs</h2>
-                <span class="section-description"
-                  >Purchase credits to use across PodManager features</span
-                >
+                <h2 data-i18n="creditPacks">Credit Packs</h2>
+                <span class="section-description" data-i18n="purchaseCredits">Purchase credits to use across PodManager features</span>
               </div>
               <div class="cards-container">
                 <div
@@ -192,29 +181,27 @@ endblock %} {% block content %}
                   data-product-type="credit"
                   data-price="7.99"
                 >
-                  <div class="product-badge">Popular</div>
+                  <div class="product-badge" data-i18n="popular">Popular</div>
                   <div class="product-header">
                     <div class="product-icon credit-icon">
                       <span class="svg-placeholder credit-small-icon"></span>
                     </div>
-                    <h3>Basic Pack</h3>
+                    <h3 data-i18n="basicPack">Basic Pack</h3>
                   </div>
                   <div class="product-price">
                     <span class="price-amount">$7.99</span>
-                    <span class="price-period">one-time</span>
+                    <span class="price-period" data-i18n="oneTime">one-time</span>
                   </div>
                   <div class="product-features">
                     <ul>
-                      <li>2,500 credits</li>
-                      <li>
-                        Credits never expire and carry over each month until
-                        used
-                      </li>
+                      <li data-i18n="basicPackFeatures.0">2,500 credits</li>
+                      <li data-i18n="basicPackFeatures.1">Credits never expire and carry over each month until used</li>
                     </ul>
                   </div>
                   <button
                     class="add-to-cart-btn"
                     data-product-id="credit-basic"
+                    data-i18n="addToCart"
                   >
                     Add to Cart
                   </button>
@@ -226,27 +213,24 @@ endblock %} {% block content %}
                   data-product-type="credit"
                   data-price="14.99"
                 >
-                  <div class="product-badge">Best Value</div>
+                  <div class="product-badge" data-i18n="bestValue">Best Value</div>
                   <div class="product-header">
                     <div class="product-icon credit-icon">
                       <span class="svg-placeholder credit-medium-icon"></span>
                     </div>
-                    <h3>Pro Pack</h3>
+                    <h3 data-i18n="proPack">Pro Pack</h3>
                   </div>
                   <div class="product-price">
                     <span class="price-amount">$14.99</span>
-                    <span class="price-period">one-time</span>
+                    <span class="price-period" data-i18n="oneTime">one-time</span>
                   </div>
                   <div class="product-features">
                     <ul>
-                      <li>5,000 credits</li>
-                      <li>
-                        Credits never expire and carry over each month until
-                        used
-                      </li>
+                      <li data-i18n="proPackFeatures.0">5,000 credits</li>
+                      <li data-i18n="proPackFeatures.1">Credits never expire and carry over each month until used</li>
                     </ul>
                   </div>
-                  <button class="add-to-cart-btn" data-product-id="credit-pro">
+                  <button class="add-to-cart-btn" data-product-id="credit-pro" data-i18n="addToCart">
                     Add to Cart
                   </button>
                 </div>
@@ -261,24 +245,22 @@ endblock %} {% block content %}
                     <div class="product-icon credit-icon">
                       <span class="svg-placeholder credit-large-icon"></span>
                     </div>
-                    <h3>Studio Pack</h3>
+                    <h3 data-i18n="studioPack">Studio Pack</h3>
                   </div>
                   <div class="product-price">
                     <span class="price-amount">$29.99</span>
-                    <span class="price-period">one-time</span>
+                    <span class="price-period" data-i18n="oneTime">one-time</span>
                   </div>
                   <div class="product-features">
                     <ul>
-                      <li>12,000 credits</li>
-                      <li>
-                        Credits never expire and carry over each month until
-                        used
-                      </li>
+                      <li data-i18n="studioPackFeatures.0">12,000 credits</li>
+                      <li data-i18n="studioPackFeatures.1">Credits never expire and carry over each month until used</li>
                     </ul>
                   </div>
                   <button
                     class="add-to-cart-btn"
                     data-product-id="credit-premium"
+                    data-i18n="addToCart"
                   >
                     Add to Cart
                   </button>
@@ -289,10 +271,8 @@ endblock %} {% block content %}
             <!-- Episode Pack Section -->
             <section class="store-section episode-packs-section">
               <div class="section-header">
-                <h2>Episode Pack</h2>
-                <span class="section-description"
-                  >Purchase additional episode slots for your podcast</span
-                >
+                <h2 data-i18n="episodePack">Episode Pack</h2>
+                <span class="section-description" data-i18n="purchaseEpisodeSlots">Purchase additional episode slots for your podcast</span>
               </div>
               <div class="cards-container">
                 <div
@@ -305,20 +285,21 @@ endblock %} {% block content %}
                     <div class="product-icon episode-icon">
                       <span class="svg-placeholder episode-icon"></span>
                     </div>
-                    <h3>Extra Episode Pack</h3>
+                    <h3 data-i18n="extraEpisodePack">Extra Episode Pack</h3>
                   </div>
                   <div class="product-price">
                     <span class="price-amount">$14.99</span>
-                    <span class="price-period">one-time</span>
+                    <span class="price-period" data-i18n="oneTime">one-time</span>
                   </div>
                   <div class="product-features">
                     <ul>
-                      <li>Opens 1 additional episode slot</li>
+                      <li data-i18n="extraEpisodePackFeatures.0">Opens 1 additional episode slot</li>
                     </ul>
                   </div>
                   <button
                     class="add-to-cart-btn"
                     data-product-id="episode-extra"
+                    data-i18n="addToCart"
                   >
                     Add to Cart
                   </button>
@@ -334,22 +315,22 @@ endblock %} {% block content %}
     <!-- Shopping Cart (Right Sidebar) -->
     <div class="shopping-cart-sidebar" id="shoppingCart">
       <div class="cart-header">
-        <h3>Your Cart</h3>
-        <span class="cart-item-count">0 items</span>
+        <h3 data-i18n="yourCart">Your Cart</h3>
+        <span class="cart-item-count"><span data-i18n="items">items</span></span>
         <button class="close-cart-btn" id="closeCartBtn">
           <span class="svg-placeholder close-icon"></span>
         </button>
       </div>
       <div class="cart-content">
         <div class="cart-items" id="cartItems">
-          <div class="empty-cart-message">Your cart is empty</div>
+          <div class="empty-cart-message" data-i18n="yourCartIsEmpty">Your cart is empty</div>
         </div>
         <div class="cart-footer">
           <div class="cart-total">
-            <span>Total:</span>
+            <span data-i18n="total">Total:</span>
             <span class="total-amount">$0.00</span>
           </div>
-          <button class="checkout-btn" id="checkoutBtn" disabled>
+          <button class="checkout-btn" id="checkoutBtn" disabled data-i18n="completePurchase">
             Complete the Purchase
           </button>
         </div>

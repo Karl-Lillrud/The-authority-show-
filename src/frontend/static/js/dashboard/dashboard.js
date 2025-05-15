@@ -8,6 +8,10 @@ import { initTaskManagement } from "/static/js/dashboard/task.js";
 import { svgdashboard } from "./svgdashboard.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
 import { getActivitiesRequest } from "/static/requests/activityRequests.js";
+import languageManager from '/static/js/i18n/languageManager.js';
+
+window.languageManager = languageManager;
+languageManager.updatePageContent();
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -548,7 +552,25 @@ function getActivityIconClass(activityType) {
 }
 
 function formatActivityType(type) {
-  if (type === "podcast_created") return "Podcast Created";
+  // Use i18n for known activity types
+  const i18nMap = {
+    podcast_created: 'podcastCreated',
+    episode_created: 'episodeCreated',
+    episode_updated: 'episodeUpdated',
+    episode_deleted: 'episodeDeleted',
+    team_created: 'teamCreated',
+    team_deleted: 'teamDeleted',
+    tasks_added: 'tasksAdded',
+    podcast_deleted: 'podcastDeleted',
+    login_email_sent: 'loginEmailSent',
+    subscription_renewed: 'subscriptionRenewed',
+    credits_reset: 'creditsReset',
+    // Add more as needed
+  };
+  if (window.languageManager && i18nMap[type]) {
+    return window.languageManager.getTranslation(i18nMap[type]);
+  }
+  // Fallback: prettify unknown types
   return type
     .replace(/_/g, " ")
     .toLowerCase()

@@ -1,5 +1,6 @@
 {% extends "components/base.html" %} {% block title %}Team Leaderboard
 Dashboard{% endblock %} {% block content %}
+<script type="module" src="{{ url_for('static', filename='js/i18n/languageManager.js') }}"></script>
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/team/team.css') }}"
@@ -21,32 +22,32 @@ Dashboard{% endblock %} {% block content %}
             <li class="sidebar-menu-item">
               <a href="/dashboard" class="sidebar-menu-link dashboard-link">
                 <span id="back-to-dashboard-icon" class="sidebar-icon"></span>
-                <span>Back to Dashboard</span>
+                <span data-i18n="backToDashboard">Back to Dashboard</span>
               </a>
             </li>
             <li id="sidebar-teams" class="sidebar-menu-item active">
               <a href="#" class="sidebar-menu-link">
                 <span id="teams-icon" class="sidebar-icon"></span>
-                <span>Teams</span>
+                <span data-i18n="teams">Teams</span>
               </a>
             </li>
             <li id="sidebar-members" class="sidebar-menu-item">
               <a href="#" class="sidebar-menu-link">
                 <span id="members-icon" class="sidebar-icon"></span>
-                <span>Members</span>
+                <span data-i18n="members">Members</span>
               </a>
             </li>
           </ul>
         </nav>
         <div class="sidebar-action-buttons">
-          <h3>Actions</h3>
+          <h3 data-i18n="actions">Actions</h3>
           <button id="openModalBtn" class="sidebar-action-button">
             <span class="sidebar-icon"></span>
-            <span>Add New Team</span>
+            <span data-i18n="addNewTeam">Add New Team</span>
           </button>
           <button id="addNewMemberBtn" class="sidebar-action-button">
             <span class="sidebar-icon"></span>
-            <span>Add New Member</span>
+            <span data-i18n="addNewMember">Add New Member</span>
           </button>
         </div>
       </div>
@@ -61,7 +62,7 @@ Dashboard{% endblock %} {% block content %}
   </div>
   <main class="main-content">
     <div class="main-header">
-      <h1>Teams</h1>
+      <h1 data-i18n="teams">Teams</h1>
     </div>
 
     <!-- Flash messages -->
@@ -81,7 +82,7 @@ Dashboard{% endblock %} {% block content %}
     <!-- Loading indicator -->
     <div class="loading-indicator">
       <div class="spinner"></div>
-      <p></p>
+      <p data-i18n="loading">Loading...</p>
     </div>
   </main>
 </div>
@@ -98,31 +99,30 @@ Dashboard{% endblock %} {% block content %}
   <div class="form-box" role="document">
     <form method="post" action="{{ url_for('team_bp.add_team') }}">
       <span id="modalCloseBtn" class="close-btn">&times;</span>
-      <h2 class="form-title" id="addTeamModalLabel">Add New Team</h2>
+      <h2 class="form-title" id="addTeamModalLabel" data-i18n="addNewTeam">Add New Team</h2>
       <div class="form-grid">
         <div class="field-group full-width">
-          <label for="podcast">Podcast:</label>
+          <label for="podcast" data-i18n="podcast">Podcast:</label>
           <select
             class="form-control"
             name="podcastId"
             id="podcastDropdown"
             required
           >
-            <option value="">Select a Podcast</option>
+            <option value="" data-i18n="selectPodcast">Select a Podcast</option>
             <!-- Populate options with podcasts -->
           </select>
         </div>
         <div class="field-group">
-          <label for="name">Team Name:</label>
+          <label for="name" data-i18n="teamName">Team Name:</label>
           <input type="text" class="form-control" name="name" required />
         </div>
         <div class="field-group">
-          <label for="email">Team Email:</label>
-          <!-- Ändrat från "Email" till "Team Email" -->
+          <label for="email" data-i18n="teamEmail">Team Email:</label>
           <input type="email" class="form-control" name="email" required />
         </div>
         <div class="field-group full-width">
-          <label for="description">Description:</label>
+          <label for="description" data-i18n="description">Description:</label>
           <textarea class="form-control" name="description"></textarea>
         </div>
         <!-- Add hidden input fields for userId and email -->
@@ -131,10 +131,8 @@ Dashboard{% endblock %} {% block content %}
       </div>
       <div class="form-validation-message" id="teamFormValidation"></div>
       <div class="form-actions">
-        <button type="button" class="cancel-btn" id="modalCloseBtn2">
-          Cancel
-        </button>
-        <button type="submit" class="save-btn">Add Team</button>
+        <button type="button" class="cancel-btn" id="modalCloseBtn2" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="save-btn" data-i18n="addTeam">Add Team</button>
       </div>
     </form>
   </div>
@@ -151,22 +149,22 @@ Dashboard{% endblock %} {% block content %}
   <div class="form-box" role="document">
     <form id="teamDetailForm">
       <span id="teamDetailCloseBtn" class="close-btn">&times;</span>
-      <h2 class="form-title" id="teamDetailModalLabel">Team Details</h2>
+      <h2 class="form-title" id="teamDetailModalLabel" data-i18n="teamDetails">Team Details</h2>
       <div class="form-grid">
         <!-- Dynamic podcast assignment section -->
         <div class="field-group full-width">
-          <label>Assigned Podcasts:</label>
+          <label data-i18n="assignedPodcasts">Assigned Podcasts:</label>
           <div id="assignedPodcasts" class="podcast-chips"></div>
         </div>
         <div class="field-group full-width">
-          <label for="podcastAssignmentDropdown">Add Podcast:</label>
+          <label for="podcastAssignmentDropdown" data-i18n="addPodcast">Add Podcast:</label>
           <select class="form-control" id="podcastAssignmentDropdown" disabled>
-            <option value="">Select Podcast to Add</option>
+            <option value="" data-i18n="selectPodcast">Select Podcast to Add</option>
           </select>
         </div>
         <!-- Team detail fields -->
         <div class="field-group">
-          <label for="detailName">Name:</label>
+          <label for="detailName" data-i18n="name">Name:</label>
           <input
             type="text"
             class="form-control"
@@ -176,8 +174,7 @@ Dashboard{% endblock %} {% block content %}
           />
         </div>
         <div class="field-group">
-          <label for="detailEmail">Team Email:</label>
-          <!-- Ändrat från "Email" till "Team Email" -->
+          <label for="detailEmail" data-i18n="teamEmail">Team Email:</label>
           <input
             type="email"
             class="form-control"
@@ -188,7 +185,7 @@ Dashboard{% endblock %} {% block content %}
           />
         </div>
         <div class="field-group full-width">
-          <label for="detailDescription">Description:</label>
+          <label for="detailDescription" data-i18n="description">Description:</label>
           <textarea
             class="form-control"
             id="detailDescription"

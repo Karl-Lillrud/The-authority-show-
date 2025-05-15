@@ -4,10 +4,10 @@
 />
 <footer>
   <p>
-    © 2023 PodManager. All rights reserved.
-    <a href="{{ url_for('frontend.terms_of_service_page') }}">Terms of Service</a> |
-    <a href="{{ url_for('frontend.privacy_policy_page') }}">Privacy Policy</a> |
-    <a href="{{ url_for('frontend.about_page') }}">About PodManager</a>
+    © <span id="footer-year">2023</span> PodManager. <span data-i18n="allRightsReserved">All rights reserved.</span>
+    <a href="{{ url_for('frontend.terms_of_service_page') }}" data-i18n="termsOfService">Terms of Service</a> |
+    <a href="{{ url_for('frontend.privacy_policy_page') }}" data-i18n="privacyPolicy">Privacy Policy</a> |
+    <a href="{{ url_for('frontend.about_page') }}" data-i18n="aboutPodManager">About PodManager</a>
   </p>
 </footer>
 

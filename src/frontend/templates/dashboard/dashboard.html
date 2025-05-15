@@ -31,7 +31,7 @@ endblock %} {% block content %}
     <div class="dashboard-header">
  
       <div class="dashboard-actions">
-        <button class="create-episode action-button">
+        <button class="create-episode action-button" data-i18n="createNewEpisode">
           <span class="stat-icon episode-icon"></span>
           Create New Episode
         </button>
@@ -46,7 +46,7 @@ endblock %} {% block content %}
         </div>
         <div class="stat-content">
           <h3 class="stat-value" id="podcast-count">0</h3>
-          <p class="stat-label">Active Podcasts</p>
+          <p class="stat-label" data-i18n="activePodcasts">Active Podcasts</p>
         </div>
       </div>
       <div class="stat-card">
@@ -55,7 +55,7 @@ endblock %} {% block content %}
         </div>
         <div class="stat-content">
           <h3 class="stat-value" id="episode-count">0</h3>
-          <p class="stat-label">Total Episodes</p>
+          <p class="stat-label" data-i18n="totalEpisodes">Total Episodes</p>
         </div>
       </div>
       <div class="stat-card">
@@ -64,7 +64,7 @@ endblock %} {% block content %}
         </div>
         <div class="stat-content">
           <h3 class="stat-value" id="guest-count">0</h3>
-          <p class="stat-label">Guests</p>
+          <p class="stat-label" data-i18n="guests">Guests</p>
         </div>
       </div>
       <div class="stat-card">
@@ -73,7 +73,7 @@ endblock %} {% block content %}
         </div>
         <div class="stat-content">
           <h3 class="stat-value" id="task-count">0</h3>
-          <p class="stat-label">Tasks</p>
+          <p class="stat-label" data-i18n="tasks">Tasks</p>
         </div>
       </div>
     </div>
@@ -86,22 +86,22 @@ endblock %} {% block content %}
           <!-- Team Leaderboard -->
           <section class="leaderboard-section">
             <div class="section-header">
-              <h2>Team Leaderboard</h2>
+              <h2 data-i18n="teamLeaderboard">Team Leaderboard</h2>
             </div>
             <div class="team-leaderboard">
               <table class="leaderboard-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Completed Tasks</th>
-                    <th>Points</th>
-                    <th>Months Won</th>
-                    <th>Goal</th>
+                    <th data-i18n="name">Name</th>
+                    <th data-i18n="completedTasks">Completed Tasks</th>
+                    <th data-i18n="points">Points</th>
+                    <th data-i18n="monthsWon">Months Won</th>
+                    <th data-i18n="goal">Goal</th>
                   </tr>
                 </thead>
                 <tbody class="leaderboard-body">
                   <tr>
-                    <td colspan="5">No leaderboard data available.</td>
+                    <td colspan="5" data-i18n="noLeaderboardData">No leaderboard data available.</td>
                   </tr>
                 </tbody>
               </table>
@@ -111,7 +111,7 @@ endblock %} {% block content %}
           <!-- Recent Activity -->
           <section class="activity-section">
             <div class="section-header">
-              <h2>Recent Activity</h2>
+              <h2 data-i18n="recentActivity">Recent Activity</h2>
             </div>
             <div class="activity-timeline activity-timeline-scroll">
               <!-- Dynamic content will be loaded here -->
@@ -121,8 +121,8 @@ endblock %} {% block content %}
           <!-- Recent Episodes -->
           <section class="episodes-section">
             <div class="section-header">
-              <h2>Active Episodes</h2>
-              <a href="#" class="view-all">View All</a>
+              <h2 data-i18n="activeEpisodes">Active Episodes</h2>
+              <a href="#" class="view-all" data-i18n="viewAll">View All</a>
             </div>
             <div class="cards-container">
               <!-- Episodes will be loaded here dynamically -->

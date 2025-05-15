@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Episode ToDo</title>
+  <title data-i18n="episodeToDo">Episode ToDo</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}">
   <link
   rel="stylesheet"
@@ -22,18 +22,18 @@
     <header class="header">
       <div class="header-content">
         <div class="header-left">
-          <h1 id="episodeTitle" class="episode-title">The Future of Podcasting</h1>
+          <h1 id="episodeTitle" class="episode-title" data-i18n="episodeTitle">The Future of Podcasting</h1>
           <div class="episode-meta">
             <i class="fas fa-calendar"></i>
-            <span id="recordingDate">Recording Date: 2025-05-01</span>
+            <span id="recordingDate" data-i18n="recordingDate">Recording Date: 2025-05-01</span>
           </div>
         </div>
       </div>
 
       <div class="progress-tracker">
         <div class="progress-header">
-          <span class="progress-label">Episode Progress</span>
-          <span id="progressText" class="progress-text">8 of 15 tasks completed (53%)</span>
+          <span class="progress-label" data-i18n="episodeProgress">Episode Progress</span>
+          <span id="progressText" class="progress-text" data-i18n="progressText">8 of 15 tasks completed (53%)</span>
         </div>
         <div class="progress-bar-bg">
           <div id="progressBar" class="progress-bar" style="width: 53%"></div>
@@ -46,13 +46,13 @@
       <div class="sidebar left-sidebar">
         <div class="card">
           <div class="card-content">
-            <h2 class="section-title">Podcasts</h2>
+            <h2 class="section-title" data-i18n="podcasts">Podcasts</h2>
             <div id="podcastSelector" class="podcast-selector">
               <!-- Podcasts will be populated by JavaScript -->
             </div>
 
             <div class="episodes-section">
-              <h3 class="subsection-title">Episodes</h3>
+              <h3 class="subsection-title" data-i18n="episodes">Episodes</h3>
               <div id="episodesList" class="episodes-list">
                 <!-- Episodes will be populated by JavaScript -->
               </div>
@@ -67,19 +67,19 @@
           <div class="tabs-list">
             <button class="tab-btn active" data-tab="tasks">
               <i class="fas fa-check-circle"></i>
-              <span>Tasks</span>
+              <span data-i18n="tasks">Tasks</span>
             </button>
             <button class="tab-btn" data-tab="kanban">
               <i class="fas fa-columns"></i>
-              <span>Progress Board</span>
+              <span data-i18n="progressBoard">Progress Board</span>
             </button>
             <button class="tab-btn" data-tab="dependencies">
               <i class="fas fa-file-alt"></i>
-              <span>Workflows</span>
+              <span data-i18n="workflows">Workflows</span>
             </button>
             <button class="tab-btn" data-tab="workspace">
               <i class="fas fa-laptop"></i>
-              <span>AI Workspace</span>
+              <span data-i18n="aiWorkspace">AI Workspace</span>
             </button>
           </div>
 
@@ -123,12 +123,12 @@
     <div id="workspace-tab" class="tab-pane">
       <div class="card">
         <div class="card-content">
-          <h2 class="section-title">AI Editing Tools</h2>
+          <h2 class="section-title" data-i18n="aiEditingTools">AI Editing Tools</h2>
           <div id="workspaceArea" class="workspace-area">
             <div class="tabs-list workspace-tabs">
-              <button class="workspace-tab-btn active" data-workspace="transcription">Transcription</button>
-              <button class="workspace-tab-btn" data-workspace="audio">Audio</button>
-              <button class="workspace-tab-btn" data-workspace="video">Video</button>
+              <button class="workspace-tab-btn active" data-workspace="transcription" data-i18n="transcription">Transcription</button>
+              <button class="workspace-tab-btn" data-workspace="audio" data-i18n="audio">Audio</button>
+              <button class="workspace-tab-btn" data-workspace="video" data-i18n="video">Video</button>
             </div>
             <div id="content">
               <!-- AI editing tools will be dynamically loaded here -->
@@ -148,12 +148,12 @@
             <div class="tab-header">
               <h2 class="section-title">
                 <i class="fas fa-clock"></i>
-                Timeline
+                <span data-i18n="timeline">Timeline</span>
               </h2>
             </div>
             <div class="timeline-badges">
-              <span class="badge">Recording: <span id="timelineRecordingDate">2025-05-01</span></span>
-              <span class="badge">Release: <span id="timelineReleaseDate">2025-05-08</span></span>
+              <span class="badge" data-i18n="recording">Recording: <span id="timelineRecordingDate">2025-05-01</span></span>
+              <span class="badge" data-i18n="release">Release: <span id="timelineReleaseDate">2025-05-08</span></span>
             </div>
             <div id="timeline" class="timeline">
               <!-- Timeline will be populated by JavaScript -->
@@ -167,13 +167,13 @@
   <div id="taskModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 id="modalTaskTitle">Task Title</h2>
-        <button id="closeModal" class="close-btn">&times;</button>
+        <h2 id="modalTaskTitle" data-i18n="taskTitle">Task Title</h2>
+        <button id="closeModal" class="close-btn" data-i18n-aria-label="closeModal">&times;</button>
       </div>
       <div class="modal-body">
-        <p id="modalTaskDescription">Task description will appear here.</p>
+        <p id="modalTaskDescription" data-i18n="taskDescription">Task description will appear here.</p>
         <div class="modal-section">
-          <h4>Dependencies:</h4>
+          <h4 data-i18n="dependencies">Dependencies:</h4>
           <ul id="modalTaskDependencies" class="modal-list">
             <!-- Dependencies will be populated by JavaScript -->
           </ul>
@@ -181,22 +181,22 @@
         <div class="modal-meta">
           <div class="meta-item">
             <i class="fas fa-clock"></i>
-            <span>Due: <span id="modalTaskDueDate">Date</span></span>
+            <span data-i18n="due">Due: <span id="modalTaskDueDate">Date</span></span>
           </div>
           <div class="meta-item">
             <i class="fas fa-user"></i>
-            <span>Assigned to: <span id="modalTaskAssignee">Person</span></span>
+            <span data-i18n="assignedTo">Assigned to: <span id="modalTaskAssignee">Person</span></span>
           </div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline">
           <i class="fas fa-comment"></i>
-          <span>Comments (2)</span>
+          <span data-i18n="comments">Comments (2)</span>
         </button>
         <button id="openWorkspaceBtn" class="btn btn-primary">
           <i class="fas fa-laptop"></i>
-          <span>Open in Workspace</span>
+          <span data-i18n="openInWorkspace">Open in Workspace</span>
         </button>
       </div>
     </div>
