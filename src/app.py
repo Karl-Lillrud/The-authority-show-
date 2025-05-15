@@ -175,5 +175,5 @@ init_credit_scheduler(app)  # Add this line after start_scheduler
 # Styled startup message
 if __name__ == "__main__":
     app.run(
-        host="0.0.0.0", port=8000, debug=False
+        host="0.0.0.0", port=8000, debug=True
     )  # Ensure the port matches your request URL

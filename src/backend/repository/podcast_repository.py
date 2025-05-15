@@ -160,6 +160,9 @@ class PodcastRepository:
             )
             for podcast in podcasts:
                 podcast["_id"] = str(podcast["_id"])
+                # Ensure logoUrl is set (for frontend image display)
+                if not podcast.get("logoUrl") and podcast.get("imageUrl"):
+                    podcast["logoUrl"] = podcast["imageUrl"]
 
             return {"podcast": podcasts}, 200
 
@@ -187,6 +190,10 @@ class PodcastRepository:
                 return {"error": "Podcast not found or unauthorized"}, 404
 
             podcast["_id"] = str(podcast["_id"])
+            # Ensure logoUrl is set (for frontend image display)
+            if not podcast.get("logoUrl") and podcast.get("imageUrl"):
+                podcast["logoUrl"] = podcast["imageUrl"]
+
             return {"podcast": podcast}, 200
         except Exception as e:
             return {"error": f"Failed to fetch podcast: {str(e)}"}, 500

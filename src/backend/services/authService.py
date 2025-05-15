@@ -4,9 +4,8 @@ import dns.resolver
 import random
 import hashlib
 import uuid
-import os
 from datetime import datetime, timedelta
-from flask import jsonify, session, request, current_app
+from flask import session, request, current_app
 from werkzeug.utils import secure_filename
 from backend.database.mongo_connection import collection
 from backend.services.teamService import TeamService
