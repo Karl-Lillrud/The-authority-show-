@@ -856,7 +856,7 @@
     /* Reset styles from desktop that might not fit full-height panel */
     margin-left: 0;
     margin-top: 0; 
-    border-radius: 0; 
+    border-radius: var(--radius-large); /* Add rounded corners for mobile view */
     border: none;
   }
 
