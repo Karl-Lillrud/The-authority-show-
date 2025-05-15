@@ -14,7 +14,8 @@ from backend.utils.text_utils import (
     generate_ai_suggestions,
     generate_show_notes,
     generate_ai_quotes,
-    generate_quote_images,
+    generate_quote_images_dalle,
+    render_quote_images_local,
     translate_text,
     suggest_sound_effects,
     get_sentence_timestamps
@@ -138,9 +139,11 @@ class TranscriptionService:
         q = generate_ai_quotes(transcript_text)
         return str(q)
 
-    def get_quote_images(self, quotes: List[str]) -> List[str]:
-        logger.info("Generating quote images...")
-        return generate_quote_images(quotes)
+    def get_quote_images(self, quotes: List[str], method: str = "dalle") -> List[str]:
+        if method == "local":
+            return render_quote_images_local(quotes)
+        else:
+            return generate_quote_images_dalle(quotes)
 
     def translate_transcript(self, raw_transcription: str, target_language: str) -> str:
         """

@@ -157,8 +157,13 @@ function showTab(tabName) {
                 </div>
     
                 <div class="result-group">
+                    <label for="quoteImageMethodSelect"><strong>Quote Image Style:</strong></label>
+                    <select id="quoteImageMethodSelect" class="input-field" style="margin-bottom: 0.5rem;">
+                        <option value="local">🖼 Local Template</option>
+                        <option value="dalle">🎨 DALL·E AI Image</option>
+                    </select>
                     <button class="btn ai-edit-button" onclick="generateQuoteImages()">
-                      ${labelWithCredits("Generate Quote Images", "ai_quote_images")}
+                        ${labelWithCredits("Generate Quote Images", "ai_quote_images")}
                     </button>
                     <div class="result-field">
                         <div id="quoteImagesResult"></div>
@@ -568,6 +573,8 @@ async function generateQuoteImages() {
     const container = document.getElementById(containerId);
 
     const quotes = document.getElementById("quotesResult").innerText.trim();
+    const method = document.getElementById("quoteImageMethodSelect")?.value || "local";
+
     if (!quotes) {
         alert("Generate quotes first.");
         return;
@@ -579,20 +586,19 @@ async function generateQuoteImages() {
         const res = await fetch("/transcription/quote_images", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ quotes })
+            body: JSON.stringify({ quotes, method })  // 👈 använder vald metod
         });
 
+        const data = await res.json();
+        container.innerHTML = "";
+
         if (res.status === 403) {
-            const data = await res.json();
             container.innerHTML = `
                 <p style="color: red;">${data.error || "You don't have enough credits."}</p>
                 ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
             `;
             return;
         }
-
-        const data = await res.json();
-        container.innerHTML = "";
 
         (data.quote_images || []).forEach(url => {
             const img = document.createElement("img");
