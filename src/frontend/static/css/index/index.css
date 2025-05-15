@@ -923,3 +923,24 @@ section#index-get-started .get-started-lottie svg g {
   }
 
 }
+
+section#index-about a.button.hero-cta {
+  background-color: #f69229;
+  color: #fff;
+  font-weight: bold;
+  font-size: 20px;
+  padding: 16px 40px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px #f6922940;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  display: inline-block;
+}
+section#index-about a.button.hero-cta:hover,
+section#index-about a.button.hero-cta:focus {
+  background-color: #e07c13;
+  box-shadow: 0 4px 18px #f6922970;
+  transform: scale(1.06);
+  outline: none;
+}
