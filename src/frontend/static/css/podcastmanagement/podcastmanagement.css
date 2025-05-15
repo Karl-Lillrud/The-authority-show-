@@ -1852,7 +1852,7 @@ select option:disabled {
   background-color: var(--highlight-color, #FF7F3F);
   color: white;
   border: none;
-  padding: 16px 12px; /* Increased padding for a larger button */
+  padding: 24px 20px; /* Further increased padding */
   cursor: pointer;
   z-index: 998; /* Below overlay (1000) and sidebar (1001) */
   border-top-right-radius: 8px;
@@ -1864,6 +1864,8 @@ select option:disabled {
 .open-sidebar-arrow-btn svg {
   display: block;
   pointer-events: none; /* Ensure clicks go to the button */
+  width: 33px; /* Increased SVG icon size */
+  height: 33px; /* Increased SVG icon size */
 }
 
 .pm-sidebar-overlay {
