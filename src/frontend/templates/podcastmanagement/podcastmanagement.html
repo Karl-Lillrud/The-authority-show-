@@ -108,11 +108,29 @@ endblock %} {% block content %}
 
   <!-- Main Content -->
   <main class="main-content">
+    <!-- Dashboard stat counters -->
+    <div class="dashboard-stats">
+      <span id="podcast-count" class="stat-value"></span>
+      <span id="episode-count" class="stat-value"></span>
+      <span id="guest-count" class="stat-value"></span>
+    </div>
+
+    <!-- Cards container for episodes -->
+    <div class="cards-container"></div>
+
+    <!-- Leaderboard body container -->
+    <table>
+      <tbody class="leaderboard-body"></tbody>
+    </table>
+
     <!-- Podcast List -->
     <div id="podcast-list" class="podcast-list"></div>
 
     <!-- Podcast Detail -->
     <div id="podcast-detail" class="podcast-detail" style="display: none"></div>
+
+    <!-- Add this container for the activity timeline -->
+    <div class="activity-timeline"></div>
 
     <!-- Form popup container for adding/updating a podcast -->
     <div id="form-popup" class="popup" style="display: none">

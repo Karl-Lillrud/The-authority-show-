@@ -154,7 +154,7 @@ function showManualGuestPopup(selectElement) {
     });
 }
 
-async function showAddGuestPopup() {
+export async function showAddGuestPopup() {
   // Hide all other popups before showing the guest popup
   document.querySelectorAll(".popup").forEach(popup => {
     popup.style.display = "none";
