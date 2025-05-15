@@ -24,6 +24,9 @@ endblock %} {% block content %}
     <aside class="sidebar">
       <div class="sidebar-header">
         <!-- Intentionally left empty as in teams -->
+        <button id="pmSidebarCloseBtn" class="pm-sidebar-close-btn" aria-label="Close sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
       <div class="sidebar-content">
         <nav class="sidebar-menu">
@@ -389,6 +392,12 @@ endblock %} {% block content %}
     </div>
   </main>
 </div>
+
+<!-- Mobile Sidebar Toggle Elements -->
+<button id="openSidebarArrowBtn" class="open-sidebar-arrow-btn" aria-label="Open sidebar" title="Open sidebar">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+</button>
+<div id="pmSidebarOverlay" class="pm-sidebar-overlay"></div>
 
 <script type="module" src="{{ url_for('static', filename='js/components/sidebar.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/podcastmanagement/podcastmanagement.js') }}"></script>

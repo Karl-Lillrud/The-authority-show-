@@ -1841,3 +1841,179 @@ select option:disabled {
   opacity: 1;
   visibility: visible;
 }
+
+/* Styles for mobile sidebar toggle arrow and overlay */
+.open-sidebar-arrow-btn {
+  display: none; /* Hidden by default, shown in media query */
+  position: fixed;
+  top: 50%;
+  left: 0px;
+  transform: translateY(-50%);
+  background-color: var(--highlight-color, #FF7F3F);
+  color: white;
+  border: none;
+  padding: 24px 20px; /* Further increased padding */
+  cursor: pointer;
+  z-index: 998; /* Below overlay (1000) and sidebar (1001) */
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+  transition: left 0.3s ease-in-out;
+}
+
+.open-sidebar-arrow-btn svg {
+  display: block;
+  pointer-events: none; /* Ensure clicks go to the button */
+  width: 33px; /* Increased SVG icon size */
+  height: 33px; /* Increased SVG icon size */
+}
+
+.pm-sidebar-overlay {
+  display: none; /* Hidden by default */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000; /* Below sidebar (1001), above arrow (998) */
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  pointer-events: none; /* Initially not interactive */
+  visibility: hidden;
+}
+
+.pm-sidebar-overlay.is-visible {
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto; /* Interactive when visible */
+}
+
+
+/* Responsive adjustments for sidebar and main content */
+@media (max-width: 992px) {
+  #sidebar-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100%; /* Cover full page */
+    z-index: 1001;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    background-color: var(--sidebar-bg, white); /* Ensure it has a background */
+    /* box-shadow: 3px 0 10px rgba(0,0,0,0.1); Removed for full-width panel */
+  }
+
+  #sidebar-container .sidebar {
+    /* If .sidebar has specific width/height, ensure it fits container */
+    width: 100%;
+    height: 100%;
+    border-right: none; /* Remove desktop border if any */
+    display: flex; /* Enable flex for easier content alignment */
+    flex-direction: column; /* Stack sidebar sections vertically */
+  }
+
+  #sidebar-container .sidebar-content {
+    padding: var(--spacing-lg) 0; /* Increased vertical padding */
+    flex-grow: 1; /* Allow content to take available space */
+    overflow-y: auto; /* Add scroll if content overflows */
+  }
+
+  #sidebar-container .sidebar-menu-link {
+    padding: var(--spacing-lg) var(--spacing-xl); /* Significantly increased padding */
+    font-size: 1.2rem; /* Significantly increased font size */
+    display: flex;
+    align-items: center;
+  }
+
+  #sidebar-container .sidebar-menu-link .sidebar-icon svg {
+    width: 28px; /* Significantly increased icon size */
+    height: 28px; /* Significantly increased icon size */
+  }
+   #sidebar-container .sidebar-menu-link .sidebar-icon {
+    margin-right: var(--spacing-lg); /* Increased spacing for larger icons */
+  }
+
+  #sidebar-container .sidebar-action-buttons h3 {
+    font-size: 1.4rem; /* Significantly increased heading size */
+    margin-bottom: var(--spacing-lg);
+    padding-left: var(--spacing-xl);
+  }
+
+  #sidebar-container .sidebar-action-button {
+    padding: var(--spacing-lg) var(--spacing-xl); /* Significantly increased padding */
+    font-size: 1.2rem; /* Significantly increased font size */
+    margin-bottom: var(--spacing-md); /* Increased space between buttons */
+    display: flex;
+    align-items: center;
+    width: calc(100% - (2 * var(--spacing-xl))); /* Adjust width considering padding */
+    margin-left: var(--spacing-xl);
+    margin-right: var(--spacing-xl);
+    box-sizing: border-box;
+  }
+
+  #sidebar-container .sidebar-action-button .sidebar-icon svg {
+    width: 26px; /* Significantly increased icon size */
+    height: 26px; /* Significantly increased icon size */
+  }
+  #sidebar-container .sidebar-action-button .sidebar-icon {
+    margin-right: var(--spacing-lg); /* Increased spacing for larger icons */
+  }
+
+  #sidebar-container.is-open {
+    transform: translateX(0%);
+  }
+
+  .main-content {
+    margin-left: 0; /* Remove margin that accounted for desktop sidebar */
+    width: 100%; /* Ensure it takes full width */
+    padding-left: var(--spacing-sm); /* Add some padding if sidebar is hidden */
+    padding-right: var(--spacing-sm);
+  }
+
+  .open-sidebar-arrow-btn {
+    display: block; /* Show the arrow button */
+  }
+
+  /* Hide the original sidebar toggle button on mobile if it conflicts */
+  #sidebar-container .sidebar-toggle {
+    display: none;
+  }
+
+  .app-container {
+    /* Ensure app-container doesn't try to use flex for sidebar positioning */
+    /* height might need to be adjusted if fixed header is present and not accounted for*/
+     height: calc(100vh - var(--header-height, 0px) - 60px); /* Adjust if header is fixed and impacts viewport*/
+  }
+
+  #sidebar-container .sidebar-header {
+    display: flex; /* To allow positioning of the close button */
+    justify-content: flex-end; /* Position close button to the right */
+    padding: var(--spacing-md); /* Adjusted padding for better spacing around the button */
+    min-height: 70px; /* Slightly increased min-height */
+    box-sizing: border-box; /* Ensure padding is included in height calculation */
+  }
+
+  .pm-sidebar-close-btn {
+    display: none; /* Hidden by default, shown in mobile sidebar */
+    background: none;
+    border: none;
+    color: var(--text-color-dark, #333);
+    cursor: pointer;
+    padding: var(--spacing-md); /* Increased padding for a larger touch target */
+    line-height: 1;
+    position: relative; /* For z-index stacking context if needed */
+    z-index: 10;      /* Ensure it's above other elements within the sidebar header */
+  }
+
+  #sidebar-container.is-open .pm-sidebar-close-btn {
+    display: block; /* Show when sidebar is open */
+  }
+
+  .pm-sidebar-close-btn svg {
+    width: 32px; /* Increased icon size */
+    height: 32px; /* Increased icon size */
+  }
+}

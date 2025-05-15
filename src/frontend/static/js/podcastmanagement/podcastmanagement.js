@@ -253,7 +253,54 @@ document.addEventListener("DOMContentLoaded", () => {
   decorativeHeader.className = "decorative-header";
   document.body.prepend(decorativeHeader);
 
+  setupMobileSidebar();
 });
+
+function setupMobileSidebar() {
+  const sidebarContainer = document.getElementById("sidebar-container");
+  const openSidebarArrowBtn = document.getElementById("openSidebarArrowBtn");
+  const pmSidebarOverlay = document.getElementById("pmSidebarOverlay");
+  const pmSidebarCloseBtn = document.getElementById("pmSidebarCloseBtn");
+
+  if (!sidebarContainer || !openSidebarArrowBtn || !pmSidebarOverlay || !pmSidebarCloseBtn) {
+    console.warn("Mobile sidebar toggle elements not all found. Skipping mobile sidebar setup.");
+    return;
+  }
+
+  const openSidebar = () => {
+    sidebarContainer.classList.add("is-open");
+    pmSidebarOverlay.classList.add("is-visible");
+    // Prevent body scroll only on mobile when sidebar is a full overlay
+    if (window.innerWidth <= 992) { // Match CSS breakpoint
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  const closeSidebar = () => {
+    sidebarContainer.classList.remove("is-open");
+    pmSidebarOverlay.classList.remove("is-visible");
+    document.body.style.overflow = ''; // Always restore body scroll
+  };
+
+  openSidebarArrowBtn.addEventListener("click", openSidebar);
+  pmSidebarOverlay.addEventListener("click", closeSidebar);
+  pmSidebarCloseBtn.addEventListener("click", closeSidebar);
+
+  // Close sidebar if a menu link or action button inside it is clicked
+  const sidebarItemsToCloseOnClick = sidebarContainer.querySelectorAll(".sidebar-menu-link, .sidebar-action-button");
+  sidebarItemsToCloseOnClick.forEach(item => {
+    item.addEventListener("click", () => {
+      if (sidebarContainer.classList.contains("is-open")) {
+        // For menu links, we might only close if it's a real navigation.
+        // For action buttons, we generally always want to close.
+        // The current simple approach is to close for any click on these items.
+        // If a menu link is just toggling a sub-menu within the sidebar (not the case here currently),
+        // this would need a more specific condition for that link.
+        closeSidebar(); 
+      }
+    });
+  });
+}
 
 // Export shared utilities and variables
 export const shared = {
