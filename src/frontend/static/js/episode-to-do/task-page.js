@@ -34,7 +34,7 @@ export function renderTaskList(state, updateUI) {
       <h3>Tasks</h3>
       <div class="task-header-actions">
         <button class="btn import-tasks-btn" id="import-default-tasks">
-          <i class="fas fa-download"></i> Import
+          <i class="fas fa-download"></i> Add Task List
         </button>
         <button class="btn add-task-btn" id="add-new-task">
           <i class="fas fa-plus"></i> Add Task
