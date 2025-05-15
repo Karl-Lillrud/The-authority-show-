@@ -160,6 +160,69 @@ section#index-banner {
   flex-direction: column;
   min-height: 1150px;
   position: relative;
+  text-align: center;
+}
+
+section#index-banner .hero-content {
+  margin-bottom: 40px;
+  color: white;
+  position: absolute;
+  left: 6vw;
+  top: 30%;
+  text-align: left;
+  max-width: 600px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  opacity: 0;
+  transform: translateX(-60px);
+  animation: hero-fly-in 1.1s cubic-bezier(0.23, 1, 0.32, 1) 0.2s forwards;
+}
+
+section#index-banner .hero-content .tagline {
+  font-size: 18px;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--index-highlight-color);
+  margin-bottom: 15px;
+  letter-spacing: 1px;
+}
+
+section#index-banner .hero-content h1 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+section#index-banner .hero-content p.subheading {
+  font-size: 20px;
+  font-weight: 400;
+  max-width: 700px;
+  margin: 0 auto 30px auto;
+  line-height: 1.6;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+section#index-banner .hero-content a.button.hero-cta {
+  background-color: var(--index-highlight-color);
+  color: white;
+  padding: 15px 35px;
+  font-size: 18px;
+  font-weight: bold;
+  text-transform: uppercase;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: var(--transition-normal);
+  display: inline-block;
+  box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+}
+
+section#index-banner .hero-content a.button.hero-cta:hover {
+  background-color: darken(var(--index-highlight-color), 10%);
+  transform: translateY(-2px);
+  box-shadow: 0px 6px 12px rgba(0,0,0,0.3);
 }
 
 section#index-banner #logo img {
@@ -169,195 +232,6 @@ section#index-banner #logo img {
   max-height: 300px;
   margin-top: 200px;
 }
-
-section#index-banner div.product-review {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: stretch;
-  position: absolute;
-  max-width: 390px;
-  padding: 40px;
-  z-index: 2;
-}
-
-section#index-banner div#product-review-1 {
-  right: calc(50% + 200px );
-  bottom: calc(50% + 75px );
-  animation: ease-in-out animate-from-left 0.5s;
-}
-section#index-banner div#product-review-1 .product-quote::before {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 0.5s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-1 .product-rating svg:nth-of-type(1) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 0.9s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-1 .product-rating svg:nth-of-type(2) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1.1s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-1 .product-rating svg:nth-of-type(3) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1.3s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-1 .product-rating svg:nth-of-type(4) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1.5s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-1 .product-rating svg:nth-of-type(5) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1.7s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-1 .product-review-author {
-  animation: ease-in-out animate-from-right 0.5s;
-  animation-delay: 0.5s;
-  animation-fill-mode: forwards;
-}
-
-section#index-banner div#product-review-2 {
-  left: calc(50% + 275px );
-  bottom: calc(50% - 50px );
-  animation: ease-in-out animate-from-right 0.8s;
-}
-section#index-banner div#product-review-2 .product-quote::before {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 0.8s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-2 .product-rating svg:nth-of-type(1) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1.2s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-2 .product-rating svg:nth-of-type(2) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1.4s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-2 .product-rating svg:nth-of-type(3) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1.6s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-2 .product-rating svg:nth-of-type(4) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1.8s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-2 .product-rating svg:nth-of-type(5) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 2.0s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-2 .product-review-author {
-  animation: ease-in-out animate-from-right 0.5s;
-  animation-delay: 0.8s;
-  animation-fill-mode: forwards;
-}
-
-section#index-banner div#product-review-3 {
-  max-width: 350px;
-  right: calc(50% + 215px );
-  bottom: calc(50% - 275px );
-  animation: ease-in-out animate-from-bottom 1s;
-}
-section#index-banner div#product-review-3 .product-quote::before {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-3 .product-rating svg:nth-of-type(1) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1.4s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-3 .product-rating svg:nth-of-type(2) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1.6s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-3 .product-rating svg:nth-of-type(3) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 1.8s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-3 .product-rating svg:nth-of-type(4) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 2.0s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-3 .product-rating svg:nth-of-type(5) {
-  animation: ease-in-out animate-pop-in 0.5s;
-  animation-delay: 2.2s;
-  animation-fill-mode: forwards;
-}
-section#index-banner div#product-review-3 .product-review-author {
-  animation: ease-in-out animate-from-right 0.5s;
-  animation-delay: 1s;
-  animation-fill-mode: forwards;
-}
-
-section#index-banner div.product-review .product-rating {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  margin-bottom: 5px;
-}
-
-section#index-banner div.product-review .product-rating svg {
-  opacity: 0;
-}
-
-section#index-banner div.product-review .product-quote {
-  font-size: 20px;
-  font-weight: 500;
-  font-kerning: normal;
-  color: black;
-  text-transform: uppercase;
-  text-shadow: 0px 0px 3px #000000cc;
-}
-
-section#index-banner div.product-review .product-quote {
-  font-size: 20px;
-  font-weight: 500;
-  font-kerning: normal;
-  color: black;
-  text-transform: uppercase;
-  text-shadow: 0px 0px 3px #000000cc;
-}
-
-section#index-banner div.product-review .product-quote::before {
-  content: "❝";
-  position: absolute;
-  color: var(--index-highlight-color);
-  font-size: 192px;
-  top: -30px;
-  left: -25px;
-  text-shadow: none;
-  z-index: -1;
-  opacity: 0;
-}
-
-section#index-banner div.product-review .product-review-author {
-  font-size: 12px;
-  font-weight: 500;
-  font-style: italic;
-  font-kerning: normal;
-  color: black;
-  text-transform: uppercase;
-  text-shadow: 0px 0px 3px #000000cc;
-  margin-top: 20px;
-  opacity: 0;
-}
-
 
 /* About Section */
 section#index-about {
@@ -712,24 +586,27 @@ section#index-get-started .get-started-lottie svg g {
   }
 }
 
+@keyframes hero-fly-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* * * * * * * * * * * */
 /*  Responsive Design  */
 /* * * * * * * * * * * */
 @media (max-width: 1304px) {
 
   /* Banner Section */
-  section#index-banner div#product-review-1 {
-    right: calc(50% + 175px );
-    bottom: calc(50% + 100px );
-  }
-
-  section#index-banner div#product-review-2 {
-    bottom: calc(50% - 100px );
-  }
-
-  section#index-banner div#product-review-3 {
-    right: calc(50% + 205px );
-    bottom: calc(50% - 275px );
+  section#index-banner figure img {
+    margin-top: 0 !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
   }
 }
 
@@ -758,20 +635,10 @@ section#index-get-started .get-started-lottie svg g {
 @media (max-width: 1144px) {
 
   /* Banner Section */
-  section#index-banner div#product-review-1 {
-    max-width: 290px;
-    right: calc(50% + 150px );
-    bottom: calc(50% + 125px );
-  }
-
-  section#index-banner div#product-review-2 {
-    bottom: calc(50% - 110px );
-  }
-
-  section#index-banner div#product-review-3 {
-    max-width: 290px;
-    right: calc(50% + 190px );
-    bottom: calc(50% - 350px );
+  section#index-banner figure img {
+    margin-top: 0 !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
   }
 
 }
@@ -856,15 +723,6 @@ section#index-get-started .get-started-lottie svg g {
     margin-top: 0 !important;
     min-height: 200px !important;
     max-height: 200px !important;
-  }
-
-  section#index-banner div.product-review {
-    position: relative;
-    right: initial !important;
-    bottom: initial !important;
-    left: initial !important;
-    max-width: 600px !important;
-    padding-bottom: 20px;
   }
 
   /* About Section */
@@ -956,6 +814,14 @@ section#index-get-started .get-started-lottie svg g {
     margin-bottom: 0px;
   }
 
+  section#index-banner .hero-content {
+    position: static;
+    margin: 0 auto 40px auto;
+    text-align: center;
+    max-width: 90vw;
+    left: unset;
+    top: unset;
+  }
 }
 
 @media (max-width: 800px) {
