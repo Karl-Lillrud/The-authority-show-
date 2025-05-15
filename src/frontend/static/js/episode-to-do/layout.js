@@ -147,7 +147,17 @@ export function updateProgressBar(state) {
   }
 
   if (progressBar) {
+    // Ensure the progress bar is orange by setting the background color directly
+    progressBar.style.backgroundColor = percentage === 100 ? "#ff6b1a" : "#ff7f3f"
     progressBar.style.width = `${percentage}%`
+    progressBar.style.height = "100%"
+
+    // Add special styling for completed progress bar
+    if (percentage === 100) {
+      progressBar.classList.add("completed")
+    } else {
+      progressBar.classList.remove("completed")
+    }
   }
 }
 
@@ -173,6 +183,13 @@ export function setupTimelineToggle(state) {
 export function updateEpisodeDisplay(state) {
   if (!state.selectedEpisode) return
 
+  // Store the selected episode ID in localStorage
+  if (state.selectedEpisode._id || state.selectedEpisode.id) {
+    const episodeId = state.selectedEpisode._id || state.selectedEpisode.id
+    localStorage.setItem("selected_episode_id", episodeId)
+    console.log("✅ Selected episode ID stored in localStorage from updateEpisodeDisplay:", episodeId)
+  }
+
   // Update header
   const currentEpisodeNumber = document.getElementById("currentEpisodeNumber")
   const episodeTitle = document.getElementById("episodeTitle")
@@ -194,24 +211,24 @@ export function updateEpisodeDisplay(state) {
 }
 
 export async function selectEpisode(episode, state, updateUI) {
-  state.selectedEpisode = episode;
+  state.selectedEpisode = episode
 
   // Store the selected episode ID in local storage
   if (episode._id || episode.id) {
-    const episodeId = episode._id || episode.id;
-    localStorage.setItem("selected_episode_id", episodeId);
-    console.log("✅ Selected episode ID stored in local storage:", episodeId);
+    const episodeId = episode._id || episode.id
+    localStorage.setItem("selected_episode_id", episodeId)
+    console.log("✅ Selected episode ID stored in local storage:", episodeId)
   }
 
   try {
     // Fetch tasks for the selected episode
-    const tasksData = await fetchTasks();
-    console.log("Tasks data for selected episode:", tasksData);
+    const tasksData = await fetchTasks()
+    console.log("Tasks data for selected episode:", tasksData)
 
     // Filter tasks for the selected episode
     state.tasks = tasksData
       ? tasksData.filter((task) => task.episodeId === episode._id || task.episodeId === episode.id)
-      : [];
+      : []
 
     console.log(
       "Tasks with assignment data:",
@@ -220,13 +237,13 @@ export async function selectEpisode(episode, state, updateUI) {
         assignee: task.assignee,
         assigneeName: task.assigneeName,
         assignedAt: task.assignedAt,
-      }))
-    );
+      })),
+    )
 
     // Update UI
-    updateUI();
+    updateUI()
   } catch (error) {
-    console.error("Error fetching tasks for episode:", error);
+    console.error("Error fetching tasks for episode:", error)
   }
 }
 

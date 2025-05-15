@@ -47,6 +47,8 @@ def get_podcasts():
 
     try:
         response, status_code = podcast_repo.get_podcasts(g.user_id)
+        # Ensure the response includes the 'image' field for each podcast
+        # If not, update the repository to include it in the returned data
         return jsonify(response), status_code
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
@@ -61,6 +63,8 @@ def get_podcast_by_id(podcast_id):
 
     try:
         response, status_code = podcast_repo.get_podcast_by_id(g.user_id, podcast_id)
+        # Ensure the response includes the 'image' field for the podcast
+        # If not, update the repository to include it in the returned data
         return jsonify(response), status_code
     except Exception as e:
         logger.error("❌ ERROR: %s", e)

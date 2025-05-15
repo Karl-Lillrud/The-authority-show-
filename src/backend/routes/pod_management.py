@@ -56,7 +56,7 @@ import os
 import json
 
 # Define the new paths
-BASE_JSON_PATH = os.path.join(os.path.dirname(__file__), "../../Frontend/static/json")
+BASE_JSON_PATH = os.path.join(os.path.dirname(__file__), "../../frontend/static/json")
 CUSTOM_TRIGGERS_FILE = os.path.join(BASE_JSON_PATH, "custom_triggers.json")
 SENT_EMAILS_FILE = os.path.join(BASE_JSON_PATH, "sent_emails.json")
 

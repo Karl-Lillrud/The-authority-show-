@@ -156,7 +156,7 @@ export function renderEpisodeDetail(episode) {
   
   <!-- About section -->
   <div class="podcast-about-section">
-    <h2 class="section-title">About</h2>
+    <h2 class="section-title">Description</h2>
     <p class="podcast-description">${
       episode.description || "No description available."
     }</p>
@@ -425,151 +425,369 @@ async function showEpisodePopup(episode) {
   // Determine if the file input should be disabled: Disable if episode IS imported
   const isAudioUploadDisabled = episode.isImported === true;
 
-  const popupContent = document.createElement("div");
-  popupContent.className = "form-box";
-  popupContent.innerHTML = `
-  <span id="close-episode-popup" class="close-btn">&times;</span>
+const popupContent = document.createElement("div");
+popupContent.className = "form-box";
+popupContent.innerHTML = `
+  <span id="close-episode-popup" class="close-btn">×</span>
   <h2 class="form-title">Edit Episode</h2>
   <form id="update-episode-form" enctype="multipart/form-data"> 
     <div class="field-group full-width">
       <label for="upd-episode-title">Episode Title</label>
-      <input type="text" id="upd-episode-title" name="title" value="${
-        episode.title
-      }" required />
+      <input type="text" id="upd-episode-title" name="title" value="${episode.title || ""}" placeholder="Enter episode title" />
     </div>
+
     <div class="field-group full-width">
       <label for="upd-episode-description">Description</label>
-      <textarea id="upd-episode-description" name="description" rows="3">${
-        episode.description || ""
-      }</textarea>
+      <textarea id="upd-episode-description" name="description" rows="3" placeholder="Describe what this episode is about">${episode.description || ""}</textarea>
     </div>
+
+    <div class="field-group full-width">
+      <label for="upd-summary">Episode Summary</label>
+      <textarea id="upd-summary" name="summary" rows="2" placeholder="Summary of the episode...">${episode.summary || ""}</textarea>
+    </div>
+
+    <div class="field-group">
+      <label for="upd-author">Author</label>
+      <input type="text" id="upd-author" name="author" value="${episode.author || ""}" placeholder="e.g. Jane Doe" pattern="[A-Za-z\\s\\-\\.]{1,100}" title="Author name can only contain letters, spaces, hyphens, and periods" />
+    </div>
+
+    <h3 class="form-section-heading">Publishing Details</h3>
     <div class="field-group">
       <label for="upd-publish-date">Publish Date</label>
       <input type="datetime-local" id="upd-publish-date" name="publishDate" value="${
-        episode.publishDate
-          ? new Date(episode.publishDate).toISOString().slice(0, 16)
-          : ""
-      }" required />
-    </div>
-    <div class="field-group">
-      <label for="upd-duration">Duration (minutes)</label> 
-      <input type="number" id="upd-duration" name="duration_minutes" value="${
-        episode.duration ? Math.floor(episode.duration / 60) : ""
+        episode.publishDate ? new Date(episode.publishDate).toISOString().slice(0, 16) : ""
       }" />
     </div>
+
     <div class="field-group">
       <label for="upd-status">Status</label>
-      <input type="text" id="upd-status" name="status" value="${
-        episode.status || ""
+      <select id="upd-status" name="status">
+        <option value="">-- Select status --</option>
+        ${["Not Recorded", "Published", "Recorded", "Edited", "Not Scheduled"]
+          .map(
+            (status) =>
+              `<option value="${status}" ${episode.status === status ? "selected" : ""}>${status}</option>`
+          )
+          .join("")}
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label for="upd-duration">Duration (minutes)</label>
+      <input 
+        type="number" 
+        id="upd-duration" 
+        name="duration_minutes" 
+        value="${episode.duration ? Math.floor(episode.duration / 60) : ''}" 
+        readonly 
+        style="background-color: #f5f5f5; cursor: not-allowed;"
+      />
+      <small style="font-size: 0.8em; color: #666;">Automatically calculated from audio file</small>
+    </div>
+
+    <div class="field-group">
+      <label for="upd-recording-at">Recording Date</label>
+      <input type="datetime-local" id="upd-recording-at" name="recordingAt" value="${
+        episode.recordingAt ? new Date(episode.recordingAt).toISOString().slice(0, 16) : ""
       }" />
     </div>
-    
-    <div class="field-group full-width">
-        <label for="upd-episode-audio" ${
-          isAudioUploadDisabled ? 'style="color: #aaa;"' : ""
-        }>Upload New Audio (Optional)</label>
-        <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/*" ${
-          isAudioUploadDisabled // Disable if true
-            ? 'disabled style="background-color: #eee;"'
-            : ""
-        }>
-        ${
-          isAudioUploadDisabled // Show message if disabled (i.e., isImported is true)
-            ? '<p style="font-size: 0.8em; color: #888; margin-top: 5px;">Audio upload disabled for imported episodes.</p>'
-            : ""
-        }
-        ${
-          episode.audioUrl && !isAudioUploadDisabled // Only show current audio link if upload is enabled
-            ? `<p style="font-size: 0.8em; margin-top: 5px;">Current audio: <a href="${episode.audioUrl}" target="_blank">Listen</a></p>`
-            : !isAudioUploadDisabled // Only show 'No current audio' if upload is enabled
-            ? '<p style="font-size: 0.8em; margin-top: 5px;">No current audio file.</p>'
-            : ""
-        }
+
+    <h3 class="form-section-heading">Episode Metadata</h3>
+    <div class="field-group">
+      <label for="upd-season">Season</label>
+      <input type="number" id="upd-season" name="season" value="${episode.season || ""}" placeholder="e.g. 1" min="0" step="1" />
     </div>
+
+    <div class="field-group">
+      <label for="upd-episode">Episode Number</label>
+      <input type="number" id="upd-episode" name="episode" value="${episode.episode || ""}" placeholder="e.g. 5" min="0" step="1" />
+    </div>
+
+    <div class="field-group">
+      <label for="upd-episode-type">Episode Type</label>
+      <select id="upd-episode-type" name="episodeType">
+        ${["", "full", "trailer", "bonus"]
+          .map(
+            (type) =>
+              `<option value="${type}" ${episode.episodeType === type ? "selected" : ""}>${type || "-- Select Type --"}</option>`
+          )
+          .join("")}
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label for="upd-explicit">Contains Explicit Content?</label>
+      <select id="upd-explicit" name="explicit">
+        <option value="" ${episode.explicit === null || episode.explicit === undefined ? "selected" : ""}>-- Select --</option>
+        <option value="true" ${String(episode.explicit) === "true" ? "selected" : ""}>Yes</option>
+        <option value="false" ${String(episode.explicit) === "false" ? "selected" : ""}>No</option>
+      </select>
+    </div>
+
+    <h3 class="form-section-heading">Audio</h3>
+    <div class="field-group full-width">
+      <label for="upd-episode-audio" ${isAudioUploadDisabled ? 'style="color: #aaa;"' : ""}>
+        Upload New Audio (Optional)
+      </label>
+      <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/mp3,audio/wav,audio/mpeg" ${
+        isAudioUploadDisabled ? 'disabled style="background-color: #eee;"' : ""
+      }>
+      ${
+        isAudioUploadDisabled
+          ? '<p style="font-size: 0.8em; color: #888; margin-top: 5px;">Audio upload disabled for imported episodes.</p>'
+          : episode.audioUrl
+            ? `<p style="font-size: 0.8em; margin-top: 5px;">Current audio: <a href="${episode.audioUrl}" target="_blank">Listen</a></p>`
+            : '<p style="font-size: 0.8em; margin-top: 5px;">No current audio file.</p>'
+      }
+    </div>
+
     <div class="form-actions">
       <button type="button" id="cancel-episode-update" class="cancel-btn">Cancel</button>
       <button type="submit" class="save-btn">Update Episode</button>
     </div>
   </form>
 `;
-  popup.appendChild(popupContent);
-  document.body.appendChild(popup);
 
-  // Close popup events
-  popup.querySelector("#close-episode-popup").addEventListener("click", () => {
-    document.body.removeChild(popup);
-  });
-  popup
-    .querySelector("#cancel-episode-update")
-    .addEventListener("click", () => {
+popup.appendChild(popupContent);
+document.body.appendChild(popup);
+
+// Close popup events
+popup.querySelector("#close-episode-popup").addEventListener("click", () => {
+  document.body.removeChild(popup);
+});
+popup.querySelector("#cancel-episode-update").addEventListener("click", () => {
+  document.body.removeChild(popup);
+});
+
+// Update episode form submission
+popup.querySelector("#update-episode-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+
+  // Validation functions
+  const validateTitle = (title) => {
+    if (title && (title.trim().length < 2 || title.length > 200)) {
+      return "Title must be between 2 and 200 characters if provided";
+    }
+    return null;
+  };
+
+  const validateDescription = (desc) => {
+    if (desc && desc.length > 4000) {
+      return "Description cannot exceed 4000 characters";
+    }
+    return null;
+  };
+
+  const validateSummary = (summary) => {
+    if (summary && summary.length > 1000) {
+      return "Summary cannot exceed 1000 characters";
+    }
+    return null;
+  };
+
+  const validateAuthor = (author) => {
+    if (author && !/^[A-Za-z\s\-\.]{1,100}$/.test(author)) {
+      return "Author name can only contain letters, spaces, hyphens, and periods (max 100 characters)";
+    }
+    return null;
+  };
+
+  const validateDate = (dateStr, fieldName) => {
+    if (dateStr) {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        return `Invalid ${fieldName} date`;
+      }
+    }
+    return null;
+  };
+
+  const validateSeason = (season) => {
+    if (season) {
+      const num = parseInt(season);
+      if (isNaN(num) || num < 0 || num > 100) {
+        return "Season must be a number between 0 and 100 if provided";
+      }
+    }
+    return null;
+  };
+
+  const validateEpisode = (episodeNum) => {
+    if (episodeNum) {
+      const num = parseInt(episodeNum);
+      if (isNaN(num) || num < 0 || num > 1000) {
+        return "Episode number must be a number between 0 and 1000 if provided";
+      }
+    }
+    return null;
+  };
+
+  const validateAudioFile = (file) => {
+    // Skip validation if no file is provided or audio upload is disabled
+    if (!file || file.size === 0 || isAudioUploadDisabled) {
+      return null;
+    }
+    const validTypes = ['audio/mp3', 'audio/wav', 'audio/mpeg'];
+    if (!validTypes.includes(file.type)) {
+      return "Audio file must be MP3 or WAV format";
+    }
+    const maxSize = 500 * 1024 * 1024; // 500MB
+    if (file.size > maxSize) {
+      return "Audio file size cannot exceed 500MB";
+    }
+    return null;
+  };
+
+  // Perform validations
+  const titleError = validateTitle(formData.get("title"));
+  if (titleError) {
+    showNotification("Invalid Title", titleError, "error");
+    return;
+  }
+
+  const descriptionError = validateDescription(formData.get("description"));
+  if (descriptionError) {
+    showNotification("Invalid Description", descriptionError, "error");
+    return;
+  }
+
+  const summaryError = validateSummary(formData.get("summary"));
+  if (summaryError) {
+    showNotification("Invalid Summary", summaryError, "error");
+    return;
+  }
+
+  const authorError = validateAuthor(formData.get("author"));
+  if (authorError) {
+    showNotification("Invalid Author", authorError, "error");
+    return;
+  }
+
+  const publishDateError = validateDate(formData.get("publishDate"), "Publish");
+  if (publishDateError) {
+    showNotification("Invalid Date", publishDateError, "error");
+    return;
+  }
+
+  const recordingDateError = validateDate(formData.get("recordingAt"), "Recording");
+  if (recordingDateError) {
+    showNotification("Invalid Date", recordingDateError, "error");
+    return;
+  }
+
+  const seasonError = validateSeason(formData.get("season"));
+  if (seasonError) {
+    showNotification("Invalid Season", seasonError, "error");
+    return;
+  }
+
+  const episodeError = validateEpisode(formData.get("episode"));
+  if (episodeError) {
+    showNotification("Invalid Episode Number", episodeError, "error");
+    return;
+  }
+
+  const audioFileError = validateAudioFile(formData.get("audioFile"));
+  if (audioFileError) {
+    showNotification("Invalid Audio File", audioFileError, "error");
+    return;
+  }
+
+  const status = formData.get("status");
+  if (status && !["Not Recorded", "Published", "Recorded", "Edited", "Not Scheduled"].includes(status)) {
+    showNotification("Invalid Status", "Please select a valid status if provided", "error");
+    return;
+  }
+
+  const episodeType = formData.get("episodeType");
+  if (episodeType && !["full", "trailer", "bonus"].includes(episodeType)) {
+    showNotification("Invalid Episode Type", "Please select a valid episode type if provided", "error");
+    return;
+  }
+
+  const explicitValue = formData.get("explicit");
+  if (explicitValue && !["true", "false"].includes(explicitValue)) {
+    showNotification("Invalid Explicit Content", "Please select a valid explicit content option if provided", "error");
+    return;
+  }
+
+  // Process form data
+  const durationMinutes = formData.get("duration_minutes");
+  if (durationMinutes) {
+    const durationSeconds = Math.round(parseFloat(durationMinutes) * 60);
+    if (durationSeconds < 0 || isNaN(durationSeconds)) {
+      showNotification("Invalid Duration", "Please provide a non-negative number if provided", "error");
+      return;
+    }
+    formData.set("duration", durationSeconds.toString());
+  }
+  formData.delete("duration_minutes");
+
+  const season = formData.get("season");
+  formData.delete("season");
+  if (season) {
+    formData.set("season", parseInt(season).toString());
+  }
+
+  const episodeNumber = formData.get("episode");
+  formData.delete("episode");
+  if (episodeNumber) {
+    formData.set("episode", parseInt(episodeNumber).toString());
+  }
+
+  const recordingAt = formData.get("recordingAt");
+  formData.delete("recordingAt");
+  if (recordingAt) {
+    formData.set("recordingAt", new Date(recordingAt).toISOString());
+  }
+
+  const publishDate = formData.get("publishDate");
+  formData.delete("publishDate");
+  if (publishDate) {
+    formData.set("publishDate", new Date(publishDate).toISOString());
+  }
+
+  if (explicitValue) {
+    formData.set("explicit", explicitValue === "true");
+  } else {
+    formData.delete("explicit");
+  }
+
+  if (isAudioUploadDisabled || !formData.get("audioFile") || formData.get("audioFile").size === 0) {
+    formData.delete("audioFile");
+  }
+
+  // Remove empty or null values
+  for (const [key, value] of formData.entries()) {
+    if (value === "" || value === null || value === undefined) {
+      formData.delete(key);
+    }
+  }
+
+  const submitButton = form.querySelector("button[type='submit']");
+  submitButton.disabled = true;
+  submitButton.textContent = "Updating...";
+
+  try {
+    const result = await updateEpisode(episode._id, formData);
+    if (result.message) {
+      showNotification("Success", "Episode updated successfully!", "success");
       document.body.removeChild(popup);
-    });
-
-  // Update episode form submission
-  popup
-    .querySelector("#update-episode-form")
-    .addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const formData = new FormData(form); // Use FormData
-
-      // Get duration in minutes from the form
-      const durationMinutes = formData.get("duration_minutes");
-
-      // Convert minutes to seconds for the backend
-      if (durationMinutes) {
-        const durationSeconds = Math.round(parseFloat(durationMinutes) * 60);
-        if (durationSeconds < 0 || isNaN(durationSeconds)) {
-          showNotification(
-            "Invalid duration",
-            "Please provide a non-negative number for duration in minutes",
-            "error"
-          );
-          return;
-        }
-        formData.set("duration", durationSeconds.toString());
-      } else {
-        formData.set("duration", ""); // Or remove if backend handles absence
-      }
-      formData.delete("duration_minutes");
-
-      // If audio upload was disabled (because isImported was true), ensure no audioFile is sent
-      if (isAudioUploadDisabled) {
-        formData.delete("audioFile");
-      }
-
-      // Optional: Add loading indicator
-      const submitButton = form.querySelector("button[type='submit']");
-      submitButton.disabled = true;
-      submitButton.textContent = "Updating...";
-
-      try {
-        const result = await updateEpisode(episode._id, formData);
-        if (result.message) {
-          showNotification(
-            "Success",
-            "Episode updated successfully!",
-            "success"
-          );
-          document.body.removeChild(popup);
-          const updatedEpisodeData = await fetchEpisode(episode._id);
-          renderEpisodeDetail(updatedEpisodeData); // Refresh detail view
-        } else {
-          showNotification("Error", result.error || "Update failed", "error");
-        }
-      } catch (error) {
-        showNotification(
-          "Error",
-          `Failed to update episode: ${error.message || error}`,
-          "error"
-        );
-      } finally {
-        submitButton.disabled = false; // Re-enable button
-        submitButton.textContent = "Update Episode";
-      }
-    });
+      const updatedEpisodeData = await fetchEpisode(episode._id);
+      renderEpisodeDetail(updatedEpisodeData);
+    } else {
+      showNotification("Error", result.error || "Update failed", "error");
+    }
+  } catch (error) {
+    showNotification("Error", `Failed to update episode: ${error.message || error}`, "error");
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = "Update Episode";
+  }
+});
 }
-
 // Initialize episode functions
 export function initEpisodeFunctions() {
   // Show form for creating a new episode
