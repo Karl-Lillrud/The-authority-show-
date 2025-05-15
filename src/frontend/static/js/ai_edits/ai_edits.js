@@ -954,48 +954,63 @@ function renderSoundSuggestions(data, timeline) {
 
 async function displayBackgroundAndMix() {
     const preview = document.getElementById("backgroundPreview");
-    const mixBtn  = document.getElementById("mixBackgroundBtn");
-    const dl      = document.getElementById("downloadEnhanced");
-    const { emotion, audioBlob } = window.analysisData || {};
-  
-    if (!emotion || !audioBlob) {
-      return alert("Run analysis first!");
+    const timeline = document.getElementById("soundEffectTimeline");
+    const mixBtn = document.getElementById("mixBackgroundBtn");
+    const dl = document.getElementById("downloadEnhanced");
+
+    const { audioBlob } = window.analysisData || {};
+    if (!audioBlob) {
+        return alert("Run analysis first!");
     }
-  
-    // Disable button & show spinner text
-    mixBtn.disabled  = true;
+
+    mixBtn.disabled = true;
     mixBtn.innerText = "Generating…";
     preview.innerHTML = "";
-  
-    const fd = new FormData();
-    fd.append("audio",   audioBlob, "processed_audio.wav");
-    fd.append("emotion", emotion);
-  
-    try {
-      const res  = await fetch("/audio_background_mix", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || res.statusText);
-  
-      // ONLY render the mixed overlay:
-      if (data.merged_audio) {
-        preview.innerHTML = `
-          <h4>Mixed Preview</h4>
-          <audio controls src="${data.merged_audio}" style="width:100%;"></audio>
-        `;
-        // Update download link
-        dl.href          = data.merged_audio;
-        dl.style.display = "inline-block";
-      }
+    timeline.innerHTML = "";
 
-      await consumeStoreCredits("ai_audio_analysis");
+    const fd = new FormData();
+    fd.append("audio", new File([audioBlob], "audio.wav", { type: "audio/wav" }));
+
+    try {
+        const res = await fetch("/plan_and_mix_sfx", { method: "POST", body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || res.statusText);
+
+        // Preview audio
+        if (data.merged_audio) {
+            preview.innerHTML = `
+                <h4>Mixed Preview</h4>
+                <audio controls src="${data.merged_audio}" style="width:100%;"></audio>
+            `;
+            dl.href = data.merged_audio;
+            dl.style.display = "inline-block";
+        }
+
+        // Render the SFX plan in timeline
+        if (data.sfx_clips?.length) {
+            timeline.innerHTML = "<h4>Planned Sound Effects</h4>";
+            data.sfx_clips.forEach((clip, i) => {
+                const div = document.createElement("div");
+                div.innerHTML = `
+                    <strong>${clip.description}</strong><br/>
+                    (${clip.start}s – ${clip.end}s)
+                    <audio controls src="${clip.sfxUrl}" style="width:100%; margin-top: 0.5rem;"></audio>
+                    <hr/>
+                `;
+                timeline.appendChild(div);
+            });
+        } else {
+            timeline.innerHTML = "<p>No sound effects generated.</p>";
+        }
+
+        await consumeStoreCredits("ai_audio_analysis");
     } catch (err) {
-      preview.innerText = `Error: ${err.message}`;
+        preview.innerText = `Error: ${err.message}`;
     } finally {
-      // Restore button
-      mixBtn.disabled  = false;
-      mixBtn.innerText = "Mix Background & Preview";
+        mixBtn.disabled = false;
+        mixBtn.innerText = "Mix Background & Preview";
     }
-  }
+}
 
   async function cutAudio() {
     const startInput = document.getElementById("startTime");
