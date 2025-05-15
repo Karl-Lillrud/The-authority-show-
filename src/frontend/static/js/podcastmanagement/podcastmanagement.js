@@ -286,18 +286,17 @@ function setupMobileSidebar() {
   pmSidebarOverlay.addEventListener("click", closeSidebar);
   pmSidebarCloseBtn.addEventListener("click", closeSidebar);
 
-  // Optional: Close sidebar if a navigation link inside it is clicked
-  // This is common UX for slide-in menus.
-  const sidebarLinks = sidebarContainer.querySelectorAll(".sidebar-menu-link");
-  sidebarLinks.forEach(link => {
-    link.addEventListener("click", () => {
+  // Close sidebar if a menu link or action button inside it is clicked
+  const sidebarItemsToCloseOnClick = sidebarContainer.querySelectorAll(".sidebar-menu-link, .sidebar-action-button");
+  sidebarItemsToCloseOnClick.forEach(item => {
+    item.addEventListener("click", () => {
       if (sidebarContainer.classList.contains("is-open")) {
-        // Do not close if it's a link that doesn't navigate away (e.g., opens a sub-menu within the sidebar)
-        // For now, assume all links navigate or perform an action that should close the mobile menu.
-        // Add more specific conditions if needed.
-        if (!link.href.endsWith("#")) { // Simple check, adjust if complex routing
-             closeSidebar();
-        }
+        // For menu links, we might only close if it's a real navigation.
+        // For action buttons, we generally always want to close.
+        // The current simple approach is to close for any click on these items.
+        // If a menu link is just toggling a sub-menu within the sidebar (not the case here currently),
+        // this would need a more specific condition for that link.
+        closeSidebar(); 
       }
     });
   });

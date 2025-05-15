@@ -1989,8 +1989,9 @@ select option:disabled {
   #sidebar-container .sidebar-header {
     display: flex; /* To allow positioning of the close button */
     justify-content: flex-end; /* Position close button to the right */
-    padding: var(--spacing-md) var(--spacing-md) 0; /* Add some padding */
-    min-height: 60px; /* Ensure header has some height for button placement */
+    padding: var(--spacing-md); /* Adjusted padding for better spacing around the button */
+    min-height: 70px; /* Slightly increased min-height */
+    box-sizing: border-box; /* Ensure padding is included in height calculation */
   }
 
   .pm-sidebar-close-btn {
@@ -1999,8 +2000,10 @@ select option:disabled {
     border: none;
     color: var(--text-color-dark, #333);
     cursor: pointer;
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md); /* Increased padding for a larger touch target */
     line-height: 1;
+    position: relative; /* For z-index stacking context if needed */
+    z-index: 10;      /* Ensure it's above other elements within the sidebar header */
   }
 
   #sidebar-container.is-open .pm-sidebar-close-btn {
@@ -2008,7 +2011,7 @@ select option:disabled {
   }
 
   .pm-sidebar-close-btn svg {
-    width: 28px; /* Match HTML */
-    height: 28px; /* Match HTML */
+    width: 32px; /* Increased icon size */
+    height: 32px; /* Increased icon size */
   }
 }
