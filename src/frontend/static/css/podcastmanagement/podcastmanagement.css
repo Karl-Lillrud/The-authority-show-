@@ -924,8 +924,8 @@
   border-radius: 12px; /* Smoother, modern radius */
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); /* Softer, more natural shadow */
   padding: 2rem; /* Increased padding for breathing room */
-  width: 90%;
-  max-width: 600px; /* Slightly wider for better form layout */
+  width: 95%;
+  max-width: 800px; /* Slightly wider for better form layout */
   max-height: 85vh; /* Increased max-height for larger screens */
   overflow-y: auto;
   overflow-x: hidden;
