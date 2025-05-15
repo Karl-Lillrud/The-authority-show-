@@ -644,6 +644,49 @@
   display: none;
 }
 
+/* Styles for the mobile cart toggle arrow and overlay */
+.open-cart-arrow-btn {
+  display: none; /* Hidden by default, shown in media query */
+  position: fixed;
+  top: 50%;
+  right: 0px;
+  transform: translateY(-50%);
+  background-color: var(--highlight-color, #FF7F3F);
+  color: white;
+  border: none;
+  padding: 12px 8px;
+  cursor: pointer;
+  z-index: 998; /* Below cart (1000), above most content */
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+  transition: right 0.3s ease-in-out;
+}
+
+.open-cart-arrow-btn svg {
+  display: block;
+  pointer-events: none; /* Ensure clicks go to the button */
+}
+
+.cart-overlay {
+  display: none; /* Hidden by default */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999; /* Below cart (1000), above arrow (998) and content */
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none; /* Initially not interactive */
+}
+
+.cart-overlay.is-visible {
+  display: block;
+  opacity: 1;
+  pointer-events: auto; /* Interactive when visible */
+}
 
 /* Popup Styles */
 .popup {
@@ -792,29 +835,44 @@
   }
 
   .shopping-cart-sidebar {
-    /* Restore modal styles */
-    position: fixed;
-    top: 50%; /* Keep centered for modal */
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 400px;
-    height: auto; /* Modal height is auto */
-    max-height: 80vh; /* Modal max height */
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-    z-index: 1000; /* Ensure modal is on top */
-    margin-left: 0; /* Reset margin */
-    margin-top: 0; /* Reset margin */
+    /* Previous styles for centering modal are removed/changed for slide-in */
+    position: fixed; /* Ensure fixed positioning for stacking context and viewport relation */
+    top: 0;
+    right: 0;
+    height: 100vh; /* Full viewport height */
+    width: 90%; /* As before */
+    max-width: 400px; /* As before */
+    z-index: 1000; /* Above overlay (999) and arrow (998) */
+    background-color: white; /* Ensure background is solid */
+    box-shadow: -5px 0px 15px rgba(0, 0, 0, 0.15); /* Shadow on the left edge */
+    
+    transform: translateX(100%); /* Start off-screen to the right */
+    transition: transform 0.3s ease-in-out;
+    
+    display: flex; /* Keep for internal layout */
+    flex-direction: column; /* Keep for internal layout */
+
+    /* Reset styles from desktop that might not fit full-height panel */
+    margin-left: 0;
+    margin-top: 0; 
+    border-radius: 0; 
+    border: none;
   }
 
-  /* Show cart button on mobile */
+  /* Show cart button on mobile - This refers to an old button, not the new arrow */
   .action-button.view-cart {
     display: flex; /* Or inline-flex */
   }
 
+  .shopping-cart-sidebar.is-open {
+    /* display: flex; <- Removed, transform handles visibility */
+    transform: translateX(0%); /* Slide in */
+  }
+
   .shopping-cart-sidebar.hidden {
-    display: none; /* Use display none for modal */
-    transform: translate(-50%, -50%); /* Keep transform for centering */
+    /* display: none; <- Avoid display:none with transform transitions */
+    transform: translateX(100%); /* Ensure it's off-screen if hidden class is applied */
+    /* transform: translate(-50%, -50%); <- Remove, use translateX */
   }
 
   /* Show close button in modal */
@@ -830,6 +888,10 @@
     max-height: calc(
       80vh - 120px
     ); /* Adjust based on header/footer height in modal */
+  }
+
+  .open-cart-arrow-btn {
+    display: block; /* Show the arrow button on mobile */
   }
 }
 

@@ -366,5 +366,11 @@ endblock %} {% block content %}
     src="{{ url_for('static', filename='js/store/store.js') }}"
   ></script>
   <script src="{{ url_for('static', filename='js/store/svgstore.js') }}"></script>
+
+  <!-- Mobile Cart Toggle Elements -->
+  <button id="openCartArrowBtn" class="open-cart-arrow-btn" aria-label="Open cart" title="Open cart">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
+  <div id="cartOverlay" class="cart-overlay"></div>
 </body>
 {% endblock %}
