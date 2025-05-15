@@ -26,8 +26,8 @@ XML_FILE_PATH_FOR_ACTIVATION = os.getenv("ACTIVATION_XML_FILE_PATH", "src/fronte
 API_BASE_URL_FOR_ACTIVATION = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')
 
 ACTIVATION_PROGRESS_FILE = os.path.join(os.path.dirname(__file__), "activation_progress.json")
-INITIAL_BATCH_SIZE = int(os.getenv("ACTIVATION_INITIAL_BATCH_SIZE", 57))
-INCREMENT_PERCENTAGE = float(os.getenv("ACTIVATION_INCREMENT_PERCENTAGE", 0.25))
+INITIAL_BATCH_SIZE = int(os.getenv("ACTIVATION_INITIAL_BATCH_SIZE", 68))
+INCREMENT_PERCENTAGE = float(os.getenv("ACTIVATION_INCREMENT_PERCENTAGE", 0.20))
 
 scheduler = BackgroundScheduler(daemon=True)
 _scheduler_initialized_jobs = False  # Flag to track if jobs have been added for the current scheduler instance
