@@ -31,14 +31,12 @@ class GuestRepository:
 
             current_date = datetime.now(timezone.utc)
 
-            # Parse and make publish_date offset-aware
+            # --- publishDate is the date the user sets for publishing an episode ---
+            # Only used for reference, not for guest booking.
             try:
-                # Check if publishDate exists and is not None
                 if "publishDate" in episode and episode["publishDate"] is not None:
                     publish_date = None
                     publish_date_str = episode["publishDate"]
-
-                    # Try parsing as RFC 2822 format first (email.utils.parsedate)
                     try:
                         publish_date_parsed = email.utils.parsedate(publish_date_str)
                         if publish_date_parsed:
@@ -46,12 +44,9 @@ class GuestRepository:
                                 tzinfo=timezone.utc
                             )
                     except Exception:
-                        # If RFC 2822 parsing fails, log it but continue to try ISO format
                         logger.info(
                             f"RFC 2822 date parsing failed for: {publish_date_str}"
                         )
-
-                    # If RFC 2822 parsing failed, try ISO format
                     if not publish_date:
                         try:
                             publish_date = datetime.fromisoformat(
@@ -62,15 +57,15 @@ class GuestRepository:
                             logger.warning(
                                 f"ISO date parsing failed for: {publish_date_str}, error: {str(e)}"
                             )
-
-                    # If both parsing methods failed, use current date
                     if not publish_date:
                         logger.warning(
                             f"All date parsing methods failed for: {publish_date_str}, using current date"
                         )
                         publish_date = current_date
                 else:
-                    # If publishDate is missing or None, use current date
+                    logger.info(
+                        f"Episode with ID {episode_id} has no publishDate. Using current date for guest creation."
+                    )
                     publish_date = current_date
             except Exception as e:
                 logger.exception(f"Error parsing publish date: {str(e)}")
@@ -78,6 +73,18 @@ class GuestRepository:
 
             guest_data = GuestSchema().load(data)
             guest_id = str(uuid.uuid4())
+
+            # --- recordingAt is the date the guest books for recording ---
+            recording_at = guest_data.get("recordingAt")
+            if recording_at:
+                try:
+                    # Accept both ISO string and datetime
+                    if isinstance(recording_at, str):
+                        recording_at = datetime.fromisoformat(recording_at.replace("Z", "+00:00"))
+                    recording_at = recording_at.replace(tzinfo=timezone.utc)
+                except Exception as e:
+                    logger.warning(f"Invalid recordingAt format for guest: {recording_at}, error: {str(e)}")
+                    recording_at = None
 
             guest_item = {
                 "_id": guest_id,
@@ -93,9 +100,8 @@ class GuestRepository:
                 "completed": 0,
                 "created_at": datetime.now(timezone.utc),
                 "user_id": user_id,
-                "calendarEventId": guest_data.get(
-                    "calendarEventId", ""
-                ),  # Store calendar event ID
+                "calendarEventId": guest_data.get("calendarEventId", ""),
+                "recordingAt": recording_at,  # Store guest's booked recording date
             }
 
             self.collection.insert_one(guest_item)

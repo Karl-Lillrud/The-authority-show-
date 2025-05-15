@@ -64,6 +64,7 @@ export async function fetchGuestsByEpisode(episodeId) {
 
   const res = await fetch(`/get_guests_by_episode/${episodeId}`);
   if (res.status === 404) {
+    // No guests for this episode, return empty array instead of error
     return [];
   }
   if (!res.ok) {

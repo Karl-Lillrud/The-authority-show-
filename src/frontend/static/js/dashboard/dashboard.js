@@ -1,5 +1,5 @@
 import { fetchAllEpisodes } from "/static/requests/episodeRequest.js";
-import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
+import { fetchGuestsByEpisode, fetchGuestsRequest } from "/static/requests/guestRequests.js";
 import {
   fetchPodcast,
   fetchPodcasts

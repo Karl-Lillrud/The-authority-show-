@@ -16,6 +16,27 @@ endblock %} {% block content %}
 
     gtag("config", "G-PTPQQ5WSQV");
   </script>
+
+  <style>
+    /* Add this to your CSS if not already present */
+    .popup {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.5); /* semi-transparent */
+      z-index: 1002; /* above overlays and other content */
+    }
+    .form-box {
+      background: #fff;
+      border-radius: 8px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+  </style>
 </head>
 
 <div class="app-container">
@@ -323,6 +344,10 @@ endblock %} {% block content %}
           <div class="field-group full-width">
             <label for="guest-email">Email</label>
             <input type="email" id="guest-email" name="guestEmail" required />
+          </div>
+          <div class="field-group full-width">
+            <label for="guest-recording-at">Recording Date (when guest will record)</label>
+            <input type="datetime-local" id="guest-recording-at" name="recordingAt" />
           </div>
           <div class="form-actions">
             <button type="button" id="cancel-guest-btn" class="cancel-btn">

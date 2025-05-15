@@ -1,6 +1,6 @@
 import { initPodcastFunctions } from "./podcast-functions.js";
 import { initEpisodeFunctions } from "./episode-functions.js";
-import { initGuestFunctions } from "./guest-functions.js";
+import { initGuestFunctions, showAddGuestPopup } from "./guest-functions.js"; // <-- Add showAddGuestPopup here
 import { svgpodcastmanagement } from "./svgpodcastmanagement.js";
 import { showNotification } from "../components/notifications.js";
 import { initEmailConfigFunctions } from "./emailconfig-functions.js";
@@ -103,6 +103,13 @@ function enablePopupCloseOnOutsideClick() {
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Function to hide all popups
+function hideAllPopups() {
+  document.querySelectorAll(".popup").forEach(popup => {
+    popup.style.display = "none";
+  });
 }
 
 // Main initialization
@@ -254,6 +261,16 @@ document.addEventListener("DOMContentLoaded", () => {
   document.body.prepend(decorativeHeader);
 
   setupMobileSidebar();
+
+  // Example: before showing any popup, call hideAllPopups()
+  document.getElementById("add-guest-btn").addEventListener("click", () => {
+    hideAllPopups();
+    showAddGuestPopup();
+  });
+  document.getElementById("create-episode-btn").addEventListener("click", () => {
+    hideAllPopups();
+    // ...show episode popup logic...
+  });
 });
 
 function setupMobileSidebar() {
