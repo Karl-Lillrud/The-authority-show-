@@ -75,6 +75,7 @@
   box-shadow: var(--card-shadow);
   transition: all var(--transition-normal);
   border: 1px solid rgba(0, 0, 0, 0.03);
+  position: relative; /* Required for absolute positioning of the notification icon */
 }
 
 .stat-card:hover {
@@ -788,25 +789,124 @@
   box-shadow: var(--card-shadow-hover2);
 }
 
-/* Smaller icon for the "Create New Episode" button */
 .create-episode .stat-icon {
-  width: 24px; /* Smaller width */
-  height: 24px; /* Smaller height */
-  background-color: #2196f3; /* Blue background for episode icon */
-  border-radius: 50%; /* Ensure it's circular */
+  width: 24px;
+  height: 24px; 
+  background-color: #2196f3; 
+  border-radius: 50%; 
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white; /* Icon color */
-  box-shadow: none; /* Remove any shadow */
-  border: none; /* Remove any border */
+  color: white; 
+  box-shadow: none; 
+  border: none; 
 }
 
 .create-episode .stat-icon svg {
-  width: 16px; /* Adjust SVG size */
+  width: 16px; 
   height: 16px;
-  fill: none; /* Ensure no fill color */
-  stroke: white; /* Match the stroke color */
+  fill: none; 
+  stroke: white; 
+}
+
+
+.stat-card .notification-container {
+  position: absolute;
+  top: 50%; 
+  right: 10px; 
+  transform: translateY(-50%); 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-icon {
+  position: relative;
+  cursor: pointer;
+  font-size: 20px;
+  color: #ff9800; 
+  background-color: #fff; 
+  border: 2px solid #ff9800; 
+  border-radius: 50%; 
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+  transition: transform 0.2s ease-in-out;
+}
+
+.notification-icon:hover {
+  transform: scale(1.1); 
+}
+
+.notification-icon .notification-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+}
+
+.popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.popup ul li button {
+  margin-top: 10px;
+  margin-right: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.popup ul li .accept-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.popup ul li .accept-btn:hover {
+  background-color: #45a049;
+}
+
+.popup ul li .decline-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.popup ul li .decline-btn:hover {
+  background-color: #e53935;
 }
 
 /* Responsive */

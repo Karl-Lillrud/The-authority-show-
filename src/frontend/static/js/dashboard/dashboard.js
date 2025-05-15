@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       createTeamLeaderBoardRows(),
       fetchAndDisplayActivities()
     ]);
+    checkForPendingGuests();
 
     // Initiera UI-komponenter efter att DOM är uppdaterad
     initializeSvgIcons();
@@ -553,4 +554,104 @@ function formatActivityType(type) {
     .replace(/_/g, " ")
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+async function fetchPendingGuests() {
+  try {
+    const response = await fetch("/get_pending_guests");
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      return result.data; // Return the list of pending guests
+    } else {
+      console.error("Failed to fetch pending guests:", result.error);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching pending guests:", error);
+    return [];
+  }
+}
+
+// Function to check for pending guests and display a notification
+async function checkForPendingGuests() {
+  const pendingGuests = await fetchPendingGuests();
+
+  if (pendingGuests.length > 0) {
+    // Create a notification icon
+    const notificationIcon = document.createElement("div");
+    notificationIcon.className = "notification-icon";
+    notificationIcon.innerHTML = `
+      <span class="notification-count">${pendingGuests.length}</span>
+      <i class="fas fa-bell"></i>
+    `;
+
+    // Add click event to show pending guests
+    notificationIcon.addEventListener("click", () => {
+      showPendingGuestsPopup(pendingGuests);
+    });
+
+    // Append the notification icon to the Guests card
+    const notificationContainer = document.querySelector(
+      ".stat-card .notification-container"
+    );
+    if (notificationContainer) {
+      notificationContainer.appendChild(notificationIcon);
+    } else {
+      console.error("Notification container not found in Guests card.");
+    }
+  }
+}
+
+// Function to display a popup with pending guests
+function showPendingGuestsPopup(pendingGuests) {
+  // Create the popup container
+  const popup = document.createElement("div");
+  popup.className = "popup";
+  popup.style.display = "flex";
+
+  // Create the popup content
+  const popupContent = document.createElement("div");
+  popupContent.className = "form-box";
+  popupContent.innerHTML = `
+    <span class="close-btn">&times;</span>
+    <h2>Pending Guests</h2>
+    <ul class="pending-guests-list">
+      ${pendingGuests
+        .map(
+          (guest) => `
+        <li>
+          <strong>${guest.name}</strong> (${guest.email})<br>
+          Requested Time: ${guest.recordingDate} at ${guest.recordingTime}
+          <button class="accept-btn" data-id="${guest.id}">Accept</button>
+          <button class="decline-btn" data-id="${guest.id}">Decline</button>
+        </li>
+      `
+        )
+        .join("")}
+    </ul>
+  `;
+
+  popup.appendChild(popupContent);
+  document.body.appendChild(popup);
+
+  // Close popup event
+  popup.querySelector(".close-btn").addEventListener("click", () => {
+    popup.remove();
+  });
+
+  // Add event listeners for accept and decline buttons
+  popup.querySelectorAll(".accept-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const guestId = event.target.dataset.id;
+      handleAcceptGuest(guestId);
+    });
+  });
+
+  popup.querySelectorAll(".decline-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const guestId = event.target.dataset.id;
+      handleDeclineGuest(guestId);
+    });
+  });
 }
