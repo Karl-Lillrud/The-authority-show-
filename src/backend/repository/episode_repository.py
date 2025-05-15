@@ -55,8 +55,6 @@ class EpisodeRepository:
                 "status": validated.get("status"),
                 "userid": str(user_id),
                 "accountId": account_id,
-                "created_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc),
                 "audioUrl": validated.get("audioUrl"),
                 "fileSize": validated.get("fileSize"),
                 "fileType": validated.get("fileType"),
@@ -201,7 +199,7 @@ class EpisodeRepository:
                 }, 400
 
             # Start building the fields to update in MongoDB
-            update_fields = {"updated_at": datetime.now(timezone.utc)}
+            update_fields = {}
 
             # Define all possible fields that can be updated (including file fields)
             allowed_fields = [
@@ -258,17 +256,15 @@ class EpisodeRepository:
                 # Ensure it's explicitly None if it was an empty string or invalid
                 update_fields["duration"] = None
 
-            # Check if there's anything to update besides 'updated_at'
-            if len(update_fields) <= 1:
+            # Check if there's anything to update
+            if len(update_fields) == 0:
                 logger.info(
-                    f"No valid fields to update for episode {episode_id} besides timestamp."
+                    f"No valid fields to update for episode {episode_id}."
                 )
                 # Decide if this is an error or just means no changes were made
                 # If only file fields were sent, this might be expected.
                 # Let's proceed if file fields were the only change.
-                has_non_timestamp_update = any(k != "updated_at" for k in update_fields)
-                if not has_non_timestamp_update:
-                    return {"message": "No valid changes detected"}, 200
+                return {"message": "No valid changes detected"}, 200
 
             # Perform the MongoDB update
             logger.debug(
@@ -308,7 +304,7 @@ class EpisodeRepository:
                         "episodeId": episode_id,
                         "title": log_title,  # Include title in details
                         "updatedFields": [
-                            k for k in update_fields.keys() if k != "updated_at"
+                            k for k in update_fields.keys()
                         ],
                     },
                 )
