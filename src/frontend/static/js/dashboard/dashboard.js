@@ -654,6 +654,7 @@ function showPendingGuestsPopup(pendingGuests) {
       handleDeclineGuest(guestId);
     });
   });
+}
 export async function refreshDashboardStats() {
   await Promise.all([
     fetchAndDisplayPodcastCount(),
@@ -661,5 +662,4 @@ export async function refreshDashboardStats() {
     fetchAndDisplayGuestCount(),
     // Add more stat refreshers if needed
   ]);
-  updateStatCounts();
-}
+  updateStatCounts();}
