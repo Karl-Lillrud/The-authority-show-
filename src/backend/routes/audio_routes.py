@@ -330,3 +330,17 @@ def get_cleaned_audio():
     except Exception as e:
         logger.error(f"Error fetching cleaned audio from blob: {str(e)}")
         return jsonify({"error": str(e)}), 500
+    
+@audio_bp.route("/plan_and_mix_sfx", methods=["POST"])
+def plan_and_mix_sfx():
+    if "audio" not in request.files:
+        return jsonify({"error": "Missing audio file"}), 400
+
+    audio_bytes = request.files["audio"].read()
+
+    try:
+        data = audio_service.plan_and_mix_sfx(audio_bytes)
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"Error generating SFX plan & mix: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500

@@ -183,6 +183,13 @@ export function setupTimelineToggle(state) {
 export function updateEpisodeDisplay(state) {
   if (!state.selectedEpisode) return
 
+  // Store the selected episode ID in localStorage
+  if (state.selectedEpisode._id || state.selectedEpisode.id) {
+    const episodeId = state.selectedEpisode._id || state.selectedEpisode.id
+    localStorage.setItem("selected_episode_id", episodeId)
+    console.log("✅ Selected episode ID stored in localStorage from updateEpisodeDisplay:", episodeId)
+  }
+
   // Update header
   const currentEpisodeNumber = document.getElementById("currentEpisodeNumber")
   const episodeTitle = document.getElementById("episodeTitle")

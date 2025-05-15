@@ -94,7 +94,7 @@ export function renderKanbanBoard(state, updateUI) {
                         </div>
                         <div class="kanban-task-footer">
                           <div class="kanban-task-assignee ${task.assignee ? "assigned" : ""}">
-                            ${task.assigneeName || "Unassigned"}
+                            ${task.assignedAt || task.assigneeName || "Unassigned"}
                           </div>
                           ${
                             task.comments && task.comments.length > 0
