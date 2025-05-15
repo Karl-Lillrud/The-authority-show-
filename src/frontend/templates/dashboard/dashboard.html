@@ -137,6 +137,18 @@ endblock %} {% block content %}
     </main>
   </div>
 
+  <div class="dashboard-popup">
+    <div id="pending-guests-popup" class="popup" style="display: none">
+      <div class="form-box">
+        <span id="close-pending-guests-popup" class="close-btn">&times;</span>
+        <h2 class="form-title">Pending Guests</h2>
+        <ul class="pending-guests-list">
+          <!-- Pending guests will be dynamically populated here -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <script
     type="module"
     src="{{ url_for('static', filename='js/dashboard/dashboard.js') }}"

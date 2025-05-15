@@ -605,39 +605,33 @@ async function checkForPendingGuests() {
 
 // Function to display a popup with pending guests
 function showPendingGuestsPopup(pendingGuests) {
-  // Create the popup container
-  const popup = document.createElement("div");
-  popup.className = "popup";
+  // Get the popup container
+  const popup = document.getElementById("pending-guests-popup");
+  const popupList = popup.querySelector(".pending-guests-list");
+
+  // Populate the list with pending guests
+  popupList.innerHTML = pendingGuests
+    .map(
+      (guest) => `
+      <li class="field-group full-width">
+        <strong>${guest.name}</strong> (${guest.email})<br>
+        Requested Time: ${guest.recordingDate} at ${guest.recordingTime}
+        <div class="form-actions">
+          <button class="accept-btn save-btn" data-id="${guest.id}">Accept</button>
+          <button class="decline-btn cancel-btn" data-id="${guest.id}">Decline</button>
+        </div>
+      </li>
+    `
+    )
+    .join("");
+
+  // Show the popup
   popup.style.display = "flex";
 
-  // Create the popup content
-  const popupContent = document.createElement("div");
-  popupContent.className = "form-box";
-  popupContent.innerHTML = `
-    <span class="close-btn">&times;</span>
-    <h2>Pending Guests</h2>
-    <ul class="pending-guests-list">
-      ${pendingGuests
-        .map(
-          (guest) => `
-        <li>
-          <strong>${guest.name}</strong> (${guest.email})<br>
-          Requested Time: ${guest.recordingDate} at ${guest.recordingTime}
-          <button class="accept-btn" data-id="${guest.id}">Accept</button>
-          <button class="decline-btn" data-id="${guest.id}">Decline</button>
-        </li>
-      `
-        )
-        .join("")}
-    </ul>
-  `;
-
-  popup.appendChild(popupContent);
-  document.body.appendChild(popup);
-
   // Close popup event
-  popup.querySelector(".close-btn").addEventListener("click", () => {
-    popup.remove();
+  const closeBtn = popup.querySelector("#close-pending-guests-popup");
+  closeBtn.addEventListener("click", () => {
+    popup.style.display = "none";
   });
 
   // Add event listeners for accept and decline buttons
