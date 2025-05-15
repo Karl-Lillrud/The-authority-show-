@@ -253,7 +253,55 @@ document.addEventListener("DOMContentLoaded", () => {
   decorativeHeader.className = "decorative-header";
   document.body.prepend(decorativeHeader);
 
+  setupMobileSidebar();
 });
+
+function setupMobileSidebar() {
+  const sidebarContainer = document.getElementById("sidebar-container");
+  const openSidebarArrowBtn = document.getElementById("openSidebarArrowBtn");
+  const pmSidebarOverlay = document.getElementById("pmSidebarOverlay");
+  const pmSidebarCloseBtn = document.getElementById("pmSidebarCloseBtn");
+
+  if (!sidebarContainer || !openSidebarArrowBtn || !pmSidebarOverlay || !pmSidebarCloseBtn) {
+    console.warn("Mobile sidebar toggle elements not all found. Skipping mobile sidebar setup.");
+    return;
+  }
+
+  const openSidebar = () => {
+    sidebarContainer.classList.add("is-open");
+    pmSidebarOverlay.classList.add("is-visible");
+    // Prevent body scroll only on mobile when sidebar is a full overlay
+    if (window.innerWidth <= 992) { // Match CSS breakpoint
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  const closeSidebar = () => {
+    sidebarContainer.classList.remove("is-open");
+    pmSidebarOverlay.classList.remove("is-visible");
+    document.body.style.overflow = ''; // Always restore body scroll
+  };
+
+  openSidebarArrowBtn.addEventListener("click", openSidebar);
+  pmSidebarOverlay.addEventListener("click", closeSidebar);
+  pmSidebarCloseBtn.addEventListener("click", closeSidebar);
+
+  // Optional: Close sidebar if a navigation link inside it is clicked
+  // This is common UX for slide-in menus.
+  const sidebarLinks = sidebarContainer.querySelectorAll(".sidebar-menu-link");
+  sidebarLinks.forEach(link => {
+    link.addEventListener("click", () => {
+      if (sidebarContainer.classList.contains("is-open")) {
+        // Do not close if it's a link that doesn't navigate away (e.g., opens a sub-menu within the sidebar)
+        // For now, assume all links navigate or perform an action that should close the mobile menu.
+        // Add more specific conditions if needed.
+        if (!link.href.endsWith("#")) { // Simple check, adjust if complex routing
+             closeSidebar();
+        }
+      }
+    });
+  });
+}
 
 // Export shared utilities and variables
 export const shared = {
