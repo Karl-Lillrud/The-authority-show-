@@ -1842,6 +1842,11 @@ select option:disabled {
   visibility: visible;
 }
 
+/* Global style to hide the mobile-specific sidebar close button by default */
+.pm-sidebar-close-btn {
+  display: none;
+}
+
 /* Styles for mobile sidebar toggle arrow and overlay */
 .open-sidebar-arrow-btn {
   display: none; /* Hidden by default, shown in media query */
@@ -1997,7 +2002,7 @@ select option:disabled {
   }
 
   .pm-sidebar-close-btn {
-    display: none; /* Hidden by default, shown in mobile sidebar */
+    /* display: none; <- This is now handled globally */
     background: none;
     border: none;
     color: var(--text-color-dark, #333);
