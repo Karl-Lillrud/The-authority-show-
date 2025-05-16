@@ -181,3 +181,50 @@ button.ai-edit-button.disabled {
     pointer-events: none;
     cursor: not-allowed;
 }
+.button-with-help {
+  display: inline-flex;
+  align-items: center;
+  /* Vänd ordningen så att span kommer före knappen */
+  flex-direction: row-reverse;
+  margin: 0.5em 0;
+}
+
+.help-icon {
+  display: inline-block;
+  /* flytta ut mot knappen på höger sida av ikonen */
+  margin-right: 6px;
+  margin-left: 0;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  background: #666;
+  border-radius: 50%;
+  cursor: default;
+  position: relative;
+}
+
+.help-icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;    /* precis ovanför ikonen */
+  left: 0;         /* ikonens vänstra kant */
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  white-space: nowrap;
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 11px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 10;
+}
+
+.help-icon:hover::after {
+  opacity: 1;
+}

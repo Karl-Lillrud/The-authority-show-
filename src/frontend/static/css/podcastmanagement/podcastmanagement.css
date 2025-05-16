@@ -897,40 +897,44 @@
 
 /* Popup Styles */
 .popup {
-  position: fixed;
+  position: fixed; /* Ensure it's fixed */
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6); /* Slightly darker overlay for better contrast */
-  display: flex;
+  background-color: rgba(0, 0, 0, 0.7); /* Simpler background */
+  display: none; /* Initially hidden, JS will change to flex */
   justify-content: center;
   align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(6px); /* Slightly stronger blur for modern feel */
-  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-  opacity: 0;
-  visibility: hidden;
+  z-index: 1000; 
+  opacity: 0; /* Start fully transparent */
+  visibility: hidden; /* Start hidden */
+  transition: opacity 0.3s ease-out, visibility 0s linear 0.3s; /* Fade out quickly */
 }
 
+/* This rule applies when JS sets display:flex for #guest-popup or any .popup */
 .popup[style*="display: flex"] {
   opacity: 1;
   visibility: visible;
+  transition: opacity 0.3s ease-out, visibility 0s linear 0s; /* Fade in */
 }
 
 /* Form Box */
 .form-box {
   background-color: #ffffff;
-  border-radius: 12px; /* Smoother, modern radius */
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); /* Softer, more natural shadow */
-  padding: 2rem; /* Increased padding for breathing room */
-  width: 95%;
-  max-width: 800px; /* Slightly wider for better form layout */
-  max-height: 85vh; /* Increased max-height for larger screens */
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 2rem;
+  width: 90%; 
+  max-width: 800px;
+  min-height: 200px; 
+  max-height: 85vh;
   overflow-y: auto;
   overflow-x: hidden;
-  transform: scale(0.9); /* Slightly smaller initial scale for pop-in effect */
-  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  transform: scale(0.95);
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out; 
+  opacity: 0; 
+  /* border: 2px solid blue; */ /* REMOVE Debug border for form-box */
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) #ffffff;
 }
