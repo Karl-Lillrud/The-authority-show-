@@ -951,18 +951,20 @@ export function initEpisodeFunctions() {
       });
 
     const credits_button = document.getElementById("buy-credits-btn-popup");
-
-    const credits = await getCredits();
-    const extra_episode_cost = 5000;
-    if (credits >= extra_episode_cost) {
-      credits_button.textContent = "Buy for 5000 credits";
-    } else {
-      credits_button.textContent = "Buy Credits"
-    }
+    // Set the button content with only the unlocked lock icon
+    credits_button.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+      </svg>
+      Unlock for 5,000 credits
+    `;
 
     // Navigate to store
     credits_button
       .addEventListener("click", async () => {
+        const credits = await getCredits();
+        const extra_episode_cost = 5000;
         if (credits >= extra_episode_cost) {
           try {
             await consumeStoreCredits("episode_pack");
