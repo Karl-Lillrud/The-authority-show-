@@ -600,13 +600,18 @@ class SubscriptionService:
             plan = sub["plan"].upper()
             benefits = PLAN_BENEFITS.get(plan, PLAN_BENEFITS["FREE"])
 
-            episode_slots = benefits.get("episode_slots", 0)
+            # Get base slots from plan
+            base_slots = benefits.get("episode_slots", 0)
+            # Get extra slots purchased
             extra_slots = account.get("unlockedExtraEpisodeSlots", 0)
-            total_allowed_slots = episode_slots + extra_slots
+            # Calculate total allowed slots
+            total_allowed_slots = base_slots + extra_slots
 
+            # Check if plan has unlimited slots
             if benefits.get("max_slots") == "Unlimited":
                 return True, "Unlimited episodes allowed"
 
+            # Count episodes in current subscription period
             now = datetime.utcnow()
             start = parse_date(sub["start_date"]) if sub.get("start_date") else now - timedelta(days=30)
             end = parse_date(sub["end_date"]) if sub.get("end_date") else now
@@ -621,14 +626,16 @@ class SubscriptionService:
             })
 
             logger.info(f"📊 Found {count} regular (non-imported) episodes for user {user_id}")
+            logger.info(f"📊 User has {base_slots} base slots and {extra_slots} extra slots (total: {total_allowed_slots})")
+
             if count < total_allowed_slots:
                 logger.info(f"✅ User {user_id} is within allowed limit: {count}/{total_allowed_slots}")
                 return True, f"{count} < allowed {total_allowed_slots}"
             else:
                 if extra_slots > 0:
-                    return False, f"You’ve used your {episode_slots} base slots and all {extra_slots} extra slot(s)."
+                    return False, f"You've used your {base_slots} base slots and all {extra_slots} extra slot(s)."
                 else:
-                    return False, f"You’ve used your {episode_slots} free episode slots. Upgrade to unlock more."
+                    return False, f"You've used your {base_slots} free episode slots. Upgrade to unlock more."
 
         except Exception as e:
             logger.error(f"❌ Error checking create-episode permission for user {user_id}: {str(e)}")

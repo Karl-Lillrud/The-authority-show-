@@ -78,8 +78,8 @@ class EpisodeRepository:
             # Insert the episode
             self.collection.insert_one(episode_doc)
 
-            # If this is not an imported episode and the user has extra slots, reduce the count
-            if not is_imported and user_account.get("unlockedExtraEpisodeSlots", 0) > 0:
+            # If this is not an imported episode, update the slot usage
+            if not is_imported:
                 # Get the current subscription plan
                 sub = self.subscription_service.get_user_subscription(user_id)
                 if sub:
