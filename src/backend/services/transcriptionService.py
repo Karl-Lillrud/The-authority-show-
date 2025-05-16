@@ -28,10 +28,14 @@ VOICE_MAPS = {
     "English": {
         "Speaker 1": os.getenv("VOICE_ID_EN_1"),
         "Speaker 2": os.getenv("VOICE_ID_EN_2"),
+        "Speaker 3": os.getenv("VOICE_ID_EN_3"),
+        "Speaker 4": os.getenv("VOICE_ID_EN_4"),
     },
     "Spanish": {
         "Speaker 1": os.getenv("VOICE_ID_ES_1"),
         "Speaker 2": os.getenv("VOICE_ID_ES_2"),
+        "Speaker 3": os.getenv("VOICE_ID_ES_3"),
+        "Speaker 4": os.getenv("VOICE_ID_ES_4"),
     },
 }
 
