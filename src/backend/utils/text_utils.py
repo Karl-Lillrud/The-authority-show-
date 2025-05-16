@@ -62,28 +62,59 @@ def translate_text(text: str, target_language: str) -> str:
     logger.error("Translation permanently failed after retries.")
     return "Failed to translate. Try again later."
 
+import tiktoken
+import time
+from openai import OpenAIError, BadRequestError
+
+def truncate_to_token_limit(text, model="gpt-4", max_tokens=7000):
+    enc = tiktoken.encoding_for_model(model)
+    tokens = enc.encode(text)
+    return enc.decode(tokens[:max_tokens]) if len(tokens) > max_tokens else text
+
+def gpt_with_fallback(prompt: str, primary_model="gpt-4", fallback_model="gpt-3.5-turbo-16k") -> str:
+    try:
+        return _safe_gpt_call(prompt, primary_model)
+    except BadRequestError as e:
+        if "context_length_exceeded" in str(e):
+            print("⚠️ Too long for GPT-4, falling back to gpt-3.5-turbo-16k")
+            return _safe_gpt_call(prompt, fallback_model)
+        raise e
+
+def _safe_gpt_call(prompt: str, model: str, max_tokens: int = 7000, retries: int = 2) -> str:
+    prompt = truncate_to_token_limit(prompt, model=model, max_tokens=max_tokens)
+    for attempt in range(retries):
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.choices[0].message.content
+        except OpenAIError as e:
+            if "rate limit" in str(e).lower():
+                if model == "gpt-4":
+                    logger.warning("⚠️ GPT-4 TPM limit hit — falling back to gpt-3.5-turbo-16k.")
+                    return _safe_gpt_call(prompt, "gpt-3.5-turbo-16k")
+                time.sleep((attempt + 1) * 5)
+            else:
+                raise e
+    raise RuntimeError("GPT call failed after retries.")
+
 def generate_ai_suggestions(text):
     prompt = f"""
     Review the following transcription and provide suggestions for improvement.
-    Focus on removing filler words, grammar/spelling corrections, rewriting awkward phrases:
+    Focus on removing filler words, grammar/spelling corrections, and awkward phrasing.
+
     {text}
     """
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content
+    return gpt_with_fallback(prompt)
 
 def generate_show_notes(text):
     prompt = f"""
-    Generate concise show notes for this transcript:
+    Generate clear, concise podcast show notes based on this transcript:
+
     {text}
     """
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content
+    return gpt_with_fallback(prompt)
 
 def transcribe_with_whisper(audio_path: str) -> str:
     try:
@@ -226,15 +257,9 @@ def generate_ai_quotes(transcript: str) -> str:
     {transcript}
     """
     try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You're an expert podcast editor and copywriter."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        quotes_raw = response.choices[0].message.content.strip()
-        lines = [line.strip("\u2022\u2013\u2014-\u2022 \n\"") for line in quotes_raw.split("\n") if line.strip()]
+        output = gpt_with_fallback(prompt, primary_model="gpt-4", fallback_model="gpt-3.5-turbo-16k")
+        # Clean up formatting
+        lines = [line.strip("•–—-• \n\"") for line in output.split("\n") if line.strip()]
         return "\n\n".join(lines[:3])
     except Exception as e:
         logger.error(f"Error generating quotes: {e}")
@@ -444,8 +469,6 @@ def get_osint_info(guest_name: str) -> str:
     return response.choices[0].message.content.strip()
 
 def create_podcast_scripts_paid(osint_info: str, guest_name: str, transcript: str = "") -> str:
-    client = OpenAI()
-
     prompt = f"""
 You are a professional podcast scriptwriter.
 
@@ -463,12 +486,11 @@ The intro should briefly tease the main topic(s) of the episode, using an engagi
 The outro should reflect on the discussion and invite the listener to tune in again.
 """
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    return response.choices[0].message.content.strip()
+    try:
+        return gpt_with_fallback(prompt, primary_model="gpt-4", fallback_model="gpt-3.5-turbo-16k").strip()
+    except Exception as e:
+        logger.error(f"Error generating intro/outro: {e}")
+        return f"Error: {str(e)}"
 
 def text_to_speech_with_elevenlabs(script: str, voice_id: str = "TX3LPaxmHKxFdv7VOQHJ") -> bytes:
 
