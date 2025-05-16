@@ -67,47 +67,31 @@ export function renderTaskList(state, updateUI) {
       const isCompleted = state.completedTasks[task.id || task._id] || task.status === "completed"
       const isExpanded = state.expandedTasks[task.id || task._id] || false
 
-      // Determine if task is assigned to current user - with extra debugging
-      let isAssignedToCurrentUser = false
+  
+// Determine if task is assigned to current user - simplified check
+let isAssignedToCurrentUser = false;
 
-      // Check assignee field (direct ID match)
-      if (task.assignee && task.assignee.toString() === state.currentUser.id.toString()) {
-        isAssignedToCurrentUser = true
-      }
-      // Check assigneeName field (contains email)
-      else if (task.assigneeName && task.assigneeName.trim() !== "") {
-        if (
-          task.assigneeName === state.currentUser.email ||
-          (state.currentUser.email && task.assigneeName.includes(state.currentUser.email))
-        ) {
-          isAssignedToCurrentUser = true
-        }
-      }
-      // Check assignedAt field (contains email or name)
-      else if (task.assignedAt && task.assignedAt.trim() !== "") {
-        if (
-          task.assignedAt === state.currentUser.email ||
-          (state.currentUser.email && task.assignedAt.includes(state.currentUser.email)) ||
-          task.assignedAt === state.currentUser.name ||
-          task.assignedAt === state.currentUser.fullName ||
-          task.assignedAt === state.currentUser.displayName
-        ) {
-          isAssignedToCurrentUser = true
-        }
-      }
+// Check if assignedAt exists and is not empty
+if (task.assignedAt && String(task.assignedAt).trim() !== "") {
+  // Since assignedAt is now a DateTime, we'll just consider any non-empty value as assigned
+  isAssignedToCurrentUser = true;
+}
 
-      // Add debug logging for assignment checks
-      if (task.assignee || task.assigneeName || task.assignedAt) {
-        console.log(`Task ${task.name} assignment check:`, {
-          taskId: task.id || task._id,
-          taskAssignee: task.assignee,
-          taskAssigneeName: task.assigneeName,
-          taskAssignedAt: task.assignedAt,
-          currentUserId: state.currentUser.id,
-          currentUserEmail: state.currentUser.email,
-          isAssigned: isAssignedToCurrentUser,
-        })
-      }
+// Add debug logging
+console.log(`Task ${task.name} assignment check:`, {
+  taskId: task.id || task._id,
+  assignedAt: task.assignedAt,
+  assignedAtType: typeof task.assignedAt,
+  isAssigned: isAssignedToCurrentUser,
+});
+
+// Add debug logging
+console.log(`Task ${task.name} assignment check:`, {
+  taskId: task.id || task._id,
+  assignedAt: task.assignedAt,
+  currentUserEmail: state.currentUser.email,
+  isAssigned: isAssignedToCurrentUser,
+});
 
       // Check if this task has dependencies that aren't completed
       const hasDependencyWarning =
@@ -485,95 +469,93 @@ export async function toggleTaskAssignment(taskId, state, updateUI) {
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'
     button.disabled = true
 
-    // Check current assignment state
-    const isCurrentlyAssigned =
-      (task.assignee && task.assignee.toString() === state.currentUser.id.toString()) ||
-      (task.assigneeName && task.assigneeName.trim() !== "") ||
-      (task.assignedAt && task.assignedAt.trim() !== "")
+    // Get user display name
+    let displayName = state.currentUser.email || "Unknown User"
+    try {
+      const accountRequests = await import("/static/requests/accountRequests.js")
+      if (accountRequests.fetchAccount && typeof accountRequests.fetchAccount === "function") {
+        const accountData = await accountRequests.fetchAccount()
+        const userData = accountData.account || accountData
+        displayName =
+          userData.fullName ||
+          userData.full_name ||
+          userData.name ||
+          userData.displayName ||
+          userData.display_name ||
+          userData.email ||
+          state.currentUser.email ||
+          "Unknown User"
+      }
+    } catch (error) {
+      console.warn("Error fetching account data, using fallback data:", error)
+    }
 
+    // Check if task is currently assigned
+    // We'll use a simple string check for now
+    const isCurrentlyAssigned = task.assignedAt && String(task.assignedAt).trim() !== "";
+    
     console.log("Current assignment state:", {
       taskId,
       isCurrentlyAssigned,
-      assignee: task.assignee,
-      assigneeName: task.assigneeName,
       assignedAt: task.assignedAt,
-      currentUserId: state.currentUser.id,
-    })
+      assignedAtType: typeof task.assignedAt,
+      currentUser: displayName
+    });
 
-    let updateData = {}
+    // Prepare update data - use current date for assignment, null for unassignment
+    const updateData = {
+      assignedAt: isCurrentlyAssigned ? null : new Date().toISOString()
+    };
 
-    if (isCurrentlyAssigned) {
-      // UNASSIGN: Set all assignment fields to empty strings
-      updateData = {
-        assignee: "",
-        assigneeName: "",
-        assignedAt: "",
-      }
-      console.log("Unassigning task:", taskId)
+    console.log("Sending update data:", updateData);
+    
+    // Update task in the database
+    await updateTask(taskId, updateData);
+
+    // Update local task object
+    task.assignedAt = updateData.assignedAt;
+
+    // Force the new assignment state
+    const newAssignmentState = !isCurrentlyAssigned;
+    
+    // Force the correct icon based on the new state
+    if (newAssignmentState) {
+      button.innerHTML = '<i class="fas fa-user-minus"></i>';
+      button.title = "Unassign Task";
     } else {
-      // ASSIGN: Get user info for assignment
-      let userId = state.currentUser.id
-      let displayName = state.currentUser.email || "Unknown User"
+      button.innerHTML = '<i class="fas fa-user-plus"></i>';
+      button.title = "Assign to me";
+    }
+    
+    button.disabled = false;
 
-      try {
-        const accountRequests = await import("/static/requests/accountRequests.js")
-        if (accountRequests.fetchAccount && typeof accountRequests.fetchAccount === "function") {
-          const accountData = await accountRequests.fetchAccount()
-          const userData = accountData.account || accountData
-          userId = userData._id || userData.id || state.currentUser.id
-          displayName =
-            userData.fullName ||
-            userData.full_name ||
-            userData.name ||
-            userData.displayName ||
-            userData.display_name ||
-            userData.email ||
-            state.currentUser.email ||
-            "Unknown User"
-        }
-      } catch (error) {
-        console.warn("Error fetching account data, using fallback data:", error)
-      }
+    console.log("Button updated:", {
+      newAssignmentState,
+      innerHTML: button.innerHTML,
+      title: button.title
+    });
 
-      updateData = {
-        assignee: userId,
-        assigneeName: displayName,
-        assignedAt: displayName,
+    // Skip the UI update for now to preserve our button state
+    // Instead, manually update the task display
+    const taskItem = document.querySelector(`.task-item[data-task-id="${taskId}"]`);
+    if (taskItem) {
+      const assignedAtDisplay = taskItem.querySelector('.task-meta-item:nth-child(2) span');
+      if (assignedAtDisplay) {
+        assignedAtDisplay.textContent = newAssignmentState ? displayName : "Unassigned";
       }
-      console.log("Assigning task to:", displayName)
     }
 
-    // Update task in the database
-    await updateTask(taskId, updateData)
-
-    // Update local task object with the new data
-    Object.assign(task, updateData)
-
-    // Update button state based on new assignment status
-    button.innerHTML = isCurrentlyAssigned ? '<i class="fas fa-user-plus"></i>' : '<i class="fas fa-user-minus"></i>'
-    button.title = isCurrentlyAssigned ? "Assign to me" : "Unassign Task"
-    button.disabled = false
-
-    // Update UI to reflect changes
-    updateUI()
-
-    console.log("Task assignment updated successfully:", {
-      taskId,
-      newState: !isCurrentlyAssigned,
-      task,
-    })
   } catch (error) {
-    console.error("Error updating task assignment:", error)
-    alert("Failed to update task assignment. Please try again.")
+    console.error("Error updating task assignment:", error);
+    alert("Failed to update task assignment. Please try again.");
 
-    // Reset button state in case of error
-    button.innerHTML =
-      task.assignedAt && task.assignedAt.trim() !== ""
-        ? '<i class="fas fa-user-minus"></i>'
-        : '<i class="fas fa-user-plus"></i>'
-    button.disabled = false
+    // Reset button state
+    button.innerHTML = '<i class="fas fa-user-plus"></i>';
+    button.title = "Assign to me";
+    button.disabled = false;
   }
 }
+
 
 export async function confirmDeleteTask(taskId, state, updateUI) {
   if (confirm("Are you sure you want to delete this task?")) {
@@ -1426,4 +1408,39 @@ export function redirectToWorkspace(taskId, aiTool, state, updateUI) {
       window.setCurrentTask(taskId)
     }
   }, 100) // Small delay to ensure the tab switch happens first
+}
+
+// Add this function to your code
+function ensureCorrectAssignmentIcons() {
+  // Get all task items
+  const taskItems = document.querySelectorAll('.task-item');
+  
+  taskItems.forEach(taskItem => {
+    const taskId = taskItem.dataset.taskId;
+    if (!taskId) return;
+    
+    const task = window.state.tasks.find(t => (t.id || t._id) === taskId);
+    if (!task) return;
+    
+    const button = taskItem.querySelector(`.assign-task-btn[data-task-id="${taskId}"]`);
+    if (!button) return;
+    
+    // Check if task is assigned
+    const isAssigned = task.assignedAt && task.assignedAt.trim && task.assignedAt.trim() !== "";
+    
+    // Set the correct icon
+    if (isAssigned) {
+      if (button.innerHTML.includes('fa-user-plus')) {
+        console.log(`Fixing icon for task ${task.name} - should be minus, was plus`);
+        button.innerHTML = '<i class="fas fa-user-minus"></i>';
+        button.title = "Unassign Task";
+      }
+    } else {
+      if (button.innerHTML.includes('fa-user-minus')) {
+        console.log(`Fixing icon for task ${task.name} - should be plus, was minus`);
+        button.innerHTML = '<i class="fas fa-user-plus"></i>';
+        button.title = "Assign to me";
+      }
+    }
+  });
 }
