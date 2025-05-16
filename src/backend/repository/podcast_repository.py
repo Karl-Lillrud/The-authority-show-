@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from backend.database.mongo_connection import collection
-from backend.models.podcasts import PodcastSchema
+from backend.models.podcasts import Podcast  # Changed from PodcastSchema to Podcast
 import logging
 import urllib.request
 import feedparser
@@ -52,8 +52,8 @@ class PodcastRepository:
             account_id = str(user_account["_id"])
             data["accountId"] = account_id
 
-            # Validate data using PodcastSchema
-            schema = PodcastSchema()
+            # Validate data using Podcast
+            schema = Podcast()
             errors = schema.validate(data)
             if errors:
                 raise ValueError("Invalid data", errors)
@@ -269,7 +269,7 @@ class PodcastRepository:
                 raise ValueError("Podcast not found or unauthorized")
 
             # Validate input data using schema
-            schema = PodcastSchema(partial=True)
+            schema = Podcast(partial=True)
             errors = schema.validate(data)
             if errors:
                 raise ValueError("Invalid data", errors)

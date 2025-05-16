@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple, Any, Optional
 from marshmallow import ValidationError
 
 from backend.database.mongo_connection import collection
-from backend.models.comments import CommentSchema
+from backend.models.comments import Comment  # Changed from CommentSchema to Comment
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +20,9 @@ class CommentRepository:
     
     def add_comment(self, user_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         try:
-            # Validate data through schema
-            schema = CommentSchema()
-            validated_data = schema.load(data)
+            # Validate data using Pydantic model
+            validated_comment = Comment(**data)
+            validated_data = validated_comment.dict()
             
             # Verify the podtask exists
             podtask_id = validated_data.get("podtaskId")

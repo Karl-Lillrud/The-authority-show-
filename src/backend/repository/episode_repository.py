@@ -1,5 +1,5 @@
 from backend.services.subscriptionService import SubscriptionService
-from backend.models.episodes import EpisodeSchema
+from backend.models.episodes import Episode  # Changed from EpisodeSchema to Episode
 from datetime import datetime, timezone
 from backend.database.mongo_connection import collection
 import uuid
@@ -162,7 +162,7 @@ class EpisodeRepository:
                 return {"error": "Permission denied"}, 403
 
 
-            schema = EpisodeSchema(partial=True)
+            schema = Episode(partial=True)
 
             validation_data = data.copy()
 

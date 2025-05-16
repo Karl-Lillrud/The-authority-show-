@@ -2,7 +2,7 @@ from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 import uuid
 import logging
-from backend.models.guests import GuestSchema
+from backend.models.guests import Guest  # Changed from GuestSchema to Guest
 from marshmallow import ValidationError
 import email.utils  # Import to handle parsing date format
 from google.oauth2.credentials import Credentials
@@ -76,26 +76,24 @@ class GuestRepository:
                 logger.exception(f"Error parsing publish date: {str(e)}")
                 return {"error": f"Invalid publish date format: {str(e)}"}, 400
 
-            guest_data = GuestSchema().load(data)
+            guest_data = Guest(**data)  # Changed from GuestSchema().load(data)
             guest_id = str(uuid.uuid4())
 
             guest_item = {
                 "_id": guest_id,
                 "episodeId": episode_id,
-                "name": guest_data["name"].strip(),
-                "image": guest_data.get("image", ""),
-                "description": guest_data.get("description", ""),
-                "bio": guest_data.get("bio", guest_data.get("description", "")),
-                "email": guest_data["email"].strip(),
-                "areasOfInterest": guest_data.get("areasOfInterest", []),
+                "name": guest_data.name.strip(),
+                "image": guest_data.image or "",
+                "description": guest_data.description or "",
+                "bio": guest_data.bio or guest_data.description or "",
+                "email": guest_data.email.strip(),
+                "areasOfInterest": guest_data.areasOfInterest or [],
                 "status": "Pending",
                 "scheduled": 0,
                 "completed": 0,
                 "created_at": datetime.now(timezone.utc),
                 "user_id": user_id,
-                "calendarEventId": guest_data.get(
-                    "calendarEventId", ""
-                ),  # Store calendar event ID
+                "calendarEventId": guest_data.calendarEventId or "",  # Store calendar event ID
             }
 
             self.collection.insert_one(guest_item)

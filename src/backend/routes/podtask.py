@@ -2,7 +2,7 @@ from venv import logger
 from flask import request, jsonify, Blueprint, g
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
-from backend.models.workflows import WorkflowSchema  # Import the schema
+from backend.models.workflows import Workflow  # Changed from WorkflowSchema to Workflow
 import uuid
 import json
 from flask import Blueprint, request, jsonify, g

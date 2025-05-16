@@ -1,12 +1,11 @@
-# backend/models/activity.py
-from marshmallow import Schema, fields
+from pydantic import BaseModel
+from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 
-
-class ActivitySchema(Schema):
-    id = fields.Str()
-    userId = fields.Str(required=True)  # logged in user
-    type = fields.Str(required=True)  # T.ex. "episode_created", "team_created"
-    description = fields.Str(required=True)  # T.ex. "Created episode 'Episode Title'"
-    details = fields.Dict(allow_none=True)  # Extra metadata, t.ex. episodeId
-    createdAt = fields.DateTime(load_default=datetime.now(timezone.utc))
+class Activity(BaseModel):
+    id: Optional[str] = None
+    userId: str  # required
+    type: str  # required, e.g. "episode_created", "team_created"
+    description: str  # required
+    details: Optional[Dict[str, Any]] = None  # extra metadata like episodeId
+    createdAt: datetime = datetime.now(timezone.utc)

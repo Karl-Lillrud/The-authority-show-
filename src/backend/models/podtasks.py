@@ -1,29 +1,30 @@
-from marshmallow import Schema, fields
+from pydantic import BaseModel, HttpUrl
+from typing import Optional, List
+from datetime import datetime
 
-class PodtaskSchema(Schema):
-    id = fields.Str()
+class Podtask(BaseModel):
+    id: Optional[str] = None
 
-    # Optional podcast, episode, team, and members, guestId. "Team can make a task for a team and"
-    #members can be assigned to a task towards episode or podcast, guest.
-    podcastId = fields.Str(allow_none=True)    # Optional 
-    episodeId = fields.Str(allow_none=True)    # Optional
-    teamId = fields.Str(allow_none=True)       # Optional
-    members = fields.List(fields.Str(), allow_none=True)  # Optional list of user IDs
-    guestId = fields.Str(allow_none=True)      # Optional
-    name = fields.Str(required=True)
-    action = fields.List(fields.Str()) #should manly be manual until code or system for automation is in place
-    dayCount = fields.Int()
-    description = fields.Str()
-    actionUrl = fields.Url(allow_none=True)
-    urlDescribe = fields.Str()
-    submissionReq = fields.Bool()
-    status = fields.Str()
-    assignedAt = fields.DateTime()
-    
-    # Added fields for due date, assigned and dependencies
-    dueDate = fields.Str(allow_none=True)      # Due date as string (e.g., "Before recording", "3 days after recording")
-    assignee = fields.Str(allow_none=True)     # ID of the assigned user
-    assigneeName = fields.Str(allow_none=True) # Name of the assigned user
-    dependencies = fields.List(fields.Str(), allow_none=True)  # List of task IDs that this task depends on
-    aiTool = fields.Str(allow_none=True)
-    priority = fields.Str()
+    podcastId: Optional[str] = None
+    episodeId: Optional[str] = None
+    teamId: Optional[str] = None
+    members: Optional[List[str]] = None
+    guestId: Optional[str] = None
+
+    name: str  # required
+    action: List[str]
+    dayCount: Optional[int] = None
+    description: Optional[str] = None
+    actionUrl: Optional[HttpUrl] = None
+    urlDescribe: Optional[str] = None
+    submissionReq: Optional[bool] = None
+    status: Optional[str] = None
+    assignedAt: Optional[datetime] = None
+
+    # Extra fields
+    dueDate: Optional[str] = None
+    assignee: Optional[str] = None
+    assigneeName: Optional[str] = None
+    dependencies: Optional[List[str]] = None
+    aiTool: Optional[str] = None
+    priority: Optional[str] = None

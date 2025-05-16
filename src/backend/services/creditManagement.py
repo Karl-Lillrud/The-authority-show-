@@ -2,9 +2,9 @@ import logging
 from datetime import datetime, timezone
 from backend.database.mongo_connection import get_db  # Assuming you have this helper
 from backend.models.credits import (
-    CreditsSchema,
-    CreditHistoryEntrySchema,
-)  # Import schemas
+    Credits,
+    CreditHistoryEntry,
+)  # Import Pydantic models only
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +13,6 @@ class CreditService:
     def __init__(self):
         self.db = get_db()
         self.credits_collection = self.db.Credits  # Or your specific collection name
-        self.schema = CreditsSchema()
-        self.history_schema = CreditHistoryEntrySchema()
 
     def _get_raw_credits(self, user_id: str):
         """Internal helper to fetch the raw document."""
@@ -24,9 +22,9 @@ class CreditService:
         """Internal helper to add a transaction to the history."""
         try:
             # Validate history entry data
-            entry = self.history_schema.load(transaction_data)
+            entry = CreditHistoryEntry(**transaction_data)
             self.credits_collection.update_one(
-                {"user_id": user_id}, {"$push": {"creditsHistory": entry}}
+                {"user_id": user_id}, {"$push": {"creditsHistory": entry.dict()}}
             )
             return True
         except Exception as e:
@@ -95,8 +93,8 @@ class CreditService:
 
         try:
             # Validate initial data
-            validated_data = self.schema.load(initial_data)
-            result = self.credits_collection.insert_one(validated_data)
+            validated_data = Credits(**initial_data)
+            result = self.credits_collection.insert_one(validated_data.dict())
             logger.info(
                 f"Successfully initialized credits for user {user_id} with ID {result.inserted_id}"
             )
@@ -291,13 +289,11 @@ class CreditService:
         old_sub = credits_doc.get("subCredits", 0)
         if old_sub > 0:
             log_entries.append(
-                self.history_schema.load(
-                    {
-                        "type": "sub_reset",
-                        "amount": -old_sub,
-                        "description": f"Reset previous month's subscription credits ({current_month-1 if current_month > 1 else 12}/{current_year if current_month > 1 else current_year-1})",
-                    }
-                )
+                CreditHistoryEntry(
+                    type="sub_reset",
+                    amount=-old_sub,
+                    description=f"Reset previous month's subscription credits ({current_month-1 if current_month > 1 else 12}/{current_year if current_month > 1 else current_year-1})",
+                ).dict()
             )
 
         # Handle storeCredits carry-over
@@ -306,13 +302,11 @@ class CreditService:
             updates["storeCredits"] = 0  # Reset user credits if carryOver is False
             if old_user > 0:
                 log_entries.append(
-                    self.history_schema.load(
-                        {
-                            "type": "user_reset",
-                            "amount": -old_user,
-                            "description": "Reset non-carryover user credits",
-                        }
-                    )
+                    CreditHistoryEntry(
+                        type="user_reset",
+                        amount=-old_user,
+                        description="Reset non-carryover user credits",
+                    ).dict()
                 )
             new_user_bal = 0
         else:
@@ -321,17 +315,15 @@ class CreditService:
         # Log the grant of new subscription credits
         if new_sub_allowance > 0:
             log_entries.append(
-                self.history_schema.load(
-                    {
-                        "type": "monthly_sub_grant",
-                        "amount": new_sub_allowance,
-                        "description": f"Monthly subscription credit grant for {current_month}/{current_year}",
-                        "balance_after": {
-                            "subCredits": new_sub_allowance,
-                            "storeCredits": new_user_bal,
-                        },
-                    }
-                )
+                CreditHistoryEntry(
+                    type="monthly_sub_grant",
+                    amount=new_sub_allowance,
+                    description=f"Monthly subscription credit grant for {current_month}/{current_year}",
+                    balance_after={
+                        "subCredits": new_sub_allowance,
+                        "storeCredits": new_user_bal,
+                    },
+                ).dict()
             )
 
         update_result = self.credits_collection.update_one(
