@@ -88,9 +88,12 @@ function showTab(tabName) {
         content.innerHTML = `
             <h2>🎙 AI-Powered Transcription</h2>
             <input type="file" id="fileUploader" accept="audio/*,video/*">
-            <button class="btn ai-edit-button" onclick="transcribe()">
-              ${labelWithCredits("Transcribe", "transcription")}
-            </button>
+            <div class="button-with-help">
+                <button class="btn ai-edit-button" onclick="transcribe()">
+                ${labelWithCredits("Transcribe", "transcription")}
+                </button>
+                <span class="help-icon" data-tooltip="Converts the uploaded audio or video file into text using AI">?</span>
+            </div>
             <div class="result-field">
                 <pre id="transcriptionResult"></pre>
             </div>
@@ -100,11 +103,14 @@ function showTab(tabName) {
                 <h3>Enhancement Tools</h3>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">
-                        ${labelWithCredits("Clean Transcript", "clean_transcript")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateCleanTranscript()">
+                            ${labelWithCredits("Clean Transcript", "clean_transcript")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Removes filler words, repeated phrases, and fixes typos in the raw transcription">?</span>
+                    </div>
                     <div class="result-field">
-                        <pre id="cleanTranscriptResult"></pre>
+                    <pre id="cleanTranscriptResult"></pre>
                     </div>
                 </div>
 
@@ -115,78 +121,104 @@ function showTab(tabName) {
                         <option value="Spanish">Spanish</option>
                         <!-- lägg till fler språk här -->
                     </select>
-                    <button class="btn ai-edit-button" onclick="translateTranscript()">
-                        ${labelWithCredits("Translate", "translation")}
-                    </button>
+
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="translateTranscript()">
+                            ${labelWithCredits("Translate", "translation")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Translates the transcript into the selected language">?</span>
+                    </div>
+
                     <div class="result-field">
                         <pre id="translateResult"></pre>
                     </div>
                 </div>
 
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateAudioClip()">
-                        ${labelWithCredits("Generate Translated Podcast", "audio_clip")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateAudioClip()">
+                            ${labelWithCredits("Generate Translated Podcast", "audio_clip")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Produces an audio file of the translated text, ready to play as a podcast">?</span>
+                    </div>
                     <div class="result-field" id="audioClipResult"></div>
                 </div>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateAISuggestions()">
-                      ${labelWithCredits("AI Suggestions", "ai_suggestions")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateAISuggestions()">
+                            ${labelWithCredits("AI Suggestions", "ai_suggestions")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Provides AI-generated tips on how to improve your transcript">?</span>
+                    </div>
                     <div class="result-field">
                         <pre id="aiSuggestionsResult"></pre>
                     </div>
                 </div>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateShowNotes()">
-                      ${labelWithCredits("Show Notes", "show_notes")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateShowNotes()">
+                           ${labelWithCredits("Show Notes", "show_notes")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Creates a concise bullet-point summary of the main topics covered">?</span>
+                    </div>
                     <div class="result-field">
                         <pre id="showNotesResult"></pre>
                     </div>
                 </div>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateQuotes()">
-                      ${labelWithCredits("Generate Quotes", "ai_quotes")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateQuotes()">
+                            ${labelWithCredits("Generate Quotes", "ai_quotes")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Extracts memorable quotes from the transcript">?</span>
+                    </div>
                     <div class="result-field">
                         <pre id="quotesResult"></pre>
                     </div>
                 </div>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateQuoteImages()">
-                      ${labelWithCredits("Generate Quote Images", "ai_quote_images")}
-                    </button>
-                    <div class="result-field">
-                        <div id="quoteImagesResult"></div>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateQuoteImages()">
+                            ${labelWithCredits("Generate Quote Images", "ai_quote_images")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Designs shareable image cards featuring the extracted quotes">?</span>
                     </div>
+                    <div class="result-field" id="quoteImagesResult"></div>
                 </div>
     
                 <div class="result-group">
                     <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field">
-                    <button class="btn ai-edit-button" onclick="runOsintSearch()">
-                      ${labelWithCredits("OSINT Search", "ai_osint")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="runOsintSearch()">
+                            ${labelWithCredits("OSINT Search", "ai_osint")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Performs an open-source intelligence search on the entered guest name">?</span>
+                    </div>
                     <div class="result-field">
                         <pre id="osintResult"></pre>
                     </div>
                 </div>
     
-                <div class="result-group">
+                <div class="button-with-help">
                     <button class="btn ai-edit-button" onclick="generatePodcastIntroOutro()">
-                    ${labelWithCredits("Generate Intro/Outro", "ai_intro_outro")}
+                        ${labelWithCredits("Generate Intro/Outro", "ai_intro_outro")}
                     </button>
-                    <div class="result-field">
-                        <pre id="introOutroScriptResult"></pre> 
-                    </div>
+                    <span class="help-icon" data-tooltip="Writes a suggested introduction and closing script for your episode">?</span>
+                </div>
+                <div class="result-field">
+                    <pre id="introOutroScriptResult"></pre>
+                </div>
+                <div class="button-with-help" style="margin-top: 1rem;">
                     <button class="btn ai-edit-button" onclick="convertIntroOutroToSpeech()">
-                    ${labelWithCredits("Convert to Speech", "ai_intro_outro_audio")}
+                        ${labelWithCredits("Convert to Speech", "ai_intro_outro_audio")}
                     </button>
-                    <div class="result-field" id="introOutroAudioResult" style="margin-top: 1rem;"></div>
+                    <span class="help-icon" data-tooltip="Turns that script into a spoken audio file using AI voice">?</span>
+                </div>
+                    <div class="result-field" id="introOutroAudioResult"></div>
                 </div>
             </div>
         `;
