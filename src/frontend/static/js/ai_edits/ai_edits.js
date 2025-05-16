@@ -18,6 +18,8 @@ window.runOsintSearch = runOsintSearch;
 window.generatePodcastIntroOutro = generatePodcastIntroOutro;
 window.convertIntroOutroToSpeech = convertIntroOutroToSpeech;
 window.enhanceAudio = enhanceAudio;
+window.translateTranscript = translateTranscript;
+window.generateAudioClip = generateAudioClip;
 window.runVoiceIsolation = runVoiceIsolation;
 window.analyzeEnhancedAudio = analyzeEnhancedAudio;
 window.displayBackgroundAndMix = displayBackgroundAndMix;
@@ -110,7 +112,6 @@ function showTab(tabName) {
                     <label for="languageSelect">Language:</label>
                     <select id="languageSelect" class="input-field">
                         <option value="English">English</option>
-                        <option value="Swedish">Swedish</option>
                         <option value="Spanish">Spanish</option>
                         <!-- lägg till fler språk här -->
                     </select>

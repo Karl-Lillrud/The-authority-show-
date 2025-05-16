@@ -26,18 +26,13 @@
   height: 120px;
   background: none;
   border-top-left-radius: 8px;
-  background-image: linear-gradient(
-      to right,
-      var(--highlight-color) 3px,
-      transparent 90%
-    ),
+  background-image: linear-gradient(to right, var(--highlight-color) 3px, transparent 90%),
     linear-gradient(to bottom, var(--highlight-color) 3px, transparent 90%);
   background-position: top left, top left;
   background-size: 120px 3px, 3px 120px;
   background-repeat: no-repeat;
   transition: all 0.4s ease;
 }
-
 
 .sidebar-header {
   padding: var(--spacing-lg);
@@ -200,8 +195,7 @@
   background-color: var(--sidebar-item-hover);
   color: var(--highlight-color);
   transform: translateX(-10px);
-  transition: transform var(--transition-normal),
-    background-color var(--transition-normal);
+  transition: transform var(--transition-normal), background-color var(--transition-normal);
 }
 
 /* Action buttons in sidebar - fix hover issues */
@@ -244,7 +238,7 @@
 }
 
 .hide-sidebar-menu-item {
-  display: none !important; 
+  display: none !important;
 }
 
 .sidebar-action-buttons h3 {
@@ -272,7 +266,7 @@
   .main-content {
     min-height: auto;
   }
-  
+
   .sidebar {
     width: 100%;
     height: auto;
@@ -444,5 +438,193 @@
 
   .sidebar-footer {
     padding: var(--spacing-xs); /* Minska padding */
+  }
+}
+
+/* Add these styles at the end of the file */
+
+/* Mobile menu button */
+.mobile-menu-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: var(--highlight-color);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+}
+
+.mobile-menu-button.hidden {
+  display: none;
+}
+
+/* Sidebar overlay */
+#pmSidebarOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 8;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#pmSidebarOverlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Sidebar animations */
+.sidebar-animate-in {
+  animation: slideIn 0.3s forwards;
+}
+
+.sidebar-animate-out {
+  animation: slideOut 0.3s forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+/* Improved mobile sidebar close button */
+#pmSidebarCloseBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--text-color-light);
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  display: none; /* Hide by default */
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+#pmSidebarCloseBtn:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Show the close button only when sidebar is open */
+#sidebar-container.is-open #pmSidebarCloseBtn {
+  display: flex;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 992px) {
+  /* Sidebar positioning for mobile */
+  #sidebar-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 85%;
+    max-width: 300px;
+    transform: translateX(-100%);
+    z-index: 9;
+    transition: transform 0.3s ease;
+  }
+
+  #sidebar-container.is-open {
+    transform: translateX(0);
+  }
+
+  /* Ensure sidebar content is scrollable on mobile */
+  .sidebar-content {
+    height: calc(100% - 60px); /* Adjust based on your header height */
+    overflow-y: auto;
+    padding-bottom: 80px; /* Extra padding at bottom for better scrolling */
+  }
+
+  /* Make action buttons more tappable on mobile */
+  .sidebar-action-button {
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+
+  /* Improve menu items for touch */
+  .sidebar-menu-link {
+    padding: 14px 16px;
+  }
+}
+
+/* Add these styles to make the arrow button smaller */
+#openSidebarArrowBtn {
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  font-size: 14px;
+}
+
+/* Make sure the arrow button is visible on mobile */
+@media (max-width: 992px) {
+  #openSidebarArrowBtn {
+    display: flex;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 8;
+    background-color: var(--highlight-color);
+    color: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+  }
+  
+  #openSidebarArrowBtn:hover {
+    transform: scale(1.1);
+  }
+  
+  /* Hide the arrow button when sidebar is open */
+  #sidebar-container.is-open ~ #openSidebarArrowBtn,
+  .sidebar-container.is-open ~ #openSidebarArrowBtn {
+    display: none;
+  }
+  
+  /* Position the mobile menu button at the bottom right */
+  .mobile-menu-button {
+    bottom: 20px;
+    right: 20px;
   }
 }
