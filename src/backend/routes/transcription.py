@@ -221,6 +221,8 @@ def quote_images():
 
     data = request.json
     quotes_text = data.get("quotes", "")
+    method = data.get("method", "dalle")  # NEW — can be "dalle" or "local"
+
     if not quotes_text.strip():
         return jsonify({"error": "No quotes provided"}), 400
 
@@ -233,7 +235,7 @@ def quote_images():
         }), 403
 
     quotes_list = [q.strip() for q in quotes_text.split("\n\n") if q.strip()]
-    image_urls = transcription_service.get_quote_images(quotes_list)
+    image_urls = transcription_service.get_quote_images(quotes_list, method=method)
     return jsonify({"quote_images": image_urls})
 
 @transcription_bp.route("/translate", methods=["POST"])

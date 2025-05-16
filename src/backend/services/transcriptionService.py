@@ -14,7 +14,8 @@ from backend.utils.text_utils import (
     generate_ai_suggestions,
     generate_show_notes,
     generate_ai_quotes,
-    generate_quote_images,
+    generate_quote_images_dalle,
+    render_quote_images_local,
     translate_text,
     suggest_sound_effects,
     get_sentence_timestamps
@@ -27,10 +28,14 @@ VOICE_MAPS = {
     "English": {
         "Speaker 1": os.getenv("VOICE_ID_EN_1"),
         "Speaker 2": os.getenv("VOICE_ID_EN_2"),
+        "Speaker 3": os.getenv("VOICE_ID_EN_3"),
+        "Speaker 4": os.getenv("VOICE_ID_EN_4"),
     },
     "Spanish": {
         "Speaker 1": os.getenv("VOICE_ID_ES_1"),
         "Speaker 2": os.getenv("VOICE_ID_ES_2"),
+        "Speaker 3": os.getenv("VOICE_ID_ES_3"),
+        "Speaker 4": os.getenv("VOICE_ID_ES_4"),
     },
 }
 
@@ -138,35 +143,56 @@ class TranscriptionService:
         q = generate_ai_quotes(transcript_text)
         return str(q)
 
-    def get_quote_images(self, quotes: List[str]) -> List[str]:
-        logger.info("Generating quote images...")
-        return generate_quote_images(quotes)
+    def get_quote_images(self, quotes: List[str], method: str = "dalle") -> List[str]:
+        if method == "local":
+            return render_quote_images_local(quotes)
+        else:
+            return generate_quote_images_dalle(quotes)
 
     def translate_transcript(self, raw_transcription: str, target_language: str) -> str:
         """
-        Translate each sentence in raw_transcription preserving timestamps and speaker labels.
+        Translate the entire raw_transcription in one go (for speed), preserving
+        timestamps and speaker labels by using placeholders.
         """
-        logger.info(f"Translating transcript to {target_language} with timestamps and speakers...")
+        logger.info(f"Translating transcript to {target_language} (bulk) with timestamps and speakers…")
         lines = raw_transcription.split("\n")
-        translated = []
-        for line in lines:
-            m = re.match(r"^(\[.*?\]\s*Speaker\s*\d+:)\s*(.*)$", line)
+
+        # 1) Extrahera prefix (timestamp+speaker) och ersätt textdelen med placeholder
+        placeholder_map = []
+        bulk_text_parts = []
+        for idx, line in enumerate(lines):
+            m = re.match(r"^(\[[0-9]+\.[0-9]{2}-[0-9]+\.[0-9]{2}\]\s*Speaker\s*\d+:)\s*(.*)$", line)
             if m:
-                prefix, text = m.groups()
-                try:
-                    trans = translate_text(text, target_language)
-                except Exception as e:
-                    logger.warning(f"Translation failed for line '{text}': {e}")
-                    trans = text
-                translated.append(f"{prefix} {trans}")
+                prefix, body = m.groups()
             else:
-                # if line doesn't match expected format, translate whole
-                try:
-                    trans = translate_text(line, target_language)
-                except:
-                    trans = line
-                translated.append(trans)
-        return "\n".join(translated)
+                # om formatet avviker, behandla hela raden som "body" (utan prefix)
+                prefix, body = "", line
+
+            placeholder = f"__LINE{idx}__"
+            placeholder_map.append((placeholder, prefix))
+            bulk_text_parts.append(body or placeholder)
+            # vi lägger in placeholder även för tomma body så att antalet delar matchar
+        bulk_text = "\n".join(bulk_text_parts)
+
+        # 2) Kör en bulk-översättning på hela texten
+        try:
+            translated_bulk = translate_text(bulk_text, target_language)
+        except Exception as e:
+            logger.warning(f"Bulk translation failed: {e}")
+            # fallback: gör rad-för-rad (originalmetoden)
+            return "\n".join(self._translate_line_by_line(lines, target_language))
+
+        # 3) Återsätt varje rad med prefix + översatt text
+        translated_lines = translated_bulk.split("\n")
+        final_lines = []
+        for idx, translated_body in enumerate(translated_lines):
+            placeholder, prefix = placeholder_map[idx]
+            if prefix:
+                final_lines.append(f"{prefix} {translated_body}")
+            else:
+                final_lines.append(translated_body)
+
+        return "\n".join(final_lines)
 
     def get_sentiment_and_sfx(self, transcript_text: str):
         logger.info("Running sentiment & sound suggestion analysis...")
@@ -246,5 +272,23 @@ class TranscriptionService:
             raise ValueError("Ingen giltig segmentrad hittades i transcriptet.")
         return segments
 
-    
+    def _translate_line_by_line(self, lines: List[str], target_language: str) -> List[str]:
+        """
+        Tidigare beteende: översätt varje enskild rad separat.
+        """
+        translated = []
+        for line in lines:
+            m = re.match(r"^(\[.*?\]\s*Speaker\s*\d+:)\s*(.*)$", line)
+            if m:
+                prefix, body = m.groups()
+            else:
+                prefix, body = "", line
+
+            try:
+                trans = translate_text(body, target_language)
+            except Exception as e:
+                logger.warning(f"Translation failed for line '{body}': {e}")
+                trans = body
+            translated.append(f"{prefix} {trans}" if prefix else trans)
+        return translated
     

@@ -181,11 +181,16 @@ function showTab(tabName) {
                 </div>
     
                 <div class="result-group">
-                    <div class="button-with-help">
-                        <button class="btn ai-edit-button" onclick="generateQuoteImages()">
-                            ${labelWithCredits("Generate Quote Images", "ai_quote_images")}
-                        </button>
-                        <span class="help-icon" data-tooltip="Designs shareable image cards featuring the extracted quotes">?</span>
+                    <label for="quoteImageMethodSelect"><strong>Quote Image Style:</strong></label>
+                    <select id="quoteImageMethodSelect" class="input-field" style="margin-bottom: 0.5rem;">
+                        <option value="local">🖼 Local Template</option>
+                        <option value="dalle">🎨 DALL·E AI Image</option>
+                    </select>
+                    <button class="btn ai-edit-button" onclick="generateQuoteImages()">
+                        ${labelWithCredits("Generate Quote Images", "ai_quote_images")}
+                    </button>
+                    <div class="result-field">
+                        <div id="quoteImagesResult"></div>
                     </div>
                     <div class="result-field" id="quoteImagesResult"></div>
                 </div>
@@ -472,7 +477,9 @@ async function transcribe() {
             if (result.credit_warning) {
                 alert("Transcription completed, but your credits are too low. Please visit the store.");
             }
-        
+            
+            // Only consume credits after successful transcription
+            await consumeStoreCredits("transcription");
         }
     } catch (error) {
         hideSpinner("transcriptionResult");
@@ -501,9 +508,9 @@ async function translateTranscript() {
       if (!res.ok) throw new Error(data.error || res.statusText);
   
       resultContainer.innerText = data.translated_transcription;
-      await consumeStoreCredits("translation");
-
       
+      // Only consume credits after successful translation
+      await consumeStoreCredits("translation");
     } catch (err) {
       hideSpinner("translateResult");
       resultContainer.innerText = `Error: ${err.message}`;
@@ -534,6 +541,9 @@ async function generateCleanTranscript() {
 
         const data = await res.json();
         container.innerText = data.clean_transcript || "No clean result.";
+        
+        // Only consume credits after successful clean transcript generation
+        await consumeStoreCredits("clean_transcript");
     } catch (err) {
         container.innerText = "Failed to clean transcript. Server says: " + err.message;
     }
@@ -565,6 +575,9 @@ async function generateAISuggestions() {
         const primary = data.primary_suggestions || "";
         const additional = (data.additional_suggestions || []).join("\n");
         container.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
+        
+        // Only consume credits after successful AI suggestions generation
+        await consumeStoreCredits("ai_suggestions");
     } catch (err) {
         container.innerText = "Failed to generate suggestions: " + err.message;
     }
@@ -594,6 +607,9 @@ async function generateShowNotes() {
 
         const data = await res.json();
         container.innerText = data.show_notes || "No notes.";
+        
+        // Only consume credits after successful show notes generation
+        await consumeStoreCredits("show_notes");
     } catch (err) {
         container.innerText = "Failed to generate show notes: " + err.message;
     }
@@ -622,6 +638,9 @@ async function generateQuotes() {
         }
         const data = await res.json();
         container.innerText = data.quotes || "No quotes.";
+        
+        // Only consume credits after successful quotes generation
+        await consumeStoreCredits("ai_quotes");
     } catch (err) {
         container.innerText = "Failed to generate quotes: " + err.message;
     }
@@ -632,6 +651,8 @@ async function generateQuoteImages() {
     const container = document.getElementById(containerId);
 
     const quotes = document.getElementById("quotesResult").innerText.trim();
+    const method = document.getElementById("quoteImageMethodSelect")?.value || "local";
+
     if (!quotes) {
         alert("Generate quotes first.");
         return;
@@ -643,20 +664,19 @@ async function generateQuoteImages() {
         const res = await fetch("/transcription/quote_images", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ quotes })
+            body: JSON.stringify({ quotes, method })  // 👈 använder vald metod
         });
 
+        const data = await res.json();
+        container.innerHTML = "";
+
         if (res.status === 403) {
-            const data = await res.json();
             container.innerHTML = `
                 <p style="color: red;">${data.error || "You don't have enough credits."}</p>
                 ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
             `;
             return;
         }
-
-        const data = await res.json();
-        container.innerHTML = "";
 
         (data.quote_images || []).forEach(url => {
             const img = document.createElement("img");
@@ -665,6 +685,9 @@ async function generateQuoteImages() {
             img.style.margin = "10px 0";
             container.appendChild(img);
         });
+        
+        // Only consume credits after successful quote images generation
+        await consumeStoreCredits("ai_quote_images");
     } catch (err) {
         container.innerText = "Failed to generate quote images: " + err.message;
     }
@@ -711,7 +734,9 @@ async function runOsintSearch() {
         }
         const data = await response.json();
         container.innerText = data.osint_info || "No info found.";
-
+        
+        // Only consume credits after successful OSINT search
+        await consumeStoreCredits("ai_osint");
     } catch (err) {
         container.innerText = `Failed: ${err.message}`;
     }
@@ -746,6 +771,9 @@ async function generatePodcastIntroOutro() {
         }
         const data = await res.json();
         container.innerText = data.script || "No result.";
+        
+        // Only consume credits after successful intro/outro generation
+        await consumeStoreCredits("ai_intro_outro");
     } catch (err) {
         container.innerText = `Failed: ${err.message}`;
     }
@@ -786,6 +814,9 @@ async function convertIntroOutroToSpeech() {
                     Download Intro/Outro Audio
                 </a>
             `;
+            
+            // Only consume credits after successful intro/outro audio conversion
+            await consumeStoreCredits("ai_intro_outro_audio");
         } else {
             container.innerText = data.error || "Unknown error occurred.";
         }
@@ -854,7 +885,9 @@ async function enhanceAudio() {
         const dl = document.getElementById("downloadEnhanced");
         dl.href = url;
         dl.style.display = "inline-block";
-
+        
+        // Only consume credits after successful audio enhancement
+        await consumeStoreCredits("audio_enhancement");
     } catch (err) {
         container.innerHTML = `Error: ${err.message}`;
     }
@@ -918,7 +951,9 @@ async function runVoiceIsolation() {
         const dl = document.getElementById("downloadIsolatedVoice");
         dl.href = url;
         dl.style.display = "inline-block";
-
+        
+        // Only consume credits after successful voice isolation
+        await consumeStoreCredits("voice_isolation");
     } catch (err) {
         console.error("Voice isolation failed:", err);
         container.innerText = `Isolation failed: ${err.message}`;
@@ -962,7 +997,7 @@ async function analyzeEnhancedAudio() {
 
     mixBtn.style.display = "inline-block"
 
-    // ✅ Consume credits only after success
+    // Only consume credits after successful audio analysis
     await consumeStoreCredits("ai_audio_analysis")
   } catch (err) {
     container.innerText = `Analysis failed: ${err.message}`
@@ -1061,14 +1096,13 @@ async function displayBackgroundAndMix() {
       // Update download link
       dl.href = data.merged_audio
       dl.style.display = "inline-block"
+      
+      // Only consume credits after successful background mixing
+      await consumeStoreCredits("ai_audio_analysis")
     } else {
       console.warn("No merged audio in response")
       preview.innerHTML += `<p class="text-warning">No mixed audio was returned from the server.</p>`
     }
-
-    // ✅ Consume credits only after success
-    await consumeStoreCredits("ai_audio_analysis")
-    console.log("Credits consumed successfully")
   } catch (err) {
     console.error("Error in displayBackgroundAndMix:", err)
     preview.innerText = `Error: ${err.message}`
@@ -1125,7 +1159,7 @@ function renderSfxPlan(sfxPlan, timeline) {
   console.log("SFX plan rendering complete")
 }
 
-  async function cutAudio() {
+async function cutAudio() {
     const startInput = document.getElementById("startTime");
     const endInput = document.getElementById("endTime");
     const cutResult = document.getElementById("cutResult");
@@ -1190,6 +1224,9 @@ function renderSfxPlan(sfxPlan, timeline) {
 
         activeAudioBlob = blob;
         activeAudioId = "external";
+        
+        // Only consume credits after successful audio cutting
+        await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`Cut failed: ${err.message}`);
     }
@@ -1307,6 +1344,9 @@ async function aiCutAudio() {
         applyBtn.innerText = "Apply AI Cuts";
         applyBtn.onclick = applySelectedCuts;
         containerCuts.appendChild(applyBtn);
+        
+        // Only consume credits after successful AI audio cutting
+        await consumeStoreCredits("ai_audio_cutting");
     } catch (err) {
         containerTranscript.innerText = "Failed to process audio.";
         alert(`AI Cut failed: ${err.message}`);
@@ -1383,6 +1423,8 @@ async function applySelectedCuts() {
         // Uppdatera aktiv blob
         activeAudioBlob = blob;
         activeAudioId = "external";
+        
+        // No credit consumption here as it's already done in aiCutAudio
     } catch (err) {
         alert(`Apply failed: ${err.message}`);
     }
@@ -1428,6 +1470,7 @@ async function cutAudioFromBlob() {
         activeAudioBlob = blob;
         activeAudioId = "external";
 
+        // Only consume credits after successful audio cutting from blob
         await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`Cut failed: ${err.message}`);
@@ -1529,6 +1572,7 @@ async function enhanceVideo() {
         dl.href = videoURL;
         dl.style.display = "inline-block";
 
+        // Only consume credits after successful video enhancement
         await consumeStoreCredits("video_enhancement");
     } catch (err) {
         container.innerText = `Error: ${err.message}`;
@@ -1678,7 +1722,7 @@ async function generateAudioClip() {
     container.innerHTML = "";
     container.appendChild(audio);
 
-    // ◀ consume the credit:
+    // Only consume credits after successful audio clip generation
     await consumeStoreCredits("audio_clip");
   } catch (err) {
     hideSpinner("audioClipResult");

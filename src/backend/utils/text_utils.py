@@ -2,12 +2,15 @@
 
 import os
 import re
+import json
+import csv
 from openai import OpenAI
 import logging
 import subprocess
 import base64
 import requests
 import time
+import random
 import math
 from pathlib import Path
 from typing import List
@@ -16,6 +19,8 @@ from io import BytesIO
 import streamlit as st  
 from pydub import AudioSegment
 from collections import Counter
+from PIL import Image, ImageDraw, ImageFont
+import difflib
 
 client = OpenAI()
 
@@ -57,28 +62,59 @@ def translate_text(text: str, target_language: str) -> str:
     logger.error("Translation permanently failed after retries.")
     return "Failed to translate. Try again later."
 
+import tiktoken
+import time
+from openai import OpenAIError, BadRequestError
+
+def truncate_to_token_limit(text, model="gpt-4", max_tokens=7000):
+    enc = tiktoken.encoding_for_model(model)
+    tokens = enc.encode(text)
+    return enc.decode(tokens[:max_tokens]) if len(tokens) > max_tokens else text
+
+def gpt_with_fallback(prompt: str, primary_model="gpt-4", fallback_model="gpt-3.5-turbo-16k") -> str:
+    try:
+        return _safe_gpt_call(prompt, primary_model)
+    except BadRequestError as e:
+        if "context_length_exceeded" in str(e):
+            print("⚠️ Too long for GPT-4, falling back to gpt-3.5-turbo-16k")
+            return _safe_gpt_call(prompt, fallback_model)
+        raise e
+
+def _safe_gpt_call(prompt: str, model: str, max_tokens: int = 7000, retries: int = 2) -> str:
+    prompt = truncate_to_token_limit(prompt, model=model, max_tokens=max_tokens)
+    for attempt in range(retries):
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.choices[0].message.content
+        except OpenAIError as e:
+            if "rate limit" in str(e).lower():
+                if model == "gpt-4":
+                    logger.warning("⚠️ GPT-4 TPM limit hit — falling back to gpt-3.5-turbo-16k.")
+                    return _safe_gpt_call(prompt, "gpt-3.5-turbo-16k")
+                time.sleep((attempt + 1) * 5)
+            else:
+                raise e
+    raise RuntimeError("GPT call failed after retries.")
+
 def generate_ai_suggestions(text):
     prompt = f"""
     Review the following transcription and provide suggestions for improvement.
-    Focus on removing filler words, grammar/spelling corrections, rewriting awkward phrases:
+    Focus on removing filler words, grammar/spelling corrections, and awkward phrasing.
+
     {text}
     """
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content
+    return gpt_with_fallback(prompt)
 
 def generate_show_notes(text):
     prompt = f"""
-    Generate concise show notes for this transcript:
+    Generate clear, concise podcast show notes based on this transcript:
+
     {text}
     """
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content
+    return gpt_with_fallback(prompt)
 
 def transcribe_with_whisper(audio_path: str) -> str:
     try:
@@ -93,10 +129,8 @@ def transcribe_with_whisper(audio_path: str) -> str:
         return ""
 
 classifier = pipeline(
-    "text-classification",
-    model="nreimers/MiniLM-L6-H384-uncased",
-    tokenizer="nreimers/MiniLM-L6-H384-uncased",
-    from_pt=True  # Explicitly load PyTorch weights
+    "zero-shot-classification",
+    model="facebook/bart-large-mnli"
 )
 
 def detect_filler_words(transcription):
@@ -221,21 +255,15 @@ def generate_ai_quotes(transcript: str) -> str:
     {transcript}
     """
     try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You're an expert podcast editor and copywriter."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        quotes_raw = response.choices[0].message.content.strip()
-        lines = [line.strip("\u2022\u2013\u2014-\u2022 \n\"") for line in quotes_raw.split("\n") if line.strip()]
+        output = gpt_with_fallback(prompt, primary_model="gpt-4", fallback_model="gpt-3.5-turbo-16k")
+        # Clean up formatting
+        lines = [line.strip("•–—-• \n\"") for line in output.split("\n") if line.strip()]
         return "\n\n".join(lines[:3])
     except Exception as e:
         logger.error(f"Error generating quotes: {e}")
         return f"Error generating quotes: {str(e)}"
 
-def generate_quote_images(quotes: List[str]) -> List[str]:
+def generate_quote_images_dalle(quotes: List[str]) -> List[str]:
     urls = []
     for quote in quotes:
         prompt = f"Create a visually striking, artistic background that reflects this quote’s emotion: \"{quote}\". No text in the image."
@@ -252,6 +280,88 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
             logger.error(f"Failed to generate image for quote: {quote} | Error: {e}")
             urls.append("")
     return urls
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+
+def render_quote_images_local(quotes: List[str]) -> List[str]:
+    output_dir = os.path.join(BASE_DIR, "src", "Frontend", "static", "quote_images")
+    os.makedirs(output_dir, exist_ok=True)
+    image_paths = []
+
+    available_templates = list(FONT_MAPPING.keys())
+    random.shuffle(available_templates)
+
+    used_templates = set()
+    i = 0  # Index för quote
+
+    while i < len(quotes) and len(image_paths) < 3 and available_templates:
+        template_key = available_templates.pop()
+        template_name = f"{template_key}.jpg"
+        layout_key = template_name
+
+        # Skip duplicates
+        if template_key in used_templates:
+            continue
+        used_templates.add(template_key)
+
+        font_name = FONT_MAPPING.get(template_key)
+        image_path = find_image_path(template_name, TEMPLATE_DIR)
+        font_path = get_matching_font_path(font_name, FONT_FOLDER)
+
+        if not image_path or not os.path.exists(image_path):
+            logger.warning(f"⚠️ Skipped {template_key} — image not found")
+            continue
+        if not font_path:
+            logger.warning(f"⚠️ Skipped {template_key} — font not found or mapping missing")
+            continue
+        if layout_key not in LAYOUTS:
+            logger.warning(f"⚠️ Skipped {template_key} — no layout found in template_layouts.json")
+            continue
+
+        try:
+            image = Image.open(image_path).convert("RGBA")
+            draw = ImageDraw.Draw(image)
+            font = ImageFont.truetype(font_path, 40)
+
+            def wrap(text, font, max_width=400):
+                words = text.split()
+                lines = []
+                if not words:
+                    return ""
+                line = words.pop(0)
+                for word in words:
+                    test = f"{line} {word}"
+                    if draw.textlength(test, font=font) <= max_width:
+                        line = test
+                    else:
+                        lines.append(line)
+                        line = word
+                lines.append(line)
+                return "\n".join(lines)
+
+            wrapped = wrap(quotes[i], font)
+            bbox = draw.multiline_textbbox((0, 0), wrapped, font=font)
+            x = LAYOUTS[layout_key]["x"]
+            y = LAYOUTS[layout_key]["y"] - (bbox[3] - bbox[1]) // 2
+
+            # Draw text with shadow
+            draw.multiline_text((x+2, y+2), wrapped, font=font, fill=(0, 0, 0, 180), anchor="mm", align="center")
+            draw.multiline_text((x, y), wrapped, font=font, fill=(255, 255, 255, 255), anchor="mm", align="center")
+
+            output_path = os.path.join(output_dir, f"quote_local_{i+1}.jpg")
+            image.convert("RGB").save(output_path)
+            image_paths.append(f"/static/quote_images/quote_local_{i+1}.jpg")
+            logger.info(f"✅ Saved: {output_path} with font {os.path.basename(font_path)}")
+
+            i += 1
+
+        except Exception as e:
+            logger.error(f"❌ Error rendering template {template_key}: {e}")
+
+    if len(image_paths) < 3:
+        logger.warning(f"⚠️ Only {len(image_paths)} quote images generated (wanted 3).")
+
+    return image_paths
 
 def fetch_sfx_for_emotion(
     emotion: str,
@@ -357,8 +467,6 @@ def get_osint_info(guest_name: str) -> str:
     return response.choices[0].message.content.strip()
 
 def create_podcast_scripts_paid(osint_info: str, guest_name: str, transcript: str = "") -> str:
-    client = OpenAI()
-
     prompt = f"""
 You are a professional podcast scriptwriter.
 
@@ -376,12 +484,11 @@ The intro should briefly tease the main topic(s) of the episode, using an engagi
 The outro should reflect on the discussion and invite the listener to tune in again.
 """
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    return response.choices[0].message.content.strip()
+    try:
+        return gpt_with_fallback(prompt, primary_model="gpt-4", fallback_model="gpt-3.5-turbo-16k").strip()
+    except Exception as e:
+        logger.error(f"Error generating intro/outro: {e}")
+        return f"Error: {str(e)}"
 
 def text_to_speech_with_elevenlabs(script: str, voice_id: str = "TX3LPaxmHKxFdv7VOQHJ") -> bytes:
 
@@ -408,3 +515,53 @@ def text_to_speech_with_elevenlabs(script: str, voice_id: str = "TX3LPaxmHKxFdv7
     else:
         raise RuntimeError(f"ElevenLabs error {response.status_code}: {response.text}")
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+
+TEMPLATE_DIR = os.path.join(BASE_DIR, "src", "frontend", "static", "images", "clean_templates")
+LAYOUTS_FILE = os.path.join(BASE_DIR, "src", "frontend", "static", "json", "template_layouts.json")
+FONT_MAPPING_FILE = os.path.join(BASE_DIR, "src", "frontend", "static", "csv", "font_mapping_clean.csv")
+FONT_FOLDER = os.path.join(BASE_DIR, "src", "frontend", "static", "fonts_flat")
+
+# === Ladda mallpositioner ===
+try:
+    with open(LAYOUTS_FILE, encoding="utf-8") as f:
+        LAYOUTS = json.load(f)
+except FileNotFoundError:
+    print(f"⚠️  Warning: Layouts file not found at {LAYOUTS_FILE}")
+    LAYOUTS = {}
+
+# === Ladda fontmapping ===
+FONT_MAPPING = {}
+try:
+    with open(FONT_MAPPING_FILE, encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            filename = row["Filename"].strip()
+            font_name = row["Font name"].strip()
+            FONT_MAPPING[filename] = font_name
+except FileNotFoundError:
+    print(f"❌ Font mapping file not found at {FONT_MAPPING_FILE}")
+
+def find_image_path(filename, template_dir):
+    path = os.path.join(template_dir, filename)
+    return path if os.path.exists(path) else None
+
+def get_matching_font_path(font_name, font_folder):
+    if not font_name:
+        return None
+    font_files = [f for f in os.listdir(font_folder) if f.lower().endswith(('.ttf', '.otf'))]
+    
+    # Försök exakt startswith-match först
+    for f in font_files:
+        if f.lower().startswith(font_name.lower()):
+            return os.path.join(font_folder, f)
+
+    # Fallback till fuzzy match
+    matches = difflib.get_close_matches(font_name.lower(), [f.lower() for f in font_files], n=1, cutoff=0.6)
+    if matches:
+        best_match = next((f for f in font_files if f.lower() == matches[0]), None)
+        if best_match:
+            return os.path.join(font_folder, best_match)
+
+    logger.warning(f"⚠️ No matching font found for: {font_name}")
+    return None
