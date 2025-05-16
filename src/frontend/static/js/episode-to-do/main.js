@@ -241,7 +241,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (state.activeTab === "dependencies") {
         renderWorkflowEditor(state, updateUI)
       }
-      setTimeout(ensureCorrectAssignmentIcons, 100);
     }
 
     // Set up tab switching

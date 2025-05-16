@@ -84,14 +84,6 @@ export function renderTaskList(state, updateUI) {
         isAssigned: isAssignedToCurrentUser,
       })
 
-      // Add debug logging
-      console.log(`Task ${task.name} assignment check:`, {
-        taskId: task.id || task._id,
-        assignedAt: task.assignedAt,
-        currentUserEmail: state.currentUser.email,
-        isAssigned: isAssignedToCurrentUser,
-      })
-
       // Check if this task has dependencies that aren't completed
       const hasDependencyWarning =
         task.dependencies &&
@@ -1405,39 +1397,4 @@ export function redirectToWorkspace(taskId, aiTool, state, updateUI) {
       window.setCurrentTask(taskId)
     }
   }, 100) // Small delay to ensure the tab switch happens first
-}
-
-// Add this function to your code
-function ensureCorrectAssignmentIcons() {
-  // Get all task items
-  const taskItems = document.querySelectorAll(".task-item")
-
-  taskItems.forEach((taskItem) => {
-    const taskId = taskItem.dataset.taskId
-    if (!taskId) return
-
-    const task = window.state.tasks.find((t) => (t.id || t._id) === taskId)
-    if (!task) return
-
-    const button = taskItem.querySelector(`.assign-task-btn[data-task-id="${taskId}"]`)
-    if (!button) return
-
-    // Check if task is assigned
-    const isAssigned = task.assignedAt && task.assignedAt.trim && task.assignedAt.trim() !== ""
-
-    // Set the correct icon
-    if (isAssigned) {
-      if (button.innerHTML.includes("fa-user-plus")) {
-        console.log(`Fixing icon for task ${task.name} - should be minus, was plus`)
-        button.innerHTML = '<i class="fas fa-user-minus"></i>'
-        button.title = "Unassign Task"
-      }
-    } else {
-      if (button.innerHTML.includes("fa-user-minus")) {
-        console.log(`Fixing icon for task ${task.name} - should be plus, was minus`)
-        button.innerHTML = '<i class="fas fa-user-plus"></i>'
-        button.title = "Assign to me"
-      }
-    }
-  })
 }
