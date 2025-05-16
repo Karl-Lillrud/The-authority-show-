@@ -88,9 +88,12 @@ function showTab(tabName) {
         content.innerHTML = `
             <h2>🎙 AI-Powered Transcription</h2>
             <input type="file" id="fileUploader" accept="audio/*,video/*">
-            <button class="btn ai-edit-button" onclick="transcribe()">
-              ${labelWithCredits("Transcribe", "transcription")}
-            </button>
+            <div class="button-with-help">
+                <button class="btn ai-edit-button" onclick="transcribe()">
+                ${labelWithCredits("Transcribe", "transcription")}
+                </button>
+                <span class="help-icon" data-tooltip="Converts the uploaded audio or video file into text using AI">?</span>
+            </div>
             <div class="result-field">
                 <pre id="transcriptionResult"></pre>
             </div>
@@ -100,11 +103,14 @@ function showTab(tabName) {
                 <h3>Enhancement Tools</h3>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">
-                        ${labelWithCredits("Clean Transcript", "clean_transcript")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateCleanTranscript()">
+                            ${labelWithCredits("Clean Transcript", "clean_transcript")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Removes filler words, repeated phrases, and fixes typos in the raw transcription">?</span>
+                    </div>
                     <div class="result-field">
-                        <pre id="cleanTranscriptResult"></pre>
+                    <pre id="cleanTranscriptResult"></pre>
                     </div>
                 </div>
 
@@ -115,78 +121,104 @@ function showTab(tabName) {
                         <option value="Spanish">Spanish</option>
                         <!-- lägg till fler språk här -->
                     </select>
-                    <button class="btn ai-edit-button" onclick="translateTranscript()">
-                        ${labelWithCredits("Translate", "translation")}
-                    </button>
+
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="translateTranscript()">
+                            ${labelWithCredits("Translate", "translation")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Translates the transcript into the selected language">?</span>
+                    </div>
+
                     <div class="result-field">
                         <pre id="translateResult"></pre>
                     </div>
                 </div>
 
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateAudioClip()">
-                        ${labelWithCredits("Generate Translated Podcast", "audio_clip")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateAudioClip()">
+                            ${labelWithCredits("Generate Translated Podcast", "audio_clip")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Produces an audio file of the translated text, ready to play as a podcast">?</span>
+                    </div>
                     <div class="result-field" id="audioClipResult"></div>
                 </div>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateAISuggestions()">
-                      ${labelWithCredits("AI Suggestions", "ai_suggestions")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateAISuggestions()">
+                            ${labelWithCredits("AI Suggestions", "ai_suggestions")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Provides AI-generated tips on how to improve your transcript">?</span>
+                    </div>
                     <div class="result-field">
                         <pre id="aiSuggestionsResult"></pre>
                     </div>
                 </div>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateShowNotes()">
-                      ${labelWithCredits("Show Notes", "show_notes")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateShowNotes()">
+                           ${labelWithCredits("Show Notes", "show_notes")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Creates a concise bullet-point summary of the main topics covered">?</span>
+                    </div>
                     <div class="result-field">
                         <pre id="showNotesResult"></pre>
                     </div>
                 </div>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateQuotes()">
-                      ${labelWithCredits("Generate Quotes", "ai_quotes")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateQuotes()">
+                            ${labelWithCredits("Generate Quotes", "ai_quotes")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Extracts memorable quotes from the transcript">?</span>
+                    </div>
                     <div class="result-field">
                         <pre id="quotesResult"></pre>
                     </div>
                 </div>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateQuoteImages()">
-                      ${labelWithCredits("Generate Quote Images", "ai_quote_images")}
-                    </button>
-                    <div class="result-field">
-                        <div id="quoteImagesResult"></div>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="generateQuoteImages()">
+                            ${labelWithCredits("Generate Quote Images", "ai_quote_images")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Designs shareable image cards featuring the extracted quotes">?</span>
                     </div>
+                    <div class="result-field" id="quoteImagesResult"></div>
                 </div>
     
                 <div class="result-group">
                     <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field">
-                    <button class="btn ai-edit-button" onclick="runOsintSearch()">
-                      ${labelWithCredits("OSINT Search", "ai_osint")}
-                    </button>
+                    <div class="button-with-help">
+                        <button class="btn ai-edit-button" onclick="runOsintSearch()">
+                            ${labelWithCredits("OSINT Search", "ai_osint")}
+                        </button>
+                        <span class="help-icon" data-tooltip="Performs an open-source intelligence search on the entered guest name">?</span>
+                    </div>
                     <div class="result-field">
                         <pre id="osintResult"></pre>
                     </div>
                 </div>
     
-                <div class="result-group">
+                <div class="button-with-help">
                     <button class="btn ai-edit-button" onclick="generatePodcastIntroOutro()">
-                    ${labelWithCredits("Generate Intro/Outro", "ai_intro_outro")}
+                        ${labelWithCredits("Generate Intro/Outro", "ai_intro_outro")}
                     </button>
-                    <div class="result-field">
-                        <pre id="introOutroScriptResult"></pre> 
-                    </div>
+                    <span class="help-icon" data-tooltip="Writes a suggested introduction and closing script for your episode">?</span>
+                </div>
+                <div class="result-field">
+                    <pre id="introOutroScriptResult"></pre>
+                </div>
+                <div class="button-with-help" style="margin-top: 1rem;">
                     <button class="btn ai-edit-button" onclick="convertIntroOutroToSpeech()">
-                    ${labelWithCredits("Convert to Speech", "ai_intro_outro_audio")}
+                        ${labelWithCredits("Convert to Speech", "ai_intro_outro_audio")}
                     </button>
-                    <div class="result-field" id="introOutroAudioResult" style="margin-top: 1rem;"></div>
+                    <span class="help-icon" data-tooltip="Turns that script into a spoken audio file using AI voice">?</span>
+                </div>
+                    <div class="result-field" id="introOutroAudioResult"></div>
                 </div>
             </div>
         `;
@@ -198,126 +230,154 @@ function showTab(tabName) {
                 <p><strong>Original Audio</strong></p>
                 <audio id="originalAudioPlayer" controls style="width: 100%"></audio>
             </div>
-    
+
             <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 12px;">
                 <h3>Choose Audio Processing Method</h3>
                 <p style="margin-bottom: 1rem;">Select one of the following enhancements:</p>
-    
-                <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
-                    <h4><strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
+
+            <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
+                <h4><strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
+                <div class="button-with-help">
                     <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
                         ${labelWithCredits("Isolate Voice", "voice_isolation")}
                     </button>
-                    <div id="isolatedVoiceResult" style="margin-top: 1rem;"></div>
-                    <a id="downloadIsolatedVoice"
-                       class="inline-block mt-2 bg-orange-500 text-white px-4 py-2 rounded-2xl shadow hover:shadow-lg transition"
-                       style="display: none;"
-                       download="isolated_voice.wav">
-                       Download Isolated Voice
-                    </a>
+                    <span class="help-icon" data-tooltip="Separates the speaker’s voice from background noise">?</span>
                 </div>
-    
-                <div id="audioEnhancementSection">
-                    <h4><strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
+                <div class="result-field">
+                    <div id="isolatedVoiceResult"></div>
+                </div>
+                <a id="downloadIsolatedVoice"
+                    class="inline-block mt-2 bg-orange-500 text-white px-4 py-2 rounded-2xl shadow hover:shadow-lg transition"
+                    style="display: none;"
+                    download="isolated_voice.wav">
+                Download Isolated Voice
+                </a>
+            </div>
+
+            <div id="audioEnhancementSection">
+                <h4><strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
+                <div class="button-with-help">
                     <button class="btn ai-edit-button" onclick="enhanceAudio()">
-                      ${labelWithCredits("Enhance Audio", "audio_enhancement")}
+                        ${labelWithCredits("Enhance Audio", "audio_enhancement")}
                     </button>
-                    <div id="audioControls" style="margin-top: 1rem;"></div>
+                    <span class="help-icon" data-tooltip="Reduces noise and normalizes volume levels automatically">?</span>
+                </div>
+                <div class="result-field">
+                    <div id="audioControls"></div>
                 </div>
             </div>
-    
+            </div>
+
             <div id="audioAnalysisSection">
-                <hr/>
-                <h3>AI Analysis</h3>
+            <hr/>
+            <h3>AI Analysis</h3>
 
-                <label for="audioSourceSelectAnalysis"><strong>Audio Source:</strong></label>
-                <select id="audioSourceSelectAnalysis" class="input-field" style="margin-bottom: 1rem;">
-                    <option value="enhanced">Enhanced</option>
-                    <option value="isolated">Isolated</option>
-                    <option value="original">Original</option>
-                </select>
+            <label for="audioSourceSelectAnalysis"><strong>Audio Source:</strong></label>
+            <select id="audioSourceSelectAnalysis" class="input-field" style="margin-bottom: 1rem;">
+                <option value="enhanced">Enhanced</option>
+                <option value="isolated">Isolated</option>
+                <option value="original">Original</option>
+            </select>
 
+            <div class="button-with-help">
                 <button class="btn ai-edit-button" onclick="analyzeEnhancedAudio()">
-                    ${labelWithCredits("Analyze", "ai_audio_analysis")}
+                ${labelWithCredits("Analyze", "ai_audio_analysis")}
                 </button>
-
+                <span class="help-icon" data-tooltip="Lets the AI analyze the selected audio source and provide content insights">?</span>
+            </div>
+            <div class="result-field">
                 <pre id="analysisResults"></pre>
+            </div>
 
-                <button id="mixBackgroundBtn"
+            <button id="mixBackgroundBtn"
                         class="btn ai-edit-button"
                         style="display: none; margin-top: 1rem;"
                         onclick="displayBackgroundAndMix()">
                     Mix Background & Preview
                 </button>
+            <div class="result-field">
+                <div id="backgroundPreview"></div>
+            </div>
+            <div class="result-field">
+                <div id="soundEffectTimeline"></div>
+            </div>
 
-                <div id="backgroundPreview" style="margin-top: 1rem;"></div>
-                <div id="soundEffectTimeline" style="margin-top: 1rem;"></div>
-
+            <div class="button-with-help" style="margin-top: 1rem;">
                 <a id="downloadEnhanced"
                 class="btn ai-edit-button"
                 download="processed_audio.wav"
                 style="display: none;">
                 Download Processed Audio
                 </a>
+                
             </div>
-    
+            </div>
+
             <div id="audioCuttingSection">
-                <hr/>
-                <h3>Audio Cutting</h3>
-                <label for="audioSourceSelectCutting"><strong>Audio Source:</strong></label>
-                <select id="audioSourceSelectCutting" class="input-field" style="margin-bottom: 1rem;">
-                    <option value="enhanced">Enhanced</option>
-                    <option value="isolated">Isolated</option>
-                    <option value="original">Original</option>
-                </select>
-                <br/>
+            <hr/>
+            <h3>Audio Cutting</h3>
 
-                <label>Start:
-                    <input type="number" id="startTime" min="0" step="0.1" class="input-field">
-                </label>
+            <label for="audioSourceSelectCutting"><strong>Audio Source:</strong></label>
+            <select id="audioSourceSelectCutting" class="input-field" style="margin-bottom: 1rem;">
+                <option value="enhanced">Enhanced</option>
+                <option value="isolated">Isolated</option>
+                <option value="original">Original</option>
+            </select>
+            <br/>
 
-                <label>End:
-                    <input type="number" id="endTime" min="0" step="0.1" class="input-field">
-                </label>
+            <label>Start:
+                <input type="number" id="startTime" min="0" step="0.1" class="input-field">
+            </label>
+            <label>End:
+                <input type="number" id="endTime" min="0" step="0.1" class="input-field">
+            </label>
 
+            <div class="button-with-help">
                 <button class="btn ai-edit-button" onclick="cutAudio()">
-                    ${labelWithCredits("Cut", "audio_cutting")}
+                ${labelWithCredits("Cut", "audio_cutting")}
                 </button>
+                <span class="help-icon" data-tooltip="Trim the audio between the specified start and end">?</span>
+            </div>
+            <div class="result-field">
+                <div id="cutResult"></div>
+            </div>
 
-                <div id="cutResult" style="margin-top: 1rem;"></div>
-
+            <div class="button-with-help" style="margin-top: 1rem;">
                 <a id="downloadCut"
                 class="btn ai-edit-button"
                 download="cut_audio.wav"
-                style="display: none; margin-top: 1rem;">
-                    Download Cut
+                style="display: none;">
+                Download Cut
                 </a>
             </div>
-            <div id="aiCuttingSection">
-                <hr/>
-                <h3>AI Cutting + Transcript</h3>
-
-                <label for="audioSourceSelectAICut"><strong>Audio Source:</strong></label>
-                <select id="audioSourceSelectAICut" class="input-field" style="margin-bottom: 1rem;">
-                    <option value="enhanced">Enhanced</option>
-                    <option value="isolated">Isolated</option>
-                    <option value="original">Original</option>
-                </select>
-
-                <button class="btn ai-edit-button" onclick="aiCutAudio()">
-                    ${labelWithCredits("Run AI Cut", "ai_audio_cutting")}
-                </button>
-
-                <div class="result-field">
-                    <h4>Transcript</h4>
-                    <pre id="aiTranscript"></pre>
-                </div>
-                <div class="result-field">
-                    <h4>Suggested Cuts</h4>
-                    <pre id="aiSuggestedCuts"></pre>
-                </div>
             </div>
 
+            <div id="aiCuttingSection">
+            <hr/>
+            <h3>AI Cutting + Transcript</h3>
+
+            <label for="audioSourceSelectAICut"><strong>Audio Source:</strong></label>
+            <select id="audioSourceSelectAICut" class="input-field" style="margin-bottom: 1rem;">
+                <option value="enhanced">Enhanced</option>
+                <option value="isolated">Isolated</option>
+                <option value="original">Original</option>
+            </select>
+
+            <div class="button-with-help">
+                <button class="btn ai-edit-button" onclick="aiCutAudio()">
+                ${labelWithCredits("Run AI Cut", "ai_audio_cutting")}
+                </button>
+                <span class="help-icon" data-tooltip="Automatically removes silent or filler sections and provides a transcript">?</span>
+            </div>
+            <div class="result-field">
+                <h4>Transcript</h4>
+                <pre id="aiTranscript"></pre>
+            </div>
+            <div class="result-field">
+                <h4>Suggested Cuts</h4>
+                <pre id="aiSuggestedCuts"></pre>
+            </div>
+            </div>
         `;
     } else if (tabName === 'video') {
         content.innerHTML = `
@@ -328,9 +388,12 @@ function showTab(tabName) {
                 <video id="originalVideoPlayer" controls style="width: 100%"></video>
             </div>
             <div class="button-group" style="margin-bottom: 1rem;">
-                <button class="btn ai-edit-button" id="enhanceVideoBtn" onclick="enhanceVideo()">
-                    ${labelWithCredits("Enhance Video", "video_enhancement")}
-                </button>
+                <div class="button-with-help">
+                    <button class="btn ai-edit-button" id="enhanceVideoBtn" onclick="enhanceVideo()">
+                        ${labelWithCredits("Enhance Video", "video_enhancement")}
+                    </button>
+                    <span class="help-icon" data-tooltip="Applies AI enhancements to improve the video’s audio quality">?</span>
+                </div>
                 <button class="btn ai-edit-button" id="resetVideoBtn" onclick="resetVideo()" style="display: none;">
                     Reset
                 </button>
