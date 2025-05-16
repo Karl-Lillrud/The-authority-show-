@@ -67,6 +67,7 @@ CORS(
             "origins": [
                 "https://devapp.podmanager.ai",  # Test Branch (testMain)
                 "https://app.podmanager.ai",  # Live branch (Main)
+                "https://www.podmanager.ai",  # Live branch/index redirect address (Main)
                 "http://127.0.0.1:8000",  # Localhost
             ]
         }
