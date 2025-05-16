@@ -129,10 +129,8 @@ def transcribe_with_whisper(audio_path: str) -> str:
         return ""
 
 classifier = pipeline(
-    "text-classification",
-    model="nreimers/MiniLM-L6-H384-uncased",
-    tokenizer="nreimers/MiniLM-L6-H384-uncased",
-    from_pt=True  # Explicitly load PyTorch weights
+    "zero-shot-classification",
+    model="facebook/bart-large-mnli"
 )
 
 def detect_filler_words(transcription):

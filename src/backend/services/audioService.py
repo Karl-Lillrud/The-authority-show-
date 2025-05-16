@@ -13,6 +13,7 @@ from backend.utils.text_utils import (
     generate_ai_show_notes, suggest_sound_effects, translate_text, mix_background,
     pick_dominant_emotion, fetch_sfx_for_emotion
 )
+import backend.utils.text_utils as text_utils
 from backend.repository.ai_models import save_file, get_file_data, get_file_by_id
 from elevenlabs.client import ElevenLabs
 from backend.utils.blob_storage import upload_file_to_blob
@@ -257,8 +258,8 @@ class AudioService:
 
             cleaned_transcript = ai_utils_module.remove_filler_words(transcript) if TEXTSTAT_AVAILABLE else transcript
             noise_result = detect_background_noise(temp_path)
-            filler_sentences = ai_utils_module.detect_filler_words(transcript) if TEXTSTAT_AVAILABLE else []
-            sentence_certainty = ai_utils_module.analyze_certainty_levels(transcript) if TEXTSTAT_AVAILABLE else []
+            filler_sentences = text_utils.detect_filler_words(transcript) if TEXTSTAT_AVAILABLE else []
+            sentence_certainty = text_utils.analyze_certainty_levels(transcript) if TEXTSTAT_AVAILABLE else []
 
             logger.info(f"Certainty results computed")
 
