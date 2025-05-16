@@ -481,6 +481,9 @@ def send_beta_invite_email(email, user_name=None):
     """
     Sends the PodManager beta invite email using the correct HTML template.
     """
+    # To temporarily disable this function, uncomment the next line
+    return {"success": False, "message": "Beta invites are temporarily disabled."}
+    
     subject = "🎉 Welcome to PodManager.ai Beta – New Features Unlocked!"
     # Render the correct template for the beta invite
     body = render_template(
