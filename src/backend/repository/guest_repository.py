@@ -209,6 +209,7 @@ class GuestRepository:
                 "recommendedGuests": data.get("recommendedGuests", []),
                 "futureOpportunities": data.get("futureOpportunities", False),
                 "socialmedia": data.get("socialmedia", {}),
+                "status": data.get("status",""),
             }
 
             # If episodeId is provided, update the guest's episodeId
@@ -227,9 +228,6 @@ class GuestRepository:
             result = self.collection.update_one(
                 {"_id": guest_id, "user_id": user_id_str}, {"$set": update_fields}
             )
-
-            if result.matched_count == 0:
-                return {"error": "Guest not found or unauthorized"}, 404
 
             return {"message": "Guest updated successfully"}, 200
 

@@ -592,3 +592,28 @@ def send_lia_inquiry_email(name, email, phone, school_and_study):
             f"❌ Error while sending LIA inquiry email: {e}", exc_info=True
         )
         return {"error": f"Error while sending LIA inquiry email: {str(e)}"}
+
+
+def send_booking_email(recipient_email, recipient_name, recording_at, pod_name):
+    """Sends a booking email to the guest."""
+    try:
+        subject = "Booking Confirmation"
+
+        # Render the email template with dynamic values
+        body = render_template(
+            "emails/booking_email.html",
+            guest_name=recipient_name,
+            booking_date=recording_at,
+            podName=pod_name
+        )
+
+        # Send the email
+        result = send_email(recipient_email, subject, body)
+        if "error" in result:
+            raise Exception(result["error"])
+
+        logger.info(f"Booking email sent to {recipient_email}")
+        return {"message": "Booking email sent successfully"}
+    except Exception as e:
+        logger.error(f"Error sending booking email to {recipient_email}: {e}", exc_info=True)
+        return {"error": f"Failed to send booking email: {str(e)}"}

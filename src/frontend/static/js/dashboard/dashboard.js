@@ -1,5 +1,5 @@
 import { fetchAllEpisodes } from "/static/requests/episodeRequest.js";
-import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
+import { fetchGuestsByEpisode,editGuestRequest } from "/static/requests/guestRequests.js";
 import {
   fetchPodcast,
   fetchPodcasts
@@ -615,7 +615,7 @@ function showPendingGuestsPopup(pendingGuests) {
       (guest) => `
       <li class="field-group full-width">
         <strong>${guest.name}</strong> (${guest.email})<br>
-        Requested Time: ${guest.recordingDate} at ${guest.recordingTime}
+        Requested Date: ${guest.recordingDate} at ${guest.recordingTime}
         <div class="form-actions">
           <button class="accept-btn save-btn" data-id="${guest.id}">Accept</button>
           <button class="decline-btn cancel-btn" data-id="${guest.id}">Decline</button>
@@ -638,7 +638,15 @@ function showPendingGuestsPopup(pendingGuests) {
   popup.querySelectorAll(".accept-btn").forEach((button) => {
     button.addEventListener("click", (event) => {
       const guestId = event.target.dataset.id;
-      handleAcceptGuest(guestId);
+        // Find the guest data from the pendingGuests array
+      const guest = pendingGuests.find((g) => g.id === guestId);
+
+      if (guest) {
+        const { recordingDate, recordingTime } = guest;
+        handleAcceptGuest(guestId, recordingDate, recordingTime);
+      } else {
+        console.error("Guest data not found for ID:", guestId);
+      }
     });
   });
 
@@ -656,4 +664,52 @@ export async function refreshDashboardStats() {
     fetchAndDisplayGuestCount(),
     // Add more stat refreshers if needed
   ]);
-  updateStatCounts();}
+  updateStatCounts();
+}
+ async function handleAcceptGuest(guestId, recordingDate, recordingTime) {
+  try {
+    console.log("Guest ID being sent:", guestId);
+    // Combine the recording date and time into a single field
+    const recordingAt = `${recordingDate} ${recordingTime}`;
+
+    // Prepare the payload for accepting the guest
+    const payload = {
+      status: "accepted",
+      recordingAt: recordingAt, // Dynamically set the recordingAt field
+    };
+
+    // Call the existing editGuestRequest function
+    const response = await editGuestRequest(guestId, payload);
+
+    if (response.message === "Guest updated successfully") {
+      alert("Guest accepted successfully!");
+      location.reload(); // Refresh the page to reflect changes
+    } else {
+      throw new Error(response.error || "Failed to accept guest.");
+    }
+  } catch (error) {
+    console.error("Error accepting guest:", error);
+    alert("Failed to accept guest.");
+  }
+}
+  async function handleDeclineGuest(guestId) {
+    try {
+      // Prepare the payload for declining the guest
+      const payload = {
+        status: "declined",
+      };
+
+      // Call the existing editGuestRequest function
+      const response = await editGuestRequest(guestId, payload);
+
+      if (response.message === "Guest updated successfully") {
+        alert("Guest declined successfully!");
+        location.reload(); // Refresh the page to reflect changes
+      } else {
+        throw new Error(response.error || "Failed to decline guest.");
+      }
+    } catch (error) {
+      console.error("Error declining guest:", error);
+      alert("Failed to decline guest.");
+    }
+  }
