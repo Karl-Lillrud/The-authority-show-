@@ -1,7 +1,8 @@
-from marshmallow import Schema, fields
+from pydantic import BaseModel
+from typing import Optional
 
-class SubscriptionSchema(Schema): # This is one subscription if more subscriptions are needed
-    id = fields.Str()           # Anoter schema should be created
-    subscriptionPlan = fields.Str()
-    autoRenew = fields.Bool()
-    discountCode = fields.Str()
+class Subscription(BaseModel):
+    id: Optional[str] = None
+    subscriptionPlan: Optional[str] = None
+    autoRenew: Optional[bool] = None
+    discountCode: Optional[str] = None

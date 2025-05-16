@@ -1,7 +1,7 @@
-from marshmallow import Schema, fields
+from pydantic import BaseModel
+from typing import Optional
 
-class GuestsToEpisodes(Schema):
-    id = fields.Str()
-    episodeId = fields.Str()       
-    guestId = fields.Str()
- 
+class GuestsToEpisodes(BaseModel):
+    id: Optional[str] = None
+    episodeId: str
+    guestId: str

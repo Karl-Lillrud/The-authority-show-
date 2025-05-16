@@ -1,21 +1,18 @@
-from marshmallow import Schema, fields
+from pydantic import BaseModel, EmailStr
+from typing import List, Optional
+from datetime import datetime
 
+class Member(BaseModel):
+    id: Optional[str] = None  # dump_only -> Optional (not required on input)
+    name: str
+    email: EmailStr
 
-class MemberSchema(Schema):
-    id = fields.Str(dump_only=True)
-    name = fields.Str(required=True)
-    email = fields.Email(required=True)
-
-
-class TeamSchema(Schema):
-    id = fields.Str(dump_only=True)
-    name = fields.Str(required=True)
-    description = fields.Str(allow_none=True)
-    ownerId = fields.Str(required=True)
-    ownerEmail = fields.Email(required=True)
-    members = fields.List(
-        fields.Nested(MemberSchema), 
-        load_default=[] # Use load_default if you need an empty list when the field is missing during loading
-    ) 
-    createdAt = fields.DateTime(dump_only=True)
-    updatedAt = fields.DateTime(dump_only=True)
+class Team(BaseModel):
+    id: Optional[str] = None  # dump_only -> Optional (not required on input)
+    name: str
+    description: Optional[str] = None
+    ownerId: str
+    ownerEmail: EmailStr
+    members: List[Member] = []  # default empty list if missing
+    createdAt: Optional[datetime] = None  # dump_only -> Optional
+    updatedAt: Optional[datetime] = None  # dump_only -> Optional

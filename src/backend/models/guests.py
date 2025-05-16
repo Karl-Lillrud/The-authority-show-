@@ -1,39 +1,40 @@
-from marshmallow import Schema, fields
-from backend.models.podtasks import PodtaskSchema
+from pydantic import BaseModel, EmailStr
+from typing import Optional, List
+from datetime import datetime
 
-class SocialMediaSchema(Schema):
+class SocialMedia(BaseModel):
     """Schema for social media links"""
-    linkedin = fields.Str(required=False)
-    twitter = fields.Str(required=False)
-    instagram = fields.Str(required=False)
-    tiktok = fields.Str(required=False)
-    facebook = fields.Str(required=False)
-    whatsapp = fields.Str(required=False)
+    linkedin: Optional[str] = None
+    twitter: Optional[str] = None
+    instagram: Optional[str] = None
+    tiktok: Optional[str] = None
+    facebook: Optional[str] = None
+    whatsapp: Optional[str] = None
 
-class RecommendedGuestSchema(Schema):
+class RecommendedGuest(BaseModel):
     """Schema for recommended guests"""
-    name = fields.Str(required=False)
-    email = fields.Str(required=False)
-    reason = fields.Str(required=False)
+    name: Optional[str] = None
+    email: Optional[str] = None
+    reason: Optional[str] = None
 
-class GuestSchema(Schema):
-    id = fields.Str()
-    episodeId = fields.Str(required=False)
-    name = fields.Str(required=True)
-    image = fields.Str()
-    description = fields.Str()
-    bio = fields.Str()
-    email = fields.Email()
-    company = fields.Str()
-    phone = fields.Str()  # Changed from Int to Str to handle phone formats
-    areasOfInterest = fields.List(fields.Str())
-    status = fields.Str()
-    scheduled = fields.Int()
-    completed = fields.Int()
-    created_at = fields.DateTime()
-    user_id = fields.Str()
-    calendarEventId = fields.Str()
-    futureOpportunities = fields.Bool()
-    notes = fields.Str()
-    recommendedGuests = fields.List(fields.Nested(RecommendedGuestSchema))
-    socialmedia = fields.Nested(SocialMediaSchema)
+class Guest(BaseModel):
+    id: Optional[str] = None
+    episodeId: Optional[str] = None
+    name: str
+    image: Optional[str] = None
+    description: Optional[str] = None
+    bio: Optional[str] = None
+    email: Optional[EmailStr] = None
+    company: Optional[str] = None
+    phone: Optional[str] = None  # String to support formats like "+46 123 456 789"
+    areasOfInterest: Optional[List[str]] = []
+    status: Optional[str] = None
+    scheduled: Optional[int] = None
+    completed: Optional[int] = None
+    created_at: Optional[datetime] = None
+    user_id: Optional[str] = None
+    calendarEventId: Optional[str] = None
+    futureOpportunities: Optional[bool] = None
+    notes: Optional[str] = None
+    recommendedGuests: Optional[List[RecommendedGuest]] = []
+    socialmedia: Optional[SocialMedia] = None
