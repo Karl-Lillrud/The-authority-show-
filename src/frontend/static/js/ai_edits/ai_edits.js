@@ -289,14 +289,12 @@ function showTab(tabName) {
                 <pre id="analysisResults"></pre>
             </div>
 
-            <div class="button-with-help" style="margin-top: 1rem;">
-                <button id="mixBackgroundBtn"
+            <button id="mixBackgroundBtn"
                         class="btn ai-edit-button"
+                        style="display: none; margin-top: 1rem;"
                         onclick="displayBackgroundAndMix()">
-                Mix Background & Preview
+                    Mix Background & Preview
                 </button>
-                <span class="help-icon" data-tooltip="Mixes the audio with background sounds and previews the result">?</span>
-            </div>
             <div class="result-field">
                 <div id="backgroundPreview"></div>
             </div>
@@ -338,7 +336,7 @@ function showTab(tabName) {
                 <button class="btn ai-edit-button" onclick="cutAudio()">
                 ${labelWithCredits("Cut", "audio_cutting")}
                 </button>
-                <span class="help-icon" data-tooltip="Trims the audio between the specified start and end">?</span>
+                <span class="help-icon" data-tooltip="Trim the audio between the specified start and end">?</span>
             </div>
             <div class="result-field">
                 <div id="cutResult"></div>
