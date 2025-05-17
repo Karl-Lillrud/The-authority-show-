@@ -63,15 +63,6 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(upload_and_delete_logs, 'cron', hour=23, minute=55)
 scheduler.start()
 
-@app.route('/')
-def home():
-    return "App running with log upload scheduler."
-
-if __name__ == "__main__":
-    app.run()
-
-
-
 def render_email_content(
     trigger_name,
     guest,
@@ -140,7 +131,8 @@ def check_and_send_reminders_with_context(app):
         check_and_send_reminders()
 
 
-# def _load_podcasts_from_xml_for_scheduler(file_path):
+def _load_podcasts_from_xml_for_scheduler(file_path):
+    return print("Paused At The Moment")
 #     podcasts = []
 #     try:
 #         # Resolve file_path relative to the project root
@@ -174,7 +166,8 @@ def check_and_send_reminders_with_context(app):
 #     return podcasts
 
 
-# def load_activation_progress():
+def load_activation_progress():
+    return print("Paused At The Moment")
 #     default_progress = {
 #         "current_day_batch_size": INITIAL_BATCH_SIZE,
 #         "processed_emails_globally": [],
@@ -207,7 +200,8 @@ def check_and_send_reminders_with_context(app):
 #         return default_progress
 
 
-# def save_activation_progress(progress_data):
+def save_activation_progress(progress_data):
+    return print("Paused At The Moment")
 #     try:
 #         with open(ACTIVATION_PROGRESS_FILE, "w") as file:
 #             json.dump(progress_data, file, indent=4)
@@ -217,7 +211,8 @@ def check_and_send_reminders_with_context(app):
 #         logger.error(f"Error serializing activation progress data: {e}")
 
 
-# def trigger_scheduled_activation_invites():
+def trigger_scheduled_activation_invites():
+    return print("Paused At The Moment")
 #     logger.info("=== [SCHEDULER] Activation email job STARTED ===")
 #     try:
 #         logger.info("Scheduler: Starting job to trigger activation invites with progressive rollout.")
@@ -350,7 +345,8 @@ def check_and_send_reminders_with_context(app):
 #         logger.error(f"=== [SCHEDULER] ERROR in activation email job: {e}", exc_info=True)
 
 
-# def send_daily_activation_summary():
+def send_daily_activation_summary():
+    return print("Paused At The Moment")
 #     logger.info("=== [SCHEDULER] Daily activation summary job STARTED ===")
 #     try:
 #         logger.info("Scheduler: Preparing to send daily activation summary.")
@@ -417,12 +413,14 @@ def check_and_send_reminders_with_context(app):
 #         logger.error(f"=== [SCHEDULER] ERROR in daily activation summary job: {e}", exc_info=True)
 
 
-# def send_daily_activation_summary_with_context(app):
+def send_daily_activation_summary_with_context(app):
+    return print("Paused At The Moment")
 #     with app.app_context():
 #         send_daily_activation_summary()
 
 
-# def trigger_scheduled_activation_invites_with_context(app):
+def trigger_scheduled_activation_invites_with_context(app):
+    return print("Paused At The Moment")
 #     with app.app_context():
 #         trigger_scheduled_activation_invites()
 
