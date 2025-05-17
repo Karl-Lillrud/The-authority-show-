@@ -2,6 +2,7 @@ import os
 import logging
 import json
 from datetime import datetime, timedelta
+from azure.storage.blob import BlobServiceClient
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
@@ -21,19 +22,54 @@ logger = logging.getLogger(__name__)
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '..', '.env'))
 
 SENT_EMAILS_FILE = os.path.join(os.path.dirname(__file__), "sent_emails.json")
-# XML_FILE_PATH_FOR_ACTIVATION will be loaded from .env; default is fallback
 XML_FILE_PATH_FOR_ACTIVATION = os.getenv("ACTIVATION_XML_FILE_PATH", "src/frontend/static/scraped.xml")  # Default changed to be more sensible if .env fails
 API_BASE_URL_FOR_ACTIVATION = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')
-
 ACTIVATION_PROGRESS_FILE = os.path.join(os.path.dirname(__file__), "activation_progress.json")
 INITIAL_BATCH_SIZE = int(os.getenv("ACTIVATION_INITIAL_BATCH_SIZE", 68))
 INCREMENT_PERCENTAGE = float(os.getenv("ACTIVATION_INCREMENT_PERCENTAGE", 0.20))
+
+# blob values
+AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+CONTAINER_NAME = "podmanagerstorage" 
+BLOB_PATH_PREFIX = "https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/appservicelogs/"  # Default to "appservicelogs" if not set
+LOGS_DIR = "/home/LogFiles"
+blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
+container_client = blob_service_client.get_container_client(CONTAINER_NAME)
 
 scheduler = BackgroundScheduler(daemon=True)
 _scheduler_initialized_jobs = False  # Flag to track if jobs have been added for the current scheduler instance
 
 guest_repo = GuestRepository()
 episode_repo = EpisodeRepository()
+
+def upload_and_delete_logs():
+    try:
+        for root, dirs, files in os.walk(LOGS_DIR):
+            for filename in files:
+                local_path = os.path.join(root, filename)
+                # Create blob name with date folder structure: appservicelogs/YYYY-MM-DD/filename
+                date_folder = datetime.utcnow().strftime("%Y-%m-%d")
+                blob_name = f"{BLOB_PATH_PREFIX}/{date_folder}/{filename}"
+
+                with open(local_path, "rb") as data:
+                    container_client.upload_blob(name=blob_name, data=data, overwrite=True)
+
+                os.remove(local_path)
+                print(f"Uploaded and deleted: {local_path}")
+    except Exception as e:
+        print(f"Error during upload and delete logs: {e}")
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(upload_and_delete_logs, 'cron', hour=23, minute=55)
+scheduler.start()
+
+@app.route('/')
+def home():
+    return "App running with log upload scheduler."
+
+if __name__ == "__main__":
+    app.run()
+
 
 
 def render_email_content(
