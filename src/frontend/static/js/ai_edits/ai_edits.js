@@ -934,17 +934,11 @@ async function runVoiceIsolation() {
         activeAudioBlob = blob;
         activeAudioId = "external";
 
-        container.innerHTML = `
-            <p>Isolated Audio</p>
-            <audio controls src="${url}" style="width: 100%;"></audio>
-        `;
+        renderAudioPlayer(containerId, blob, "isolatedAudioPlayer");
 
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
         document.getElementById("aiCuttingSection").style.display = "block";
-
-        const mixBtn = document.getElementById("mixBackgroundBtn");
-        mixBtn.style.display = "none";
 
         const dl = document.getElementById("downloadIsolatedVoice");
         dl.href = url;
