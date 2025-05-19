@@ -7,6 +7,10 @@ body {
     background-color: var(--background-light);
     color: #404040;
   }
+
+  #app {
+    min-height: calc(100vh - 60px);
+  }
   
 
   /* Tabs */
