@@ -1717,7 +1717,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
             button.disabled = false;
             button.classList.remove("disabled");
-        }, 3000);
+        }, 1000);
     }, true);  
 });
 
