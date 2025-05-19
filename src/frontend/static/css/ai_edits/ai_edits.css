@@ -15,7 +15,7 @@ body {
   /* Tabs */
   #tabs {
     display: flex;
-    gap: 1rem;
+    gap: 30px;
     padding-bottom: 0.5rem;
     margin-bottom: 23px;
   }
