@@ -42,13 +42,16 @@ VOICE_MAPS = {
 
 class TranscriptionService:
     def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
+        """
+        Transkriberar ljudet och grupperar ord till meningar med korrekta tidsstämplar.
+        """
         from io import BytesIO
         from datetime import datetime, timezone
         import re
-        
-        logger.info("Starting transcription")
 
-        # === steg 1: ElevenLabs-transkription ===
+        logger.info("Starting transcription (group by sentence)")
+
+        # === steg 1: ElevenLabs-transkription (word granularity) ===
         audio_data = BytesIO(file_data)
         transcription_result = client.speech_to_text.convert(
             file=audio_data,
@@ -59,7 +62,7 @@ class TranscriptionService:
         )
         if not transcription_result.text:
             raise Exception("Transcription returned no text.")
-        transcription_text = transcription_result.text.strip()
+        full_text = transcription_result.text.strip()
 
         # === steg 2: spara fil i GridFS ===
         file_id = fs.put(
@@ -68,16 +71,16 @@ class TranscriptionService:
             metadata={"upload_timestamp": datetime.now(timezone.utc), "type": "transcription"}
         )
 
-        # === steg 3: bygg word_timings + speaker_map ===
+        # === steg 3: bygg per-ord-lista och speaker_map ===
+        word_timings = []
         speaker_map = {}
         speaker_counter = 1
-        word_timings = []
         for w in transcription_result.words:
             txt = w.text.strip()
             if not txt:
                 continue
             start = round(w.start, 2)
-            end   = round(w.end,   2)
+            end = round(w.end, 2)
             word_timings.append({
                 "word": txt,
                 "start": start,
@@ -88,42 +91,47 @@ class TranscriptionService:
                 speaker_map[w.speaker_id] = f"Speaker {speaker_counter}"
                 speaker_counter += 1
 
-        # === steg 4: dela upp i meningar och behåll kronologisk ordning ===
-        sentences = re.split(r'(?<=[\.!?])\s+', transcription_text)
-        raw_entries = []  # list of (start_time, line)
-        prev_end_time = 0.0
-        for sentence in sentences:
-            sent = sentence.strip()
+        # === steg 4: dela full_text i meningar ===
+        sentences = re.split(r'(?<=[\.\?\!])\s+', full_text)
+
+        # === steg 5: gruppera ord till meningar ===
+        raw_entries = []  # (start_time, end_time, speaker, sentence_text)
+        idx = 0
+        for sent in sentences:
+            sent = sent.strip()
             if not sent:
                 continue
-            # hämta tidsintervall för meningen från ord-timings, baserat på föregående slut-tid
-            ts = get_sentence_timestamps(sent, word_timings, prev_end_time)
-            start, end = ts["start"], ts["end"]
-            prev_end_time = end
-            # hitta talare för första ordet i segmentet
-            first = next((wt for wt in word_timings if wt["start"] == start), None)
-            speaker = speaker_map.get(first["speaker_id"], "Speaker 1") if first else "Speaker 1"
-            line = f"[{start:.2f}-{end:.2f}] {speaker}: {sent}"
-            raw_entries.append((start, line))
+            words = sent.split()
+            # hitta start/end för mening baserat på ord_timings sekventiellt
+            # start = first matching word start, end = last matching word end
+            start_time, end_time = None, None
+            speaker = None
+            for w in word_timings[idx:]:
+                if w["word"] == words[0] and start_time is None:
+                    start_time = w["start"]
+                if start_time is not None:
+                    # mappa speaker från första ord
+                    if speaker is None:
+                        speaker = speaker_map[w["speaker_id"]]
+                    if w["word"] == words[-1]:
+                        end_time = w["end"]
+                        # flytta idx framåt för nästa sentence
+                        idx = word_timings.index(w) + 1
+                        break
+            # fallback om ej hittat
+            if start_time is None or end_time is None:
+                continue
+            raw_entries.append((start_time, end_time, speaker or "Speaker 1", sent))
 
-        # === steg 5: fallback om ingen mening fångades ===
-        if not raw_entries:
-            for wt in word_timings:
-                line = (
-                    f"[{wt['start']:.2f}-{wt['end']:.2f}] "
-                    f"{speaker_map[wt['speaker_id']]}: {wt['word']}"
-                )
-                raw_entries.append((wt["start"], line))
-
-        # === steg 6: sortera per start-tid och slå ihop ===
+        # === steg 6: format och sortera ===
         raw_entries.sort(key=lambda x: x[0])
-        raw_lines = [line for _, line in raw_entries]
+        raw_lines = [f"[{s:.2f}-{e:.2f}] {sp}: {txt}" for s, e, sp, txt in raw_entries]
         raw_transcription = "\n".join(raw_lines)
 
         return {
             "file_id": str(file_id),
             "raw_transcription": raw_transcription,
-            "full_transcript": transcription_text
+            "full_transcript": full_text
         }
 
     def get_clean_transcript(self, transcript_text: str) -> str:
