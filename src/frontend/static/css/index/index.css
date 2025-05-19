@@ -1,8 +1,11 @@
 /* * * * * * * * * * * * * */
 /*  Index General Styling  */
 /* * * * * * * * * * * * * */
+
 body {
   background-color: var(--index-background-light);
+  overflow: hidden;
+  height: 100%;
 }
 
 h1 {
@@ -107,14 +110,13 @@ header.index-header nav ul.nav-links {
 /* * * * * * * * * * * * * */
 
 main {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  flex: 1;
 }
 
 main section {
-  min-height: 90vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
