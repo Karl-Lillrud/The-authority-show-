@@ -184,54 +184,97 @@ class GuestRepository:
 
     def edit_guest(self, guest_id, data, user_id):
         """
-        Update a guest's information
+        Update a guest's information, including status.
         """
         try:
-            logger.info("📩 Received Data: %s", data)
+            logger.info(f"🔍 Starting edit_guest for guest_id: {guest_id}, user_id: {user_id}")
 
             if not guest_id:
+                logger.error("❌ Guest ID is required but not provided.")
                 return {"error": "Guest ID is required"}, 400
 
-            user_id_str = str(user_id)
+            # Fetch the guest to get the associated episode ID
+            guest = self.collection.find_one({"_id": guest_id})
+            logger.info(f"📝 Fetched guest: {guest}")
+            if not guest:
+                logger.error(f"❌ Guest with ID {guest_id} not found.")
+                return {"error": "Guest not found"}, 404
 
-            # Prepare update fields from the incoming request body
-            update_fields = {
-                "name": data.get("name", "").strip(),
-                "image": data.get("image", "default-profile.png"),
-                "bio": data.get("bio", data.get("description", "")),
-                "email": data.get("email", "").strip(),
-                "areasOfInterest": data.get("areasOfInterest", []),
-                # Add new fields
-                "company": data.get("company", ""),
-                "phone": data.get("phone", ""),
-                "notes": data.get("notes", ""),
-                "scheduled": data.get("scheduled", 0),
-                "recommendedGuests": data.get("recommendedGuests", []),
-                "futureOpportunities": data.get("futureOpportunities", False),
-                "socialmedia": data.get("socialmedia", {}),
-            }
+            episode_id = guest.get("episode_id")
+            logger.info(f"🔗 Guest is associated with episode_id: {episode_id}")
+            if not episode_id:
+                logger.error(f"❌ Guest with ID {guest_id} is not associated with any episode.")
+                return {"error": "Guest is not associated with any episode"}, 400
 
-            # If episodeId is provided, update the guest's episodeId
-            episode_id = data.get("episodeId")
-            if episode_id is not None:
-                update_fields["episodeId"] = episode_id
+            # Fetch the episode to verify the podcast owner
+            episode = collection.database.Episodes.find_one({"_id": episode_id})
+            logger.info(f"📝 Fetched episode: {episode}")
+            if not episode:
+                logger.error(f"❌ Episode with ID {episode_id} not found.")
+                return {"error": "Episode not found"}, 404
 
-            # If calendarEventId is provided, update it
-            calendar_event_id = data.get("calendarEventId")
-            if calendar_event_id is not None:
-                update_fields["calendarEventId"] = calendar_event_id
+            # Verify that the logged-in user owns the episode
+            if episode.get("userid") != user_id:
+                logger.error(f"❌ Unauthorized: User {user_id} does not own episode {episode_id}.")
+                return {"error": "Unauthorized: You do not own this episode"}, 403
 
-            logger.info("📝 Update Fields: %s", update_fields)
+            # Prepare update fields dynamically
+            update_fields = {}
+            logger.info(f"📦 Data received for update: {data}")
 
-            # Update the guest document based on guest_id and user_id to ensure the user can only edit their own guests
+            if "name" in data:
+                update_fields["name"] = data["name"].strip()
+            if "image" in data:
+                update_fields["image"] = data["image"]
+            if "bio" in data:
+                update_fields["bio"] = data["bio"]
+            if "email" in data:
+                update_fields["email"] = data["email"].strip()
+            if "areasOfInterest" in data:
+                update_fields["areasOfInterest"] = data["areasOfInterest"]
+            if "company" in data:
+                update_fields["company"] = data["company"]
+            if "phone" in data:
+                update_fields["phone"] = data["phone"]
+            if "notes" in data:
+                update_fields["notes"] = data["notes"]
+            if "scheduled" in data:
+                update_fields["scheduled"] = data["scheduled"]
+            if "recommendedGuests" in data:
+                update_fields["recommendedGuests"] = data["recommendedGuests"]
+            if "futureOpportunities" in data:
+                update_fields["futureOpportunities"] = data["futureOpportunities"]
+            if "socialmedia" in data:
+                update_fields["socialmedia"] = data["socialmedia"]
+            if "episodeId" in data:
+                update_fields["episodeId"] = data["episodeId"]
+            if "calendarEventId" in data:
+                update_fields["calendarEventId"] = data["calendarEventId"]
+            if "status" in data:
+                update_fields["status"] = data["status"]
+
+            if not update_fields:
+                logger.error("❌ No valid fields provided for update.")
+                return {"error": "No valid fields provided for update"}, 400
+
+            logger.info(f"📝 Update Fields: {update_fields}")
+
+            # Perform the update
             result = self.collection.update_one(
-                {"_id": guest_id, "user_id": user_id_str}, {"$set": update_fields}
+                {"_id": guest_id},
+                {"$set": update_fields}
             )
+            logger.info(f"🔄 Update result: Matched Count: {result.matched_count}, Modified Count: {result.modified_count}")
 
             if result.matched_count == 0:
+                logger.error(f"❌ Guest with ID {guest_id} not found or unauthorized.")
                 return {"error": "Guest not found or unauthorized"}, 404
 
-            return {"message": "Guest updated successfully"}, 200
+            logger.info(f"✅ Guest with ID {guest_id} updated successfully.")
+            return {
+                "message": "Guest updated successfully",
+                "episode_id": guest.get("episode_id")  # Include episode_id in the response
+            }, 200
 
         except Exception as e:
             logger.exception("❌ ERROR: Failed to update guest")
