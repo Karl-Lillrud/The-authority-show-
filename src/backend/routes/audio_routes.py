@@ -51,7 +51,8 @@ def audio_enhancement():
         logger.info("Audio duration validated for enhancement")
 
         blob_url = audio_service.enhance_audio(audio_bytes, filename, episode_id)
-        return jsonify({"enhanced_audio_url": blob_url})
+        return jsonify({"enhanced_audio_url": blob_url,
+                        "clipUrl": blob_url})
     
     except ValueError as e:
         logger.warning(f"Duration validation error: {e}")

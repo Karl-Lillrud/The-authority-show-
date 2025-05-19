@@ -857,13 +857,14 @@ async function enhanceAudio() {
             `;
             return;
         }
-        if (!response.ok) {
-            container.innerHTML = `Error: ${result.error || response.statusText}`;
-            return;
+        if (!response.ok || !result.enhanced_audio_url) {
+            throw new Error(result.error || "Enhancement failed.");
         }
 
-        const blobUrl = result.enhanced_audio_url; // Ensure this is returned by the backend
-        if (!blobUrl) throw new Error("No enhanced audio URL returned.");
+        const blobUrl = result.enhanced_audio_url || result.clipUrl;
+        if (!blobUrl) {
+            throw new Error("No audio URL returned")
+        }
 
         const audioRes = await fetch(`/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
@@ -875,8 +876,10 @@ async function enhanceAudio() {
 
         container.innerHTML = `
             <p>Audio enhancement complete!</p>
-            <audio controls src="${url}" style="width: 100%;"></audio>
+            <div id="waveform" style="width: 100%; height: 96px; margin-bottom: 16px;"></div>
         `;
+        
+        renderWaveform(blob);
 
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
@@ -1728,4 +1731,24 @@ async function generateAudioClip() {
     hideSpinner("audioClipResult");
     container.innerText = `Failed to generate audio clip: ${err.message}`;
   }
+}
+
+function renderWaveform(audioBlob) {
+    const container = document.getElementById("waveform");
+    if (!container) return;
+
+    container.innerHTML = ""
+
+    const url = URL.createObjectURL(audioBlob);
+
+    const wavesurfer = WaveSurfer.create({
+        container: "#waveform",
+        waveColor: "#ccc",
+        progressColor: "#f69229",
+        height: 96,
+        barWidth: 2,
+        responsive: true,
+
+    });
+    wavesurfer.load(url);
 }

@@ -15,9 +15,9 @@
     <div class="dashboard dashboard-content">
       <main>
         <div id="tabs">
-          <button onclick="showTab('transcription')" id="tab-transcription">🎙 AI-Powered Transcription</button>
-          <button onclick="showTab('audio')" id="tab-audio">🎵 AI Audio Enhancement</button>
-          <button onclick="showTab('video')" id="tab-video">📹 AI Video Enhancement</button>
+          <button onclick="showTab('transcription')" id="tab-transcription">AI-Powered Transcription</button>
+          <button onclick="showTab('audio')" id="tab-audio">AI Audio Enhancement</button>
+          <button onclick="showTab('video')" id="tab-video">AI Video Enhancement</button>
         </div>
 
         <!-- Content injected by JS -->
@@ -35,7 +35,7 @@
 
     window.addEventListener("DOMContentLoaded", () => {
       showTab('transcription');
-      loadAudioEditsForEpisode(episodeId);  // 👈 Load edit history
+      loadAudioEditsForEpisode(episodeId);  // Load edit history
     });
 
     window.CURRENT_USER_ID = "{{ user_id }}";
@@ -43,8 +43,8 @@
   </script>
 
   <script src="/static/js/landingpage/audio-player.js"></script>
-  <script src="/static/js/ai_edits/ai_edits.js"></script>
   <script src="https://unpkg.com/wavesurfer.js"></script>
+  <script src="/static/js/ai_edits/ai_edits.js"></script>
   <script>
     window.CURRENT_EPISODE_ID = "{{ episode_id or '' }}";
     if ("{{ episode_id }}") sessionStorage.setItem("selected_episode_id", "{{ episode_id }}");
