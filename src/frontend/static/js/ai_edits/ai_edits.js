@@ -64,6 +64,9 @@ const CREDIT_COSTS = {
     ai_intro_outro_audio: 500,
 };
 const RegionsPlugin = WaveSurfer.Regions;
+if (!RegionsPlugin) {
+  console.error("Regions plugin not loaded — did you include wavesurfer.regions.min.js?");
+}
 window.RegionsPlugin = RegionsPlugin;
 function labelWithCredits(text, key) {
     const cost = CREDIT_COSTS[key];
@@ -88,7 +91,7 @@ function showTab(tabName) {
 
     if (tabName === 'transcription') {
         content.innerHTML = `
-            <h2>🎙 AI-Powered Transcription</h2>
+            <h2>AI-Powered Transcription</h2>
             <input type="file" id="fileUploader" accept="audio/*,video/*">
             <div class="button-with-help">
                 <button class="btn ai-edit-button" onclick="transcribe()">
@@ -332,7 +335,20 @@ function showTab(tabName) {
             <button class="btn ai-edit-button" id="loadCuttingWaveformBtn" style="margin-bottom: 1rem;">
                 Load Audio Waveform
             </button>
+            
             <div id="waveformCut" style="margin: 1rem 0; height: 128px;"></div>
+            
+            <button id="cut-play-pause" class="btn ai-edit-button" style="display:none; margin-bottom:1rem;">
+            Play
+            </button>
+            <label>
+            Start (s):
+            <input id="cut-start" type="number" step="0.01" class="input-field" style="width:5em;">
+            </label>
+            <label style="margin-left:1em;">
+            End (s):
+            <input id="cut-end" type="number" step="0.01" class="input-field" style="width:5em;">
+            </label>
 
             <div class="button-with-help">
                 <button class="btn ai-edit-button" onclick="cutAudio()">
@@ -488,11 +504,12 @@ let waveformCut = null;
 let selectedRegion = null;
 
 function initWaveformCutting(blob) {
+    // Clean up any existing instance
     if (waveformCut) {
         waveformCut.destroy();
         document.getElementById("waveformCut").innerHTML = "";
     }
-
+    // Create a new WaveSurfer instance with the Regions plugin
     waveformCut = WaveSurfer.create({
         container: "#waveformCut",
         waveColor: "#ccc",
@@ -501,12 +518,18 @@ function initWaveformCutting(blob) {
         barWidth: 2,
         responsive: true,
         backend: "WebAudio",
-        plugins: [RegionsPlugin.create()]
+        plugins: [
+            RegionsPlugin.create({
+                dragSelection: true
+            })
+        ]
     });
 
+    // Load the audio from the blob
     waveformCut.load(URL.createObjectURL(blob));
 
     waveformCut.on("ready", () => {
+        // Add a default region
         const duration = waveformCut.getDuration();
         selectedRegion = waveformCut.addRegion({
             start: 0,
@@ -515,12 +538,45 @@ function initWaveformCutting(blob) {
             drag: true,
             resize: true
         });
+
+        // Show & wire the Play/Pause button
+        const btn = document.getElementById("cut-play-pause");
+        btn.style.display = "inline-block";
+        btn.onclick = () => {
+        waveformCut.isPlaying() ? waveformCut.pause() : waveformCut.play();
+        };
+        waveformCut.on("play",  () => { btn.textContent = "Pause"; });
+        waveformCut.on("pause", () => { btn.textContent = "Play"; });
+
+
+        // Sync numeric inputs with region
+        const startInput = document.getElementById("cut-start");
+        const endInput   = document.getElementById("cut-end");
+        startInput.value = selectedRegion.start.toFixed(2);
+        endInput.value   = selectedRegion.end.toFixed(2);
+
+        startInput.oninput = () => {
+        const v = parseFloat(startInput.value);
+        if (!isNaN(v) && v < selectedRegion.end) {
+            selectedRegion.update({ start: v });
+        }
+        };
+        endInput.oninput = () => {
+        const v = parseFloat(endInput.value);
+        if (!isNaN(v) && v > selectedRegion.start) {
+            selectedRegion.update({ end: v });
+        }
+        };
     });
 
+    // Keep inputs in sync whenever the user drags/resizes the region
     waveformCut.on("region-updated", (region) => {
         selectedRegion = region;
+        document.getElementById("cut-start").value = region.start.toFixed(2);
+        document.getElementById("cut-end").value   = region.end.toFixed(2);
     });
 }
+
 
 
 let rawTranscript = "";

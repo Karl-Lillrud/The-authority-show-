@@ -41,14 +41,17 @@
     window.CURRENT_USER_ID = "{{ user_id }}";
     localStorage.setItem("user_id", "{{ user_id }}");
   </script>
+    </div>
   <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
   <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+  <script> WaveSurfer.registerPlugin(window.WaveSurferRegions);</script>
+
   <script src="/static/js/ai_edits/ai_edits.js"></script>
   <script>
     window.CURRENT_EPISODE_ID = "{{ episode_id or '' }}";
     if ("{{ episode_id }}") sessionStorage.setItem("selected_episode_id", "{{ episode_id }}");
   </script>
-  
+
     <!-- Footer -->
   <footer style="text-align: center;">
     <div class="container">
