@@ -233,7 +233,6 @@ function showTab(tabName) {
             <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
             <div id="originalAudioContainer" style="display: none; margin-bottom: 1rem;">
                 <p><strong>Original Audio</strong></p>
-                <audio id="originalAudioPlayer" controls style="width: 100%"></audio>
             </div>
 
             <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 12px;">
@@ -1585,17 +1584,12 @@ function previewOriginalAudio() {
     const file = fileInput.files[0];
     if (!file) return;
 
-    const audioURL = URL.createObjectURL(file);
-    const audioPlayer = document.getElementById("originalAudioPlayer");
-
-    if (audioPlayer) {
-        audioPlayer.src = audioURL;
-        audioPlayer.load();
-        document.getElementById("originalAudioContainer").style.display = "block";
-    }
-
-    // Store raw audio
     rawAudioBlob = file;
+
+    const container = document.getElementById("originalAudioContainer");
+    container.style.display = "block";
+
+    renderAudioPlayer("originalAudioContainer", rawAudioBlob, "originalAudioPlayer")
 }
 
 function previewOriginalVideo() {
