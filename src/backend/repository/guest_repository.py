@@ -261,7 +261,7 @@ class GuestRepository:
 
             # Perform the update
             result = self.collection.update_one(
-                {"_id": guest_id},  # No need to include user_id here
+                {"_id": guest_id},
                 {"$set": update_fields}
             )
             logger.info(f"🔄 Update result: Matched Count: {result.matched_count}, Modified Count: {result.modified_count}")
@@ -271,7 +271,10 @@ class GuestRepository:
                 return {"error": "Guest not found or unauthorized"}, 404
 
             logger.info(f"✅ Guest with ID {guest_id} updated successfully.")
-            return {"message": "Guest updated successfully"}, 200
+            return {
+                "message": "Guest updated successfully",
+                "episode_id": guest.get("episode_id")  # Include episode_id in the response
+            }, 200
 
         except Exception as e:
             logger.exception("❌ ERROR: Failed to update guest")

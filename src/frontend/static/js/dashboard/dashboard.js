@@ -8,6 +8,7 @@ import { initTaskManagement } from "/static/js/dashboard/task.js";
 import { svgdashboard } from "./svgdashboard.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
 import { getActivitiesRequest } from "/static/requests/activityRequests.js";
+import { updateEpisode } from "/static/requests/episodeRequest.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -669,6 +670,7 @@ export async function refreshDashboardStats() {
  async function handleAcceptGuest(guestId, recordingDate, recordingTime) {
   try {
     console.log("Guest ID being sent:", guestId);
+
     // Combine the recording date and time into a single field
     const recordingAt = `${recordingDate} ${recordingTime}`;
 
@@ -683,6 +685,37 @@ export async function refreshDashboardStats() {
 
     if (response.message === "Guest updated successfully") {
       alert("Guest accepted successfully!");
+
+      // Extract the episode ID from the response
+      const episodeId = response.episode_id; // Ensure this is populated
+      if (!episodeId) {
+        console.warn("Episode ID is missing in the response. Skipping episode update.");
+        location.reload(); // Refresh the page to reflect changes
+        return;
+      }
+
+      // Prepare the payload for updating the episode
+      const episodeUpdatePayload = { recordingAt };
+
+      // Call the updateEpisode method with the correct payload
+      const episodeUpdateResponse = await fetch(`/update_episodes/${episodeId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+        body: JSON.stringify(episodeUpdatePayload),
+      });
+
+      if (episodeUpdateResponse.ok) {
+        const result = await episodeUpdateResponse.json();
+        console.log("Episode recordingAt updated successfully!", result);
+      } else {
+        const errorData = await episodeUpdateResponse.json();
+        console.error("Failed to update episode recordingAt:", errorData.error);
+        alert("Guest accepted, but failed to update episode recording time.");
+      }
+
       location.reload(); // Refresh the page to reflect changes
     } else {
       throw new Error(response.error || "Failed to accept guest.");
