@@ -12,17 +12,12 @@ body {
     min-height: calc(100vh - 60px);
   }
 
-  #app h2 {
-    margin-top: var(--spacing-lg);
-  }
-  
-
   /* Tabs */
   #tabs {
     display: flex;
     gap: 1rem;
     padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 23px;
   }
   
   #tabs button {
@@ -48,11 +43,17 @@ body {
   }
   
   /* Content Box */
-  #content {
+
+  #content .content-wrapper {
     background-color: var(--card-bg-light);
     padding: 1.5rem;
     border-radius: 1rem;
     box-shadow: 0 4px 12px rgba(255, 115, 0, 0.1);
+    margin-bottom: 30px;
+  }
+
+  #content .content-wrapper:last-of-type {
+    margin-bottom: 0;
   }
   
   /* File Upload */

@@ -86,6 +86,7 @@ function showTab(tabName) {
 
     if (tabName === 'transcription') {
         content.innerHTML = `
+          <div class="content-wrapper">
             <h1>AI-Powered Transcription</h1>
             <input type="file" id="fileUploader" accept="audio/*,video/*">
             <div class="button-with-help">
@@ -97,7 +98,9 @@ function showTab(tabName) {
             <div class="result-field">
                 <pre id="transcriptionResult"></pre>
             </div>
-    
+          </div>
+
+          <div class="content-wrapper">
             <div id="enhancementTools";">
                 <h2>Enhancement Tools</h2>
     
@@ -225,9 +228,11 @@ function showTab(tabName) {
                     <div class="result-field" id="introOutroAudioResult"></div>
                 </div>
             </div>
+          </div>
         `;
     }else if (tabName === 'audio') {
         content.innerHTML = `
+          <div class="content-wrapper">
             <h1>AI Audio Enhancement</h1>
             <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
             <div id="originalAudioContainer" style="display: none; margin-bottom: 1rem;">
@@ -271,7 +276,9 @@ function showTab(tabName) {
                 </div>
             </div>
             </div>
+          </div>
 
+          <div class="content-wrapper">
             <div id="audioAnalysisSection">
             <h2>AI Analysis</h2>
 
@@ -315,7 +322,9 @@ function showTab(tabName) {
                 
             </div>
             </div>
+          </div>
 
+          <div class="content-wrapper">
             <div id="audioCuttingSection">
             <h2>Audio Cutting</h2>
 
@@ -353,7 +362,9 @@ function showTab(tabName) {
                 </a>
             </div>
             </div>
+          </div>
 
+          <div class="content-wrapper">
             <div id="aiCuttingSection">
             <h2>AI Cutting + Transcript</h2>
 
@@ -379,9 +390,11 @@ function showTab(tabName) {
                 <pre id="aiSuggestedCuts"></pre>
             </div>
             </div>
+          </div>
         `;
     } else if (tabName === 'video') {
         content.innerHTML = `
+          <div class="content-wrapper">
             <h1>AI Video Enhancement</h1>
             <input type="file" id="videoUploader" accept="video/*" onchange="previewOriginalVideo()">
             <div id="originalVideoContainer" style="display: none; margin-bottom: 1rem;">
@@ -403,6 +416,7 @@ function showTab(tabName) {
             <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none;">
                 Download Enhanced Video
             </a>
+          </div>
         `;
     }
 }
