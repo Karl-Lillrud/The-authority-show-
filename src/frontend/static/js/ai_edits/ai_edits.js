@@ -1306,8 +1306,8 @@ function renderSfxPlan(sfxPlan, timeline) {
 }
 
 async function cutAudio() {
-    const startInput = document.getElementById("startTime");
-    const endInput = document.getElementById("endTime");
+    const startInput = document.getElementById("cut-start");
+    const endInput = document.getElementById("cut-end");
     const cutResult = document.getElementById("cutResult");
     const dl = document.getElementById("downloadCut");
 
