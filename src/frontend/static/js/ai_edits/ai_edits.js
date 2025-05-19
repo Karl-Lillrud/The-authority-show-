@@ -874,12 +874,30 @@ async function enhanceAudio() {
         activeAudioBlob = blob;
         activeAudioId = "external";
 
+        const audioId = "enhanchedAudioPlayer";
+        const playPauseId = "playPauseBtn";
+
         container.innerHTML = `
             <p>Audio enhancement complete!</p>
-            <div id="waveform" style="width: 100%; height: 96px; margin-bottom: 16px;"></div>
+            <audio id="${audioId}" src="${url}" style="display:none;"></audio>
+            <button id="${playPauseId}" class="btn ai-edit-button">Play</button>
+            <div id="waveform" style="width: 100%; height: 96px; margin-top: 1rem;"></div>
         `;
         
         renderWaveform(blob);
+
+        //play button
+        const player = document.getElementById(audioId);
+        const button = document.getElementById(playPauseId);
+        button.addEventListener("click", () => {
+            if (player.paused) {
+                player.play();
+                button.textContent= "Pause";
+            } else {
+                player.pause();
+                button.textContent = "Play";
+            }
+        })
 
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
