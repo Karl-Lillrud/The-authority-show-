@@ -86,7 +86,7 @@ function showTab(tabName) {
 
     if (tabName === 'transcription') {
         content.innerHTML = `
-            <h2>🎙 AI-Powered Transcription</h2>
+            <h2>AI-Powered Transcription</h2>
             <input type="file" id="fileUploader" accept="audio/*,video/*">
             <div class="button-with-help">
                 <button class="btn ai-edit-button" onclick="transcribe()">
@@ -99,7 +99,6 @@ function showTab(tabName) {
             </div>
     
             <div id="enhancementTools";">
-                <hr/>
                 <h3>Enhancement Tools</h3>
     
                 <div class="result-group">
@@ -274,7 +273,6 @@ function showTab(tabName) {
             </div>
 
             <div id="audioAnalysisSection">
-            <hr/>
             <h3>AI Analysis</h3>
 
             <label for="audioSourceSelectAnalysis"><strong>Audio Source:</strong></label>
@@ -319,7 +317,6 @@ function showTab(tabName) {
             </div>
 
             <div id="audioCuttingSection">
-            <hr/>
             <h3>Audio Cutting</h3>
 
             <label for="audioSourceSelectCutting"><strong>Audio Source:</strong></label>
@@ -358,7 +355,6 @@ function showTab(tabName) {
             </div>
 
             <div id="aiCuttingSection">
-            <hr/>
             <h3>AI Cutting + Transcript</h3>
 
             <label for="audioSourceSelectAICut"><strong>Audio Source:</strong></label>
@@ -808,7 +804,6 @@ async function convertIntroOutroToSpeech() {
 
         if (data.audio_base64) {
             container.innerHTML = `
-                <hr/>
                 <audio controls src="${data.audio_base64}"></audio>
                 <a href="${data.audio_base64}" download="intro_outro.mp3" class="btn ai-edit-button">
                     Download Intro/Outro Audio

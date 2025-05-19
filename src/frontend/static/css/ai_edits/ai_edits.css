@@ -13,7 +13,6 @@ body {
   #tabs {
     display: flex;
     gap: 1rem;
-    border-bottom: 1px solid #ccc;
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
   }
@@ -52,12 +51,12 @@ body {
   input[type="file"] {
     border: 2px dashed #ccc;
     padding: 1rem;
-    width: 100%;
     border-radius: 0.75rem;
     background: #fafafa;
     text-align: center;
     cursor: pointer;
     margin-bottom: 1rem;
+    display: block;
   }
   
   /* Buttons */
@@ -165,7 +164,6 @@ body {
 }
 
 .edit-history-container {
-  border-top: 1px solid #ccc;
   padding-top: 1.5rem;
 }
 
