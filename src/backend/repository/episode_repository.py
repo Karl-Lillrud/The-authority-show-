@@ -78,41 +78,6 @@ class EpisodeRepository:
             # Insert the episode
             self.collection.insert_one(episode_doc)
 
-            # If this is not an imported episode, update the slot usage
-            if not is_imported:
-                # Get the current subscription plan
-                sub = self.subscription_service.get_user_subscription(user_id)
-                if sub:
-                    plan = sub["plan"].upper()
-                    benefits = PLAN_BENEFITS.get(plan, PLAN_BENEFITS["FREE"])
-                    base_slots = benefits.get("episode_slots", 0)
-                    
-                    # Count existing episodes in the current subscription period
-                    now = datetime.utcnow()
-                    start = parse_date(sub["start_date"]) if sub.get("start_date") else now - timedelta(days=30)
-                    end = parse_date(sub["end_date"]) if sub.get("end_date") else now
-                    
-                    count = self.collection.count_documents({
-                        "userid": str(user_id),
-                        "created_at": {"$gte": start, "$lte": end},
-                        "$or": [
-                            {"isImported": {"$exists": False}},
-                            {"isImported": False}
-                        ]
-                    })
-                    
-                    # If we've exceeded base slots, reduce extra slots
-                    if count > base_slots:
-                        extra_slots_used = count - base_slots
-                        current_extra_slots = user_account.get("unlockedExtraEpisodeSlots", 0)
-                        new_extra_slots = max(0, current_extra_slots - extra_slots_used)
-                        
-                        # Update the account with new extra slots count
-                        self.accounts_collection.update_one(
-                            {"ownerId": user_id},
-                            {"$set": {"unlockedExtraEpisodeSlots": new_extra_slots}}
-                        )
-
             try:
                 self.activity_service.log_activity(
                     user_id=str(user_id),
