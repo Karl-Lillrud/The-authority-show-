@@ -874,7 +874,7 @@ async function enhanceAudio() {
         activeAudioBlob = blob;
         activeAudioId = "external";
 
-        const audioId = "enhanchedAudioPlayer";
+        const audioId = "enhancedAudioPlayer";
         const playPauseId = "playPauseBtn";
 
         container.innerHTML = `
@@ -897,6 +897,9 @@ async function enhanceAudio() {
                 player.pause();
                 button.textContent = "Play";
             }
+        })
+        player.addEventListener("ended", () => {
+            button.textContent = "Play";
         })
 
         document.getElementById("audioAnalysisSection").style.display = "block";
@@ -1758,6 +1761,8 @@ function renderWaveform(audioBlob) {
     container.innerHTML = ""
 
     const url = URL.createObjectURL(audioBlob);
+    const audioEl = document.getElementById("enhancedAudioPlayer");
+    if (!audioEl) return;
 
     const wavesurfer = WaveSurfer.create({
         container: "#waveform",
@@ -1766,6 +1771,9 @@ function renderWaveform(audioBlob) {
         height: 96,
         barWidth: 2,
         responsive: true,
+        backend: "MediaElement",
+        mediaControls: false,
+        media: audioEl
 
     });
     wavesurfer.load(url);
