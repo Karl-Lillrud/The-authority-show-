@@ -874,33 +874,8 @@ async function enhanceAudio() {
         activeAudioBlob = blob;
         activeAudioId = "external";
 
-        const audioId = "enhancedAudioPlayer";
-        const playPauseId = "playPauseBtn";
-
-        container.innerHTML = `
-            <p>Audio enhancement complete!</p>
-            <audio id="${audioId}" src="${url}" style="display:none;"></audio>
-            <button id="${playPauseId}" class="btn ai-edit-button">Play</button>
-            <div id="waveform" style="width: 100%; height: 96px; margin-top: 1rem;"></div>
-        `;
-        
-        renderWaveform(blob);
-
-        //play button
-        const player = document.getElementById(audioId);
-        const button = document.getElementById(playPauseId);
-        button.addEventListener("click", () => {
-            if (player.paused) {
-                player.play();
-                button.textContent= "Pause";
-            } else {
-                player.pause();
-                button.textContent = "Play";
-            }
-        })
-        player.addEventListener("ended", () => {
-            button.textContent = "Play";
-        })
+        container.innerHTML = '<p>Audio enhancement complete!</p>';
+        renderAudioPlayer("audioControls", blob, "enhancedAudioPlayer")
 
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
@@ -1777,4 +1752,50 @@ function renderWaveform(audioBlob) {
 
     });
     wavesurfer.load(url);
+}
+
+function renderAudioPlayer(containerId, audioBlob, audioId = "customAudioPlayer") {
+    const container = document.getElementById(containerId);
+    if (!container || !audioBlob) return;
+
+    const url = URL.createObjectURL(audioBlob);
+    container.innerHTML = `
+        <audio id="${audioId}" src="${url}" style="display: none;"></audio>
+        <button id="${audioId}_playBtn" class="btn ai-edit-button">Play</button>
+        <div id="${audioId}_waveform" style="width: 100%; height: 96px; margin-top: 1rem;"></div>
+    `;
+
+    const audioEl = document.getElementById(audioId);
+    const playBtn = document.getElementById(`${audioId}_playBtn`);
+    const waveformEl = document.getElementById(`${audioId}_waveform`);
+
+    if (!audioEl || !waveformEl || !playBtn) return;
+
+    const wavesurfer = WaveSurfer.create({
+        container: `#${audioId}_waveform`,
+        waveColor: "#ccc",
+        progressColor: "#f69229",
+        height: 96,
+        barWidth: 2,
+        responsive: true,
+        backend: "MediaElement",
+        mediaControls: false,
+        media: audioEl,
+    });
+
+    wavesurfer.load(url);
+
+    playBtn.addEventListener("click", () => {
+        if (audioEl.paused) {
+            audioEl.play();
+            playBtn.textContent = "Pause";
+        } else {
+            audioEl.pause();
+            playBtn.textContent = "Play";
+        }
+    });
+
+    audioEl.addEventListener("ended", () => {
+        playBtn.textContent = "Play";
+    });
 }
