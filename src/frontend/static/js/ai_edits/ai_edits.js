@@ -86,7 +86,7 @@ function showTab(tabName) {
 
     if (tabName === 'transcription') {
         content.innerHTML = `
-            <h2>AI-Powered Transcription</h2>
+            <h1>AI-Powered Transcription</h1>
             <input type="file" id="fileUploader" accept="audio/*,video/*">
             <div class="button-with-help">
                 <button class="btn ai-edit-button" onclick="transcribe()">
@@ -99,7 +99,7 @@ function showTab(tabName) {
             </div>
     
             <div id="enhancementTools";">
-                <h3>Enhancement Tools</h3>
+                <h2>Enhancement Tools</h2>
     
                 <div class="result-group">
                     <div class="button-with-help">
@@ -228,7 +228,7 @@ function showTab(tabName) {
         `;
     }else if (tabName === 'audio') {
         content.innerHTML = `
-            <h2>AI Audio Enhancement</h2>
+            <h1>AI Audio Enhancement</h1>
             <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
             <div id="originalAudioContainer" style="display: none; margin-bottom: 1rem;">
                 <p><strong>Original Audio</strong></p>
@@ -273,7 +273,7 @@ function showTab(tabName) {
             </div>
 
             <div id="audioAnalysisSection">
-            <h3>AI Analysis</h3>
+            <h2>AI Analysis</h2>
 
             <label for="audioSourceSelectAnalysis"><strong>Audio Source:</strong></label>
             <select id="audioSourceSelectAnalysis" class="input-field" style="margin-bottom: 1rem;">
@@ -317,7 +317,7 @@ function showTab(tabName) {
             </div>
 
             <div id="audioCuttingSection">
-            <h3>Audio Cutting</h3>
+            <h2>Audio Cutting</h2>
 
             <label for="audioSourceSelectCutting"><strong>Audio Source:</strong></label>
             <select id="audioSourceSelectCutting" class="input-field" style="margin-bottom: 1rem;">
@@ -355,7 +355,7 @@ function showTab(tabName) {
             </div>
 
             <div id="aiCuttingSection">
-            <h3>AI Cutting + Transcript</h3>
+            <h2>AI Cutting + Transcript</h2>
 
             <label for="audioSourceSelectAICut"><strong>Audio Source:</strong></label>
             <select id="audioSourceSelectAICut" class="input-field" style="margin-bottom: 1rem;">
@@ -382,7 +382,7 @@ function showTab(tabName) {
         `;
     } else if (tabName === 'video') {
         content.innerHTML = `
-            <h2>AI Video Enhancement</h2>
+            <h1>AI Video Enhancement</h1>
             <input type="file" id="videoUploader" accept="video/*" onchange="previewOriginalVideo()">
             <div id="originalVideoContainer" style="display: none; margin-bottom: 1rem;">
                 <p><strong>Original Video</strong></p>

@@ -11,6 +11,10 @@ body {
   #app {
     min-height: calc(100vh - 60px);
   }
+
+  #app h2 {
+    margin-top: var(--spacing-lg);
+  }
   
 
   /* Tabs */
