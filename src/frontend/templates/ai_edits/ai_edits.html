@@ -44,6 +44,7 @@
 
   <script src="/static/js/landingpage/audio-player.js"></script>
   <script src="/static/js/ai_edits/ai_edits.js"></script>
+  <script src="https://unpkg.com/wavesurfer.js"></script>
   <script>
     window.CURRENT_EPISODE_ID = "{{ episode_id or '' }}";
     if ("{{ episode_id }}") sessionStorage.setItem("selected_episode_id", "{{ episode_id }}");
