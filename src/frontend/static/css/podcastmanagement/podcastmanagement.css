@@ -1896,6 +1896,26 @@ select option:disabled {
   margin: 0 auto;
 }
 
+/* Ensure non-published episodes are not greyed out */
+select option.non-published {
+  color: #000000 !important; /* Black for non-published episodes */
+}
+
+/* Style for published episodes */
+select option.published {
+  color: #888888; /* Grey for published episodes */
+}
+
+/* Style for the [Published] text in orange */
+select option.published span.published-label {
+  color: #ff6200 !important; 
+}
+
+
+select#episode-id {
+  color: #000000; 
+}
+
 /* Responsive adjustments for sidebar and main content */
 @media (max-width: 992px) {
   #sidebar-container {
