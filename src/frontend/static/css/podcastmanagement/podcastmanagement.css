@@ -2020,4 +2020,21 @@ select option:disabled {
     width: 32px; /* Increased icon size */
     height: 32px; /* Increased icon size */
   }
+  .studio-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-left: 8px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(124, 58, 237, 0.08);
+    cursor: pointer;
+  }
+  .studio-btn:disabled {
+    background: #ccc !important;
+    color: #888 !important;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
 }
