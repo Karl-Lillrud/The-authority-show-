@@ -103,25 +103,37 @@ export function renderEpisodeDetail(episode) {
     Back to podcast
   </button>
   <div class="top-right-actions">
-    ${/* Conditionally render AI Edit button */ ""}
+    <!-- Studio Button -->
+    ${(() => {
+      const now = new Date();
+      let isStudioEnabled = false;
+      let timeLeft = "";
+      if (episode.recordingAt) {
+        const recordingTime = new Date(episode.recordingAt);
+        if (recordingTime > now) {
+          const diffMs = recordingTime - now;
+          const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+          const diffMin = Math.floor((diffMs / (1000 * 60)) % 60);
+          timeLeft = `${diffHrs}h ${diffMin}m left`;
+        } else {
+          isStudioEnabled = true;
+        }
+      }
+      if (isStudioEnabled) {
+        return `<button class=\"studio-btn\" id=\"studio-btn\" style=\"background: #ff7f3f; color: white; margin-left: 8px;\" data-podcast-id=\"${episode.podcastId || episode.podcast_id}\" data-episode-id=\"${episode._id}\">Studio</button>`;
+      } else {
+        return `<button class=\"studio-btn\" id=\"studio-btn\" style=\"background: #ccc; color: #888; margin-left: 8px; cursor: not-allowed;\" disabled>${timeLeft || 'Not available'}</button>`;
+      }
+    })()}
     ${
       !episode.isImported
         ? `
-    <button class="save-btn" id="ai-edit-episode-btn" data-id="${episode._id}">
-      AI Edit
-    </button>
-    `
+    <button class=\"save-btn\" id=\"ai-edit-episode-btn\" data-id=\"${episode._id}\">\n      AI Edit\n    </button>\n    `
         : ""
     }
-    <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
+    <button class=\"action-btn edit-btn\" id=\"edit-episode-btn\" data-id=\"${
       episode._id
-    }">
-      ${shared.svgpodcastmanagement.edit}
-    </button>
-    <button class="action-btn delete-btn" id="delete-episode-btn" data-id="${episode._id}">
-      <span class="icon">${shared.svgpodcastmanagement.delete}</span>
-    </button>
-  </div>
+    }\">\n      ${shared.svgpodcastmanagement.edit}\n    </button>\n    <button class=\"action-btn delete-btn\" id=\"delete-episode-btn\" data-id=\"${episode._id}\">\n      <span class=\"icon\">${shared.svgpodcastmanagement.delete}</span>\n    </button>\n  </div>
 </div>
 
 <div class="podcast-detail-container"></div>
@@ -326,6 +338,16 @@ export function renderEpisodeDetail(episode) {
           showNotification("Info", "Episode deletion canceled.", "info");
         }
       );
+    });
+  }
+
+  // Add event listener for the Studio button
+  const studioBtn = document.getElementById("studio-btn");
+  if (studioBtn && !studioBtn.disabled) {
+    studioBtn.addEventListener("click", () => {
+      const podcastId = studioBtn.getAttribute("data-podcast-id");
+      const episodeId = studioBtn.getAttribute("data-episode-id");
+      window.location.href = `@recording_studio.html?podcastId=${podcastId}&episodeId=${episodeId}`;
     });
   }
 
