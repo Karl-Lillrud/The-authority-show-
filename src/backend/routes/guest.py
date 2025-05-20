@@ -25,17 +25,19 @@ def add_guest():
     try:
         data = request.json
         user_id = session.get("user_id")
-        if not user_id:
-            return {"error": "User not authenticated"}, 401
 
-        # Add the guest to the database and send the invitation email
-        response, status_code = InvitationService.send_guest_invitation(user_id, data)
+        if not user_id:
+            return jsonify({"error": "User not authenticated"}), 401
+
+        # ✅ Corrected argument order
+        response, status_code = guest_repo.add_guest(data, user_id)
 
         return jsonify(response), status_code
 
     except Exception as e:
         logger.error(f"Failed to add guest: {e}", exc_info=True)
         return jsonify({"error": f"Failed to add guest: {str(e)}"}), 500
+
 
 @guest_bp.route("/get_guests", methods=["GET"])
 def get_guests():
