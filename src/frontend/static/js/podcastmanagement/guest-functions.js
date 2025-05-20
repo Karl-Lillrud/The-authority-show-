@@ -260,13 +260,14 @@ async function loadEpisodesForPodcast(podcastId, episodeSelectElement) {
       episodes.forEach((episode) => {
         const option = document.createElement("option");
         option.value = episode._id;
-        option.textContent = episode.title;
-        // Apply styling based on status
-        if (episode.status && episode.status.toLowerCase() !== "published") {
-          option.style.color = "inherit"; // Ensure non-published episodes are not greyed out
-        } else {
-          option.style.color = "#888"; // Grey out published episodes (optional, adjust as needed)
-        }
+        // Append [Published] to published episodes
+        option.textContent = episode.status && episode.status.toLowerCase() === "published" 
+          ? `${episode.title} [Published]` 
+          : episode.title;
+        // Apply class based on status
+        option.className = episode.status && episode.status.toLowerCase() === "published" 
+          ? "published" 
+          : "non-published";
         episodeSelectElement.appendChild(option);
       });
       episodeSelectElement.disabled = false;
@@ -281,7 +282,6 @@ async function loadEpisodesForPodcast(podcastId, episodeSelectElement) {
     showNotification("Error", "Could not load episodes.", "error");
   }
 }
-
 
 // Function to close the Add Guest popup
 function closeAddGuestPopup() {
