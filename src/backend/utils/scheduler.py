@@ -25,7 +25,7 @@ SENT_EMAILS_FILE = os.path.join(os.path.dirname(__file__), "sent_emails.json")
 XML_FILE_PATH_FOR_ACTIVATION = os.getenv("ACTIVATION_XML_FILE_PATH", "src/frontend/static/scraped.xml")  # Default changed to be more sensible if .env fails
 API_BASE_URL_FOR_ACTIVATION = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')
 ACTIVATION_PROGRESS_FILE = os.path.join(os.path.dirname(__file__), "activation_progress.json")
-INITIAL_BATCH_SIZE = int(os.getenv("ACTIVATION_INITIAL_BATCH_SIZE", 68))
+INITIAL_BATCH_SIZE = int(os.getenv("ACTIVATION_INITIAL_BATCH_SIZE", 82))
 INCREMENT_PERCENTAGE = float(os.getenv("ACTIVATION_INCREMENT_PERCENTAGE", 0.20))
 
 # blob values
