@@ -154,7 +154,7 @@ function showManualGuestPopup(selectElement) {
     });
 }
 
-async function showAddGuestPopup() {
+export async function showAddGuestPopup() {
   console.log("%c[guest-functions.js] showAddGuestPopup() CALLED.", "color: blue; font-weight: bold;");
   const popup = document.getElementById("guest-popup");
 
