@@ -48,7 +48,6 @@ class GuestRepository:
                 return {"error": "Episode missing 'podcast_id' field"}, 400
 
             current_date = datetime.now(timezone.utc)
-            publish_date = self._parse_publish_date(episode.get("publishDate", ""), current_date)
 
             try:
                 guest_data = GuestSchema().load(data)
@@ -69,8 +68,8 @@ class GuestRepository:
                 "scheduled": 0,
                 "completed": 0,
                 "created_at": current_date,
-                "user_id": user_id,
                 "calendarEventId": guest_data.get("calendarEventId", ""),
+                "recordingAt": episode.get("recordingAt", None),  
             }
 
             self.collection.insert_one(guest_item)
