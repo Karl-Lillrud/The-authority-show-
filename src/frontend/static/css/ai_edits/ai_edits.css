@@ -192,7 +192,7 @@ button.ai-edit-button.disabled {
   display: inline-flex;
   align-items: center;
   /* Vänd ordningen så att span kommer före knappen */
-  flex-direction: row-reverse;
+  flex-direction: row;
   margin: 0.5em 0;
 }
 
