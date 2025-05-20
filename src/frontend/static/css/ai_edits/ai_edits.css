@@ -318,6 +318,14 @@ button span.credit-cost {
 
 @media (max-width: 600px) {
 
+  h1, h2 {
+    text-align: center;
+  }
+  
+  input[type="file"] {
+    width: 100%;
+  }
+
   .content-wrapper, #enhancementTools, #audioAnalysisSection, #audioCuttingSection, #aiCuttingSection {
     width: 100%;
     display: flex;
