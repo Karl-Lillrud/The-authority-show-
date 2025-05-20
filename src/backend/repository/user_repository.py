@@ -21,7 +21,6 @@ class UserRepository:
         self.user_collection = collection.database.Users
         self.teams_collection = collection.database.Teams
         self.user_to_teams_collection = collection.database.UsersToTeams
-        self.account_collection = collection.database.Accounts
 
     def get_user_by_email(self, email):
         return self.user_collection.find_one({"email": email.lower().strip()})
@@ -127,7 +126,6 @@ class UserRepository:
             )
 
             # Continue cleanup
-            accounts = self.account_collection.delete_many({"userId": user_id_str})
             user_teams = UserToTeamRepository().delete_by_user(user_id_str)
             user_credit = delete_credits_by_user(user_id_str)
             user_activity = ActivitiesRepository().delete_by_user(user_id_str)
@@ -137,7 +135,6 @@ class UserRepository:
                 "guests_deleted": guests,
                 "podcasts_deleted": podcasts,
                 "podtasks_deleted": podtasks,
-                "accounts_deleted": accounts.deleted_count,
                 "user_team_links_deleted": user_teams,
                 "teams_processed": team_cleanup_results,
                 "user_credits_deleted": user_credit,
