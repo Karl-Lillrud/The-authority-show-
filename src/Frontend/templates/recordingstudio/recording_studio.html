@@ -1,15 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recording Studio</title>
-</head>
-<body>
-  <header>
-    <h1>Recording Studio</h1>
-    <div id="episode-id-display"></div>
-  </header>
-  <script type="module" src="/static/js/recordingstudio/recording_studio.js"></script>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Recording Studio - PodManager{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recordingstudio/recording_studio.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="studio-container">
+    <div class="studio-header">
+        <h1>Recording Studio</h1>
+        <div class="episode-info">
+            <div id="episode-id-display" class="episode-id"></div>
+            <div class="recording-status">
+                <span class="status-indicator"></span>
+                <span class="status-text">Ready to Record</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="studio-main">
+        <div class="controls-panel">
+            <div class="audio-visualizer">
+                <canvas id="audio-visualizer"></canvas>
+            </div>
+            
+            <div class="recording-controls">
+                <button id="recordButton" class="control-button record">
+                    <i class="fas fa-microphone"></i>
+                    <span>Start Recording</span>
+                </button>
+                <button id="pauseButton" class="control-button pause" disabled>
+                    <i class="fas fa-pause"></i>
+                    <span>Pause</span>
+                </button>
+                <button id="stopButton" class="control-button stop" disabled>
+                    <i class="fas fa-stop"></i>
+                    <span>Stop</span>
+                </button>
+            </div>
+
+            <div class="audio-settings">
+                <div class="setting-group">
+                    <label for="inputDevice">Input Device</label>
+                    <select id="inputDevice" class="device-select"></select>
+                </div>
+                <div class="setting-group">
+                    <label for="outputDevice">Output Device</label>
+                    <select id="outputDevice" class="device-select"></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="recording-info">
+            <div class="timer">
+                <span id="recordingTime">00:00:00</span>
+            </div>
+            <div class="recording-levels">
+                <div class="level-meter">
+                    <div class="level-bar"></div>
+                </div>
+                <span class="level-value">-∞ dB</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="studio-footer">
+        <div class="recording-actions">
+            <button id="saveRecording" class="action-button save" disabled>
+                <i class="fas fa-save"></i>
+                Save Recording
+            </button>
+            <button id="discardRecording" class="action-button discard" disabled>
+                <i class="fas fa-trash"></i>
+                Discard
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+<script type="module" src="{{ url_for('static', filename='js/recordingstudio/recording_studio.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,251 @@
+.studio-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: calc(100vh - 4rem);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.studio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.studio-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.episode-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.episode-id {
+    font-size: 1.1rem;
+    color: #4b5563;
+}
+
+.recording-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #10b981;
+}
+
+.status-text {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.studio-main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.controls-panel {
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.audio-visualizer {
+    width: 100%;
+    height: 200px;
+    background-color: #1f2937;
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.audio-visualizer canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.recording-controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.control-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    border-radius: 0.375rem;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.control-button i {
+    font-size: 1.5rem;
+}
+
+.control-button.record {
+    background-color: #ef4444;
+    color: white;
+}
+
+.control-button.record:hover {
+    background-color: #dc2626;
+}
+
+.control-button.pause {
+    background-color: #f59e0b;
+    color: white;
+}
+
+.control-button.pause:hover {
+    background-color: #d97706;
+}
+
+.control-button.stop {
+    background-color: #6b7280;
+    color: white;
+}
+
+.control-button.stop:hover {
+    background-color: #4b5563;
+}
+
+.control-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.audio-settings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.setting-group label {
+    font-size: 0.9rem;
+    color: #4b5563;
+}
+
+.device-select {
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: white;
+}
+
+.recording-info {
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.timer {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.recording-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.level-meter {
+    width: 100%;
+    height: 20px;
+    background-color: #e5e7eb;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.level-bar {
+    width: 0%;
+    height: 100%;
+    background-color: #10b981;
+    transition: width 0.1s ease;
+}
+
+.level-value {
+    text-align: right;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.studio-footer {
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.recording-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-button.save {
+    background-color: #10b981;
+    color: white;
+}
+
+.action-button.save:hover {
+    background-color: #059669;
+}
+
+.action-button.discard {
+    background-color: #ef4444;
+    color: white;
+}
+
+.action-button.discard:hover {
+    background-color: #dc2626;
+}
+
+.action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
