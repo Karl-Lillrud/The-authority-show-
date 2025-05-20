@@ -338,3 +338,20 @@ class PodtaskRepository:
                 return {"error": "No default tasks were added"}, 500
         except Exception as e:
             return {"error": str(e)}, 500
+
+    def delete_by_user(self, user_id: str) -> int:
+        """
+        Delete all podtasks associated with a user.
+        Args:
+            user_id (str): The ID of the user whose podtasks should be deleted
+        Returns:
+            int: Number of podtasks deleted
+        """
+        try:
+            result = self.podtasks_collection.delete_many({"userid": str(user_id)})
+            deleted_count = result.deleted_count
+            logger.info(f"Deleted {deleted_count} podtasks for user {user_id}")
+            return deleted_count
+        except Exception as e:
+            logger.error(f"Error deleting podtasks for user {user_id}: {e}", exc_info=True)
+            return 0

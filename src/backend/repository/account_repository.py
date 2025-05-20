@@ -12,23 +12,20 @@ class AccountRepository:
     def __init__(self):
         self.collection = collection.database.Accounts
         self.subscription_service = SubscriptionService()
+        self.user_collection = collection.database.Users
 
     def create_account(self, data):
         """
         Creates a new account for the user if one does not exist, or returns the existing account.
         Args:
-            data (dict): Contains ownerId, email, and optional fields (e.g., isFirstLogin).
+            data (dict): Contains ownerId and optional fields (e.g., isFirstLogin).
         Returns: (dict, status_code)
         """
         try:
             user_id = data.get("ownerId")
-            email = data.get("email")
             if not user_id or not isinstance(user_id, str):
                 logger.error(f"Invalid user_id: {user_id}")
                 return {"error": "Invalid or missing ownerId"}, 400
-            if not email or not isinstance(email, str):
-                logger.error(f"Invalid email: {email}")
-                return {"error": "Invalid or missing email"}, 400
 
             # Check if an account already exists for the user
             logger.debug(f"Checking for existing account with ownerId: {user_id}")
@@ -61,7 +58,6 @@ class AccountRepository:
             account_data = {
                 "_id": account_id,
                 "ownerId": user_id,
-                "email": email.lower().strip(),
                 "createdAt": datetime.utcnow().isoformat(),
                 "updatedAt": datetime.utcnow().isoformat(),
                 "isActive": data.get("isActive", True),
@@ -121,9 +117,21 @@ class AccountRepository:
 
     def get_account_by_user(self, user_id):
         try:
+            # Get account data
             account = self.collection.find_one({"ownerId": user_id})
             if not account:
                 return {"error": "Account not found"}, 404
+
+            # Get user data directly from Users collection
+            user = self.user_collection.find_one({"_id": user_id})
+            if user:
+                # Merge user data with account data
+                account.update({
+                    "full_name": user.get("full_name", ""),
+                    "email": user.get("email", ""),
+                    "phone": user.get("phone", "")
+                })
+
             return {"account": account}, 200
         except Exception as e:
             logger.error(f"Error while retrieving account: {e}", exc_info=True)

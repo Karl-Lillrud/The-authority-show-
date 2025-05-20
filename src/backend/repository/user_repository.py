@@ -1,7 +1,6 @@
 import logging
 from flask import url_for
 from backend.database.mongo_connection import collection
-from backend.repository.account_repository import AccountRepository
 from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.guest_repository import GuestRepository
 from backend.repository.podcast_repository import PodcastRepository
@@ -22,6 +21,7 @@ class UserRepository:
         self.user_collection = collection.database.Users
         self.teams_collection = collection.database.Teams
         self.user_to_teams_collection = collection.database.UsersToTeams
+        self.account_collection = collection.database.Accounts
 
     def get_user_by_email(self, email):
         return self.user_collection.find_one({"email": email.lower().strip()})
@@ -46,7 +46,7 @@ class UserRepository:
             # Always use string ID
             string_user_id = str(user_id)
             user = self.user_collection.find_one(
-                {"_id": string_user_id}, {"email": 1, "full_name": 1, "phone": 1}
+                {"_id": string_user_id}, {"email": 1, "full_name": 1, "phone": 1, "profile_pic_url": 1}
             )
 
             if not user:
@@ -56,6 +56,7 @@ class UserRepository:
                 "full_name": user.get("full_name", ""),
                 "email": user.get("email", ""),
                 "phone": user.get("phone", ""),
+                "profile_pic_url": user.get("profile_pic_url", ""),
             }, 200
 
         except Exception as e:
@@ -81,6 +82,34 @@ class UserRepository:
         except Exception as e:
             logger.error(f"Error updating profile: {e}", exc_info=True)
             return {"error": f"Error updating profile: {str(e)}"}, 500
+
+    def update_profile_picture(self, user_id, profile_pic_url):
+        """
+        Update user's profile picture URL.
+        Args:
+            user_id (str): The ID of the user
+            profile_pic_url (str): The URL of the profile picture in Azure Blob Storage
+        Returns:
+            tuple: (dict, int) containing response message and status code
+        """
+        try:
+            # Always use string ID
+            string_user_id = str(user_id)
+            result = self.user_collection.update_one(
+                {"_id": string_user_id},
+                {"$set": {"profile_pic_url": profile_pic_url}}
+            )
+
+            if result.matched_count == 0:
+                logger.error(f"No user found with ID: {string_user_id}")
+                return {"error": "User not found"}, 404
+
+            logger.info(f"Successfully updated profile picture for user {string_user_id}")
+            return {"message": "Profile picture updated successfully"}, 200
+
+        except Exception as e:
+            logger.error(f"Error updating profile picture for user {user_id}: {e}", exc_info=True)
+            return {"error": f"Failed to update profile picture: {str(e)}"}, 500
 
     # Delete user and all associated data from related collections
     def cleanup_user_data(self, user_id, user_email):
@@ -127,21 +156,24 @@ class UserRepository:
             )
 
             # Continue cleanup
-            accounts = AccountRepository().delete_by_user(user_id_str)
             user_teams = UserToTeamRepository().delete_by_user(user_id_str)
             user_credit = delete_credits_by_user(user_id_str)
             user_activity = ActivitiesRepository().delete_by_user(user_id_str)
+
+            # Delete account documents
+            accounts_deleted = self.account_collection.delete_many({"ownerId": user_id_str}).deleted_count
+            logger.info(f"Deleted {accounts_deleted} account documents for user {user_id_str}")
 
             return {
                 "episodes_deleted": episodes,
                 "guests_deleted": guests,
                 "podcasts_deleted": podcasts,
                 "podtasks_deleted": podtasks,
-                "accounts_deleted": accounts,
                 "user_team_links_deleted": user_teams,
                 "teams_processed": team_cleanup_results,
                 "user_credits_deleted": user_credit,
                 "user_activity_deleted": user_activity,
+                "accounts_deleted": accounts_deleted,
             }
 
         except Exception as e:
@@ -174,13 +206,19 @@ class UserRepository:
             # Always use string ID
             user_id_str = str(user_id)
 
+            # First clean up all associated data
             cleanup_result = self.cleanup_user_data(user_id_str, user["email"])
+            if isinstance(cleanup_result, dict) and cleanup_result.get("error"):
+                logger.error(f"Cleanup failed for user {user_id_str}: {cleanup_result.get('error')}")
+                return {"error": "Failed to clean up user data"}, 500
 
+            # Finally delete the user document
             user_result = self.user_collection.delete_one({"_id": user_id_str})
 
             if user_result.deleted_count == 0:
                 return {"error": "User deletion failed."}, 500
 
+            logger.info(f"Successfully deleted user {user_id_str} and all associated data")
             return {
                 "message": "User account and associated data deleted successfully.",
                 "redirect": url_for("auth_bp.signin"),
