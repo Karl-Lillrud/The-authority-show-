@@ -16,25 +16,37 @@ body {
   #tabs {
     display: flex;
     gap: 30px;
-    padding-bottom: 0.5rem;
-    margin-bottom: 23px;
+    justify-content: center;
+    /*padding-bottom: 0.5rem;*/
+    /*margin-bottom: 23px;*/
+    z-index: 1;
   }
   
   #tabs button {
-    padding: 0.5rem 1rem;
+    padding: var(--spacing-md) var(--spacing-lg);
     font-weight: 600;
-    color: #404040;
-    background: transparent;
-    border: none;
+    color: #797979;
+    background: white;
     cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid white;
+    border-bottom: none;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
   }
-  
-  #tabs button.active,
+
   #tabs button:hover {
     color: #FF7300;
-    border-bottom: 3px solid #FF7300;
+    box-shadow: 0px 0px 6px rgba(255, 100, 0, 0.8);
+  }
+
+  #tabs button.active {
+    color: #FF7300;
+    box-shadow: 0px 0px 6px rgba(255, 100, 0, 0.8);
+    border-color: var(--highlight-color);
+    border-bottom: none;
   }
   
   /* Main Content */
@@ -43,6 +55,11 @@ body {
   }
   
   /* Content Box */
+
+  #content {
+    position: relative;
+    z-index: 2;
+  }
 
   #content .content-wrapper {
     background-color: var(--card-bg-light);
@@ -244,4 +261,8 @@ button span.credit-cost {
 
 .help-icon:hover::after {
   opacity: 1;
+}
+
+.no-edits-found {
+  text-align: center;
 }
