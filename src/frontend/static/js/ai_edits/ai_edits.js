@@ -70,7 +70,7 @@ if (!RegionsPlugin) {
 
 function labelWithCredits(text, key) {
     const cost = CREDIT_COSTS[key];
-    return `${text} <span style="color: gray; font-size: 0.9em;">(${cost} credits)</span>`;
+    return `${text} <span class="credit-cost">${cost} credits</span>`;
 }
 
 function showTab(tabName) {
@@ -82,8 +82,20 @@ function showTab(tabName) {
     
     // Add active class to clicked button
     const clickedButton = document.querySelector(`.workspace-tab-btn[data-workspace="${tabName}"]`);
-    if (clickedButton) {
-        clickedButton.classList.add('active');
+    
+    // Add active class to the clicked button
+    if (tabName === 'transcription') {
+      document.getElementById('tab-transcription').classList.add('active');
+      document.getElementById('tab-audio').classList.remove('active');
+      document.getElementById('tab-video').classList.remove('active');
+    } else if (tabName === 'audio') {
+      document.getElementById('tab-transcription').classList.remove('active');
+      document.getElementById('tab-audio').classList.add('active');
+      document.getElementById('tab-video').classList.remove('active');
+    } else if (tabName === 'video') {
+      document.getElementById('tab-transcription').classList.remove('active');
+      document.getElementById('tab-audio').classList.remove('active');
+      document.getElementById('tab-video').classList.add('active');
     }
 
     const content = document.getElementById('content');
@@ -1644,7 +1656,7 @@ async function loadAudioEditsForEpisode(episodeId) {
         const edits = await response.json();
 
         if (!Array.isArray(edits) || edits.length === 0) {
-            container.innerHTML = "<p>No edits found.</p>";
+            container.innerHTML = "<p class='no-edits-found'>No edits found.</p>";
             return;
         }
 
