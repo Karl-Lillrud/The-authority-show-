@@ -32,7 +32,6 @@ body {
     transition: all 0.3s ease;
     box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
     border: 1px solid white;
-    border-bottom: none;
     border-bottom-right-radius: 0;
     border-bottom-left-radius: 0;
   }
@@ -117,7 +116,7 @@ body {
 .btn.ai-edit-button {
     background-color: var(--highlight-color); 
     color: white;
-    padding: var(--spacing-md) var(--spacing-md);      
+    padding: var(--spacing-sm) var(--spacing-md);      
     font-size: 1rem;         
     font-weight: 600;
     border: none;
@@ -163,6 +162,18 @@ body {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+.result-field, #videoResult, #audioResult {
+  width: 100%;
+}
+
+.result-field h4 {
+  margin-top: 15px;
+}
+
+.result-group {
+  padding: 15px 0px;
+}
+
 .result-field pre {
   max-height: 300px;
   overflow-y: auto;
@@ -173,6 +184,11 @@ body {
   border-radius: 0.75rem;
   white-space: pre-wrap;      
   word-break: break-word;     
+}
+
+label {
+  padding: 10px;
+  padding-top: 0;
 }
 
 /* Spinner style */
@@ -251,10 +267,12 @@ button span.credit-cost {
   content: attr(data-tooltip);
   position: absolute;
   bottom: 100%;    /* precis ovanför ikonen */
-  left: 0;         /* ikonens vänstra kant */
+  left: -160px;         /* ikonens vänstra kant */
+  max-width: 320px;
+  min-width: 320px;
   margin-bottom: 6px;
   padding: 6px 8px;
-  white-space: nowrap;
+  /*white-space: nowrap;*/
   background: rgba(0,0,0,0.8);
   color: #fff;
   border-radius: 4px;
@@ -271,4 +289,65 @@ button span.credit-cost {
 
 .no-edits-found {
   text-align: center;
+}
+
+@media (max-width: 850px) {
+  .dashboard {
+    margin-top: 0px !important;
+  }
+
+  main {
+    padding-top: 0px;
+  }
+
+  #tabs {
+    margin-top: 30px;
+    margin-bottom: 30px;
+  }
+
+  #tabs button {
+    border: 1px solid white;
+    border-bottom-right-radius: 1rem;
+    border-bottom-left-radius: 1rem;
+  }
+
+  #tabs button.active {
+    border: 1px solid var(--highlight-color);;
+  }
+}
+
+@media (max-width: 600px) {
+
+  .content-wrapper, #enhancementTools, #audioAnalysisSection, #audioCuttingSection, #aiCuttingSection {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .result-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .result-field {
+    text-align: center;
+  }
+
+  #tabs {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  #tabs button {
+    margin-bottom: 15px;
+  }
+
+  #tabs button:last-of-type {
+    margin-bottom: 0px;
+  }
+
 }
