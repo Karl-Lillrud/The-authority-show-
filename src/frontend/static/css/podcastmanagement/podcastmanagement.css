@@ -1139,29 +1139,14 @@ select option:disabled {
   transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
+/* Remove the default ::before pseudo-element for the buy credits button */
+#buy-credits-btn-popup::before {
+  display: none !important;
+}
+
 .save-btn:hover {
   background-color: var(--highlight-hover, #e66b2e);
   transform: translateY(-1px);
-}
-
-.save-btn::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
-  );
-  transition: left 0.4s ease;
-}
-
-.save-btn:hover::after {
-  left: 100%;
 }
 
 /* Responsive Adjustments */

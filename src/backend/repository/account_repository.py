@@ -3,12 +3,15 @@ import uuid
 from datetime import datetime
 from backend.database.mongo_connection import collection
 from backend.services.creditService import initialize_credits
+from backend.services.subscriptionService import SubscriptionService
+from backend.utils.subscription_access import PLAN_BENEFITS
 
 logger = logging.getLogger(__name__)
 
 class AccountRepository:
     def __init__(self):
         self.collection = collection.database.Accounts
+        self.subscription_service = SubscriptionService()
 
     def create_account(self, data):
         """
@@ -50,6 +53,11 @@ class AccountRepository:
             subscription_id = data.get("subscriptionId") or str(uuid.uuid4())
             credit_id = data.get("creditId") or str(uuid.uuid4())
 
+            # Get the subscription plan and its benefits
+            plan = data.get("subscriptionPlan", "FREE").upper()
+            benefits = PLAN_BENEFITS.get(plan, PLAN_BENEFITS["FREE"])
+            
+            # Initialize with 0 extra slots - base slots are handled by the plan
             account_data = {
                 "_id": account_id,
                 "ownerId": user_id,
@@ -68,8 +76,9 @@ class AccountRepository:
                 "isFirstLogin": data.get("isFirstLogin", True),
                 "lastUpdated": datetime.utcnow().isoformat(),
                 "subscriptionAmount": data.get("subscriptionAmount", 0),
-                "subscriptionPlan": data.get("subscriptionPlan", "Free"),
-                "unlockedExtraEpisodeSlots": data.get("unlockedExtraEpisodeSlots", 0)
+                "subscriptionPlan": plan,
+                "unlockedExtraEpisodeSlots": 0,  # Start with 0 extra slots
+                "benefits": benefits  # Store the plan benefits for reference
             }
             logger.debug(f"Attempting to create account with data: {account_data}")
             result = self.collection.insert_one(account_data)

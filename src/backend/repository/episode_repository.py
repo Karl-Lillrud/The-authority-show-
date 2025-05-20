@@ -1,10 +1,12 @@
 from backend.services.subscriptionService import SubscriptionService
 from backend.models.episodes import EpisodeSchema
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from backend.database.mongo_connection import collection
 import uuid
 import logging
 from backend.services.activity_service import ActivityService
+from dateutil.parser import parse as parse_date
+from backend.utils.subscription_access import PLAN_BENEFITS
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +75,7 @@ class EpisodeRepository:
                 "isImported": is_imported,
             }
 
+            # Insert the episode
             self.collection.insert_one(episode_doc)
 
             try:
