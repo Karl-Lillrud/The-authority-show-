@@ -68,6 +68,7 @@ if (!RegionsPlugin) {
   console.error("Regions plugin not loaded — did you include wavesurfer.regions.min.js?");
 }
 window.RegionsPlugin = RegionsPlugin;
+
 function labelWithCredits(text, key) {
     const cost = CREDIT_COSTS[key];
     return `${text} <span style="color: gray; font-size: 0.9em;">(${cost} credits)</span>`;
@@ -563,8 +564,8 @@ function initWaveformCutting(blob) {
 
 
         // Sync numeric inputs with region
-        const startInput = document.getElementById("cut-start");
-        const endInput   = document.getElementById("cut-end");
+        const startInput = document.getElementById("startTime");
+        const endInput   = document.getElementById("endTime");
         startInput.value = selectedRegion.start.toFixed(2);
         endInput.value   = selectedRegion.end.toFixed(2);
 
@@ -585,8 +586,8 @@ function initWaveformCutting(blob) {
     // Keep inputs in sync whenever the user drags/resizes the region
     waveformCut.on("region-updated", (region) => {
         selectedRegion = region;
-        document.getElementById("cut-start").value = region.start.toFixed(2);
-        document.getElementById("cut-end").value   = region.end.toFixed(2);
+        document.getElementById("startTime").value = region.start.toFixed(2);
+        document.getElementById("endTime").value   = region.end.toFixed(2);
     });
 }
 
@@ -1319,8 +1320,8 @@ function renderSfxPlan(sfxPlan, timeline) {
 
 async function cutAudio() {
   // Grab the start/end values from the input fields
-  const start = parseFloat(document.getElementById("cut-start").value);
-  const end   = parseFloat(document.getElementById("cut-end").value);
+  const start = parseFloat(document.getElementById("startTime").value);
+  const end   = parseFloat(document.getElementById("endTime").value);
 
   const cutResult = document.getElementById("cutResult");
   const dl        = document.getElementById("downloadCut");
