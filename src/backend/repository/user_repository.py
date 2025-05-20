@@ -1,7 +1,6 @@
 import logging
 from flask import url_for
 from backend.database.mongo_connection import collection
-from backend.repository.account_repository import AccountRepository
 from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.guest_repository import GuestRepository
 from backend.repository.podcast_repository import PodcastRepository
@@ -22,6 +21,7 @@ class UserRepository:
         self.user_collection = collection.database.Users
         self.teams_collection = collection.database.Teams
         self.user_to_teams_collection = collection.database.UsersToTeams
+        self.account_collection = collection.database.Accounts
 
     def get_user_by_email(self, email):
         return self.user_collection.find_one({"email": email.lower().strip()})
@@ -127,7 +127,7 @@ class UserRepository:
             )
 
             # Continue cleanup
-            accounts = AccountRepository().delete_by_user(user_id_str)
+            accounts = self.account_collection.delete_many({"userId": user_id_str})
             user_teams = UserToTeamRepository().delete_by_user(user_id_str)
             user_credit = delete_credits_by_user(user_id_str)
             user_activity = ActivitiesRepository().delete_by_user(user_id_str)
@@ -137,7 +137,7 @@ class UserRepository:
                 "guests_deleted": guests,
                 "podcasts_deleted": podcasts,
                 "podtasks_deleted": podtasks,
-                "accounts_deleted": accounts,
+                "accounts_deleted": accounts.deleted_count,
                 "user_team_links_deleted": user_teams,
                 "teams_processed": team_cleanup_results,
                 "user_credits_deleted": user_credit,

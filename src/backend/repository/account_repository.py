@@ -5,7 +5,6 @@ from backend.database.mongo_connection import collection
 from backend.services.creditService import initialize_credits
 from backend.services.subscriptionService import SubscriptionService
 from backend.utils.subscription_access import PLAN_BENEFITS
-from backend.repository.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +12,7 @@ class AccountRepository:
     def __init__(self):
         self.collection = collection.database.Accounts
         self.subscription_service = SubscriptionService()
-        self.user_repository = UserRepository()
+        self.user_collection = collection.database.Users
 
     def create_account(self, data):
         """
@@ -128,14 +127,14 @@ class AccountRepository:
             if not account:
                 return {"error": "Account not found"}, 404
 
-            # Get user data using UserRepository
-            user = self.user_repository.get_user_by_id(user_id)
+            # Get user data directly from Users collection
+            user = self.user_collection.find_one({"_id": user_id})
             if user:
                 # Merge user data with account data
                 account.update({
                     "full_name": user.get("full_name", ""),
                     "email": user.get("email", ""),
-                    "phone": user.get("phone", ""),  # Note: using 'phone' to match repository
+                    "phone": user.get("phone", ""),
                     "profile_pic_url": user.get("profile_pic_url", "")
                 })
 
