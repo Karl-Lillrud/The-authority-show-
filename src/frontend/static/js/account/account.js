@@ -259,7 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
               purchase.details
                 ? `<button class="details-btn" data-details='${JSON.stringify(
                     purchase.details
-                  )}'>View Details</button>`
+                  )}'>Details</button>`
                 : "N/A"
             }
           </div>

@@ -78,7 +78,9 @@ def connect_google_calendar():
     try:
         client_id = os.getenv("GOOGLE_CLIENT_ID")
         redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
-        scope = "https://www.googleapis.com/calendar"
+        scope = "https://www.googleapis.com/auth/calendar.events"
+        #https://www.googleapis.com/auth/calendar Main scope for Google Calendar API
+        #Can take multiple weeks for access to be granted
         response_type = "code"
         access_type = "offline"
         include_granted_scopes = "true"
@@ -252,41 +254,18 @@ def send_login_email(email, login_link):
             </body>
         </html>
         """
-        logger.info(f"📧 Preparing to send login email to {email}")
 
-        # Remove color formatting from print statement
         print(f"Login link for {email}: {login_link}", flush=True)
 
         result = send_email(email, subject, body)
-        if result.get("success"):
-            logger.info(f"✅ Login email sent successfully to {email}")
-            # --- Log activity for login email sent ---
-            try:
-                user = collection.database.Users.find_one(
-                    {"email": email.lower().strip()}
-                )
-                if user:
-                    ActivityService().log_activity(
-                        user_id=str(user["_id"]),
-                        activity_type="login_email_sent",
-                        description=f"Login email sent to {email}",
-                        details={"email": email},
-                    )
-            except Exception as act_err:
-                logger.error(
-                    f"Failed to log login_email_sent activity: {act_err}", exc_info=True
-                )
-            # --- End activity log ---
-        else:
-            logger.error(
-                f"❌ Failed to send login email to {email}: {result.get('error')}"
-            )
+
         return result
     except Exception as e:
         logger.error(
             f"❌ Error while sending login email to {email}: {e}", exc_info=True
         )
         return {"error": f"Error while sending login email: {str(e)}"}
+
 
 
 def send_team_invite_email(
@@ -613,3 +592,39 @@ def send_lia_inquiry_email(name, email, phone, school_and_study):
             f"❌ Error while sending LIA inquiry email: {e}", exc_info=True
         )
         return {"error": f"Error while sending LIA inquiry email: {str(e)}"}
+
+
+def send_booking_email(recipient_email, recipient_name, recording_at, pod_name):
+    """
+    Sends a confirmed booking email to the guest.
+    """
+    try:
+        subject = "Booking Confirmation"
+
+        # Email body with inline template logic
+        body = f"""
+        <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Booking Information</title>
+            </head>
+            <body>
+                <h2>Hello {recipient_name},</h2>
+                <p>Thank you for booking your recording session with us. Your session details are confirmed.</p>
+                <p>Your session is scheduled for: {recording_at}.</p>
+                <p>If you have any questions, feel free to reach out.</p>
+                <p>Best regards,<br>{pod_name}</p>
+            </body>
+        </html>
+        """
+
+        # Send the email
+        result = send_email(recipient_email, subject, body)
+        if "error" in result:
+            raise Exception(result["error"])
+
+        logger.info(f"✅ Booking email sent to {recipient_email}")
+        return {"message": "Booking email sent successfully"}
+    except Exception as e:
+        logger.error(f"❌ Error sending booking email to {recipient_email}: {e}", exc_info=True)
+        return {"error": f"Failed to send booking email: {str(e)}"}

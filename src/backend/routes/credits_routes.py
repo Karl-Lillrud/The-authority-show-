@@ -26,8 +26,10 @@ def consume():
     try:
         result = consume_credits(user_id, feature)
         return jsonify({"success": True, "data": result}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 403
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "Unexpected server error."}), 500
 
 
 @credits_bp.route("/api/credits", methods=["GET"])

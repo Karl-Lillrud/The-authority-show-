@@ -1,15 +1,5 @@
-from flask import (
-    render_template,
-    jsonify,
-    Blueprint,
-    g,
-    request,
-    redirect,
-    url_for,
-    flash,
-)
+from flask import (render_template, jsonify, Blueprint, g, request, redirect, url_for, flash)
 from backend.database.mongo_connection import database, collection, collection as team_collection
-from bson import ObjectId
 from datetime import datetime
 import logging
 import json
@@ -66,7 +56,7 @@ import os
 import json
 
 # Define the new paths
-BASE_JSON_PATH = os.path.join(os.path.dirname(__file__), "../../Frontend/static/json")
+BASE_JSON_PATH = os.path.join(os.path.dirname(__file__), "../../frontend/static/json")
 CUSTOM_TRIGGERS_FILE = os.path.join(BASE_JSON_PATH, "custom_triggers.json")
 SENT_EMAILS_FILE = os.path.join(BASE_JSON_PATH, "sent_emails.json")
 

@@ -12,7 +12,7 @@ from backend.repository.teaminviterepository import TeamInviteRepository
 from backend.repository.credits_repository import delete_by_user as delete_credits_by_user
 from backend.repository.activities_repository import ActivitiesRepository
 from datetime import datetime, timezone
-import bson
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,26 +27,26 @@ class UserRepository:
         return self.user_collection.find_one({"email": email.lower().strip()})
 
     def get_user_by_id(self, user_id):
-        # Handle both string and ObjectId formats
+        """
+        Get user by ID, always using string representation.
+        """
         try:
-            if isinstance(user_id, str) and bson.ObjectId.is_valid(user_id):
-                # Try to convert to ObjectId if it's a valid format
-                return self.user_collection.find_one({"_id": bson.ObjectId(user_id)})
-            else:
-                # Otherwise use as is
-                return self.user_collection.find_one({"_id": user_id})
+            # Always use string ID
+            string_user_id = str(user_id)
+            return self.user_collection.find_one({"_id": string_user_id})
         except Exception as e:
             logger.error(f"Error in get_user_by_id: {e}", exc_info=True)
-            # Try both formats as fallback
-            return self.user_collection.find_one({"$or": [
-                {"_id": user_id},
-                {"_id": str(user_id)}
-            ]})
-
+            return None
+    
     def get_profile(self, user_id):
+        """
+        Get user profile by ID, always using string representation.
+        """
         try:
+            # Always use string ID
+            string_user_id = str(user_id)
             user = self.user_collection.find_one(
-                {"_id": user_id}, {"email": 1, "full_name": 1, "phone": 1, "profileUrl": 1}
+                {"_id": string_user_id}, {"email": 1, "full_name": 1, "phone": 1}
             )
 
             if not user:
@@ -67,15 +67,18 @@ class UserRepository:
             return {"error": f"Failed to fetch profile: {str(e)}"}, 500
 
     def update_profile(self, user_id, data):
+        """
+        Update user profile, always using string representation of user ID.
+        """
         try:
+            # Always use string ID
+            string_user_id = str(user_id)
             updates = {k: v for k, v in data.items() if v is not None}
 
             if not updates:
                 return {"error": "No valid fields provided for update"}, 400
 
-            result = self.user_collection.update_one({"_id": user_id}, {"$set": updates})
-            if result.matched_count == 0:
-                return {"error": "User not found"}, 404
+            self.user_collection.update_one({"_id": string_user_id}, {"$set": updates})
 
             return {"message": "Profile updated successfully!"}, 200
 
@@ -83,10 +86,13 @@ class UserRepository:
             logger.error(f"Error updating profile: {e}", exc_info=True)
             return {"error": f"Error updating profile: {str(e)}"}, 500
 
-
     # Delete user and all associated data from related collections
     def cleanup_user_data(self, user_id, user_email):
+        """
+        Clean up all user data across collections, using string representation of user ID.
+        """
         try:
+            # Always use string ID
             user_id_str = str(user_id)
             logger.info(f"Starting cleanup for user {user_id_str} ({user_email})")
 
@@ -94,6 +100,7 @@ class UserRepository:
             episodes = EpisodeRepository().delete_by_user(user_id_str)
             guests = GuestRepository().delete_by_user(user_id_str)
             podcasts = PodcastRepository().delete_by_user(user_id_str)
+            podtasks = PodtaskRepository().delete_by_user(user_id_str)
 
             # Clean up teams: remove from members or delete if creator
             team_repo = TeamRepository()
@@ -146,6 +153,9 @@ class UserRepository:
             return {"error": f"Cleanup failed: {str(e)}"}
 
     def delete_user(self, data):
+        """
+        Delete user and all associated data, using string representation of user ID.
+        """
         try:
             input_email = data.get("deleteEmail")
             delete_confirm = data.get("deleteConfirm", "").strip().upper()
@@ -162,13 +172,15 @@ class UserRepository:
                 {"email": input_email.lower().strip()}
             )
             if not user:
-                return {"error": "User doeexist in the database."}, 404
+                return {"error": "User does not exist in the database."}, 404
 
             user_id = user.get("_id")
+            # Always use string ID
+            user_id_str = str(user_id)
 
-            cleanup_result = self.cleanup_user_data(user_id, user["email"])
+            cleanup_result = self.cleanup_user_data(user_id_str, user["email"])
 
-            user_result = self.user_collection.delete_one({"_id": user_id})
+            user_result = self.user_collection.delete_one({"_id": user_id_str})
 
             if user_result.deleted_count == 0:
                 return {"error": "User deletion failed."}, 500
@@ -184,24 +196,14 @@ class UserRepository:
 
     def save_tokens(self, user_id, access_token, refresh_token):
         """
-        Save access token and refresh token to the user document.
+        Save access token and refresh token to the user document using string ID.
         """
         try:
-            # Log token saving attempt with partial token info for security
+            # Log token saving attempt
             logger.info(f"save_tokens called for user {user_id}")
             
-            # Try different user_id formats to ensure we find the user
-            try_user_ids = [user_id]
-            
-            # If it's a string that could be an ObjectId, add that format
-            if isinstance(user_id, str) and bson.ObjectId.is_valid(user_id):
-                try_user_ids.append(bson.ObjectId(user_id))
-            
-            # If it's an ObjectId, add the string version
-            if not isinstance(user_id, str):
-                try_user_ids.append(str(user_id))
-                
-            logger.info(f"Will try user IDs: {try_user_ids}")
+            # Always convert user_id to string to ensure consistency
+            string_user_id = str(user_id)
             
             # Create update data
             user_data = {
@@ -210,35 +212,29 @@ class UserRepository:
                 "googleCalLastUpdated": datetime.now(timezone.utc)
             }
             
-            # Try to update with each possible user_id format
-            for uid in try_user_ids:
-                try:
-                    result = self.user_collection.update_one(
-                        {"_id": uid},
-                        {"$set": user_data}
-                    )
-                    
-                    logger.info(f"Update with user_id {uid}: matched={result.matched_count}, modified={result.modified_count}")
-                    
-                    if result.matched_count > 0:
-                        # We found and updated the user, so we can stop trying
-                        logger.info(f"Successfully updated user {uid} with tokens")
-                        
-                        # Verify the update
-                        user = self.user_collection.find_one({"_id": uid})
-                        if user and user.get("googleCalRefreshToken") == refresh_token:
-                            logger.info(f"Verified tokens saved for user {uid}")
-                            return {"message": "Tokens saved successfully"}, 200
-                        else:
-                            logger.warning(f"Tokens saved but verification failed for user {uid}")
-                            
-                        # Even if verification failed, we did find and update the user
-                        return {"message": "Tokens saved"}, 200
-                except Exception as e:
-                    logger.error(f"Error updating user {uid}: {e}", exc_info=True)
+            # Update using string ID
+            result = self.user_collection.update_one(
+                {"_id": string_user_id},
+                {"$set": user_data}
+            )
             
-            # If we get here, we didn't find the user with any ID format
-            logger.error(f"No user found with any ID format: {try_user_ids}")
+            logger.info(f"Update with user_id {string_user_id}: matched={result.matched_count}, modified={result.modified_count}")
+            
+            if result.matched_count > 0:
+                # We found and updated the user
+                logger.info(f"Successfully updated user {string_user_id} with tokens")
+                
+                # Verify the update
+                user = self.user_collection.find_one({"_id": string_user_id})
+                if user and user.get("googleCalRefreshToken") == refresh_token:
+                    logger.info(f"Verified tokens saved for user {string_user_id}")
+                    return {"message": "Tokens saved successfully"}, 200
+                else:
+                    logger.warning(f"Tokens saved but verification failed for user {string_user_id}")
+                    return {"message": "Tokens saved but verification failed"}, 200
+            
+            # If we get here, we didn't find the user
+            logger.error(f"No user found with ID: {string_user_id}")
             return {"error": "User not found"}, 404
 
         except Exception as e:

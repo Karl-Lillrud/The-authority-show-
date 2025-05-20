@@ -280,43 +280,54 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log(`Episodes to register (${episodes.length}):`, JSON.stringify(episodes, null, 2));
         // --- End Debug ---
 
-        for (const episode of episodes) {
-          console.log("Registering episode:", episode.title, "for podcastId:", podcastId);
-          try {
-            // Prepare episode data safely, especially audio details
-            const episodeDataForRegistration = {
-              podcast_id: podcastId, // Changed from podcastId to podcast_id
-              title: episode.title || "Untitled Episode", // Fallback for title
-              description: episode.description,
-              publishDate: episode.pubDate || new Date().toISOString(), // Provide default if episode.pubDate is null/undefined
-              duration: episode.duration,
-              // Safely access audio properties
-              audioUrl: episode.audio ? episode.audio.url : null,
-              fileSize: episode.audio ? episode.audio.length : null,
-              fileType: episode.audio ? episode.audio.type : null,
-              guid: episode.guid,
-              season: episode.season || null,
-              episode: episode.episode || null,
-              episodeType: episode.episodeType || null,
-              explicit: episode.explicit || null,
-              imageUrl: episode.image || episode.imageUrl || "/placeholder.svg?height=300&width=300",
-              keywords: episode.keywords || null,
-              chapters: episode.chapters || null,
-              link: episode.link || null,
-              subtitle: episode.subtitle || null,
-              summary: episode.summary || null,
-              author: episode.author || null,
-              isHidden: episode.isHidden || null,
-              status: "published",
-              isImported: true,
-            };
+const episodePayloads = [];
 
-            const registerResponse = await registerEpisode(episodeDataForRegistration);
-            console.log("Episode registered successfully:", registerResponse);
-          } catch (error) {
-            console.error("Error registering episode:", episode.title, error);
-          }
-        }
+for (const episode of episodes) {
+  console.log("Preparing episode:", episode.title, "for podcastId:", podcastId);
+  
+  const episodeData = {
+    podcastId,
+    title: episode.title || "Untitled Episode",
+    description: episode.description,
+    publishDate: episode.pubDate || new Date().toISOString(),
+    duration: episode.duration,
+    audioUrl: episode.audio?.url || null,
+    fileSize: episode.audio?.length || null,
+    fileType: episode.audio?.type || null,
+    guid: episode.guid,
+    season: episode.season || null,
+    episode: episode.episode || null,
+    episodeType: episode.episodeType || null,
+    explicit: episode.explicit || null,
+    imageUrl: episode.image || episode.imageUrl || "/placeholder.svg?height=300&width=300",
+    keywords: episode.keywords || null,
+    chapters: episode.chapters || null,
+    link: episode.link || null,
+    subtitle: episode.subtitle || null,
+    summary: episode.summary || null,
+    author: episode.author || null,
+    isHidden: episode.isHidden || null,
+    status: "published",
+    isImported: true,
+  };
+
+  episodePayloads.push(episodeData);
+}
+
+// Now register all episodes after the loop is done
+for (const payload of episodePayloads) {
+  try {
+    const registerResponse = await registerEpisode(payload);
+    console.log("✅ Episode registered:", registerResponse);
+  } catch (error) {
+    console.error("❌ Error registering episode:", payload.title, error);
+    alert(`Error registering episode "${payload.title}". Aborting.`);
+    return;
+  }
+}
+
+
+
 
         loadingBar.processStep(3);
 
@@ -435,60 +446,75 @@ document.addEventListener("DOMContentLoaded", async () => {
             const episodeId = `episode-${index}-${Date.now()}`;
 
             return `
-              <div class="episode-card" data-episode-id="${episodeId}">
-                <div class="episode-image-container">
-                  <img src="${
-                    episode.image || "/placeholder.svg?height=300&width=300"
-                  }" alt="${episode.title}" class="episode-image">
-                  <div class="episode-play-overlay">
-                    <button class="episode-play-btn" data-audio-url="${
-                      episode.audio?.url
-                    }" data-episode-id="${episodeId}">
-                      <i class="fas fa-play"></i>
-                    </button>
-                  </div>
-                  <div class="now-playing" id="now-playing-${episodeId}">
-                    <span class="pulse"></span>Now Playing
-                  </div>
-                </div>
-                <div class="episode-content">
-                  <h3 class="episode-title">${episode.title}</h3>
-                  <div class="episode-meta">
-                    <span><i class="fas fa-calendar"></i> ${formattedDate}</span>
-                    ${formattedDuration ? `<span><i class="fas fa-clock"></i> ${formattedDuration}</span>` : ""}
-                    ${
-                      episode.season && episode.episode
-                        ? `<span><i class="fas fa-list-ol"></i> S${episode.season} E${episode.episode}</span>`
-                        : ""
-                    }
-                    ${
-                      episode.explicit === "Yes"
-                        ? `<span class="explicit-tag"><i class="fas fa-exclamation-circle"></i> Explicit</span>`
-                        : ""
-                    }
-                  </div>
-                  <div class="episode-description" id="desc-${episodeId}">
-                    ${episode.summary || episode.description || "No description available."}
-                  </div>
-                  <div class="episode-actions">
-                    <button class="episode-btn primary" data-audio-url="${
-                      episode.audio?.url
-                    }" data-episode-id="${episodeId}">
-                      <i class="fas fa-play"></i> Play
-                    </button>
-                    <button class="episode-btn secondary toggle-description" data-desc-id="desc-${episodeId}">
-                      <i class="fas fa-ellipsis-h"></i> More
-                    </button>
-                  </div>
-                  <div class="audio-player" id="player-${episodeId}">
-                    <audio controls>
-                      <source src="${episode.audio?.url}" type="${episode.audio?.type || "audio/mpeg"}">
-                      Your browser does not support the audio element.
-                    </audio>
-                  </div>
+            <div class="episode-card" data-episode-id="${episodeId}">
+              <div class="episode-image-container">
+                <img src="${
+                  episode.image || "/placeholder.svg?height=300&width=300"
+                }" alt="${episode.title}" class="episode-image">
+                
+                ${
+                  episode.audio?.url
+                    ? `<div class="episode-play-overlay">
+                        <button class="episode-play-btn" data-audio-url="${episode.audio.url}" data-episode-id="${episodeId}">
+                          <i class="fas fa-play"></i>
+                        </button>
+                      </div>`
+                    : ""
+                }
+
+                <div class="now-playing" id="now-playing-${episodeId}">
+                  <span class="pulse"></span>Now Playing
                 </div>
               </div>
-            `;
+              <div class="episode-content">
+                <h3 class="episode-title">${episode.title}</h3>
+                <div class="episode-meta">
+                  <span><i class="fas fa-calendar"></i> ${formattedDate}</span>
+                  ${
+                    formattedDuration
+                      ? `<span><i class="fas fa-clock"></i> ${formattedDuration}</span>`
+                      : ""
+                  }
+                  ${
+                    episode.season && episode.episode
+                      ? `<span><i class="fas fa-list-ol"></i> S${episode.season} E${episode.episode}</span>`
+                      : ""
+                  }
+                  ${
+                    episode.explicit === "Yes"
+                      ? `<span class="explicit-tag"><i class="fas fa-exclamation-circle"></i> Explicit</span>`
+                      : ""
+                  }
+                </div>
+                <div class="episode-description" id="desc-${episodeId}">
+                  ${episode.summary || episode.description || "No description available."}
+                </div>
+                <div class="episode-actions">
+                  ${
+                    episode.audio?.url
+                      ? `<button class="episode-btn primary" data-audio-url="${episode.audio.url}" data-episode-id="${episodeId}">
+                          <i class="fas fa-play"></i> Play
+                        </button>`
+                      : ""
+                  }
+                  <button class="episode-btn secondary toggle-description" data-desc-id="desc-${episodeId}">
+                    <i class="fas fa-ellipsis-h"></i> More
+                  </button>
+                </div>
+                ${
+                  episode.audio?.url
+                    ? `<div class="audio-player" id="player-${episodeId}">
+                        <audio controls>
+                          <source src="${episode.audio.url}" type="${episode.audio.type || "audio/mpeg"}">
+                          Your browser does not support the audio element.
+                        </audio>
+                      </div>`
+                    : ""
+                }
+              </div>
+            </div>
+          `;
+
           })
           .join("")
       : "";

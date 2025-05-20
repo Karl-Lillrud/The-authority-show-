@@ -601,16 +601,51 @@ class SubscriptionService:
             plan = sub["plan"].upper()
             benefits = PLAN_BENEFITS.get(plan, PLAN_BENEFITS["FREE"])
 
-            episode_slots = benefits.get("episode_slots", 0)
+            # Get base slots from plan
+            base_slots = benefits.get("episode_slots", 0)
+            # Get extra slots purchased
             extra_slots = account.get("unlockedExtraEpisodeSlots", 0)
-            total_allowed_slots = episode_slots + extra_slots
+            # Calculate total allowed slots
+            total_allowed_slots = base_slots + extra_slots
 
+            # Check if plan has unlimited slots
             if benefits.get("max_slots") == "Unlimited":
                 return True, "Unlimited episodes allowed"
 
+            # Get current episode count
+            current_count = self.get_episode_slot_count(user_id, sub)
+            
+            logger.info(f"📊 Found {current_count} regular (non-imported) episodes for user {user_id}")
+            logger.info(f"📊 User has {base_slots} base slots and {extra_slots} extra slots (total: {total_allowed_slots})")
+
+            if current_count < total_allowed_slots:
+                logger.info(f"✅ User {user_id} is within allowed limit: {current_count}/{total_allowed_slots}")
+                return True, f"{current_count} < allowed {total_allowed_slots}"
+            else:
+                if extra_slots > 0:
+                    return False, f"You've used your {base_slots} base slots and all {extra_slots} extra slot(s)."
+                else:
+                    return False, f"You've used your {base_slots} free episode slots. Upgrade to unlock more."
+
+        except Exception as e:
+            logger.error(f"❌ Error checking create-episode permission for user {user_id}: {str(e)}")
+            return False, "Internal server error"
+
+    def get_episode_slot_count(self, user_id, subscription):
+        """
+        Count the number of episodes created by a user in their current subscription period.
+        
+        Args:
+            user_id: The user's ID
+            subscription: The user's subscription data
+            
+        Returns:
+            int: The number of episodes created in the current subscription period
+        """
+        try:
             now = datetime.utcnow()
-            start = parse_date(sub["start_date"]) if sub.get("start_date") else now - timedelta(days=30)
-            end = parse_date(sub["end_date"]) if sub.get("end_date") else now
+            start = parse_date(subscription["start_date"]) if subscription.get("start_date") else now - timedelta(days=30)
+            end = parse_date(subscription["end_date"]) if subscription.get("end_date") else now
 
             count = self.episodes_collection.count_documents({
                 "userid": str(user_id),
@@ -620,20 +655,11 @@ class SubscriptionService:
                     {"isImported": False}
                 ]
             })
-
-            logger.info(f"📊 Found {count} regular (non-imported) episodes for user {user_id}")
-            if count < total_allowed_slots:
-                logger.info(f"✅ User {user_id} is within allowed limit: {count}/{total_allowed_slots}")
-                return True, f"{count} < allowed {total_allowed_slots}"
-            else:
-                if extra_slots > 0:
-                    return False, f"You’ve used your {episode_slots} base slots and all {extra_slots} extra slot(s)."
-                else:
-                    return False, f"You’ve used your {episode_slots} free episode slots. Upgrade to unlock more."
-
+            
+            return count
         except Exception as e:
-            logger.error(f"❌ Error checking create-episode permission for user {user_id}: {str(e)}")
-            return False, "Internal server error"
+            logger.error(f"Error counting episodes for user {user_id}: {str(e)}")
+            return 0
 
 
 

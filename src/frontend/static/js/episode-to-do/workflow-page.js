@@ -10,13 +10,16 @@ export function renderWorkflowEditor(state, updateUI) {
 
   dependencyView.innerHTML = ""
 
+  // Refresh the workflows list before rendering
+  refreshWorkflowsList(state, updateUI).then((workflows) => {
+    if (workflows.length > 0) {
+      state.workflows = workflows
+    }
+  })
+
   // Create the workflow editor UI
   const workflowEditorHTML = `
     <div class="workflow-editor">
-      <div class="workflow-header">
-        <h3>Edit Workflow</h3>
-        <p>Select a workflow to edit or create a new one from the current tasks.</p>
-      </div>
       
       <div class="workflow-selector">
         <label for="workflow-select">Select Workflow:</label>
@@ -124,18 +127,40 @@ export async function confirmDeleteWorkflow(workflowId, state, updateUI) {
       // Call the API to delete the workflow
       await deleteWorkflow(workflowId)
 
-      // Remove the workflow from the state
-      state.workflows = state.workflows.filter((w) => w._id !== workflowId)
+      // Refresh the workflows list
+      fetch("/get_workflows", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.workflows) {
+            state.workflows = data.workflows
 
-      // Update the workflow selector
-      const workflowSelect = document.getElementById("workflow-select")
-      if (workflowSelect) {
-        const optionToRemove = workflowSelect.querySelector(`option[value="${workflowId}"]`)
-        if (optionToRemove) {
-          workflowSelect.removeChild(optionToRemove)
-        }
-        workflowSelect.value = ""
-      }
+            // Update the workflow selector
+            const workflowSelect = document.getElementById("workflow-select")
+            if (workflowSelect) {
+              // Clear existing options except the first one
+              while (workflowSelect.options.length > 1) {
+                workflowSelect.remove(1)
+              }
+
+              // Add all workflows from the refreshed list
+              data.workflows.forEach((workflow) => {
+                const option = document.createElement("option")
+                option.value = workflow._id
+                option.textContent = workflow.name || "Unnamed Workflow"
+                workflowSelect.appendChild(option)
+              })
+
+              // Reset selection
+              workflowSelect.value = ""
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("Error refreshing workflows:", error)
+        })
 
       // Clear the workflow tasks display
       const workflowTasks = document.getElementById("workflow-tasks")
@@ -555,6 +580,46 @@ export async function saveWorkflowChanges(state, updateUI) {
 
     alert("Workflow updated successfully!")
 
+    // Refresh the workflows list
+    fetch("/get_workflows", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.workflows) {
+          state.workflows = data.workflows
+
+          // Update the workflow dropdown
+          const workflowSelect = document.getElementById("workflow-select")
+          if (workflowSelect) {
+            // Save the current selection
+            const currentSelection = workflowSelect.value
+
+            // Clear existing options except the first one
+            while (workflowSelect.options.length > 1) {
+              workflowSelect.remove(1)
+            }
+
+            // Add all workflows from the refreshed list
+            data.workflows.forEach((workflow) => {
+              const option = document.createElement("option")
+              option.value = workflow._id
+              option.textContent = workflow.name || "Unnamed Workflow"
+              workflowSelect.appendChild(option)
+            })
+
+            // Restore the selection if it still exists
+            if (currentSelection) {
+              workflowSelect.value = currentSelection
+            }
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Error refreshing workflows:", error)
+      })
+
     // Reset button state
     saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes'
     saveBtn.disabled = false
@@ -679,30 +744,45 @@ export function showCreateWorkflowModal(state, updateUI) {
       const result = await response.json()
 
       if (response.ok) {
-        // Add the new workflow to the state
-        if (result.workflowId) {
-          const newWorkflow = {
-            _id: result.workflowId,
-            name: name,
-            description: description,
-            tasks: tasks,
-            isTemplate: true,
-          }
-          state.workflows.push(newWorkflow)
+        // Refresh the workflows list
+        fetch("/get_workflows", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.workflows) {
+              state.workflows = data.workflows
 
-          // Update the workflow selector
-          const workflowSelect = document.getElementById("workflow-select")
-          if (workflowSelect) {
-            const option = document.createElement("option")
-            option.value = result.workflowId
-            option.textContent = name
-            workflowSelect.appendChild(option)
-            workflowSelect.value = result.workflowId
-          }
+              // Update the workflow selector
+              const workflowSelect = document.getElementById("workflow-select")
+              if (workflowSelect) {
+                // Clear existing options except the first one
+                while (workflowSelect.options.length > 1) {
+                  workflowSelect.remove(1)
+                }
 
-          // Load the new workflow for editing
-          loadWorkflowForEditing(result.workflowId, state, updateUI)
-        }
+                // Add all workflows from the refreshed list
+                data.workflows.forEach((workflow) => {
+                  const option = document.createElement("option")
+                  option.value = workflow._id
+                  option.textContent = workflow.name || "Unnamed Workflow"
+                  workflowSelect.appendChild(option)
+                })
+
+                // Select the newly created workflow
+                if (result.workflowId) {
+                  workflowSelect.value = result.workflowId
+
+                  // Load the new workflow for editing
+                  loadWorkflowForEditing(result.workflowId, state, updateUI)
+                }
+              }
+            }
+          })
+          .catch((error) => {
+            console.error("Error refreshing workflows:", error)
+          })
 
         closePopup(popup)
         alert("Workflow created successfully!")
@@ -1082,4 +1162,49 @@ export function saveWorkflow(state, updateUI) {
       console.error("Error saving workflow:", error)
     }
   })
+}
+
+export async function refreshWorkflowsList(state, updateUI) {
+  try {
+    const response = await fetch("/get_workflows", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    })
+
+    const data = await response.json()
+
+    if (data.workflows) {
+      state.workflows = data.workflows
+
+      // Update the workflow selector if it exists
+      const workflowSelect = document.getElementById("workflow-select")
+      if (workflowSelect) {
+        // Save the current selection
+        const currentSelection = workflowSelect.value
+
+        // Clear existing options except the first one
+        while (workflowSelect.options.length > 1) {
+          workflowSelect.remove(1)
+        }
+
+        // Add all workflows from the refreshed list
+        data.workflows.forEach((workflow) => {
+          const option = document.createElement("option")
+          option.value = workflow._id
+          option.textContent = workflow.name || "Unnamed Workflow"
+          workflowSelect.appendChild(option)
+        })
+
+        // Restore the selection if it still exists
+        if (currentSelection) {
+          workflowSelect.value = currentSelection
+        }
+      }
+    }
+
+    return data.workflows || []
+  } catch (error) {
+    console.error("Error refreshing workflows list:", error)
+    return []
+  }
 }

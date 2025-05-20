@@ -1,12 +1,13 @@
-from backend.database.mongo_connection import collection
-from datetime import datetime, timezone
+import json
 import uuid
 import logging
+import email.utils
+from datetime import datetime, timezone
+
+from backend.database.mongo_connection import collection
 from backend.models.guests import GuestSchema
+from backend.services.activity_service import ActivityService
 from marshmallow import ValidationError
-import email.utils  # Import to handle parsing date format
-from google.oauth2.credentials import Credentials
-from backend.services.activity_service import ActivityService  # Add this import
 
 logger = logging.getLogger(__name__)
 
@@ -14,71 +15,47 @@ logger = logging.getLogger(__name__)
 class GuestRepository:
     def __init__(self):
         self.collection = collection.database.Guests
-        self.activity_service = ActivityService()  # Add this line
+        self.activity_service = ActivityService()
+
+    def _parse_publish_date(self, publish_date_str, fallback_date):
+        """Attempts to parse a publish date string into an aware datetime object."""
+        try:
+            parsed = email.utils.parsedate(publish_date_str)
+            if parsed:
+                return datetime(*parsed[:6], tzinfo=timezone.utc)
+        except Exception:
+            logger.info(f"RFC 2822 date parsing failed: {publish_date_str}")
+
+        try:
+            return datetime.fromisoformat(publish_date_str.replace("Z", "+00:00")).replace(tzinfo=timezone.utc)
+        except Exception as e:
+            logger.warning(f"ISO date parsing failed: {publish_date_str}, error: {e}")
+
+        logger.warning(f"Using fallback date for unparsed date: {publish_date_str}")
+        return fallback_date
 
     def add_guest(self, data, user_id):
         try:
-            episode_id = data.get("episodeId")
+            # Convert JSON string to dictionary if needed
+            if isinstance(data, str):
+                data = json.loads(data)
 
-            # Fetch the episode and ensure it contains the 'podcast_id' field
+            episode_id = data.get("episodeId")
             episode = collection.database.Episodes.find_one({"_id": episode_id})
             if not episode:
-                logger.error(f"Episode with ID {episode_id} not found.")
                 return {"error": "Episode not found"}, 404
             if "podcast_id" not in episode:
-                logger.warning(f"Episode with ID {episode_id} is missing 'podcast_id'.")
                 return {"error": "Episode missing 'podcast_id' field"}, 400
 
             current_date = datetime.now(timezone.utc)
+            publish_date = self._parse_publish_date(episode.get("publishDate", ""), current_date)
 
-            # Parse and make publish_date offset-aware
             try:
-                # Check if publishDate exists and is not None
-                if "publishDate" in episode and episode["publishDate"] is not None:
-                    publish_date = None
-                    publish_date_str = episode["publishDate"]
+                guest_data = GuestSchema().load(data)
+            except ValidationError as e:
+                return {"error": f"Invalid guest data: {e.messages}"}, 400
 
-                    # Try parsing as RFC 2822 format first (email.utils.parsedate)
-                    try:
-                        publish_date_parsed = email.utils.parsedate(publish_date_str)
-                        if publish_date_parsed:
-                            publish_date = datetime(*publish_date_parsed[:6]).replace(
-                                tzinfo=timezone.utc
-                            )
-                    except Exception:
-                        # If RFC 2822 parsing fails, log it but continue to try ISO format
-                        logger.info(
-                            f"RFC 2822 date parsing failed for: {publish_date_str}"
-                        )
-
-                    # If RFC 2822 parsing failed, try ISO format
-                    if not publish_date:
-                        try:
-                            publish_date = datetime.fromisoformat(
-                                publish_date_str.replace("Z", "+00:00")
-                            )
-                            publish_date = publish_date.replace(tzinfo=timezone.utc)
-                        except Exception as e:
-                            logger.warning(
-                                f"ISO date parsing failed for: {publish_date_str}, error: {str(e)}"
-                            )
-
-                    # If both parsing methods failed, use current date
-                    if not publish_date:
-                        logger.warning(
-                            f"All date parsing methods failed for: {publish_date_str}, using current date"
-                        )
-                        publish_date = current_date
-                else:
-                    # If publishDate is missing or None, use current date
-                    publish_date = current_date
-            except Exception as e:
-                logger.exception(f"Error parsing publish date: {str(e)}")
-                return {"error": f"Invalid publish date format: {str(e)}"}, 400
-
-            guest_data = GuestSchema().load(data)
             guest_id = str(uuid.uuid4())
-
             guest_item = {
                 "_id": guest_id,
                 "episodeId": episode_id,
@@ -91,16 +68,13 @@ class GuestRepository:
                 "status": "Pending",
                 "scheduled": 0,
                 "completed": 0,
-                "created_at": datetime.now(timezone.utc),
+                "created_at": current_date,
                 "user_id": user_id,
-                "calendarEventId": guest_data.get(
-                    "calendarEventId", ""
-                ),  # Store calendar event ID
+                "calendarEventId": guest_data.get("calendarEventId", ""),
             }
 
             self.collection.insert_one(guest_item)
 
-            # --- Log activity for guest added ---
             try:
                 self.activity_service.log_activity(
                     user_id=user_id,
@@ -113,16 +87,15 @@ class GuestRepository:
                     },
                 )
             except Exception as act_err:
-                logger.error(
-                    f"Failed to log guest_added activity: {act_err}", exc_info=True
-                )
-            # --- End activity log ---
+                logger.error("Failed to log activity", exc_info=True)
 
             return {"message": "Guest added successfully", "guest_id": guest_id}, 201
 
         except Exception as e:
-            logger.exception("❌ ERROR: Failed to add guest")
+            logger.exception("Failed to add guest")
             return {"error": f"Failed to add guest: {str(e)}"}, 500
+
+
 
     def get_guests(self, user_id):
         """
@@ -184,54 +157,97 @@ class GuestRepository:
 
     def edit_guest(self, guest_id, data, user_id):
         """
-        Update a guest's information
+        Update a guest's information, including status.
         """
         try:
-            logger.info("📩 Received Data: %s", data)
+            logger.info(f"🔍 Starting edit_guest for guest_id: {guest_id}, user_id: {user_id}")
 
             if not guest_id:
+                logger.error("❌ Guest ID is required but not provided.")
                 return {"error": "Guest ID is required"}, 400
 
-            user_id_str = str(user_id)
+            # Fetch the guest to get the associated episode ID
+            guest = self.collection.find_one({"_id": guest_id})
+            logger.info(f"📝 Fetched guest: {guest}")
+            if not guest:
+                logger.error(f"❌ Guest with ID {guest_id} not found.")
+                return {"error": "Guest not found"}, 404
 
-            # Prepare update fields from the incoming request body
-            update_fields = {
-                "name": data.get("name", "").strip(),
-                "image": data.get("image", "default-profile.png"),
-                "bio": data.get("bio", data.get("description", "")),
-                "email": data.get("email", "").strip(),
-                "areasOfInterest": data.get("areasOfInterest", []),
-                # Add new fields
-                "company": data.get("company", ""),
-                "phone": data.get("phone", ""),
-                "notes": data.get("notes", ""),
-                "scheduled": data.get("scheduled", 0),
-                "recommendedGuests": data.get("recommendedGuests", []),
-                "futureOpportunities": data.get("futureOpportunities", False),
-                "socialmedia": data.get("socialmedia", {}),
-            }
+            episode_id = guest.get("episode_id")
+            logger.info(f"🔗 Guest is associated with episode_id: {episode_id}")
+            if not episode_id:
+                logger.error(f"❌ Guest with ID {guest_id} is not associated with any episode.")
+                return {"error": "Guest is not associated with any episode"}, 400
 
-            # If episodeId is provided, update the guest's episodeId
-            episode_id = data.get("episodeId")
-            if episode_id is not None:
-                update_fields["episodeId"] = episode_id
+            # Fetch the episode to verify the podcast owner
+            episode = collection.database.Episodes.find_one({"_id": episode_id})
+            logger.info(f"📝 Fetched episode: {episode}")
+            if not episode:
+                logger.error(f"❌ Episode with ID {episode_id} not found.")
+                return {"error": "Episode not found"}, 404
 
-            # If calendarEventId is provided, update it
-            calendar_event_id = data.get("calendarEventId")
-            if calendar_event_id is not None:
-                update_fields["calendarEventId"] = calendar_event_id
+            # Verify that the logged-in user owns the episode
+            if episode.get("userid") != user_id:
+                logger.error(f"❌ Unauthorized: User {user_id} does not own episode {episode_id}.")
+                return {"error": "Unauthorized: You do not own this episode"}, 403
 
-            logger.info("📝 Update Fields: %s", update_fields)
+            # Prepare update fields dynamically
+            update_fields = {}
+            logger.info(f"📦 Data received for update: {data}")
 
-            # Update the guest document based on guest_id and user_id to ensure the user can only edit their own guests
+            if "name" in data:
+                update_fields["name"] = data["name"].strip()
+            if "image" in data:
+                update_fields["image"] = data["image"]
+            if "bio" in data:
+                update_fields["bio"] = data["bio"]
+            if "email" in data:
+                update_fields["email"] = data["email"].strip()
+            if "areasOfInterest" in data:
+                update_fields["areasOfInterest"] = data["areasOfInterest"]
+            if "company" in data:
+                update_fields["company"] = data["company"]
+            if "phone" in data:
+                update_fields["phone"] = data["phone"]
+            if "notes" in data:
+                update_fields["notes"] = data["notes"]
+            if "scheduled" in data:
+                update_fields["scheduled"] = data["scheduled"]
+            if "recommendedGuests" in data:
+                update_fields["recommendedGuests"] = data["recommendedGuests"]
+            if "futureOpportunities" in data:
+                update_fields["futureOpportunities"] = data["futureOpportunities"]
+            if "socialmedia" in data:
+                update_fields["socialmedia"] = data["socialmedia"]
+            if "episodeId" in data:
+                update_fields["episodeId"] = data["episodeId"]
+            if "calendarEventId" in data:
+                update_fields["calendarEventId"] = data["calendarEventId"]
+            if "status" in data:
+                update_fields["status"] = data["status"]
+
+            if not update_fields:
+                logger.error("❌ No valid fields provided for update.")
+                return {"error": "No valid fields provided for update"}, 400
+
+            logger.info(f"📝 Update Fields: {update_fields}")
+
+            # Perform the update
             result = self.collection.update_one(
-                {"_id": guest_id, "user_id": user_id_str}, {"$set": update_fields}
+                {"_id": guest_id},
+                {"$set": update_fields}
             )
+            logger.info(f"🔄 Update result: Matched Count: {result.matched_count}, Modified Count: {result.modified_count}")
 
             if result.matched_count == 0:
+                logger.error(f"❌ Guest with ID {guest_id} not found or unauthorized.")
                 return {"error": "Guest not found or unauthorized"}, 404
 
-            return {"message": "Guest updated successfully"}, 200
+            logger.info(f"✅ Guest with ID {guest_id} updated successfully.")
+            return {
+                "message": "Guest updated successfully",
+                "episode_id": guest.get("episode_id")  # Include episode_id in the response
+            }, 200
 
         except Exception as e:
             logger.exception("❌ ERROR: Failed to update guest")

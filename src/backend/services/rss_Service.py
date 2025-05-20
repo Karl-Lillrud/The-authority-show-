@@ -45,6 +45,10 @@ class RSSService:
         return soup.get_text()
 
     def _parse_duration(self, duration_str):
+        """
+        Parses a duration string and returns total seconds as an integer.
+        Supports formats: 'HH:MM:SS', 'MM:SS', or plain seconds.
+        """
         if not duration_str:
             return None
         try:
@@ -54,7 +58,10 @@ class RSSService:
                     return parts[0] * 3600 + parts[1] * 60 + parts[2]
                 elif len(parts) == 2:  # MM:SS
                     return parts[0] * 60 + parts[1]
-            return int(duration_str)  # Assume it's in seconds
+                elif len(parts) == 1:
+                    return parts[0]
+            else:
+                return int(duration_str)  # Assume it's in seconds
         except ValueError:
             return None
 
@@ -65,15 +72,14 @@ class RSSService:
             logger.info(f"Feedparser parsed feed for URL: {feed_url}. Feed title: {feed.feed.get('title', 'N/A')}")
             logger.info(f"Number of entries found by feedparser: {len(feed.entries)}")
 
-            # Parse XML directly for iTunes namespace
+            # Parse XML directly for iTunes namespace and fallback parsing
             root = ET.fromstring(feed_content)
             itunes_ns = {'itunes': 'http://www.itunes.com/dtds/podcast-1.0.dtd'}
-            
+
             # Get iTunes owner information
             itunes_owner = root.find('.//itunes:owner', itunes_ns)
             owner_name = None
             owner_email = None
-            
             if itunes_owner is not None:
                 owner_name = itunes_owner.find('itunes:name', itunes_ns)
                 owner_email = itunes_owner.find('itunes:email', itunes_ns)
@@ -122,6 +128,7 @@ class RSSService:
             if not parsed_data["imageUrl"] and hasattr(feed.feed, 'itunes_image') and feed.feed.itunes_image:
                 parsed_data["imageUrl"] = feed.feed.itunes_image.get('href')
 
+            all_items_xml = root.findall(".//item")
             parsed_episodes = []
             for entry in feed.entries:
                 episode_pub_date_obj = self._ensure_utc(entry.get("published_parsed") or entry.get("updated_parsed"))
@@ -140,12 +147,15 @@ class RSSService:
                     "season": entry.get("itunes_season"),
                     "episode": entry.get("itunes_episode"),
                     "episodeType": entry.get("itunes_episodetype"),
-                    "image": entry.get("image", {}).get("href") if entry.get("image") else (entry.get("itunes_image", {}).get("href") if entry.get("itunes_image") else None),
+                    "image": entry.get("image", {}).get("href") if entry.get("image") else (
+                        entry.get("itunes_image", {}).get("href") if entry.get("itunes_image") else None
+                    ),
                     "audio": None,
                     "chapters": entry.get("psc_chapters", {}).get("chapters", []) if hasattr(entry, 'psc_chapters') else [],
                     "keywords": [tag.term for tag in entry.get("tags", [])],
                 }
 
+                # Primary: feedparser enclosure
                 if hasattr(entry, "enclosures"):
                     for enc in entry.enclosures:
                         if enc.get("type", "").startswith("audio/"):
@@ -156,6 +166,46 @@ class RSSService:
                             }
                             break
 
+                # Fallback: raw XML if feedparser missed it
+                if episode_data["audio"] is None:
+                    try:
+                        for item in all_items_xml:
+                            item_title = item.findtext("title")
+                            if item_title == episode_data["title"]:
+                                enclosure = item.find("enclosure")
+                                if enclosure is not None and enclosure.attrib.get("url"):
+                                    audio_type = enclosure.attrib.get("type", "")
+                                    if not audio_type or audio_type.startswith("audio/"):
+                                        episode_data["audio"] = {
+                                            "url": enclosure.attrib.get("url"),
+                                            "type": audio_type,
+                                            "length": int(enclosure.attrib.get("length", 0)) if enclosure.attrib.get("length") else None
+                                        }
+
+                                # 🔍 NYTT: Check for media:content (audio or video)
+                                media_content = item.find("media:content", {'media': 'http://search.yahoo.com/mrss/'})
+                                if media_content is not None and media_content.attrib.get("url"):
+                                    media_type = media_content.attrib.get("type", "")
+                                    media_url = media_content.attrib.get("url")
+
+                                    if media_type.startswith("audio/"):
+                                        episode_data["audio"] = {
+                                            "url": media_url,
+                                            "type": media_type,
+                                            "length": int(media_content.attrib.get("fileSize", 0)) if media_content.attrib.get("fileSize") else None
+                                        }
+                                    elif media_type.startswith("video/") and not episode_data["audio"]:
+                                        episode_data["audio"] = {
+                                            "url": media_url,
+                                            "type": media_type,
+                                            "length": int(media_content.attrib.get("fileSize", 0)) if media_content.attrib.get("fileSize") else None,
+                                            "isVideo": True
+                                        }
+
+                                break
+                    except Exception as xml_error:
+                        logger.warning(f"Could not extract enclosure/media:content for episode '{episode_data['title']}': {xml_error}")
+
                 parsed_episodes.append(episode_data)
 
             parsed_data["episodes"] = parsed_episodes
@@ -165,6 +215,8 @@ class RSSService:
         except Exception as e:
             logger.error(f"❌ Error parsing RSS content for {feed_url}: {e}", exc_info=True)
             return {"error": f"Failed to parse RSS content: {str(e)}"}, 500
+
+
 
     def fetch_rss_feed(self, rss_url):
         response = None

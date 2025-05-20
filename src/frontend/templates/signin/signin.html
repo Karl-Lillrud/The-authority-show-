@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign In</title>
-    <link rel="stylesheet" href="/static/css/signin/signin.css" />
+    <!-- Use correct static path for signin.css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/signin/signin.css') }}" />
     <link
       rel="icon"
       type="image/x-icon"
@@ -53,16 +54,53 @@
       <button class="close-button" aria-label="Close">
         <i class="fas fa-times"></i>
       </button>
-      <h2>Podcasting, Reimagined</h2>
-      <p class="subtitle">Grow faster, improve quality, Earn more</p>
-      <p class="no-credit"><i class="fas fa-credit-card"></i> no credit card required</p>
+      <div class="popup-header">
+        <h2>Podcasting, Reimagined</h2>
+        <p class="subtitle">Grow faster, improve quality, Earn more</p>
+        <div class="no-credit"><i class="fas fa-credit-card"></i> no credit card required</div>
+      </div>
       
       <ul class="feature-list">
-        <li><i class="fas fa-robot"></i> Al-powered repetitive tasks</li>
-        <li><i class="fas fa-users"></i> Manage guests & teams</li>
-        <li><i class="fas fa-tasks"></i> Episode checklists</li>
-        <li><i class="fas fa-share-alt"></i> Share-ready content in clicks</li>
-        <li><i class="fas fa-th-large"></i> Everything in one dashboard</li>
+        <li class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-robot"></i>
+          </div>
+          <div class="feature-content">
+            <span>AI-powered repetitive tasks</span>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="feature-content">
+            <span>Manage guests & teams</span>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-tasks"></i>
+          </div>
+          <div class="feature-content">
+            <span>Episode checklists</span>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-share-alt"></i>
+          </div>
+          <div class="feature-content">
+            <span>Share-ready content in clicks</span>
+          </div>
+        </li>
+        <li class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-th-large"></i>
+          </div>
+          <div class="feature-content">
+            <span>Everything in one dashboard</span>
+          </div>
+        </li>
       </ul>
 
       <a href="{{ url_for('frontend.about_page') }}" class="learn-more-link">
@@ -72,13 +110,15 @@
     </div>
 
     <div class="center-box">
-      <h1 class="title">Continue to PodManager</h1>
+      <h1 class="signin-title">Create Your First Podcast<br>With PodManager.ai</h1>
       <div id="success-message" class="success-message" style="display: none"></div>
       <div id="error-message" class="error-message" style="display: none"></div>
 
       <form id="signin-form">
         <div class="input-group">
-          <label for="email" class="label"></label>
+          <div class="input-icon">
+            <i class="fas fa-envelope"></i>
+          </div>
           <input
             type="email"
             id="email"
@@ -95,10 +135,11 @@
             id="send-login-link-button"
             class="button button-primary"
           >
-            Get Log-In Link
+            <span>Log In</span>
+            <i class="fas fa-arrow-right"></i>
           </button>
         </div>
-
+        
         <div class="policy-links">
           <a href="{{ url_for('frontend.terms_of_service_page') }}" class="link"
             >Terms of Service</a
@@ -120,11 +161,11 @@
             <a href="https://discord.gg/vwdhqFxhVm" target="_blank" title="Join our Discord">
               <i class="fab fa-discord"></i>
             </a>
-            <!-- You can add more social icons here as needed -->
           </div>
         </div>
       </form>
     </div>
+    <!-- Use correct static path for signin.js -->
     <script type="module" src="{{ url_for('static', filename='js/signin/signin.js') }}"></script>
   </body>
 </html>

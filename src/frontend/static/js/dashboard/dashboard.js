@@ -1,5 +1,5 @@
 import { fetchAllEpisodes } from "/static/requests/episodeRequest.js";
-import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
+import { fetchGuestsByEpisode,editGuestRequest } from "/static/requests/guestRequests.js";
 import {
   fetchPodcast,
   fetchPodcasts
@@ -8,6 +8,7 @@ import { initTaskManagement } from "/static/js/dashboard/task.js";
 import { svgdashboard } from "./svgdashboard.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
 import { getActivitiesRequest } from "/static/requests/activityRequests.js";
+import { updateEpisode } from "/static/requests/episodeRequest.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -20,6 +21,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       createTeamLeaderBoardRows(),
       fetchAndDisplayActivities()
     ]);
+    checkForPendingGuests();
 
     // Initiera UI-komponenter efter att DOM är uppdaterad
     initializeSvgIcons();
@@ -554,3 +556,193 @@ function formatActivityType(type) {
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
+
+async function fetchPendingGuests() {
+  try {
+    const response = await fetch("/get_pending_guests");
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      return result.data; // Return the list of pending guests
+    } else {
+      console.error("Failed to fetch pending guests:", result.error);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching pending guests:", error);
+    return [];
+  }
+}
+
+// Function to check for pending guests and display a notification
+async function checkForPendingGuests() {
+  const pendingGuests = await fetchPendingGuests();
+
+  if (pendingGuests.length > 0) {
+    // Create a notification icon
+    const notificationIcon = document.createElement("div");
+    notificationIcon.className = "notification-icon";
+    notificationIcon.innerHTML = `
+      <span class="notification-count">${pendingGuests.length}</span>
+      <i class="fas fa-bell"></i>
+    `;
+
+    // Add click event to show pending guests
+    notificationIcon.addEventListener("click", () => {
+      showPendingGuestsPopup(pendingGuests);
+    });
+
+    // Append the notification icon to the Guests card
+    const notificationContainer = document.querySelector(
+      ".stat-card .notification-container"
+    );
+    if (notificationContainer) {
+      notificationContainer.appendChild(notificationIcon);
+    } else {
+      console.error("Notification container not found in Guests card.");
+    }
+  }
+}
+
+// Function to display a popup with pending guests
+function showPendingGuestsPopup(pendingGuests) {
+  // Get the popup container
+  const popup = document.getElementById("pending-guests-popup");
+  const popupList = popup.querySelector(".pending-guests-list");
+
+  // Populate the list with pending guests
+  popupList.innerHTML = pendingGuests
+    .map(
+      (guest) => `
+      <li class="field-group full-width">
+        <strong>${guest.name}</strong> (${guest.email})<br>
+        Requested Date: ${guest.recordingDate} at ${guest.recordingTime}
+        <div class="form-actions">
+          <button class="accept-btn save-btn" data-id="${guest.id}">Accept</button>
+          <button class="decline-btn cancel-btn" data-id="${guest.id}">Decline</button>
+        </div>
+      </li>
+    `
+    )
+    .join("");
+
+  // Show the popup
+  popup.style.display = "flex";
+
+  // Close popup event
+  const closeBtn = popup.querySelector("#close-pending-guests-popup");
+  closeBtn.addEventListener("click", () => {
+    popup.style.display = "none";
+  });
+
+  // Add event listeners for accept and decline buttons
+  popup.querySelectorAll(".accept-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const guestId = event.target.dataset.id;
+        // Find the guest data from the pendingGuests array
+      const guest = pendingGuests.find((g) => g.id === guestId);
+
+      if (guest) {
+        const { recordingDate, recordingTime } = guest;
+        handleAcceptGuest(guestId, recordingDate, recordingTime);
+      } else {
+        console.error("Guest data not found for ID:", guestId);
+      }
+    });
+  });
+
+  popup.querySelectorAll(".decline-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const guestId = event.target.dataset.id;
+      handleDeclineGuest(guestId);
+    });
+  });
+}
+export async function refreshDashboardStats() {
+  await Promise.all([
+    fetchAndDisplayPodcastCount(),
+    fetchAndDisplayEpisodeCount(),
+    fetchAndDisplayGuestCount(),
+    // Add more stat refreshers if needed
+  ]);
+  updateStatCounts();
+}
+ async function handleAcceptGuest(guestId, recordingDate, recordingTime) {
+  try {
+    console.log("Guest ID being sent:", guestId);
+
+    // Combine the recording date and time into a single field
+    const recordingAt = `${recordingDate} ${recordingTime}`;
+
+    // Prepare the payload for accepting the guest
+    const payload = {
+      status: "accepted",
+      recordingAt: recordingAt, // Dynamically set the recordingAt field
+    };
+
+    // Call the existing editGuestRequest function
+    const response = await editGuestRequest(guestId, payload);
+
+    if (response.message === "Guest updated successfully") {
+      alert("Guest accepted successfully!");
+
+      // Extract the episode ID from the response
+      const episodeId = response.episode_id; // Ensure this is populated
+      if (!episodeId) {
+        console.warn("Episode ID is missing in the response. Skipping episode update.");
+        location.reload(); // Refresh the page to reflect changes
+        return;
+      }
+
+      // Prepare the payload for updating the episode
+      const episodeUpdatePayload = { recordingAt };
+
+      // Call the updateEpisode method with the correct payload
+      const episodeUpdateResponse = await fetch(`/update_episodes/${episodeId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+        body: JSON.stringify(episodeUpdatePayload),
+      });
+
+      if (episodeUpdateResponse.ok) {
+        const result = await episodeUpdateResponse.json();
+        console.log("Episode recordingAt updated successfully!", result);
+      } else {
+        const errorData = await episodeUpdateResponse.json();
+        console.error("Failed to update episode recordingAt:", errorData.error);
+        alert("Guest accepted, but failed to update episode recording time.");
+      }
+
+      location.reload(); // Refresh the page to reflect changes
+    } else {
+      throw new Error(response.error || "Failed to accept guest.");
+    }
+  } catch (error) {
+    console.error("Error accepting guest:", error);
+    alert("Failed to accept guest.");
+  }
+}
+  async function handleDeclineGuest(guestId) {
+    try {
+      // Prepare the payload for declining the guest
+      const payload = {
+        status: "declined",
+      };
+
+      // Call the existing editGuestRequest function
+      const response = await editGuestRequest(guestId, payload);
+
+      if (response.message === "Guest updated successfully") {
+        alert("Guest declined successfully!");
+        location.reload(); // Refresh the page to reflect changes
+      } else {
+        throw new Error(response.error || "Failed to decline guest.");
+      }
+    } catch (error) {
+      console.error("Error declining guest:", error);
+      alert("Failed to decline guest.");
+    }
+  }

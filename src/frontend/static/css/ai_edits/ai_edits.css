@@ -7,15 +7,17 @@ body {
     background-color: var(--background-light);
     color: #404040;
   }
-  
+
+  #app {
+    min-height: calc(100vh - 60px);
+  }
 
   /* Tabs */
   #tabs {
     display: flex;
-    gap: 1rem;
-    border-bottom: 1px solid #ccc;
+    gap: 30px;
     padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 23px;
   }
   
   #tabs button {
@@ -41,23 +43,29 @@ body {
   }
   
   /* Content Box */
-  #content {
+
+  #content .content-wrapper {
     background-color: var(--card-bg-light);
     padding: 1.5rem;
     border-radius: 1rem;
     box-shadow: 0 4px 12px rgba(255, 115, 0, 0.1);
+    margin-bottom: 30px;
+  }
+
+  #content .content-wrapper:last-of-type {
+    margin-bottom: 0;
   }
   
   /* File Upload */
   input[type="file"] {
     border: 2px dashed #ccc;
     padding: 1rem;
-    width: 100%;
     border-radius: 0.75rem;
     background: #fafafa;
     text-align: center;
     cursor: pointer;
     margin-bottom: 1rem;
+    display: block;
   }
   
   /* Buttons */
@@ -165,7 +173,6 @@ body {
 }
 
 .edit-history-container {
-  border-top: 1px solid #ccc;
   padding-top: 1.5rem;
 }
 
@@ -174,4 +181,57 @@ body {
   padding: 1rem;
   background: #f9f9f9;
   border-radius: 8px;
+}
+
+button.ai-edit-button.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+.button-with-help {
+  display: inline-flex;
+  align-items: center;
+  /* Vänd ordningen så att span kommer före knappen */
+  flex-direction: row-reverse;
+  margin: 0.5em 0;
+}
+
+.help-icon {
+  display: inline-block;
+  /* flytta ut mot knappen på höger sida av ikonen */
+  margin-right: 6px;
+  margin-left: 0;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  background: #666;
+  border-radius: 50%;
+  cursor: default;
+  position: relative;
+}
+
+.help-icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;    /* precis ovanför ikonen */
+  left: 0;         /* ikonens vänstra kant */
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  white-space: nowrap;
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 11px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 10;
+}
+
+.help-icon:hover::after {
+  opacity: 1;
 }

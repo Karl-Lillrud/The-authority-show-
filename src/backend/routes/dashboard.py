@@ -172,3 +172,30 @@ def store():
 
     logger.info(f"User {session.get('email', 'Unknown')} accessed the store page.")
     return render_template("store/store.html")
+
+
+@dashboard_bp.route("/get_pending_guests", methods=["GET"])
+def get_pending_guests():
+    """
+    Fetch all guests with the status 'pending'.
+    """
+    try:
+        pending_guests = list(
+            collection.database.Guests.find({"status": "pending"})
+        )
+        response = [
+            {
+                "id": str(guest["_id"]),
+                "name": guest["name"],
+                "email": guest["email"],
+                "recordingDate": guest.get("recordingDate"),
+                "recordingTime": guest.get("recordingTime"),
+                "status": guest.get("status"),
+            }
+            for guest in pending_guests
+        ]
+        logger.info(f"Pending guests response: {response}")  # Add this log
+        return jsonify({"success": True, "data": response}), 200
+    except Exception as e:
+        logger.error(f"Failed to fetch pending guests: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
