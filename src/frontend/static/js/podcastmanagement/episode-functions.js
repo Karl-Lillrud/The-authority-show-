@@ -13,6 +13,7 @@ import { showNotification, showConfirmationPopup } from "../components/notificat
 
 import { consumeStoreCredits, getCredits } from "../../../static/requests/creditRequests.js";
 import { incrementUpdateAccount } from "../../../static/requests/accountRequests.js";
+import { showAddGuestPopup } from "./guest-functions.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -416,10 +417,23 @@ export function renderEpisodeDetail(episode) {
 
           guestsListEl.appendChild(guestsContainer);
         } else {
-          const noGuests = document.createElement("p");
-          noGuests.className = "no-guests-message";
-          noGuests.textContent = "No guests to display.";
-          guestsListEl.appendChild(noGuests);
+          const noGuestsContainer = document.createElement("div");
+          noGuestsContainer.className = "no-guests-container";
+
+          const noGuestsMsg = document.createElement("p");
+          noGuestsMsg.className = "no-guests-message";
+          noGuestsMsg.textContent = "No guests to display.";
+
+          const addGuestBtn = document.createElement("button");
+          addGuestBtn.className = "save-btn guest-btn";
+          addGuestBtn.textContent = "Add Guest";
+          addGuestBtn.onclick = function() {
+            showAddGuestPopup();
+          };
+
+          noGuestsContainer.appendChild(noGuestsMsg);
+          noGuestsContainer.appendChild(addGuestBtn);
+          guestsListEl.appendChild(noGuestsContainer);
         }
       }
     })

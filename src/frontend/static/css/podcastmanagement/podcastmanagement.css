@@ -1879,6 +1879,22 @@ select option:disabled {
   pointer-events: auto; /* Interactive when visible */
 }
 
+.no-guests-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 32px 0;
+}
+
+.no-guests-message {
+  margin-bottom: 16px;
+  color: #888;
+  font-size: 1.1rem;
+}
+.guest-btn {
+  margin: 0 auto;
+}
 
 /* Responsive adjustments for sidebar and main content */
 @media (max-width: 992px) {
@@ -2023,3 +2039,4 @@ select option:disabled {
     box-shadow: none;
   }
 }
+
