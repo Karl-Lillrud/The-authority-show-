@@ -129,8 +129,7 @@ class AccountRepository:
                 account.update({
                     "full_name": user.get("full_name", ""),
                     "email": user.get("email", ""),
-                    "phone": user.get("phone", ""),
-                    "profile_pic_url": user.get("profile_pic_url", "")
+                    "phone": user.get("phone", "")
                 })
 
             return {"account": account}, 200

@@ -45,7 +45,7 @@ class UserRepository:
             # Always use string ID
             string_user_id = str(user_id)
             user = self.user_collection.find_one(
-                {"_id": string_user_id}, {"email": 1, "full_name": 1, "phone": 1}
+                {"_id": string_user_id}, {"email": 1, "full_name": 1, "phone": 1, "profile_pic_url": 1}
             )
 
             if not user:
@@ -55,6 +55,7 @@ class UserRepository:
                 "full_name": user.get("full_name", ""),
                 "email": user.get("email", ""),
                 "phone": user.get("phone", ""),
+                "profile_pic_url": user.get("profile_pic_url", ""),
             }, 200
 
         except Exception as e:
@@ -80,6 +81,34 @@ class UserRepository:
         except Exception as e:
             logger.error(f"Error updating profile: {e}", exc_info=True)
             return {"error": f"Error updating profile: {str(e)}"}, 500
+
+    def update_profile_picture(self, user_id, profile_pic_url):
+        """
+        Update user's profile picture URL.
+        Args:
+            user_id (str): The ID of the user
+            profile_pic_url (str): The URL of the profile picture in Azure Blob Storage
+        Returns:
+            tuple: (dict, int) containing response message and status code
+        """
+        try:
+            # Always use string ID
+            string_user_id = str(user_id)
+            result = self.user_collection.update_one(
+                {"_id": string_user_id},
+                {"$set": {"profile_pic_url": profile_pic_url}}
+            )
+
+            if result.matched_count == 0:
+                logger.error(f"No user found with ID: {string_user_id}")
+                return {"error": "User not found"}, 404
+
+            logger.info(f"Successfully updated profile picture for user {string_user_id}")
+            return {"message": "Profile picture updated successfully"}, 200
+
+        except Exception as e:
+            logger.error(f"Error updating profile picture for user {user_id}: {e}", exc_info=True)
+            return {"error": f"Failed to update profile picture: {str(e)}"}, 500
 
     # Delete user and all associated data from related collections
     def cleanup_user_data(self, user_id, user_email):
