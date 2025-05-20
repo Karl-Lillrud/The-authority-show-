@@ -38,7 +38,7 @@ container_client = blob_service_client.get_container_client(CONTAINER_NAME)
 
 scheduler = BackgroundScheduler(daemon=True)
 _scheduler_initialized_jobs = False  # Flag to track if jobs have been added for the current scheduler instance
-S
+
 guest_repo = GuestRepository()
 episode_repo = EpisodeRepository()
 
