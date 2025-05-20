@@ -347,7 +347,7 @@ export function renderEpisodeDetail(episode) {
     studioBtn.addEventListener("click", () => {
       const podcastId = studioBtn.getAttribute("data-podcast-id");
       const episodeId = studioBtn.getAttribute("data-episode-id");
-      window.location.href = `@recording_studio.html?podcastId=${podcastId}&episodeId=${episodeId}`;
+      window.location.href = `recording_studio.html?podcastId=${podcastId}&episodeId=${episodeId}`;
     });
   }
 
