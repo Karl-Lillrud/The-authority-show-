@@ -63,11 +63,11 @@ const CREDIT_COSTS = {
     ai_intro_outro: 800,
     ai_intro_outro_audio: 500,
 };
-const RegionsPlugin = WaveSurfer.Regions;
+const RegionsPlugin = window.WaveSurferRegions;
 if (!RegionsPlugin) {
   console.error("Regions plugin not loaded — did you include wavesurfer.regions.min.js?");
 }
-window.RegionsPlugin = RegionsPlugin;
+
 function labelWithCredits(text, key) {
     const cost = CREDIT_COSTS[key];
     return `${text} <span style="color: gray; font-size: 0.9em;">(${cost} credits)</span>`;
