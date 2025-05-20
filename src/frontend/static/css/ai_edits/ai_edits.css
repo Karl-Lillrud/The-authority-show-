@@ -126,7 +126,11 @@ body {
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: var(--button-shadow);
     margin: var(--spacing-sm);       
-    display: inline-block;   
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
 }
 
 .btn.ai-edit-button:hover {
@@ -211,6 +215,8 @@ button.ai-edit-button.disabled {
   align-items: center;
   /* Vänd ordningen så att span kommer före knappen */
   flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
   margin: 0.5em 0;
 }
 
@@ -220,7 +226,7 @@ button span.credit-cost {
   background-color: white;
   border-radius: var(--radius-small);
   padding: 7px 10px;
-  margin-left: 10px;
+  display: inline-block;
 }
 
 .help-icon {
