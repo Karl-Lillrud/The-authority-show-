@@ -352,11 +352,11 @@ function showTab(tabName) {
             </button>
             <label>
             Start (s):
-            <input id="cut-start" type="number" step="0.01" class="input-field" style="width:5em;">
+            <input id="startTime" type="number" step="0.01" class="input-field" style="width:5em;">
             </label>
             <label style="margin-left:1em;">
             End (s):
-            <input id="cut-end" type="number" step="0.01" class="input-field" style="width:5em;">
+            <input id="endTime" type="number" step="0.01" class="input-field" style="width:5em;">
             </label>
 
             <div class="button-with-help">
@@ -1318,77 +1318,83 @@ function renderSfxPlan(sfxPlan, timeline) {
 }
 
 async function cutAudio() {
-    const startInput = document.getElementById("cut-start");
-    const endInput = document.getElementById("cut-end");
-    const cutResult = document.getElementById("cutResult");
-    const dl = document.getElementById("downloadCut");
+  // Grab the start/end values from the input fields
+  const start = parseFloat(document.getElementById("cut-start").value);
+  const end   = parseFloat(document.getElementById("cut-end").value);
 
-    const start = parseFloat(startInput.value);
-    const end = parseFloat(endInput.value);
+  const cutResult = document.getElementById("cutResult");
+  const dl        = document.getElementById("downloadCut");
+  const episodeId = getSelectedEpisodeId();
 
-    const episodeId = getSelectedEpisodeId();
-    if (!episodeId) return alert("No episode selected.");
+  // Basic validation
+  if (!activeAudioBlob) {
+    return alert("No audio loaded. Please enhance or isolate first.");
+  }
+  if (!episodeId) {
+    return alert("No episode selected.");
+  }
+  if (isNaN(start) || isNaN(end) || start >= end) {
+    return alert("Invalid start/end times.");
+  }
 
-    const selectedSource = document.getElementById("audioSourceSelectCutting").value;
+  // Build the FormData payload
+  const formData = new FormData();
+  formData.append("audio", new File([activeAudioBlob], "clip.wav", { type: activeAudioBlob.type || "audio/wav" }));
+  formData.append("episode_id", episodeId);
+  formData.append("start", start);
+  formData.append("end", end);
 
-    let blobToUse;
-    if (selectedSource === "enhanced") {
-        blobToUse = enhancedAudioBlob;
-    } else if (selectedSource === "isolated") {
-        blobToUse = isolatedAudioBlob;
-    } else if (selectedSource === "original") {
-        blobToUse = rawAudioBlob;
+  try {
+    // Send to your Flask endpoint
+    const response = await fetch("/cut_from_blob", {
+      method: "POST",
+      body: formData
+    });
+
+    // Handle out-of-credits (403) before other errors
+    if (response.status === 403) {
+      const errorPayload = await response.json();
+      cutResult.innerHTML = `
+        <p style="color: red;">${errorPayload.error || "You don't have enough credits."}</p>
+        ${errorPayload.redirect
+          ? `<a href="${errorPayload.redirect}" class="btn ai-edit-button">Go to Store</a>`
+          : ""
+        }
+      `;
+      return;
     }
 
-    if (!blobToUse) return alert("No audio selected or loaded.");
-    if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid timestamps.");
-
-    const formData = new FormData();
-    formData.append("audio", new File([blobToUse], "clip.wav", { type: "audio/wav" }));
-    formData.append("episode_id", episodeId);
-    formData.append("start", start);
-    formData.append("end", end);
-
-    try {
-        const response = await fetch("/cut_from_blob", {
-            method: "POST",
-            body: formData
-        });
-
-        const result = await response.json();
-
-        if (response.status === 403) {
-            cutResult.innerHTML = `
-                <p style="color: red;">${result.error || "You don't have enough credits."}</p>
-                ${result.redirect ? `<a href="${result.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-            `;
-            return;
-        }
-
-        if (!response.ok || !result.clipped_audio_url) {
-            throw new Error(result.error || "Clipping failed.");
-        }
-
-        const proxyUrl = `/get_clipped_audio?url=${encodeURIComponent(result.clipped_audio_url)}`;
-        const audioRes = await fetch(proxyUrl);
-        if (!audioRes.ok) throw new Error("Failed to fetch clipped audio.");
-        const blob = await audioRes.blob();
-        const url = URL.createObjectURL(blob);
-
-        cutResult.innerHTML = `<audio controls src="${url}" style="width: 100%;"></audio>`;
-        dl.href = url;
-        dl.download = "clipped_audio.wav";
-        dl.style.display = "inline-block";
-
-        activeAudioBlob = blob;
-        activeAudioId = "external";
-        
-        // Only consume credits after successful audio cutting
-        await consumeStoreCredits("audio_cutting");
-    } catch (err) {
-        alert(`Cut failed: ${err.message}`);
+    const result = await response.json();
+    if (!response.ok || !result.clipped_audio_url) {
+      throw new Error(result.error || "Clipping failed.");
     }
+
+    // Proxy fetch the actual clipped audio and render it
+    const proxyUrl = `/get_clipped_audio?url=${encodeURIComponent(result.clipped_audio_url)}`;
+    const audioRes = await fetch(proxyUrl);
+    if (!audioRes.ok) throw new Error("Failed to fetch clipped audio.");
+
+    const blob = await audioRes.blob();
+    const url  = URL.createObjectURL(blob);
+
+    // Show player + download link
+    cutResult.innerHTML = `<audio controls src="${url}" style="width:100%;"></audio>`;
+    dl.href          = url;
+    dl.download      = "clipped_audio.wav";
+    dl.style.display = "inline-block";
+
+    // Update active blob so further operations use this clip
+    activeAudioBlob = blob;
+    activeAudioId   = "external";
+
+    // Consume credits only after success
+    await consumeStoreCredits("audio_cutting");
+
+  } catch (err) {
+    alert(`Cut failed: ${err.message}`);
+  }
 }
+
 
 async function aiCutAudio() {
     const episodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
