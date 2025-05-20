@@ -70,7 +70,7 @@ if (!RegionsPlugin) {
 window.RegionsPlugin = RegionsPlugin;
 function labelWithCredits(text, key) {
     const cost = CREDIT_COSTS[key];
-    return `${text} <span style="color: gray; font-size: 0.9em;">(${cost} credits)</span>`;
+    return `${text} <span class="credit-cost">${cost} credits</span>`;
 }
 
 function showTab(tabName) {
