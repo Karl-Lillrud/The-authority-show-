@@ -767,7 +767,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Delete account form submission
   const deleteForm = document.querySelector(".delete-form");
   if (deleteForm) {
-    deleteForm.addEventListener("submit", (event) => {
+    deleteForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
       const confirmText = document.getElementById("delete-confirm").value;
@@ -796,32 +796,42 @@ document.addEventListener("DOMContentLoaded", () => {
         deleteEmail: email,
       };
 
-      console.log("Confirm data:", confirmData); // debugging log
-
-      deleteUserAccount(confirmData)
-        .then((data) => {
-          if (data.message) {
-            showNotification(
-              "Success",
-              "Account deleted successfully",
-              "success"
-            );
-            // Redirect to logout or home page after successful deletion
-            if (data.redirect) {
-              redirect_to_login();
-            }
-          } else {
-            showNotification("Error", "Failed to delete account", "error");
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
+      try {
+        const data = await deleteUserAccount(confirmData);
+        
+        if (data.message) {
           showNotification(
-            "Error",
-            "An error occurred while deleting account",
+            "Success",
+            "Account deleted successfully",
+            "success"
+          );
+          
+          // Wait for the notification to be visible
+          setTimeout(async () => {
+            try {
+              // Attempt to logout
+              await redirect_to_login();
+            } catch (error) {
+              console.error("Error during logout:", error);
+              // If logout fails, redirect to signin page anyway
+              window.location.href = "/signin";
+            }
+          }, 1000);
+        } else {
+          showNotification(
+            "Error", 
+            "Failed to delete account", 
             "error"
           );
-        });
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        showNotification(
+          "Error",
+          error.message || "An error occurred while deleting account",
+          "error"
+        );
+      }
     });
   }
 

@@ -21,6 +21,7 @@ class UserRepository:
         self.user_collection = collection.database.Users
         self.teams_collection = collection.database.Teams
         self.user_to_teams_collection = collection.database.UsersToTeams
+        self.account_collection = collection.database.Accounts
 
     def get_user_by_email(self, email):
         return self.user_collection.find_one({"email": email.lower().strip()})
@@ -159,6 +160,10 @@ class UserRepository:
             user_credit = delete_credits_by_user(user_id_str)
             user_activity = ActivitiesRepository().delete_by_user(user_id_str)
 
+            # Delete account documents
+            accounts_deleted = self.account_collection.delete_many({"ownerId": user_id_str}).deleted_count
+            logger.info(f"Deleted {accounts_deleted} account documents for user {user_id_str}")
+
             return {
                 "episodes_deleted": episodes,
                 "guests_deleted": guests,
@@ -168,6 +173,7 @@ class UserRepository:
                 "teams_processed": team_cleanup_results,
                 "user_credits_deleted": user_credit,
                 "user_activity_deleted": user_activity,
+                "accounts_deleted": accounts_deleted,
             }
 
         except Exception as e:
@@ -200,13 +206,19 @@ class UserRepository:
             # Always use string ID
             user_id_str = str(user_id)
 
+            # First clean up all associated data
             cleanup_result = self.cleanup_user_data(user_id_str, user["email"])
+            if isinstance(cleanup_result, dict) and cleanup_result.get("error"):
+                logger.error(f"Cleanup failed for user {user_id_str}: {cleanup_result.get('error')}")
+                return {"error": "Failed to clean up user data"}, 500
 
+            # Finally delete the user document
             user_result = self.user_collection.delete_one({"_id": user_id_str})
 
             if user_result.deleted_count == 0:
                 return {"error": "User deletion failed."}, 500
 
+            logger.info(f"Successfully deleted user {user_id_str} and all associated data")
             return {
                 "message": "User account and associated data deleted successfully.",
                 "redirect": url_for("auth_bp.signin"),

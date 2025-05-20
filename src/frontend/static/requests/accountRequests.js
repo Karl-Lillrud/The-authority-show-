@@ -133,17 +133,45 @@ export function subscribeUser(email) {
 }
 
 // Delete user account
-export function deleteUserAccount(payload) {
-  return fetch("/user/delete_user", {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  })
-    .then((response) => response.json())
-    .catch((error) => {
-      console.error("Error deleting user account:", error)
-      throw new Error("Failed to delete account")
-    })
+export async function deleteUserAccount(payload) {
+  try {
+    const response = await fetch("/user/delete_user", {
+      method: "DELETE",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      credentials: "same-origin",
+      body: JSON.stringify(payload),
+    });
+
+    const contentType = response.headers.get("content-type");
+    if (!response.ok) {
+      let errorMsg = `Failed to delete account: ${response.statusText}`;
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch (e) {}
+      } else if (response.status === 401) {
+        errorMsg = "Unauthorized: Please log in.";
+      }
+      throw new Error(errorMsg);
+    }
+
+    if (contentType && contentType.includes("application/json")) {
+      const data = await response.json();
+      return data;
+    } else {
+      if (response.status === 204 || response.status === 200) {
+        return { message: "Account deleted successfully", redirect: "/signin" };
+      }
+      throw new Error("Received unexpected response format from server.");
+    }
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    throw error;
+  }
 }
 
 // Function to delete account - Add export keyword
