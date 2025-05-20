@@ -48,7 +48,7 @@ def account():
     user = collection.find_one({"_id": g.user_id})
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
-    phone_number = user.get("phone_number", "") if user else ""  # Fetch phone number
+    phone_number = user.get("phone", "") if user else ""  # Fetch phone number
 
     # Pass all required fields to the account template
     return render_template(
@@ -68,7 +68,7 @@ def settings():
     user = collection.find_one({"_id": g.user_id})
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
-    phone_number = user.get("phone_number", "") if user else ""  # Fetch phone number
+    phone_number = user.get("phone", "") if user else ""  # Fetch phone number
 
     # Pass all required fields to the settings template
     return render_template(

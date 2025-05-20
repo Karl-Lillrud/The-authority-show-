@@ -40,6 +40,47 @@ export async function fetchAccount() {
   }
 }
 
+// Function to fetch profile (user) data
+export async function getProfile() {
+  try {
+    const response = await fetch("/user/get_profile", { 
+      method: "GET",
+      headers: { 
+        "Accept": "application/json" 
+      },
+      credentials: "same-origin"
+    });
+
+    const contentType = response.headers.get("content-type");
+    if (!response.ok) {
+      let errorMsg = `Failed to get profile data: ${response.statusText}`;
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch (e) {
+          // Ignore if error response is not JSON
+        }
+      } else if (response.status === 401) {
+         errorMsg = "Unauthorized: Please log in.";
+      }
+      throw new Error(errorMsg);
+    }
+    
+    // Check content type before parsing JSON
+    if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        return data; // Expecting { user: { ... } }
+    } else {
+        throw new Error("Received non-JSON response from server.");
+    }
+
+  } catch (error) {
+    console.error("Error in getProfile:", error);
+    throw new Error(error.message || "Failed to get profile data");
+  }
+}
+
 // Update profile data
 export function updateProfile(profileData) {
   return fetch('/user/update_profile', {

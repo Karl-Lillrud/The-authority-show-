@@ -46,16 +46,20 @@ class UserRepository:
     def get_profile(self, user_id):
         try:
             user = self.user_collection.find_one(
-                {"_id": user_id}, {"email": 1, "full_name": 1, "phone": 1}
+                {"_id": user_id}, {"email": 1, "full_name": 1, "phone": 1, "profileUrl": 1}
             )
 
             if not user:
                 return {"error": "User not found"}, 404
 
             return {
+                "user" :
+                {
                 "full_name": user.get("full_name", ""),
                 "email": user.get("email", ""),
                 "phone": user.get("phone", ""),
+                "profileUrl": user.get("profileUrl", "")
+                }
             }, 200
 
         except Exception as e:
@@ -69,7 +73,9 @@ class UserRepository:
             if not updates:
                 return {"error": "No valid fields provided for update"}, 400
 
-            self.user_collection.update_one({"_id": user_id}, {"$set": updates})
+            result = self.user_collection.update_one({"_id": user_id}, {"$set": updates})
+            if result.matched_count == 0:
+                return {"error": "User not found"}, 404
 
             return {"message": "Profile updated successfully!"}, 200
 

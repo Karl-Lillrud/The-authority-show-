@@ -4,6 +4,7 @@ import {
   deleteAccount,
   uploadProfilePicture,
   deleteUserAccount,
+  getProfile,
   updateProfile
 } from "/static/requests/accountRequests.js";
 import { showNotification } from "../components/notifications.js";
@@ -112,18 +113,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
+      // Now call getProfile to get user profile that is NOT stored in account but in user
+      const userResponse = await getProfile();
+      const user = userResponse.user
+
       // Set other profile data
-      document.getElementById("full-name").value = account.full_name || "";
-      document.getElementById("email").value = account.email || "";
-      document.getElementById("phone").value = account.phone || "";
+      document.getElementById("full-name").value = user.full_name || "";
+      document.getElementById("email").value = user.email || "";
+      document.getElementById("phone").value = user.phone || "";
+      document.getElementById("profileUrl").value = user.profileUrl || "";
 
       // Update the display values
       document.getElementById("display-full-name").textContent =
-        account.full_name || "Not provided";
+        user.full_name || "Not provided";
       document.getElementById("display-email").textContent =
-        account.email || "Not provided";
+        user.email || "Not provided";
       document.getElementById("display-phone").textContent =
-        account.phone || "Not provided";
+        user.phone || "Not provided";
+      document.getElementById("display-url").textContent =
+        user.profileUrl || "Not provided";
+
     } catch (error) {
       console.error("Error loading account data:", error);
       showNotification(
@@ -540,6 +549,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const fullName = document.getElementById("full-name").value;
       const email = document.getElementById("email").value;
       const phone = document.getElementById("phone").value; // Optional field
+      const url = document.getElementById("profileUrl").value; // Optional field
 
       // Validate required fields
       if (!fullName.trim()) {
@@ -555,7 +565,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const profileData = {
         full_name: fullName,
         email: email,
-        phone: phone || null // Allow phone to be null if not provided
+        phone: phone || null, // Allow phone to be null if not provided
+        profileUrl: url || null // Allow URL to be null if not provided
       };
 
       updateProfile(profileData)
@@ -574,6 +585,8 @@ document.addEventListener("DOMContentLoaded", () => {
               email || "Not provided";
             document.getElementById("display-phone").textContent =
               phone || "Not provided";
+            document.getElementById("display-url").textContent =
+              url || "Not provided";
             
             // Switch back to view mode
             toggleProfileEditMode(false);
@@ -666,6 +679,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const fullNameInput = document.getElementById("full-name");
       const emailInput = document.getElementById("email");
       const phoneInput = document.getElementById("phone");
+      const urlInput = document.getElementById("profileUrl");
 
       if (fullNameInput && document.getElementById("display-full-name")) {
         document.getElementById("display-full-name").textContent =
@@ -680,6 +694,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (phoneInput && document.getElementById("display-phone")) {
         document.getElementById("display-phone").textContent =
           phoneInput.value || "Not provided";
+      }
+
+      if (urlInput && document.getElementById("display-url")) {
+        document.getElementById("display-url").textContent =
+          urlInput.value || "Not provided";
       }
 
       // Hide upload button and profile pic overlay

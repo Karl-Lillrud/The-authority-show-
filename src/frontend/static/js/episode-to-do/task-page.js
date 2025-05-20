@@ -468,30 +468,20 @@ export async function toggleTaskAssignment(taskId, state, updateUI) {
         // Try to import and use the account requests module
         const accountRequests = await import("/static/requests/accountRequests.js")
 
-        // Check if fetchAccount exists and is a function
-        if (accountRequests.fetchAccount && typeof accountRequests.fetchAccount === "function") {
-          const accountData = await accountRequests.fetchAccount()
-          console.log("Fetched account data:", accountData)
+        // Check if getProfile exists and is a function
+        if (accountRequests.getProfile && typeof accountRequests.getProfile === "function") {
+          const userResponse = await accountRequests.getProfile()
+          const userData = userResponse.user
+          console.log("Fetched user data:", userData)
 
-          // Extract user information from account data
-          // The structure might be { account: { ... } } or directly the account object
-          const userData = accountData.account || accountData
-
-          userId = userData._id || userData.id || state.currentUser.id
-
-          // Get the full name from account data - handle different possible structures
           fullName =
-            userData.fullName ||
             userData.full_name ||
-            userData.name ||
-            userData.displayName ||
-            userData.display_name ||
             ""
 
           // Get email if fullName is not available
           email = userData.email || state.currentUser.email || ""
         } else {
-          console.log("fetchAccount function not found in accountRequests module, using fallback data")
+          console.log("getProfile function not found in accountRequests module, using fallback data")
         }
       } catch (error) {
         console.warn("Error fetching account data, using fallback data:", error)

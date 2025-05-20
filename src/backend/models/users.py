@@ -5,6 +5,7 @@ class UserSchema(Schema):
     email = fields.Email(required=True)
     fullName = fields.Str(allow_none=True)
     phone = fields.Str(allow_none=True)
+    profileUrl = fields.Str(allow_none=True)
     createdAt = fields.DateTime()
     referralCode = fields.Str()
     referredBy = fields.Str(allow_none=True)

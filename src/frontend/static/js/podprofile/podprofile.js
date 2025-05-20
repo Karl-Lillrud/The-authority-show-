@@ -589,10 +589,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       const wrapper = await fetchAccount();
-      const user = wrapper.account;
+      const account = wrapper.account;
       const showWelcomePopup = sessionStorage.getItem("showWelcomePopup") === "true";
 
-      if (user.isFirstLogin || showWelcomePopup) {
+      if (account.isFirstLogin || showWelcomePopup) {
         const welcomePopup = document.getElementById("welcome-popup");
         const closeWelcomePopup = document.getElementById("close-welcome-popup");
         const getStartedBtn = document.getElementById("get-started-btn");
