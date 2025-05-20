@@ -3,9 +3,13 @@ import logging
 from backend.database.mongo_connection import collection  # Ensure this import is correct
 from backend.repository.podcast_repository import PodcastRepository
 from backend.repository.episode_repository import EpisodeRepository
+from backend.repository.user_repository import UserRepository  # Add this import
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
 logger = logging.getLogger(__name__)
+
+# Initialize repositories
+user_repository = UserRepository()
 
 @dashboard_bp.route("/dashboard", methods=["GET"])
 def dashboard():
@@ -45,10 +49,16 @@ def account():
     if not g.user_id:
         return redirect(url_for("auth_bp.signin"))
 
-    user = collection.find_one({"_id": g.user_id})
-    email = user.get("email", "") if user else ""
-    full_name = user.get("full_name", "") if user else ""
-    phone_number = user.get("phone_number", "") if user else ""  # Fetch phone number
+    # Use UserRepository to get user data
+    user = user_repository.get_user_by_id(g.user_id)
+    if not user:
+        return redirect(url_for("auth_bp.signin"))
+
+    # Get user data with defaults if not present
+    email = user.get("email", "")
+    full_name = user.get("full_name", "")
+    phone_number = user.get("phone", "")  # Note: using 'phone' instead of 'phone_number' to match repository
+    profile_pic_url = user.get("profile_pic_url", "")
 
     # Pass all required fields to the account template
     return render_template(
@@ -56,6 +66,7 @@ def account():
         email=email,
         full_name=full_name,
         phone_number=phone_number,
+        profile_pic_url=profile_pic_url
     )
 
 

@@ -105,25 +105,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Set profile picture
       if (profilePic) {
-        if (account.profilePicUrl) {
-          profilePic.src = account.profilePicUrl;
+        if (account.profile_pic_url) {
+          profilePic.src = account.profile_pic_url;
         } else {
-          profilePic.src = "/static/images/profilepic.png"; // Correct default path
+          profilePic.src = "/static/images/profilepic.png"; // Default profile picture
         }
       }
 
-      // Set other profile data
-      document.getElementById("full-name").value = account.full_name || "";
-      document.getElementById("email").value = account.email || "";
-      document.getElementById("phone").value = account.phone || "";
+      // Set form field values
+      const fullNameInput = document.getElementById("full-name");
+      const emailInput = document.getElementById("email");
+      const phoneInput = document.getElementById("phone");
+
+      if (fullNameInput) fullNameInput.value = account.full_name || "";
+      if (emailInput) emailInput.value = account.email || "";
+      if (phoneInput) phoneInput.value = account.phone || ""; // Note: using 'phone' to match repository
 
       // Update the display values
-      document.getElementById("display-full-name").textContent =
-        account.full_name || "Not provided";
-      document.getElementById("display-email").textContent =
-        account.email || "Not provided";
-      document.getElementById("display-phone").textContent =
-        account.phone || "Not provided";
+      const displayFullName = document.getElementById("display-full-name");
+      const displayEmail = document.getElementById("display-email");
+      const displayPhone = document.getElementById("display-phone");
+
+      if (displayFullName) displayFullName.textContent = account.full_name || "Not provided";
+      if (displayEmail) displayEmail.textContent = account.email || "Not provided";
+      if (displayPhone) displayPhone.textContent = account.phone || "Not provided"; // Note: using 'phone' to match repository
+
+      // Log successful data load
+      console.log("Account data loaded successfully:", {
+        full_name: account.full_name,
+        email: account.email,
+        phone: account.phone // Note: using 'phone' to match repository
+      });
     } catch (error) {
       console.error("Error loading account data:", error);
       showNotification(
@@ -131,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `Failed to load account data: ${error.message}`,
         "error"
       );
-      // Set default profile picture on error as well
+      // Set default profile picture on error
       if (profilePic) {
         profilePic.src = "/static/images/profilepic.png";
       }

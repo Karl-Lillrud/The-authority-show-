@@ -5,6 +5,7 @@ from backend.database.mongo_connection import collection
 from backend.services.creditService import initialize_credits
 from backend.services.subscriptionService import SubscriptionService
 from backend.utils.subscription_access import PLAN_BENEFITS
+from backend.repository.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ class AccountRepository:
     def __init__(self):
         self.collection = collection.database.Accounts
         self.subscription_service = SubscriptionService()
+        self.user_repository = UserRepository()
 
     def create_account(self, data):
         """
@@ -121,9 +123,22 @@ class AccountRepository:
 
     def get_account_by_user(self, user_id):
         try:
+            # Get account data
             account = self.collection.find_one({"ownerId": user_id})
             if not account:
                 return {"error": "Account not found"}, 404
+
+            # Get user data using UserRepository
+            user = self.user_repository.get_user_by_id(user_id)
+            if user:
+                # Merge user data with account data
+                account.update({
+                    "full_name": user.get("full_name", ""),
+                    "email": user.get("email", ""),
+                    "phone": user.get("phone", ""),  # Note: using 'phone' to match repository
+                    "profile_pic_url": user.get("profile_pic_url", "")
+                })
+
             return {"account": account}, 200
         except Exception as e:
             logger.error(f"Error while retrieving account: {e}", exc_info=True)
