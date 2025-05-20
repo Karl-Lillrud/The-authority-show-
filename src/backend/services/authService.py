@@ -99,7 +99,6 @@ class AuthService:
 
             account_data = {
                 "ownerId": user["_id"],
-                "email": email,
                 "isFirstLogin": True,
             }
             account_result, status_code = self.account_repository.create_account(
@@ -139,7 +138,6 @@ class AuthService:
 
             account_data = {
                 "ownerId": user["_id"],
-                "email": email,
                 "isFirstLogin": True,
             }
             account_result, status_code = self.account_repository.create_account(
@@ -418,7 +416,6 @@ class AuthService:
             # 3. Ensure Account Exists
             account_data_for_creation = {
                 "ownerId": user_id,
-                "email": email,
                 "isFirstLogin": False, 
             }
             account_result, status_code = self.account_repository.create_account(account_data_for_creation)

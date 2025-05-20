@@ -18,18 +18,14 @@ class AccountRepository:
         """
         Creates a new account for the user if one does not exist, or returns the existing account.
         Args:
-            data (dict): Contains ownerId, email, and optional fields (e.g., isFirstLogin).
+            data (dict): Contains ownerId and optional fields (e.g., isFirstLogin).
         Returns: (dict, status_code)
         """
         try:
             user_id = data.get("ownerId")
-            email = data.get("email")
             if not user_id or not isinstance(user_id, str):
                 logger.error(f"Invalid user_id: {user_id}")
                 return {"error": "Invalid or missing ownerId"}, 400
-            if not email or not isinstance(email, str):
-                logger.error(f"Invalid email: {email}")
-                return {"error": "Invalid or missing email"}, 400
 
             # Check if an account already exists for the user
             logger.debug(f"Checking for existing account with ownerId: {user_id}")
@@ -62,7 +58,6 @@ class AccountRepository:
             account_data = {
                 "_id": account_id,
                 "ownerId": user_id,
-                "email": email.lower().strip(),
                 "createdAt": datetime.utcnow().isoformat(),
                 "updatedAt": datetime.utcnow().isoformat(),
                 "isActive": data.get("isActive", True),
