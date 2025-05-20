@@ -32,13 +32,13 @@ INCREMENT_PERCENTAGE = float(os.getenv("ACTIVATION_INCREMENT_PERCENTAGE", 0.20))
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 CONTAINER_NAME = "podmanagerstorage" 
 BLOB_PATH_PREFIX = "https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/appservicelogs/"  # Default to "appservicelogs" if not set
-LOGS_DIR = "/home/LogFiles"
+LOGS_DIR = "https://podmanager-ggevewegdfgwebcd.northeurope-01.azurewebsites.net/home/LogFiles"
 blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
 container_client = blob_service_client.get_container_client(CONTAINER_NAME)
 
 scheduler = BackgroundScheduler(daemon=True)
 _scheduler_initialized_jobs = False  # Flag to track if jobs have been added for the current scheduler instance
-
+S
 guest_repo = GuestRepository()
 episode_repo = EpisodeRepository()
 
