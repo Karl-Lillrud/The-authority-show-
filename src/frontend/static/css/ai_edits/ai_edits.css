@@ -48,7 +48,7 @@ body {
     background-color: var(--card-bg-light);
     padding: 1.5rem;
     border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(255, 115, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
   }
 
