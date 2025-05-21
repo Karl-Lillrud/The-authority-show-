@@ -8,6 +8,10 @@ body {
     color: #404040;
   }
 
+  #app h4 {
+    color: var(--text-color-light);
+  }
+
   #app {
     min-height: calc(100vh - 60px);
   }
@@ -81,7 +85,15 @@ body {
     text-align: center;
     cursor: pointer;
     margin-bottom: 1rem;
+    margin-top: var(--spacing-md);
     display: block;
+  }
+
+  /* Select */
+  select, input[type="text"] {
+    margin-right: 15px;
+    padding: 5px 5px;
+    border: 1px solid darkgray;
   }
   
   /* Buttons */
@@ -100,12 +112,17 @@ body {
   button:hover {
     background-color: #e46600;
   }
+
+  #audioEnhancementSection .button-with-help, #voiceIsolationSection .button-with-help {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
   
   /* Results */
   #transcriptionResult,
   #audioResult,
   #videoResult {
-    margin-top: 1.5rem;
+    margin-top: 15px;
     white-space: pre-wrap;
     background: #f9f9f9;
     border: 1px solid #ddd;
@@ -124,7 +141,8 @@ body {
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: var(--button-shadow);
-    margin: var(--spacing-sm);       
+    margin: var(--spacing-sm);   
+    margin-left: 0;    
     display: inline-flex;
     align-items: center;
     flex-wrap: wrap;
@@ -162,8 +180,17 @@ body {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+.result-field {
+  margin-top: 15px;
+  display: none;
+}
+
 .result-field, #videoResult, #audioResult {
   width: 100%;
+}
+
+#waveformCut, #videoResult {
+  display: none;
 }
 
 .result-field h4 {
@@ -172,6 +199,9 @@ body {
 
 .result-group {
   padding: 15px 0px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .result-field pre {
@@ -187,8 +217,9 @@ body {
 }
 
 label {
-  padding: 10px;
   padding-top: 0;
+  display: inline-block;
+  margin-right: 10px;
 }
 
 /* Spinner style */
@@ -227,13 +258,13 @@ button.ai-edit-button.disabled {
 }
 
 .button-with-help {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   /* Vänd ordningen så att span kommer före knappen */
   flex-direction: row;
   flex-wrap: wrap;
-  justify-content: center;
-  margin: 0.5em 0;
+  justify-content: left;
+  margin: 0;
 }
 
 button span.credit-cost {
@@ -326,6 +357,15 @@ button span.credit-cost {
     width: 100%;
   }
 
+  select, input[type="text"] {
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
+
+  label {
+    margin-bottom: 5px;
+  }
+
   .content-wrapper, #enhancementTools, #audioAnalysisSection, #audioCuttingSection, #aiCuttingSection {
     width: 100%;
     display: flex;
@@ -356,6 +396,18 @@ button span.credit-cost {
 
   #tabs button:last-of-type {
     margin-bottom: 0px;
+  }
+
+  .button-with-help {
+    flex-direction: column;
+  }
+
+  .ap-container {
+    text-align: center;
+  }
+
+  .help-icon {
+    margin-right: 0;
   }
 
 }
