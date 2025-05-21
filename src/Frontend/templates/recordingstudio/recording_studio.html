@@ -21,8 +21,16 @@
 
     <div class="studio-main">
         <div class="controls-panel">
-            <div class="audio-visualizer">
-                <canvas id="audio-visualizer"></canvas>
+            <div class="media-preview">
+                <div class="video-container">
+                    <video id="video-preview" autoplay muted playsinline></video>
+                    <div class="video-overlay">
+                        <div class="recording-indicator"></div>
+                    </div>
+                </div>
+                <div class="audio-visualizer">
+                    <canvas id="audio-visualizer"></canvas>
+                </div>
             </div>
             
             <div class="recording-controls">
@@ -40,14 +48,26 @@
                 </button>
             </div>
 
-            <div class="audio-settings">
+            <div class="media-settings">
                 <div class="setting-group">
-                    <label for="inputDevice">Input Device</label>
+                    <label for="inputDevice">Audio Input</label>
                     <select id="inputDevice" class="device-select"></select>
                 </div>
                 <div class="setting-group">
-                    <label for="outputDevice">Output Device</label>
+                    <label for="outputDevice">Audio Output</label>
                     <select id="outputDevice" class="device-select"></select>
+                </div>
+                <div class="setting-group">
+                    <label for="videoDevice">Video Input</label>
+                    <select id="videoDevice" class="device-select"></select>
+                </div>
+                <div class="setting-group">
+                    <label for="videoQuality">Video Quality</label>
+                    <select id="videoQuality" class="device-select">
+                        <option value="1080p">1080p</option>
+                        <option value="720p">720p</option>
+                        <option value="480p">480p</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -61,6 +81,20 @@
                     <div class="level-bar"></div>
                 </div>
                 <span class="level-value">-∞ dB</span>
+            </div>
+            <div class="recording-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Resolution:</span>
+                    <span id="resolution" class="stat-value">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">FPS:</span>
+                    <span id="fps" class="stat-value">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Bitrate:</span>
+                    <span id="bitrate" class="stat-value">-</span>
+                </div>
             </div>
         </div>
     </div>
