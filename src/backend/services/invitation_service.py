@@ -4,6 +4,7 @@ from backend.utils.email_utils import send_email, send_guest_invitation_email
 import uuid
 from datetime import datetime, timedelta
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -77,40 +78,37 @@ class InvitationService:
             return {"error": f"Failed to send guest invitation: {str(e)}"}, 500
 
     @staticmethod
-    def send_session_invitation(email, episode_id):
+    def send_session_invitation(email, episode_id, guest_id):
         """
-        Generates an invitation token, saves it in the database, and sends an email to the guest.
+        Generates an invitation token using guest_to_episode and sends an email with a link to greenroom.html.
         """
         try:
-            # Generate a unique token for the invitation
-            invite_token = str(uuid.uuid4())
-            expiration_time = datetime.utcnow() + timedelta(hours=24)  # Token expires in 24 hours
+            # Call the guest_to_episode /invite-guest route to create an invite token
+            invite_url = f"http://127.0.0.1:8000/invite-guest"
+            payload = {"episode_id": episode_id, "guest_id": guest_id}
+            response = requests.post(invite_url, json=payload)
 
-            # Save the invitation in the "invites" table
-            invitation = {
-                "email": email,
-                "episode_id": episode_id,
-                "invite_token": invite_token,
-                "created_at": datetime.utcnow(),
-                "expires_at": expiration_time,
-                "status": "pending"
-            }
-            collection.database.Invitations.insert_one(invitation)
+            if response.status_code != 201:
+                logger.error(f"Failed to create invite token: {response.json()}")
+                return {"error": "Failed to create invite token"}, 500
 
-            # Generate the link to join the session
-            join_url = url_for(
-                "recording_studio_bp.recording_studio",
+            # Extract the invite token and construct the greenroom link
+            invite_data = response.json()
+            token = invite_data.get("invite_url").split("/")[-1]  # Extract token from the URL
+            greenroom_url = url_for(
+                "recording_studio_bp.greenroom",
                 _external=True,
-                token=invite_token
+                guestId=guest_id,
+                token=token
             )
 
             # Send the invitation email
             subject = "You're Invited to Join the Recording Session"
-            body = f"Click the link below to join the session:\n\n{join_url}"
+            body = f"Click the link below to join the greenroom:\n\n{greenroom_url}"
             send_email(email, subject, body)
 
             logger.info(f"Session invitation email sent to {email}")
-            return {"message": "Invitation sent successfully", "invite_token": invite_token}, 201
+            return {"message": "Invitation sent successfully", "greenroom_url": greenroom_url}, 201
 
         except Exception as e:
             logger.error(f"Failed to send session invitation: {e}", exc_info=True)

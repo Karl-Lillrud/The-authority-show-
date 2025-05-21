@@ -58,11 +58,13 @@ def create_invitation():
         data = request.get_json()
         email = data.get("email")
         episode_id = data.get("episode_id")
-        if not email or not episode_id:
-            return jsonify({"error": "Email and episode_id are required"}), 400
+        guest_id = data.get("guest_id")  # Include guest_id in the request
 
-        # Use the InvitationService to handle the invitation logic
-        response, status_code = InvitationService.send_session_invitation(email, episode_id)
+        if not all([email, episode_id, guest_id]):
+            return jsonify({"error": "Email, episode_id, and guest_id are required"}), 400
+
+        # Use the updated InvitationService to handle the invitation logic
+        response, status_code = InvitationService.send_session_invitation(email, episode_id, guest_id)
         return jsonify(response), status_code
 
     except Exception as e:
@@ -161,4 +163,13 @@ def recording_studio():
     Render the recording studio page.
     """
     return render_template('recordingstudio/recording_studio.html')
+
+@recording_studio_bp.route('/greenroom', methods=['GET'])
+def greenroom():
+    """
+    Render the greenroom page with guestId and token.
+    """
+    guest_id = request.args.get("guestId")
+    token = request.args.get("token")
+    return render_template('recordingstudio/greenroom.html', guestId=guest_id, token=token)
 
