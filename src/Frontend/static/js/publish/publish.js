@@ -2,6 +2,8 @@ import { publishEpisode } from "/static/js/publish/publishRequests.js"
 import { fetchAllEpisodes, fetchEpisode } from "/static/js/publish/episodeRequests.js"
 import { svgIcons } from "/static/js/components/svgIcons.js"
 import { showNotification } from "/static/js/components/notifications.js"
+import { fetchPodcasts } from "/static/requests/podcastRequests.js"
+import { fetchEpisodesByPodcast } from "/static/requests/episodeRequest.js"
 
 // Placeholder for SVGs that might be used on the publish page or in shared components like header/footer
 // if they are not handled by a global script loaded in base.html.
@@ -21,9 +23,7 @@ function initializePublishPageSVGs() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Initialize SVG icons
-  initializeSvgIcons()
-
+  const podcastSelect = document.getElementById("podcast-select")
   const episodeSelect = document.getElementById("episode-select")
   const episodeDetailsPreview = document.getElementById("episode-details-preview")
   const previewTitle = document.getElementById("preview-title")
@@ -35,6 +35,57 @@ document.addEventListener("DOMContentLoaded", () => {
   const publishLogPre = document.getElementById("publish-log")
   const platformToggles = document.querySelectorAll('.platform-toggle input[type="checkbox"]')
   const publishNotes = document.getElementById("publish-notes")
+
+  async function loadPodcasts() {
+    try {
+      podcastSelect.innerHTML = '<option value="">Loading podcasts...</option>'
+      const podcastData = await fetchPodcasts()
+      const podcasts = podcastData.podcast || []
+      podcastSelect.innerHTML = '<option value="">-- Select a Podcast --</option>'
+      podcasts.forEach(podcast => {
+        if (podcast && podcast._id && podcast.podName) {
+          const option = document.createElement("option")
+          option.value = podcast._id
+          option.textContent = podcast.podName
+          podcastSelect.appendChild(option)
+        }
+      })
+    } catch (error) {
+      console.error("Error loading podcasts:", error)
+      podcastSelect.innerHTML = '<option value="">Error loading podcasts</option>'
+      episodeSelect.disabled = true
+    }
+  }
+
+  async function loadEpisodesForPodcast(podcastId) {
+    episodeSelect.innerHTML = '<option value="">Loading episodes...</option>'
+    episodeSelect.disabled = true
+    episodeDetailsPreview.classList.add("hidden")
+    if (!podcastId) {
+      episodeSelect.innerHTML = '<option value="">Select a podcast first...</option>'
+      return
+    }
+    try {
+      const episodes = await fetchEpisodesByPodcast(podcastId)
+      episodeSelect.innerHTML = '<option value="">-- Select an Episode --</option>'
+      if (episodes && episodes.length > 0) {
+        episodes.forEach(episode => {
+          if (episode && episode._id && episode.title) {
+            const option = document.createElement("option")
+            option.value = episode._id
+            option.textContent = `${episode.title} (${episode.status || ""})`
+            episodeSelect.appendChild(option)
+          }
+        })
+        episodeSelect.disabled = false
+      } else {
+        episodeSelect.innerHTML = '<option value="">No episodes found for this podcast</option>'
+      }
+    } catch (error) {
+      console.error("Error loading episodes:", error)
+      episodeSelect.innerHTML = '<option value="">Error loading episodes</option>'
+    }
+  }
 
   async function loadEpisodes() {
     try {
@@ -98,6 +149,13 @@ document.addEventListener("DOMContentLoaded", () => {
     publishLogPre.textContent += `[${timestamp}] ${message}\n`
     publishLogPre.scrollTop = publishLogPre.scrollHeight // Auto-scroll
   }
+
+  podcastSelect.addEventListener("change", (event) => {
+    const podcastId = event.target.value
+    loadEpisodesForPodcast(podcastId)
+    episodeSelect.value = ""
+    episodeDetailsPreview.classList.add("hidden")
+  })
 
   episodeSelect.addEventListener("change", (event) => {
     loadEpisodePreview(event.target.value)
@@ -243,7 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Initial load
-  loadEpisodes()
+  loadPodcasts()
   initializePublishPageSVGs() // Initialize SVGs for the publish page
   setupMobileSidebar()
 })

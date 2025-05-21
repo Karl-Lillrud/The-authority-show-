@@ -16,10 +16,15 @@
 
     <div class="publish-form-section">
         <div class="field-group">
+            <label for="podcast-select">Select Podcast:</label>
+            <select id="podcast-select" name="podcast-select">
+                <option value="">Loading podcasts...</option>
+            </select>
+        </div>
+        <div class="field-group">
             <label for="episode-select">Select Episode to Publish:</label>
-            <select id="episode-select" name="episode-select">
-                <option value="">Loading episodes...</option>
-                <!-- Episodes will be populated by JavaScript -->
+            <select id="episode-select" name="episode-select" disabled>
+                <option value="">Select a podcast first...</option>
             </select>
         </div>
 
