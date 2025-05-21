@@ -29,7 +29,6 @@ class ActivityService:
                 "type": activity_type,
                 "description": description,
                 "details": details or {},
-                "ipAddress": ip_address,
                 "createdAt": datetime.now(timezone.utc),
             }
             self.activities_collection.insert_one(activity)
