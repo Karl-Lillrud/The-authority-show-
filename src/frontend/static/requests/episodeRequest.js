@@ -160,15 +160,10 @@ export async function updateEpisode(episodeId, data) {
     const response = await fetch(`/update_episodes/${episodeId}`, {
       method: "PUT",
       headers: {
-        // Remove any manual 'Content-Type' setting here if 'isFormData' is true
-        // Fetch will automatically set it correctly for FormData
-        // Example: DO NOT include the line below if isFormData is true
-        // 'Content-Type': isFormData ? undefined : 'application/json', // Let browser set for FormData
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        // Add other necessary headers like Accept if needed
-        Accept: "application/json" // It's good practice to specify what you accept back
+        Accept: "application/json" // Specify expected response format
+        // Don't set 'Content-Type' if sending FormData — browser handles it automatically
       },
-      // Send FormData directly, or stringify if it's a plain object
       body: isFormData ? data : JSON.stringify(data)
     });
 
@@ -177,40 +172,39 @@ export async function updateEpisode(episodeId, data) {
 
     if (!response.ok) {
       let errorData;
+      const clonedResponse = response.clone(); // Clone the response to safely read it twice
+
       try {
-        errorData = await response.json(); // Try to parse error response
+        errorData = await response.json(); // Try parsing JSON
         console.error("Update Episode Error Response:", errorData);
       } catch (e) {
-        // If response is not JSON (e.g., plain text or HTML error page)
-        errorData = { error: await response.text() };
-        console.error(
-          "Update Episode Non-JSON Error Response:",
-          errorData.error
-        );
+        const fallbackText = await clonedResponse.text(); // Fallback to plain text
+        errorData = { error: fallbackText };
+        console.error("Update Episode Non-JSON Error Response:", fallbackText);
       }
+
       // Throw a more informative error
       throw new Error(
         errorData?.error ||
-          errorData?.message ||
-          `HTTP error! status: ${response.status}`
+        errorData?.message ||
+        `HTTP error! status: ${response.status}`
       );
     }
 
-    // If response is OK, try to parse JSON, handle potential empty response for 200/204
+    // If response is OK, handle potential empty response for 204
     if (response.status === 204) {
-      // No Content
       return { message: "Episode updated successfully (No Content)" };
     }
 
     const result = await response.json();
     console.log("Update Episode Success Response:", result);
-    return result; // Contains { message: "..." } or potentially updated episode data
+    return result; // Contains success message or updated episode data
   } catch (error) {
     console.error("Failed to update episode:", error.message || error);
-    // Return an object with an error key for consistent handling in the calling function
     return { error: `Failed to update episode: ${error.message || error}` };
   }
 }
+
 
 export async function deleteEpisode(episodeId) {
   try {
