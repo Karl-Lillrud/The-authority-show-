@@ -1,6 +1,5 @@
 from flask import Blueprint, request
-from flask_socketio import join_room, leave_room, emit
-from flask_socketio import SocketIO
+from flask_socketio import join_room, leave_room, emit, SocketIO
 from .. import socketio
 from backend.services.recording_studio_service import recording_studio_service
 
