@@ -420,7 +420,7 @@ function showTab(tabName) {
             </div>
           </div>
         `;
-           // Automatically trigger waveform rendering after loading audio tab
+           
             
         setTimeout(() => {
             const cuttingSelect = document.getElementById("audioSourceSelectCutting");
