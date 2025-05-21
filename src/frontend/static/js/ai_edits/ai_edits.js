@@ -137,7 +137,9 @@ function showTab(tabName) {
                 </div>
 
                 <div class="result-group">
-                    <label for="languageSelect">Language:</label>
+                    <label for="languageSelect">
+                      <strong>Language:</strong>
+                    </label>
                     <select id="languageSelect" class="input-field">
                         <option value="English">English</option>
                         <option value="Spanish">Spanish</option>
@@ -259,11 +261,11 @@ function showTab(tabName) {
                 <p><strong>Original Audio</strong></p>
             </div>
 
-            <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 12px;">
+            <div style="margin-top: 23px; padding: 1.5rem; padding-bottom: 1rem; border: 1px solid #ddd; border-radius: 12px;">
                 <h3>Choose Audio Processing Method</h3>
-                <p style="margin-bottom: 1rem;">Select one of the following enhancements:</p>
+                <p style="margin-bottom: 20px;">Select one of the following enhancements:</p>
 
-            <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
+            <div id="voiceIsolationSection" style="margin-bottom: 10px;">
                 <h4><strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
                 <div class="button-with-help">
                     <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
@@ -364,11 +366,11 @@ function showTab(tabName) {
             </button>
             <label>
             Start (s):
-            <input id="cut-start" type="number" step="0.01" class="input-field" style="width:5em;">
+            <input id="cut-start" type="number" step="0.01" class="input-field" style="width:6em; padding: 5px; margin-left: 5px;">
             </label>
-            <label style="margin-left:1em;">
+            <label style="margin-top: 10px;">
             End (s):
-            <input id="cut-end" type="number" step="0.01" class="input-field" style="width:5em;">
+            <input id="cut-end" type="number" step="0.01" class="input-field" style="width:6em; padding: 5px; margin-left: 5px;">
             </label>
 
             <div class="button-with-help">
@@ -439,6 +441,7 @@ function showTab(tabName) {
                 else if (source === "enhanced") blob = enhancedAudioBlob;
                 else if (source === "isolated") blob = isolatedAudioBlob;
 
+                document.getElementById('waveformCut').style.display = "block";
                 if (blob) {
                     initWaveformCutting(blob);
                 } else {
@@ -474,7 +477,8 @@ function showTab(tabName) {
             </a>
           </div>
         `;
-    }}
+    }
+  }
 
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -610,6 +614,7 @@ let fullTranscript = "";
 async function transcribe() {
     const fileInput = document.getElementById('fileUploader');
     const resultContainer = document.getElementById('transcriptionResult');
+    
     const file = fileInput.files[0];
     if (!file) {
         alert('Please upload a file.');
@@ -632,6 +637,7 @@ async function transcribe() {
             method: 'POST',
             body: formData,
         });
+        resultContainer.parentElement.style.display = "block";
 
         hideSpinner("transcriptionResult");
 
@@ -680,6 +686,7 @@ async function translateTranscript() {
           language: lang
         })
       });
+      resultContainer.parentElement.style.display = "block";
       hideSpinner("translateResult");
   
       const data = await res.json();
@@ -707,6 +714,7 @@ async function generateCleanTranscript() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: fullTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const errorData = await res.json();
@@ -739,6 +747,7 @@ async function generateAISuggestions() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const data = await res.json();
@@ -773,6 +782,7 @@ async function generateShowNotes() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const data = await res.json();
@@ -805,6 +815,7 @@ async function generateQuotes() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const data = await res.json();
@@ -844,6 +855,7 @@ async function generateQuoteImages() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ quotes, method })  // 👈 använder vald metod
         });
+        container.parentElement.style.display = "block";
 
         const data = await res.json();
         container.innerHTML = "";
@@ -902,6 +914,7 @@ async function runOsintSearch() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ guest_name: guestName })
         });
+        container.parentElement.style.display = "block";
         if (response.status === 403) {
             const data = await response.json();
             container.innerHTML = `
@@ -939,6 +952,7 @@ async function generatePodcastIntroOutro() {
                 transcript: rawTranscript
             })
         });
+        container.parentElement.style.display = "block";
         if (res.status === 403) {
             const data = await res.json();
             container.innerHTML = `
@@ -973,6 +987,7 @@ async function convertIntroOutroToSpeech() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ script })
         });
+        container.style.display = "block";
 
         const data = await res.json();
 
@@ -1024,6 +1039,7 @@ async function enhanceAudio() {
             method: "POST",
             body: formData
         });
+        container.parentElement.style.display = "block";
 
         const result = await response.json();
 
@@ -1091,6 +1107,7 @@ async function runVoiceIsolation() {
             method: "POST",
             body: formData
         });
+        container.parentElement.style.display = "block";
 
         if (response.status === 403) {
             const data = await response.json();
@@ -1148,6 +1165,7 @@ async function analyzeEnhancedAudio() {
 
     const res = await fetch("/audio_analysis", { method: "POST", body: fd })
     const data = await res.json()
+    container.parentElement.style.display = "block";
     if (!res.ok) throw new Error(data.error || res.statusText)
 
     container.innerText = `
@@ -1366,6 +1384,7 @@ async function cutAudio() {
             method: "POST",
             body: formData
         });
+        cutResult.parentElement.style.display = "block";
 
         const result = await response.json();
 
@@ -1460,6 +1479,8 @@ async function aiCutAudio() {
                 })
             });
         }
+        containerTranscript.parentElement.style.display = "block";
+        containerCuts.parentElement.style.display = "block";
 
         const data = await response.json();
 
@@ -1703,6 +1724,7 @@ async function enhanceVideo() {
             method: "POST",
             body: formData,
         });
+        container.style.display = "block";
 
         if (!uploadResponse.ok) {
             throw new Error(`Video upload failed: ${uploadResponse.statusText}`);
@@ -1861,6 +1883,7 @@ async function generateAudioClip() {
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ translated_transcription: translated })
     });
+    container.style.display = "block";
     hideSpinner("audioClipResult");
 
     if (!res.ok) throw new Error(`Server svarade ${res.status}`);
