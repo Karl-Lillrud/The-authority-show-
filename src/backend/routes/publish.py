@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, current_app, Response, send_file
-from publish_service import (
+from backend.services.publishService import ( # Corrected import path
     create_sas_upload_url,
     save_episode_to_db,
     trigger_encoding_job,
@@ -7,19 +7,18 @@ from publish_service import (
     record_download,
     notify_spotify,
     notify_google_podcasts,
-    get_episode_audio_stream,
-    PublishService
+    get_episode_audio_stream
 )
 from bson.objectid import ObjectId
 import datetime
 
-publish_bp = Blueprint('publish', __name__, url_prefix='/publish')
+publish_bp = Blueprint('publish_bp', __name__, url_prefix='/publish')
 
 
 @publish_bp.route('/', methods=['GET'])
 def publish_page():
     """Renders the main publishing page."""
-    return render_template('publish.html')
+    return render_template('publish/publish.html')
 
 
 @publish_bp.route('/get_sas_url', methods=['POST'])
