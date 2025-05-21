@@ -28,6 +28,19 @@ export function setupTabs(state, updateUI) {
             console.error("Error loading workflow editor:", error)
           })
       }
+
+      // If the AI Workspace tab is selected, render AI editing tools
+      if (tabId === "workspace") {
+        import("/static/js/ai_edits/ai_edits_script.js")
+          .then((module) => {
+            if (typeof module.renderQuickRunAIEdits === "function") {
+              module.renderQuickRunAIEdits()
+            }
+          })
+          .catch((error) => {
+            console.error("Error loading AI Workspace:", error)
+          })
+      }
     })
   })
 
@@ -309,26 +322,22 @@ export function addModalStyles() {
 
 // Add flatpickr for date/time picker
 export function addFlatpickrStyles() {
-  // Add flatpickr CSS
   const flatpickrCSS = document.createElement("link")
   flatpickrCSS.rel = "stylesheet"
   flatpickrCSS.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
   document.head.appendChild(flatpickrCSS)
 
-  // Add flatpickr theme (optional)
   const flatpickrTheme = document.createElement("link")
   flatpickrTheme.rel = "stylesheet"
   flatpickrTheme.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
   document.head.appendChild(flatpickrTheme)
 
-  // Add flatpickr JS
   const flatpickrScript = document.createElement("script")
   flatpickrScript.src = "https://cdn.jsdelivr.net/npm/flatpickr"
   document.head.appendChild(flatpickrScript)
 }
 
 export function setupModalButtons() {
-  // Create modal containers if they don't exist
   if (!document.getElementById("modal-container")) {
     const modalContainer = document.createElement("div")
     modalContainer.id = "modal-container"
