@@ -29,6 +29,18 @@ class RecordingStudio {
         this.statusText = document.querySelector('.status-text');
         this.inputDeviceSelect = document.getElementById('inputDevice');
         this.outputDeviceSelect = document.getElementById('outputDevice');
+        this.playButton = document.getElementById('playButton');
+        this.waveform = document.getElementById('waveform');
+        this.timer = document.querySelector('.timer');
+        this.recordingStatus = document.querySelector('.recording-status');
+        this.inviteButton = document.getElementById('inviteButton');
+        this.inviteModal = document.getElementById('inviteModal');
+        this.inviteForm = document.getElementById('inviteForm');
+        this.closeModalButtons = document.querySelectorAll('.close-modal');
+        this.chatInput = document.getElementById('chatInput');
+        this.sendMessageButton = document.getElementById('sendMessage');
+        this.chatMessages = document.querySelector('.chat-messages');
+        this.guestsList = document.querySelector('.guests-list');
     }
 
     initializeEventListeners() {
@@ -38,6 +50,12 @@ class RecordingStudio {
         this.saveButton.addEventListener('click', () => this.saveRecording());
         this.discardButton.addEventListener('click', () => this.discardRecording());
         this.inputDeviceSelect.addEventListener('change', () => this.updateAudioDevices());
+        this.playButton.addEventListener('click', () => this.playRecording());
+        this.inviteButton.addEventListener('click', () => this.showInviteModal());
+        this.closeModalButtons.forEach(button => button.addEventListener('click', () => this.hideInviteModal()));
+        this.inviteForm.addEventListener('submit', (e) => this.handleInviteFormSubmission(e));
+        this.sendMessageButton.addEventListener('click', () => this.handleSendMessage());
+        this.chatInput.addEventListener('keypress', (e) => this.handleChatInputKeypress(e));
     }
 
     async loadAudioDevices() {
@@ -246,6 +264,74 @@ class RecordingStudio {
     showNotification(message, type = 'info') {
         // Implement notification system here
         console.log(`${type}: ${message}`);
+    }
+
+    async playRecording() {
+        if (this.audioChunks.length === 0) {
+            this.showNotification('No recording to play', 'error');
+            return;
+        }
+
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audio.play();
+        this.updateRecordingStatus('playing');
+        audio.onended = () => {
+            this.updateRecordingStatus('ready');
+        };
+    }
+
+    showInviteModal() {
+        this.inviteModal.style.display = 'block';
+    }
+
+    hideInviteModal() {
+        this.inviteModal.style.display = 'none';
+        this.inviteForm.reset();
+    }
+
+    handleInviteFormSubmission(e) {
+        e.preventDefault();
+        const name = document.getElementById('guestName').value;
+        const email = document.getElementById('guestEmail').value;
+        this.addGuest(name, email);
+        this.hideInviteModal();
+    }
+
+    addGuest(name, email) {
+        const guestCard = document.createElement('div');
+        guestCard.className = 'guest-card';
+        guestCard.innerHTML = `
+            <div class="guest-avatar">${name.charAt(0)}</div>
+            <div class="guest-info">
+                <div class="guest-name">${name}</div>
+                <div class="guest-status">Waiting to join</div>
+            </div>
+        `;
+        this.guestsList.appendChild(guestCard);
+    }
+
+    handleSendMessage() {
+        const message = this.chatInput.value.trim();
+        if (message) {
+            this.addChatMessage(message);
+            this.chatInput.value = '';
+        }
+    }
+
+    addChatMessage(message, isSent = true) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `chat-message ${isSent ? 'sent' : 'received'}`;
+        messageElement.textContent = message;
+        this.chatMessages.appendChild(messageElement);
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    }
+
+    handleChatInputKeypress(e) {
+        if (e.key === 'Enter') {
+            this.sendMessageButton.click();
+        }
     }
 }
 
