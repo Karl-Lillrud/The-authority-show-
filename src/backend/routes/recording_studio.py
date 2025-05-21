@@ -172,6 +172,7 @@ def greenroom():
     guest_id = request.args.get("guestId")
     token = request.args.get("token")
     return render_template('recordingstudio/greenroom.html', guestId=guest_id, token=token)
+
 # Socket.IO event: participant ready
 @socketio.on('participant_ready')
 def handle_participant_ready(data):
