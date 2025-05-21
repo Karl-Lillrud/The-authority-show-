@@ -1128,16 +1128,18 @@ input:focus:invalid {
   gap: 8px;
   font-size: 14px;
   border-radius: 4px;
-  border: 1px solid #ddd;
-  background-color: #f8f9fa;
-  color: #333;
+  border: 1px solid var(--account-border);
+  background-color: var(--account-primary-light);
+  color: var(--account-primary);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .change-email-btn:hover {
-  background-color: #e9ecef;
-  border-color: #ced4da;
+  background-color: var(--account-primary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .change-email-btn svg {
@@ -1184,4 +1186,25 @@ input:focus:invalid {
 #email-change-form .required {
   color: #dc3545;
   margin-left: 4px;
+}
+
+.readonly-field {
+  background-color: var(--account-muted) !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+  color: var(--account-muted-foreground) !important;
+}
+
+.readonly-field:focus {
+  outline: none;
+  border-color: var(--account-border) !important;
+  box-shadow: none !important;
+}
+
+/* Email change button container */
+.email-field-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }

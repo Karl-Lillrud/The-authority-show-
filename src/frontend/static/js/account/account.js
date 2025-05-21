@@ -221,7 +221,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Function to load account data
   async function loadAccountData(preserveProfilePic = false) {
     try {
-      // Explicitly call fetchAccount
       const wrapper = await fetchAccount();
       const account = wrapper.account;
 
@@ -243,7 +242,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const phoneInput = document.getElementById("phone");
 
       if (fullNameInput) fullNameInput.value = account.full_name || "";
-      if (emailInput) emailInput.value = account.email || "";
+      if (emailInput) {
+        emailInput.value = account.email || "";
+        emailInput.readOnly = true; // Make email field read-only
+        emailInput.classList.add('readonly-field'); // Add a class for styling
+      }
       if (phoneInput) phoneInput.value = account.phone || "";
 
       // Update the display values
@@ -669,7 +672,6 @@ document.addEventListener("DOMContentLoaded", () => {
       event.preventDefault();
 
       const fullName = document.getElementById("full-name").value;
-      const email = document.getElementById("email").value;
       const phone = document.getElementById("phone").value; // Optional field
 
       // Validate required fields
@@ -678,14 +680,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      if (!email.trim()) {
-        showNotification("Error", "Email is required", "error");
-        return;
-      }
-
       const profileData = {
         full_name: fullName,
-        email: email,
         phone: phone || null // Allow phone to be null if not provided
       };
 
@@ -701,8 +697,6 @@ document.addEventListener("DOMContentLoaded", () => {
             // Update the display values in the read-only view
             document.getElementById("display-full-name").textContent =
               fullName || "Not provided";
-            document.getElementById("display-email").textContent =
-              email || "Not provided";
             document.getElementById("display-phone").textContent =
               phone || "Not provided";
             
@@ -803,17 +797,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Update display values before switching back to view mode
       const fullNameInput = document.getElementById("full-name");
-      const emailInput = document.getElementById("email");
       const phoneInput = document.getElementById("phone");
 
       if (fullNameInput && document.getElementById("display-full-name")) {
         document.getElementById("display-full-name").textContent =
           fullNameInput.value || "Not provided";
-      }
-
-      if (emailInput && document.getElementById("display-email")) {
-        document.getElementById("display-email").textContent =
-          emailInput.value || "Not provided";
       }
 
       if (phoneInput && document.getElementById("display-phone")) {

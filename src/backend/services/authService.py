@@ -241,6 +241,11 @@ class AuthService:
     def edit_account(self, user_id, data):
         """Update account information."""
         try:
+            # Remove email from the update data if present
+            if 'email' in data:
+                logger.warning(f"Attempted direct email update for user {user_id} - This is not allowed")
+                return {"error": "Email cannot be updated directly. Please use the email change process."}, 400
+
             response, status_code = self.account_repository.edit_account(user_id, data)
             if status_code == 200:
                 self.activity_service.log_activity(
@@ -251,8 +256,8 @@ class AuthService:
                 )
             return response, status_code
         except Exception as e:
-            logger.error(f"Fel vid uppdatering av konto för användare {user_id}: {e}", exc_info=True)
-            return {"error": f"Internt serverfel: {str(e)}"}, 500
+            logger.error(f"Error updating account for user {user_id}: {e}", exc_info=True)
+            return {"error": f"Internal server error: {str(e)}"}, 500
     
     def edit_increment_account(self, user_id, data):
         # Updating account information by increment.
