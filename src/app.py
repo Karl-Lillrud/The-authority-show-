@@ -41,7 +41,7 @@ from backend.routes.enterprise import enterprise_bp
 from backend.routes.lia import lia_bp
 from backend.routes.index import index_bp
 from backend.routes.recording_studio import register_socketio_events  # <- updated import
-
+from backend.routes.recording_studio import recording_studio_bp
 # Utils
 from backend.utils.scheduler import start_scheduler
 from backend.utils.credit_scheduler import init_credit_scheduler
@@ -103,6 +103,7 @@ app.register_blueprint(edit_bp)
 app.register_blueprint(enterprise_bp, url_prefix="/enterprise")
 app.register_blueprint(lia_bp, url_prefix="/lia")
 app.register_blueprint(index_bp)
+app.register_blueprint(recording_studio_bp)
 
 # Set up environment and logging
 APP_ENV = os.getenv("APP_ENV", "production")
