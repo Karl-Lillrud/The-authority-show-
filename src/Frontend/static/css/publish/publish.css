@@ -162,6 +162,10 @@ body {
 .platform-toggle img {
   width: 24px;
   height: 24px;
+  /* --- Debugging styles - remove after resolving --- */
+  border: 1px dashed red; 
+  background-color: lightblue;
+  /* --- End debugging styles --- */
 }
 
 .form-actions {
