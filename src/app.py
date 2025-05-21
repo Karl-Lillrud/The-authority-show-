@@ -61,7 +61,9 @@ static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "fronte
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
-# Update CORS configuration
+# Initialize SocketIO
+socketio = SocketIO(app, cors_allowed_origins="*")
+
 CORS(
     app,
     resources={
