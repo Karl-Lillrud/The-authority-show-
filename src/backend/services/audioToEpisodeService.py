@@ -11,9 +11,9 @@ class AudioToEpisodeService:
     """
     def __init__(self):
         # Configure blob storage settings
-        self.audio_container_name = os.getenv("AZURE_BLOB_AUDIO_CONTAINER", "podcast-audio")
+        self.audio_container_name = os.getenv("AZURE_BLOB_AUDIO_CONTAINER", "podmanagerfiles")
     
-    def upload_episode_audio(self, account_id, episode_id, audio_file):
+    def upload_episode_audio(self, account_id, episode_id, audio_file, podcast_id):
         try:
             if not audio_file:
                 logger.warning("No audio file provided for upload")
@@ -28,7 +28,7 @@ class AudioToEpisodeService:
 
             # Log stream state
             logger.debug(f"Audio file: filename={getattr(audio_file, 'filename', 'unknown')}, "
-                        f"content_type={mime_type}, readable={audio_file.stream.readable()}")
+                         f"content_type={mime_type}, readable={audio_file.stream.readable()}")
 
             # Read file into a BytesIO buffer to ensure seekable stream
             buffer = BytesIO()
@@ -64,7 +64,7 @@ class AudioToEpisodeService:
 
             # Construct blob path
             file_name = os.path.basename(audio_file.filename) if hasattr(audio_file, 'filename') else f"{episode_id}.{mime_type.split('/')[-1]}"
-            blob_path = f"{account_id}/{episode_id}/{file_name}"
+            blob_path = f"users/{account_id}/podcasts/{podcast_id}/episodes/{episode_id}/{file_name}"
 
             # Upload to Azure Blob Storage
             blob_url = upload_file_to_blob(

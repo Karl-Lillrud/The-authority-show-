@@ -141,6 +141,7 @@ export async function fetchEpisode(episodeId) {
   try {
     const response = await fetch(`/get_episodes/${episodeId}`);
     const data = await response.json();
+    console.log("fetchEpisode response:", data); // Debug log
     if (response.ok) {
       return data;
     } else {

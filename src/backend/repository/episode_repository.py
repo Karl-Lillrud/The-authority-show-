@@ -159,6 +159,7 @@ class EpisodeRepository:
         except Exception as e:
             return {"error": f"Failed to delete episode: {str(e)}"}, 500
 
+
     def update_episode(self, episode_id, user_id, data, audio_file=None):
         """Update an episode if it belongs to the user, including handling audio file uploads."""
         try:
@@ -246,9 +247,15 @@ class EpisodeRepository:
                         logger.error(f"No accountId found for episode {episode_id}")
                         return {"error": "Account ID not found for episode"}, 500
 
+                    podcast_id = ep.get("podcast_id")
+                    if not podcast_id:
+                        logger.error(f"No podcast_id found for episode {episode_id}")
+                        return {"error": "Podcast ID not found for episode"}, 500
+
                     # Upload the audio file using AudioToEpisodeService
                     upload_result = self.audio_service.upload_episode_audio(
                         account_id=account_id,
+                        podcast_id=podcast_id,
                         episode_id=episode_id,
                         audio_file=audio_file
                     )
@@ -264,7 +271,7 @@ class EpisodeRepository:
 
                     logger.info(
                         f"Audio file uploaded for episode {episode_id}: "
-                        f"URL={upload_result['blob_url']}, Size={upload_result['file_size']} MB"
+                        f"URL={upload_result['blob_url']}, Size={upload_result['file_size']} {upload_result.get('size_unit', '')}"
                     )
                 except Exception as e:
                     logger.error(f"Error handling audio file upload for episode {episode_id}: {e}", exc_info=True)
@@ -341,6 +348,7 @@ class EpisodeRepository:
                 f"Failed to update episode {episode_id}: {str(e)}", exc_info=True
             )
             return {"error": f"Failed to update episode: {str(e)}"}, 500
+
 
     def get_episodes_by_podcast(self, podcast_id, user_id):
         """Get all episodes under a specific podcast owned by the user."""
