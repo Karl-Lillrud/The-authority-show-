@@ -67,6 +67,7 @@ CORS(
             "origins": [
                 "https://devapp.podmanager.ai",  # Test Branch (testMain)
                 "https://app.podmanager.ai",  # Live branch (Main)
+                "https://www.podmanager.ai",  # Live branch/index redirect address (Main)
                 "http://127.0.0.1:8000",  # Localhost
             ]
         }
@@ -174,5 +175,5 @@ init_credit_scheduler(app)  # Add this line after start_scheduler
 # Styled startup message
 if __name__ == "__main__":
     app.run(
-        host="0.0.0.0", port=8000, debug=True
+        host="0.0.0.0", port=8000, debug=False
     )  # Ensure the port matches your request URL

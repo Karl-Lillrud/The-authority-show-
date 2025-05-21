@@ -456,6 +456,10 @@ def send_activation_email(email, activation_link, podcast_name, artwork_url):
     """
     Sends an activation email with a link and optional artwork.
     """
+
+    # To temporarily disable this function, uncomment the next line
+    return {"success": False, "message": "Beta invites are temporarily disabled."}
+
     try:
         subject = f"Activate Your Podcast Account: {podcast_name}"
         # Render the email body using the activate_email.html template
@@ -481,6 +485,7 @@ def send_beta_invite_email(email, user_name=None):
     """
     Sends the PodManager beta invite email using the correct HTML template.
     """
+    
     subject = "🎉 Welcome to PodManager.ai Beta – New Features Unlocked!"
     # Render the correct template for the beta invite
     body = render_template(

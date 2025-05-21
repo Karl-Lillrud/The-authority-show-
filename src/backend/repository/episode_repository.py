@@ -98,6 +98,7 @@ class EpisodeRepository:
             logger.error("❌ ERROR registering episode: %s", str(e))
             return {"error": f"Failed to register episode: {str(e)}"}, 500
 
+
     def get_episode(self, episode_id, user_id):
         """Get a single episode by its ID and user."""
         try:

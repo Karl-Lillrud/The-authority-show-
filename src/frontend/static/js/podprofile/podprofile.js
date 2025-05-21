@@ -284,7 +284,7 @@ const episodePayloads = [];
 
 for (const episode of episodes) {
   console.log("Preparing episode:", episode.title, "for podcastId:", podcastId);
-  
+
   const episodeData = {
     podcastId,
     title: episode.title || "Untitled Episode",
@@ -314,20 +314,14 @@ for (const episode of episodes) {
   episodePayloads.push(episodeData);
 }
 
-// Now register all episodes after the loop is done
 for (const payload of episodePayloads) {
   try {
     const registerResponse = await registerEpisode(payload);
     console.log("✅ Episode registered:", registerResponse);
   } catch (error) {
-    console.error("❌ Error registering episode:", payload.title, error);
-    alert(`Error registering episode "${payload.title}". Aborting.`);
-    return;
+    console.error(`❌ Error registering episode "${payload.title}":`, error);
   }
 }
-
-
-
 
         loadingBar.processStep(3);
 
