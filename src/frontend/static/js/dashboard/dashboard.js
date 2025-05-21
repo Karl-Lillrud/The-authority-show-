@@ -8,7 +8,7 @@ import { initTaskManagement } from "/static/js/dashboard/task.js";
 import { svgdashboard } from "./svgdashboard.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
 import { getActivitiesRequest } from "/static/requests/activityRequests.js";
-import { updateEpisode } from "/static/requests/episodeRequest.js";
+
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -80,7 +80,8 @@ function initializeSvgIcons() {
     { selector: ".team-deleted-icon", svg: svgdashboard.teamDeletedIcon },
     { selector: ".tasks-added-icon", svg: svgdashboard.tasksAddedIcon },
     { selector: ".podcast-created-icon", svg: svgdashboard.podcastCreatedIcon },
-    { selector: ".podcast-deleted-icon", svg: svgdashboard.podcastDeletedIcon }
+    { selector: ".podcast-deleted-icon", svg: svgdashboard.podcastDeletedIcon },
+    { selector: ".team-leaderboard-trophy", svg: svgdashboard.trophyIcon }
   ];
 
   iconSelectors.forEach(({ selector, svg }) => {

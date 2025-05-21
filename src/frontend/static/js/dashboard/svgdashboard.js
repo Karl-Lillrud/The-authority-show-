@@ -134,5 +134,14 @@ export const svgdashboard = {
       <line x1="8" y1="8" x2="16" y2="16"></line>
       <line x1="16" y1="8" x2="8" y2="16"></line>
     </svg>
+  `,
+  trophyIcon: `
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="40" cy="40" r="38" stroke="#FF7F3F" stroke-width="4" fill="#FFF7F2"/>
+    <path d="M40 20L47 36L64 38L51 50L54 67L40 58L26 67L29 50L16 38L33 36L40 20Z" fill="#FF7F3F" fill-opacity="0.15"/>
+    <path d="M40 25L45 36L57 37.5L47.5 46.5L50 59L40 52.5L30 59L32.5 46.5L23 37.5L35 36L40 25Z" fill="#FF7F3F" fill-opacity="0.25"/>
+    <circle cx="40" cy="40" r="10" fill="#FF7F3F" fill-opacity="0.7"/>
+    <text x="40" y="45" text-anchor="middle" fill="#fff" font-size="18" font-family="Arial" font-weight="bold">🏆</text>
+  </svg>
   `
 };
