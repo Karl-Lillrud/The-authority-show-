@@ -3,6 +3,7 @@ import logging  # Ensure logging is imported
 from colorama import init # Add this line
 from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
+from dotenv import load_dotenv
 from backend.routes.auth import auth_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
 from backend.routes.dashboard import dashboard_bp
@@ -11,9 +12,7 @@ from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp  # Ensure this import is correct
 from backend.routes.credits_routes import credits_bp
 from backend.routes.team import team_bp
-from backend.routes.guest import (
-    guest_bp,
-)  # Ensure the guest blueprint is correctly imported
+from backend.routes.guest import (guest_bp,)  # Ensure the guest blueprint is correctly imported
 from backend.routes.user_to_team import usertoteam_bp
 from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
@@ -24,12 +23,12 @@ from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
+from backend.routes.publish import publish_bp # Import the publish blueprint
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
 from backend.utils.credit_scheduler import init_credit_scheduler  # Add this import
 from backend.routes.billing import billing_bp
 from backend.routes.landingpage import landingpage_bp
-from dotenv import load_dotenv
 from backend.utils import venvupdate
 from backend.database.mongo_connection import collection
 from backend.routes.Mailing_list import Mailing_list_bp
@@ -102,9 +101,7 @@ app.register_blueprint(transcription_bp, url_prefix="/transcription")
 app.register_blueprint(audio_bp)
 app.register_blueprint(video_bp)
 app.register_blueprint(billing_bp)
-app.register_blueprint(
-    guest_form_bp, url_prefix="/guest-form"
-)  # Register the guest_form blueprint with URL prefix
+app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Register the guest_form blueprint with URL prefix
 app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(landingpage_bp)
 app.register_blueprint(comment_bp)
@@ -113,9 +110,8 @@ app.register_blueprint(stripe_config_bp)  # Ensure this registration exists
 app.register_blueprint(edit_bp)
 app.register_blueprint(enterprise_bp, url_prefix="/enterprise")  # Register the enterprise blueprint
 app.register_blueprint(lia_bp, url_prefix="/lia")  # Ensure this line uses the correct lia_bp
-
-# Register the new index blueprint
 app.register_blueprint(index_bp) # This registration is correct
+app.register_blueprint(publish_bp) # Register the publish blueprint
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")

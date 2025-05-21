@@ -1,0 +1,190 @@
+{% extends "components/base.html" %} {% block title %}Publish Episode{%
+endblock %} {% block content %}
+
+<head>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/publish/publish.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}" />
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+
+    gtag("config", "G-PTPQQ5WSQV");
+  </script>
+</head>
+
+<div class="app-container">
+  <!-- Sidebar -->
+  <div id="sidebar-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <!-- Intentionally left empty as in podcastmanagement -->
+        <button id="pmSidebarCloseBtn" class="pm-sidebar-close-btn" aria-label="Close sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="sidebar-content">
+        <nav class="sidebar-menu">
+          <ul>
+            <li class="sidebar-menu-item">
+              <a href="/dashboard" class="sidebar-menu-link dashboard-link">
+                <span id="back-to-dashboard-icon" class="sidebar-icon"></span>
+                <span>Back to Dashboard</span>
+              </a>
+            </li>
+            <li class="sidebar-menu-item">
+              <a href="/podcastmanagement" class="sidebar-menu-link">
+                <span id="podcasts-icon" class="sidebar-icon"></span>
+                <span>Podcasts</span>
+              </a>
+            </li>
+            <li class="sidebar-menu-item">
+              <a href="/episodes" class="sidebar-menu-link">
+                <span id="episodes-icon" class="sidebar-icon"></span>
+                <span>Episodes</span>
+              </a>
+            </li>
+            <li class="sidebar-menu-item active">
+              <a href="/publish" class="sidebar-menu-link">
+                <span id="publish-icon" class="sidebar-icon"></span>
+                <span>Publish</span>
+              </a>
+            </li>
+            <li class="sidebar-menu-item">
+              <a href="#" class="sidebar-menu-link" id="guests-link">
+                <span id="guests-icon" class="sidebar-icon"></span>
+                <span>Guests</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <!-- Add action buttons section to sidebar -->
+        <div class="sidebar-action-buttons">
+          <h3>Actions</h3>
+          <button id="add-podcast-btn" class="sidebar-action-button">
+            <span id="add-icon-podcast" class="sidebar-icon"></span>
+            <span>Add Podcast</span>
+          </button>
+          <button id="create-episode-btn" class="sidebar-action-button">
+            <span id="add-icon-episode" class="sidebar-icon"></span>
+            <span>Create Episode</span>
+          </button>
+          <button id="add-guest-btn" class="sidebar-action-button">
+            <span id="add-icon-guest" class="sidebar-icon"></span>
+            <span>Add Guest</span>
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="sidebar-actions">
+          <button id="toggle-sidebar" class="sidebar-toggle">
+            <span id="toggle-sidebar-icon"></span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="publish-container">
+      <h1 class="page-title">Publish Episode</h1>
+
+      <div class="publish-form-section">
+        <div class="field-group">
+          <label for="episode-select">Select Episode to Publish:</label>
+          <select id="episode-select" name="episode-select">
+            <option value="">Loading episodes...</option>
+            <!-- Episodes will be populated by JavaScript -->
+          </select>
+        </div>
+
+        <div id="episode-details-preview" class="episode-details-preview hidden">
+          <h3 id="preview-title"></h3>
+          <p id="preview-description"></p>
+          <img id="preview-image" src="/placeholder.svg" alt="Episode Image" class="hidden"/>
+          <audio id="preview-audio" controls class="hidden"></audio>
+        </div>
+      </div>
+
+      <div class="publish-form-section">
+        <h2>Publishing Platforms</h2>
+        <div class="platform-toggles">
+          <div class="platform-toggle">
+            <input type="checkbox" id="platform-spotify" name="platform-spotify" data-platform="spotify" checked>
+            <label for="platform-spotify">
+              <img src="{{ url_for('static', filename='images/platform-icons/spotify.svg') }}" alt="Spotify">
+              Spotify
+            </label>
+          </div>
+          <div class="platform-toggle">
+            <input type="checkbox" id="platform-apple" name="platform-apple" data-platform="apple" checked>
+            <label for="platform-apple">
+              <img src="{{ url_for('static', filename='images/platform-icons/apple_podcasts.svg') }}" alt="Apple Podcasts">
+              Apple Podcasts
+            </label>
+          </div>
+          <div class="platform-toggle">
+            <input type="checkbox" id="platform-google" name="platform-google" data-platform="google">
+            <label for="platform-google">
+              <img src="{{ url_for('static', filename='images/platform-icons/google_podcasts.svg') }}" alt="Google Podcasts">
+              Google Podcasts
+            </label>
+          </div>
+          <div class="platform-toggle">
+            <input type="checkbox" id="platform-amazon" name="platform-amazon" data-platform="amazon">
+            <label for="platform-amazon">
+              <img src="{{ url_for('static', filename='images/platform-icons/amazon_music.svg') }}" alt="Amazon Music">
+              Amazon Music
+            </label>
+          </div>
+          <div class="platform-toggle">
+            <input type="checkbox" id="platform-stitcher" name="platform-stitcher" data-platform="stitcher">
+            <label for="platform-stitcher">
+              <img src="{{ url_for('static', filename='images/platform-icons/stitcher.svg') }}" alt="Stitcher">
+              Stitcher
+            </label>
+          </div>
+          <div class="platform-toggle">
+            <input type="checkbox" id="platform-pocketcasts" name="platform-pocketcasts" data-platform="pocketcasts">
+            <label for="platform-pocketcasts">
+              <img src="{{ url_for('static', filename='images/platform-icons/pocket_casts.svg') }}" alt="Pocket Casts">
+              Pocket Casts
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="publish-form-section">
+        <label for="publish-notes">Publish Notes (Optional):</label>
+        <textarea id="publish-notes" name="publish-notes" rows="3" placeholder="Any specific notes for this publish action..."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button id="publish-now-btn" class="save-btn">Publish Now</button>
+      </div>
+
+      <div id="publish-status" class="publish-status hidden">
+        <h3>Publishing Status:</h3>
+        <pre id="publish-log"></pre>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Mobile Sidebar Toggle Elements -->
+<button id="openSidebarArrowBtn" class="open-sidebar-arrow-btn" aria-label="Open sidebar" title="Open sidebar">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+</button>
+<div id="pmSidebarOverlay" class="pm-sidebar-overlay"></div>
+
+<script type="module" src="{{ url_for('static', filename='js/components/sidebar.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/publish/publish.js') }}"></script>
+{% endblock %}
