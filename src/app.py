@@ -57,7 +57,11 @@ template_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "fron
 static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "static")
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
-socketio = SocketIO(app, cors_allowed_origins="*")  # Create instance
+socketio = SocketIO(app, 
+                   cors_allowed_origins="*",
+                   async_mode='threading',
+                   logger=True,
+                   engineio_logger=True)  # Create instance with additional configuration
 
 CORS(app, resources={r"/*": {"origins": [
     "https://devapp.podmanager.ai",
@@ -145,4 +149,8 @@ init_credit_scheduler(app)
 register_socketio_events(socketio)
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=8000, debug=True)
+    socketio.run(app, 
+                host="0.0.0.0", 
+                port=8000, 
+                debug=True,
+                use_reloader=False)  # Disable reloader to prevent socket issues

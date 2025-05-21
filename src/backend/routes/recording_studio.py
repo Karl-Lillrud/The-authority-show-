@@ -157,5 +157,5 @@ def verify_invite(invite_token):
         return jsonify({"error": str(e)}), 500
 
 @recording_studio_bp.route('/recording_studio', methods=['GET'])
-def recording_studio():
+def recording_studio_alt():
     return render_template('recordingstudio/recording_studio.html')
