@@ -11,6 +11,7 @@ from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp  # Ensure this import is correct
 from backend.routes.credits_routes import credits_bp
 from backend.routes.team import team_bp
+from backend.routes.email_change import email_change_bp  # Add this import
 from backend.routes.guest import (
     guest_bp,
 )  # Ensure the guest blueprint is correctly imported
@@ -59,7 +60,7 @@ static_folder = os.path.join(
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
-
+# Update CORS configuration
 CORS(
     app,
     resources={
@@ -68,14 +69,18 @@ CORS(
                 "https://devapp.podmanager.ai",  # Test Branch (testMain)
                 "https://app.podmanager.ai",  # Live branch (Main)
                 "http://127.0.0.1:8000",  # Localhost
-            ]
+                "http://localhost:8000",   # Also allow localhost
+            ],
+            "supports_credentials": True,  # Add this line
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Add this line
+            "allow_headers": ["Content-Type", "Authorization"]  # Add this line
         }
-    },
+    }
 )
 
-# These can cause  GET https://app.podmanager.ai/ 503 (Service Unavailable) error in the browser if not set
+# These can cause GET https://app.podmanager.ai/ 503 (Service Unavailable) error in the browser if not set
 app.secret_key = os.getenv("SECRET_KEY")
-app.config["PREFERRED URL SCHEME"] = "https"
+app.config["PREFERRED_URL_SCHEME"] = "https"
 
 # Register blueprints for different routes
 app.register_blueprint(auth_bp)  # Removed url_prefix="/auth"
@@ -84,6 +89,7 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
+app.register_blueprint(email_change_bp)  # Add this line
 app.register_blueprint(Mailing_list_bp)  # <--- Here is the registration
 app.register_blueprint(guest_bp)  # Ensure the guest blueprint is correctly registered
 app.register_blueprint(guestpage_bp)
