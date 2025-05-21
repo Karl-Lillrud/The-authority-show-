@@ -66,7 +66,23 @@ export function renderTaskList(state, updateUI) {
     tasksToRender.forEach((task) => {
       const isCompleted = state.completedTasks[task.id || task._id] || task.status === "completed"
       const isExpanded = state.expandedTasks[task.id || task._id] || false
-      const isAssignedToCurrentUser = task.assignee === state.currentUser.id
+
+      // Determine if task is assigned to current user - simplified check
+      let isAssignedToCurrentUser = false
+
+      // Check if assignedAt exists and is not empty
+      if (task.assignedAt && String(task.assignedAt).trim() !== "") {
+        // Since assignedAt is now a DateTime, we'll just consider any non-empty value as assigned
+        isAssignedToCurrentUser = true
+      }
+
+      // Add debug logging
+      console.log(`Task ${task.name} assignment check:`, {
+        taskId: task.id || task._id,
+        assignedAt: task.assignedAt,
+        assignedAtType: typeof task.assignedAt,
+        isAssigned: isAssignedToCurrentUser,
+      })
 
       // Check if this task has dependencies that aren't completed
       const hasDependencyWarning =
@@ -429,109 +445,104 @@ export function toggleTaskExpansion(taskId, state, updateUI) {
   }
 }
 
+// Find the toggleTaskAssignment function and replace it with this improved version
 export async function toggleTaskAssignment(taskId, state, updateUI) {
   // Find the task
   const task = state.tasks.find((t) => t.id === taskId || t._id === taskId)
   if (!task) return
 
+  // Get the button that was clicked
+  const button = document.querySelector(`.assign-task-btn[data-task-id="${taskId}"]`)
+  if (!button) return
+
   try {
-    // Get the current assignment status
-    const isCurrentlyAssigned = task.assignee === state.currentUser.id
+    // Show loading state on the button
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'
+    button.disabled = true
 
-    if (isCurrentlyAssigned) {
-      // If already assigned to current user, unassign
-      await updateTask(taskId, {
-        assignee: null,
-        assigneeName: null,
-        assignedAt: null,
-      })
-
-      // Update local state
-      task.assignee = null
-      task.assigneeName = null
-      task.assignedAt = null
-    } else {
-      // Show loading state on the button
-      const button = document.querySelector(`.assign-task-btn[data-task-id="${taskId}"]`)
-      if (button) {
-        const originalHTML = button.innerHTML
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'
-        button.disabled = true
+    // Get user display name
+    let displayName = state.currentUser.email || "Unknown User"
+    try {
+      const accountRequests = await import("/static/requests/accountRequests.js")
+      if (accountRequests.fetchAccount && typeof accountRequests.fetchAccount === "function") {
+        const accountData = await accountRequests.fetchAccount()
+        const userData = accountData.account || accountData
+        displayName =
+          userData.fullName ||
+          userData.full_name ||
+          userData.name ||
+          userData.displayName ||
+          userData.display_name ||
+          userData.email ||
+          state.currentUser.email ||
+          "Unknown User"
       }
-
-      // Try to get user profile data, with fallbacks
-      let userId = state.currentUser.id
-      let fullName = ""
-      let email = state.currentUser.email || ""
-
-      try {
-        // Try to import and use the account requests module
-        const accountRequests = await import("/static/requests/accountRequests.js")
-
-        // Check if fetchAccount exists and is a function
-        if (accountRequests.fetchAccount && typeof accountRequests.fetchAccount === "function") {
-          const accountData = await accountRequests.fetchAccount()
-          console.log("Fetched account data:", accountData)
-
-          // Extract user information from account data
-          // The structure might be { account: { ... } } or directly the account object
-          const userData = accountData.account || accountData
-
-          userId = userData._id || userData.id || state.currentUser.id
-
-          // Get the full name from account data - handle different possible structures
-          fullName =
-            userData.fullName ||
-            userData.full_name ||
-            userData.name ||
-            userData.displayName ||
-            userData.display_name ||
-            ""
-
-          // Get email if fullName is not available
-          email = userData.email || state.currentUser.email || ""
-        } else {
-          console.log("fetchAccount function not found in accountRequests module, using fallback data")
-        }
-      } catch (error) {
-        console.warn("Error fetching account data, using fallback data:", error)
-      }
-
-      // Use fullName if available, otherwise use email, or fallback to "Unknown User"
-      const displayName = fullName || email || "Unknown User"
-      console.log(`Using name: ${displayName} for task assignment`)
-
-      // Update task in the database - use assignedAt as the source of truth
-      await updateTask(taskId, {
-        assignee: userId,
-        assigneeName: displayName, // Keep this for backward compatibility
-        assignedAt: displayName, // This is now the primary field for assignment
-      })
-
-      // Update local state
-      task.assignee = userId
-      task.assigneeName = displayName
-      task.assignedAt = displayName
-
-      // Reset button state
-      if (button) {
-        button.innerHTML = '<i class="fas fa-user-minus"></i>'
-        button.disabled = false
-      }
+    } catch (error) {
+      console.warn("Error fetching account data, using fallback data:", error)
     }
 
-    // Update UI
-    updateUI()
+    // Check if task is currently assigned
+    // We'll use a simple string check for now
+    const isCurrentlyAssigned = task.assignedAt && String(task.assignedAt).trim() !== ""
+
+    console.log("Current assignment state:", {
+      taskId,
+      isCurrentlyAssigned,
+      assignedAt: task.assignedAt,
+      assignedAtType: typeof task.assignedAt,
+      currentUser: displayName,
+    })
+
+    // Prepare update data - use user's name for assignment, null for unassignment
+    const updateData = {
+      assignedAt: isCurrentlyAssigned ? null : displayName,
+    }
+
+    console.log("Sending update data:", updateData)
+
+    // Update task in the database
+    await updateTask(taskId, updateData)
+
+    // Update local task object
+    task.assignedAt = updateData.assignedAt
+
+    // Force the new assignment state
+    const newAssignmentState = !isCurrentlyAssigned
+
+    // Force the correct icon based on the new state
+    if (newAssignmentState) {
+      button.innerHTML = '<i class="fas fa-user-minus"></i>'
+      button.title = "Unassign Task"
+    } else {
+      button.innerHTML = '<i class="fas fa-user-plus"></i>'
+      button.title = "Assign to me"
+    }
+
+    button.disabled = false
+
+    console.log("Button updated:", {
+      newAssignmentState,
+      innerHTML: button.innerHTML,
+      title: button.title,
+    })
+
+    // Skip the UI update for now to preserve our button state
+    // Instead, manually update the task display
+    const taskItem = document.querySelector(`.task-item[data-task-id="${taskId}"]`)
+    if (taskItem) {
+      const assignedAtDisplay = taskItem.querySelector(".task-meta-item:nth-child(2) span")
+      if (assignedAtDisplay) {
+        assignedAtDisplay.textContent = newAssignmentState ? displayName : "Unassigned"
+      }
+    }
   } catch (error) {
     console.error("Error updating task assignment:", error)
     alert("Failed to update task assignment. Please try again.")
 
-    // Reset button state in case of error
-    const button = document.querySelector(`.assign-task-btn[data-task-id="${taskId}"]`)
-    if (button) {
-      button.innerHTML = '<i class="fas fa-user-plus"></i>'
-      button.disabled = false
-    }
+    // Reset button state
+    button.innerHTML = '<i class="fas fa-user-plus"></i>'
+    button.title = "Assign to me"
+    button.disabled = false
   }
 }
 
@@ -697,6 +708,7 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
 
     // Form submission
     const saveBtn = document.getElementById("save-edit-btn")
+    let originalText
     saveBtn.addEventListener("click", async () => {
       const title = document.getElementById("edit-task-title").value
       const description = document.getElementById("edit-task-description").value
@@ -718,7 +730,7 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
       }
 
       try {
-        const originalText = saveBtn.innerHTML
+        originalText = saveBtn.innerHTML
         saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
         saveBtn.disabled = true
 
@@ -789,6 +801,10 @@ export function showAddTaskModal(state, updateUI) {
                 <option value="video-editing">Video Editing</option>
               </select>
               <small class="help-text">Select an AI tool to assist with this task</small>
+                <option value="audio-editing">Audio Editing</option>
+                <option value="video-editing">Video Editing</option>
+              </select>
+              <small class="help-text">Select an AI tool to assist with this task</small>
             </div>
             <div class="form-group">
               <label for="task-dependencies">Dependencies</label>
@@ -798,6 +814,10 @@ export function showAddTaskModal(state, updateUI) {
                     allTasks.length > 0
                       ? allTasks.map((task) => `<option value="${task.id || task._id}">${task.name}</option>`).join("")
                       : "<option disabled>No tasks available for dependencies</option>"
+                  }
+                </select>
+                <p class="help-text">Hold Ctrl/Cmd to select multiple tasks. This task will only be available when all selected tasks are completed.</p>
+                <div class="dependency-preview" id="dependency-preview"></div>
                   }
                 </select>
                 <p class="help-text">Hold Ctrl/Cmd to select multiple tasks. This task will only be available when all selected tasks are completed.</p>

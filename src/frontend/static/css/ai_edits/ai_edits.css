@@ -7,15 +7,17 @@ body {
     background-color: var(--background-light);
     color: #404040;
   }
-  
+
+  #app {
+    min-height: calc(100vh - 60px);
+  }
 
   /* Tabs */
   #tabs {
     display: flex;
-    gap: 1rem;
-    border-bottom: 1px solid #ccc;
+    gap: 30px;
     padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 23px;
   }
   
   #tabs button {
@@ -41,23 +43,29 @@ body {
   }
   
   /* Content Box */
-  #content {
+
+  #content .content-wrapper {
     background-color: var(--card-bg-light);
     padding: 1.5rem;
     border-radius: 1rem;
     box-shadow: 0 4px 12px rgba(255, 115, 0, 0.1);
+    margin-bottom: 30px;
+  }
+
+  #content .content-wrapper:last-of-type {
+    margin-bottom: 0;
   }
   
   /* File Upload */
   input[type="file"] {
     border: 2px dashed #ccc;
     padding: 1rem;
-    width: 100%;
     border-radius: 0.75rem;
     background: #fafafa;
     text-align: center;
     cursor: pointer;
     margin-bottom: 1rem;
+    display: block;
   }
   
   /* Buttons */
@@ -165,7 +173,6 @@ body {
 }
 
 .edit-history-container {
-  border-top: 1px solid #ccc;
   padding-top: 1.5rem;
 }
 

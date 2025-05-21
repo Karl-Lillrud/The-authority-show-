@@ -13,6 +13,7 @@ from backend.utils.text_utils import (
     generate_ai_show_notes, suggest_sound_effects, translate_text, mix_background,
     pick_dominant_emotion, fetch_sfx_for_emotion
 )
+import backend.utils.text_utils as text_utils
 from backend.repository.ai_models import save_file, get_file_data, get_file_by_id
 from elevenlabs.client import ElevenLabs
 from backend.utils.blob_storage import upload_file_to_blob
@@ -257,8 +258,8 @@ class AudioService:
 
             cleaned_transcript = ai_utils_module.remove_filler_words(transcript) if TEXTSTAT_AVAILABLE else transcript
             noise_result = detect_background_noise(temp_path)
-            filler_sentences = ai_utils_module.detect_filler_words(transcript) if TEXTSTAT_AVAILABLE else []
-            sentence_certainty = ai_utils_module.analyze_certainty_levels(transcript) if TEXTSTAT_AVAILABLE else []
+            filler_sentences = text_utils.detect_filler_words(transcript) if TEXTSTAT_AVAILABLE else []
+            sentence_certainty = text_utils.analyze_certainty_levels(transcript) if TEXTSTAT_AVAILABLE else []
 
             logger.info(f"Certainty results computed")
 
@@ -343,15 +344,23 @@ class AudioService:
             tmp.write(audio_bytes)
             temp_input_path = tmp.name
 
+        temp_output_path = None  # ✅ Ensure this is always defined
+
         try:
+            elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
+            if not elevenlabs_api_key:
+                raise RuntimeError("Missing ELEVENLABS_API_KEY environment variable")
+
             logger.info("Sending audio to ElevenLabs voice isolation endpoint...")
 
             with open(temp_input_path, "rb") as f:
                 response = requests.post(
                     "https://api.elevenlabs.io/v1/audio-isolation",
-                    headers={"xi-api-key": os.getenv("ELEVENLABS_API_KEY")},
+                    headers={"xi-api-key": elevenlabs_api_key},
                     files={"audio": f}
                 )
+
+            logger.info(f"ElevenLabs response status: {response.status_code}")
 
             if response.status_code != 200:
                 logger.error(f"Voice isolation failed: {response.status_code} {response.text}")
@@ -366,8 +375,7 @@ class AudioService:
                 isolated_data = f.read()
 
             isolated_filename = f"isolated_{filename}"
-            repo = EpisodeRepository()
-            podcast_id = repo.get_podcast_id_by_episode(episode_id)
+            podcast_id = episode_repo.get_podcast_id_by_episode(episode_id)
 
             blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{isolated_filename}"
             isolated_stream = BytesIO(isolated_data)
@@ -385,14 +393,14 @@ class AudioService:
                 }
             )
 
-
             logger.info(f"Isolated voice uploaded to Azure: {blob_url}")
             return blob_url
 
         finally:
             os.remove(temp_input_path)
-            if os.path.exists(temp_output_path):
+            if temp_output_path and os.path.exists(temp_output_path):
                 os.remove(temp_output_path)
+
 
 
     def split_audio_on_silence(wav_path, min_len=500, silence_thresh_db=-35):
@@ -757,113 +765,94 @@ class AudioService:
     def generate_sfx_plan_from_analysis(self, transcript_segments: list) -> list:
         """
         Use GPT to generate a creative SFX plan based on transcript segments.
-        Each segment has: {start, end, text}
-        Returns a list of: {description, start, end}
+        Fallbacks to gpt-3.5-turbo if gpt-4 fails (rate limit, context length, etc).
         """
+        import json, os
+        from openai import OpenAI
+
         logger.info(f"Generating SFX plan from {len(transcript_segments)} transcript segments")
-        
-        # Prepare the prompt for GPT
         segments_text = "\n".join([
             f"[{s['start']:.2f}s - {s['end']:.2f}s]: {s['text']}"
             for s in transcript_segments
         ])
-        
+
         prompt = f"""
-        You are a professional podcast sound designer.
+    You are a professional podcast sound designer.
 
-        Your task is to plan highly creative and immersive sound effects (SFX) that align with the emotions, actions, or environments described in the transcript below. Use the timestamps to precisely place the sounds.
+    Your task is to plan highly creative and immersive sound effects (SFX) that align with the emotions, actions, or environments described in the transcript below. Use the timestamps to precisely place the sounds.
 
-        For each sound effect, return:
-        - A brief but vivid description of the sound
-        - The start time in seconds
-        - The end time in seconds
+    For each sound effect, return:
+    - A brief but vivid description of the sound
+    - The start time in seconds
+    - The end time in seconds
 
-        Be cinematic and imaginative, but ensure the effects:
-        - Enhance storytelling or emotional tone
-        - Reflect the literal or implied context
-        - Are suitable for a podcast (not too loud or distracting)
+    Be cinematic and imaginative, but ensure the effects:
+    - Enhance storytelling or emotional tone
+    - Reflect the literal or implied context
+    - Are suitable for a podcast (not too loud or distracting)
 
-        EXAMPLES:
-        If someone says "It was thundering outside", suggest "Distant thunder rumbling".
-        If a person whispers nervously, suggest "Tense ambient drone".
-        If someone opens a door, suggest "Old wooden door creaking open".
+    EXAMPLES:
+    If someone says "It was thundering outside", suggest "Distant thunder rumbling".
+    If a person whispers nervously, suggest "Tense ambient drone".
+    If someone opens a door, suggest "Old wooden door creaking open".
 
-        TRANSCRIPT SEGMENTS:
-        {segments_text}
+    TRANSCRIPT SEGMENTS:
+    {segments_text}
 
-        FORMAT:
-        [
-        {{
-            "description": "sound description",
-            "start": start_time,
-            "end": end_time
-        }},
-        ...
-        ]
+    FORMAT:
+    [
+    {{
+        "description": "sound description",
+        "start": start_time,
+        "end": end_time
+    }},
+    ...
+    ]
 
-        You can include up to 5 SFX. Skip segments if no effect is needed. Only return the JSON array — no explanation.
-        """
-        
-        logger.info("Sending prompt to OpenAI GPT")
-        logger.info(f"Prompt length: {len(prompt)} characters")
-        
-        try:
-            # Import OpenAI client
-            from openai import OpenAI
-            
-            # Create OpenAI client
-            openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            
-            # Call GPT with the prompt - FIXED: removed response_format parameter
+    You can include up to 5 SFX. Skip segments if no effect is needed. Only return the JSON array — no explanation.
+    """
+
+        openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+        def call_gpt(model_name):
+            logger.info(f"🔁 Calling model: {model_name}")
             response = openai_client.chat.completions.create(
-                model="gpt-4",
+                model=model_name,
                 messages=[
                     {"role": "system", "content": "You are a professional sound designer."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.8
             )
-            
-            # Parse the JSON response
-            content = response.choices[0].message.content.strip()
-            logger.info(f"Received response from GPT: {content[:200]}...")  # Log first 200 chars
-            
+            return response.choices[0].message.content.strip()
+
+        for model in ["gpt-4", "gpt-3.5-turbo"]:
             try:
+                content = call_gpt(model)
+                logger.info(f"✅ Response from {model}: {content[:200]}...")
                 result = json.loads(content)
-                logger.info(f"Successfully parsed JSON response: {type(result)}")
-                
-                # Ensure we have the expected format
                 if isinstance(result, list):
-                    sfx_plan = result
-                else:
-                    sfx_plan = result.get("sfx_plan", [])
-                    logger.info("Using direct list from response as sfx_plan")
-                
-                logger.info(f"Raw SFX plan: {sfx_plan}")
-                
-                # Validate each entry
-                validated_plan = []
-                for entry in sfx_plan:
-                    if isinstance(entry, dict) and "description" in entry and "start" in entry and "end" in entry:
-                        validated_plan.append({
+                    return [
+                        {
                             "description": entry["description"],
                             "start": float(entry["start"]),
                             "end": float(entry["end"])
-                        })
-                    else:
-                        logger.warning(f"Invalid SFX plan entry: {entry}")
-                
-                logger.info(f"Validated {len(validated_plan)} SFX plan entries")
-                return validated_plan
-                
+                        }
+                        for entry in result
+                        if isinstance(entry, dict) and "description" in entry and "start" in entry and "end" in entry
+                    ]
+                elif isinstance(result, dict) and "sfx_plan" in result:
+                    return result["sfx_plan"]
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse GPT response as JSON: {e}")
-                logger.error(f"Raw response: {content}")
-                return []
-        
-        except Exception as e:
-            logger.error(f"Error generating SFX plan: {e}", exc_info=True)
-            return []
+                logger.warning(f"⚠️ GPT ({model}) response is not valid JSON: {e}")
+                logger.debug(f"Raw: {content}")
+            except Exception as e:
+                logger.warning(f"⚠️ GPT call with {model} failed: {e}")
+                continue
+
+        logger.error("❌ All GPT model calls failed")
+        return []
+
 
     def generate_sfx_clips_from_plan(self, sfx_plan: list) -> list:
         """
