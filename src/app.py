@@ -44,6 +44,7 @@ from backend.routes.edit_routes import edit_bp
 from backend.routes.enterprise import enterprise_bp  # Import the enterprise blueprint
 from backend.routes.lia import lia_bp  # Corrected: Import lia_bp from backend.routes.lia
 from backend.routes.index import index_bp # This import is correct
+from backend.routes.recording_studio import recording_studio_bp
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -113,6 +114,7 @@ app.register_blueprint(stripe_config_bp)  # Ensure this registration exists
 app.register_blueprint(edit_bp)
 app.register_blueprint(enterprise_bp, url_prefix="/enterprise")  # Register the enterprise blueprint
 app.register_blueprint(lia_bp, url_prefix="/lia")  # Ensure this line uses the correct lia_bp
+app.register_blueprint(recording_studio_bp)
 
 # Register the new index blueprint
 app.register_blueprint(index_bp) # This registration is correct
