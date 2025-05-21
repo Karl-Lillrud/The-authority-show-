@@ -420,34 +420,6 @@ function showTab(tabName) {
             </div>
           </div>
         `;
-           
-            
-        setTimeout(() => {
-            const cuttingSelect = document.getElementById("audioSourceSelectCutting");
-            if (cuttingSelect && rawAudioBlob) {
-                cuttingSelect.value = "original";
-                cuttingSelect.dispatchEvent(new Event("change"));
-            }
-        }, 0);
-        const loadCutBtn = document.getElementById("loadCuttingWaveformBtn");
-        if (loadCutBtn) {
-            loadCutBtn.onclick = () => {
-                const source = document.getElementById("audioSourceSelectCutting").value;
-                let blob = null;
-
-                if (source === "original") blob = rawAudioBlob;
-                else if (source === "enhanced") blob = enhancedAudioBlob;
-                else if (source === "isolated") blob = isolatedAudioBlob;
-
-                if (blob) {
-                    initWaveformCutting(blob);
-                } else {
-                    document.getElementById("waveformCut").innerHTML =
-                        "<p>No audio available for the selected source.</p>";
-                }
-            };
-        }
-
     } else if (tabName === 'video') {
         content.innerHTML = `
           <div class="content-wrapper">
