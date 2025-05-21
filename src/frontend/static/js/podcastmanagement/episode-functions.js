@@ -13,6 +13,7 @@ import { showNotification, showConfirmationPopup } from "../components/notificat
 
 import { consumeStoreCredits, getCredits } from "../../../static/requests/creditRequests.js";
 import { incrementUpdateAccount } from "../../../static/requests/accountRequests.js";
+import { showAddGuestPopup } from "./guest-functions.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -103,25 +104,37 @@ export function renderEpisodeDetail(episode) {
     Back to podcast
   </button>
   <div class="top-right-actions">
-    ${/* Conditionally render AI Edit button */ ""}
+    <!-- Studio Button -->
+    ${(() => {
+      const now = new Date();
+      let isStudioEnabled = false;
+      let timeLeft = "";
+      if (episode.recordingAt) {
+        const recordingTime = new Date(episode.recordingAt);
+        if (recordingTime > now) {
+          const diffMs = recordingTime - now;
+          const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+          const diffMin = Math.floor((diffMs / (1000 * 60)) % 60);
+          timeLeft = `${diffHrs}h ${diffMin}m left`;
+        } else {
+          isStudioEnabled = true;
+        }
+      }
+      if (isStudioEnabled) {
+        return `<button class=\"studio-btn\" id=\"studio-btn\" style=\"background: #ff7f3f; color: white; margin-left: 8px;\" data-podcast-id=\"${episode.podcastId || episode.podcast_id}\" data-episode-id=\"${episode._id}\">Studio</button>`;
+      } else {
+        return `<button class=\"studio-btn\" id=\"studio-btn\" style=\"background: #ccc; color: #888; margin-left: 8px; cursor: not-allowed;\" disabled>${timeLeft || 'Not available'}</button>`;
+      }
+    })()}
     ${
       !episode.isImported
         ? `
-    <button class="save-btn" id="ai-edit-episode-btn" data-id="${episode._id}">
-      AI Edit
-    </button>
-    `
+    <button class=\"save-btn\" id=\"ai-edit-episode-btn\" data-id=\"${episode._id}\">\n      AI Edit\n    </button>\n    `
         : ""
     }
-    <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
+    <button class=\"action-btn edit-btn\" id=\"edit-episode-btn\" data-id=\"${
       episode._id
-    }">
-      ${shared.svgpodcastmanagement.edit}
-    </button>
-    <button class="action-btn delete-btn" id="delete-episode-btn" data-id="${episode._id}">
-      <span class="icon">${shared.svgpodcastmanagement.delete}</span>
-    </button>
-  </div>
+    }\">\n      ${shared.svgpodcastmanagement.edit}\n    </button>\n    <button class=\"action-btn delete-btn\" id=\"delete-episode-btn\" data-id=\"${episode._id}\">\n      <span class=\"icon\">${shared.svgpodcastmanagement.delete}</span>\n    </button>\n  </div>
 </div>
 
 <div class="podcast-detail-container"></div>
@@ -329,6 +342,16 @@ export function renderEpisodeDetail(episode) {
     });
   }
 
+  // Add event listener for the Studio button
+  const studioBtn = document.getElementById("studio-btn");
+  if (studioBtn && !studioBtn.disabled) {
+    studioBtn.addEventListener("click", () => {
+      const podcastId = studioBtn.getAttribute("data-podcast-id");
+      const episodeId = studioBtn.getAttribute("data-episode-id");
+      window.location.href = `recording_studio.html?podcastId=${podcastId}&episodeId=${episodeId}`;
+    });
+  }
+
   // Fetch and display guests for the episode
   fetchGuestsByEpisode(episode._id)
     .then((guests) => {
@@ -394,10 +417,23 @@ export function renderEpisodeDetail(episode) {
 
           guestsListEl.appendChild(guestsContainer);
         } else {
-          const noGuests = document.createElement("p");
-          noGuests.className = "no-guests-message";
-          noGuests.textContent = "No guests to display.";
-          guestsListEl.appendChild(noGuests);
+          const noGuestsContainer = document.createElement("div");
+          noGuestsContainer.className = "no-guests-container";
+
+          const noGuestsMsg = document.createElement("p");
+          noGuestsMsg.className = "no-guests-message";
+          noGuestsMsg.textContent = "No guests to display.";
+
+          const addGuestBtn = document.createElement("button");
+          addGuestBtn.className = "save-btn guest-btn";
+          addGuestBtn.textContent = "Add Guest";
+          addGuestBtn.onclick = function() {
+            showAddGuestPopup();
+          };
+
+          noGuestsContainer.appendChild(noGuestsMsg);
+          noGuestsContainer.appendChild(addGuestBtn);
+          guestsListEl.appendChild(noGuestsContainer);
         }
       }
     })
@@ -951,18 +987,20 @@ export function initEpisodeFunctions() {
       });
 
     const credits_button = document.getElementById("buy-credits-btn-popup");
-
-    const credits = await getCredits();
-    const extra_episode_cost = 5000;
-    if (credits >= extra_episode_cost) {
-      credits_button.textContent = "Buy for 5000 credits";
-    } else {
-      credits_button.textContent = "Buy Credits"
-    }
+    // Set the button content with only the unlocked lock icon
+    credits_button.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+      </svg>
+      Unlock for 5,000 credits
+    `;
 
     // Navigate to store
     credits_button
       .addEventListener("click", async () => {
+        const credits = await getCredits();
+        const extra_episode_cost = 5000;
         if (credits >= extra_episode_cost) {
           try {
             await consumeStoreCredits("episode_pack");

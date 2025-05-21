@@ -1,12 +1,13 @@
-from backend.database.mongo_connection import collection
-from datetime import datetime, timezone
+import json
 import uuid
 import logging
+import email.utils
+from datetime import datetime, timezone
+
+from backend.database.mongo_connection import collection
 from backend.models.guests import GuestSchema
+from backend.services.activity_service import ActivityService
 from marshmallow import ValidationError
-import email.utils  # Import to handle parsing date format
-from google.oauth2.credentials import Credentials
-from backend.services.activity_service import ActivityService  # Add this import
 
 logger = logging.getLogger(__name__)
 
@@ -14,71 +15,46 @@ logger = logging.getLogger(__name__)
 class GuestRepository:
     def __init__(self):
         self.collection = collection.database.Guests
-        self.activity_service = ActivityService()  # Add this line
+        self.activity_service = ActivityService()
+
+    def _parse_publish_date(self, publish_date_str, fallback_date):
+        """Attempts to parse a publish date string into an aware datetime object."""
+        try:
+            parsed = email.utils.parsedate(publish_date_str)
+            if parsed:
+                return datetime(*parsed[:6], tzinfo=timezone.utc)
+        except Exception:
+            logger.info(f"RFC 2822 date parsing failed: {publish_date_str}")
+
+        try:
+            return datetime.fromisoformat(publish_date_str.replace("Z", "+00:00")).replace(tzinfo=timezone.utc)
+        except Exception as e:
+            logger.warning(f"ISO date parsing failed: {publish_date_str}, error: {e}")
+
+        logger.warning(f"Using fallback date for unparsed date: {publish_date_str}")
+        return fallback_date
 
     def add_guest(self, data, user_id):
         try:
-            episode_id = data.get("episodeId")
+            # Convert JSON string to dictionary if needed
+            if isinstance(data, str):
+                data = json.loads(data)
 
-            # Fetch the episode and ensure it contains the 'podcast_id' field
+            episode_id = data.get("episodeId")
             episode = collection.database.Episodes.find_one({"_id": episode_id})
             if not episode:
-                logger.error(f"Episode with ID {episode_id} not found.")
                 return {"error": "Episode not found"}, 404
             if "podcast_id" not in episode:
-                logger.warning(f"Episode with ID {episode_id} is missing 'podcast_id'.")
                 return {"error": "Episode missing 'podcast_id' field"}, 400
 
             current_date = datetime.now(timezone.utc)
 
-            # Parse and make publish_date offset-aware
             try:
-                # Check if publishDate exists and is not None
-                if "publishDate" in episode and episode["publishDate"] is not None:
-                    publish_date = None
-                    publish_date_str = episode["publishDate"]
+                guest_data = GuestSchema().load(data)
+            except ValidationError as e:
+                return {"error": f"Invalid guest data: {e.messages}"}, 400
 
-                    # Try parsing as RFC 2822 format first (email.utils.parsedate)
-                    try:
-                        publish_date_parsed = email.utils.parsedate(publish_date_str)
-                        if publish_date_parsed:
-                            publish_date = datetime(*publish_date_parsed[:6]).replace(
-                                tzinfo=timezone.utc
-                            )
-                    except Exception:
-                        # If RFC 2822 parsing fails, log it but continue to try ISO format
-                        logger.info(
-                            f"RFC 2822 date parsing failed for: {publish_date_str}"
-                        )
-
-                    # If RFC 2822 parsing failed, try ISO format
-                    if not publish_date:
-                        try:
-                            publish_date = datetime.fromisoformat(
-                                publish_date_str.replace("Z", "+00:00")
-                            )
-                            publish_date = publish_date.replace(tzinfo=timezone.utc)
-                        except Exception as e:
-                            logger.warning(
-                                f"ISO date parsing failed for: {publish_date_str}, error: {str(e)}"
-                            )
-
-                    # If both parsing methods failed, use current date
-                    if not publish_date:
-                        logger.warning(
-                            f"All date parsing methods failed for: {publish_date_str}, using current date"
-                        )
-                        publish_date = current_date
-                else:
-                    # If publishDate is missing or None, use current date
-                    publish_date = current_date
-            except Exception as e:
-                logger.exception(f"Error parsing publish date: {str(e)}")
-                return {"error": f"Invalid publish date format: {str(e)}"}, 400
-
-            guest_data = GuestSchema().load(data)
             guest_id = str(uuid.uuid4())
-
             guest_item = {
                 "_id": guest_id,
                 "episodeId": episode_id,
@@ -91,16 +67,13 @@ class GuestRepository:
                 "status": "Pending",
                 "scheduled": 0,
                 "completed": 0,
-                "created_at": datetime.now(timezone.utc),
-                "user_id": user_id,
-                "calendarEventId": guest_data.get(
-                    "calendarEventId", ""
-                ),  # Store calendar event ID
+                "created_at": current_date,
+                "calendarEventId": guest_data.get("calendarEventId", ""),
+                "recordingAt": episode.get("recordingAt", None),  
             }
 
             self.collection.insert_one(guest_item)
 
-            # --- Log activity for guest added ---
             try:
                 self.activity_service.log_activity(
                     user_id=user_id,
@@ -113,16 +86,15 @@ class GuestRepository:
                     },
                 )
             except Exception as act_err:
-                logger.error(
-                    f"Failed to log guest_added activity: {act_err}", exc_info=True
-                )
-            # --- End activity log ---
+                logger.error("Failed to log activity", exc_info=True)
 
             return {"message": "Guest added successfully", "guest_id": guest_id}, 201
 
         except Exception as e:
-            logger.exception("❌ ERROR: Failed to add guest")
+            logger.exception("Failed to add guest")
             return {"error": f"Failed to add guest: {str(e)}"}, 500
+
+
 
     def get_guests(self, user_id):
         """

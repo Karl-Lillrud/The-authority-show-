@@ -142,8 +142,7 @@ export async function renderPodcastList() {
       podcastCard.className = "podcast-card";
 
       // Use imageUrl if available, otherwise allow user to upload an image
-      const imageUrl =
-        podcast.logoUrl || podcast.imageUrl || "/static/images/default-image.png";
+      const imageUrl = podcast.rssImage || podcast.logoUrl || podcast.imageUrl;
 
       // Create the basic podcast card structure
       podcastCard.innerHTML = `
@@ -467,7 +466,7 @@ try {
 // Function to render podcast detail
 export function renderPodcastDetail(podcast) {
   const podcastDetailElement = document.getElementById("podcast-detail");
-  const imageUrl = podcast.logoUrl || podcast.imageUrl || "/static/images/default-image.png";
+  const imageUrl = podcast.rssImage || podcast.logoUrl || podcast.imageUrl;
 
   podcastDetailElement.innerHTML = `
   <div class="detail-header">
@@ -825,7 +824,7 @@ function handlePodcastFormSubmission() {
       hostBio: document.getElementById("hostBio")?.value.trim() || "",
       hostImage: document.getElementById("host-image")?.value.trim() || "",
       // the logoUrl field will be replaced if a logo is uploaded
-
+      rssImage: null, // Initialize rssImage field
       category,
       socialMedia: [
         document.getElementById("facebook")?.value.trim() || " ",
@@ -837,6 +836,21 @@ function handlePodcastFormSubmission() {
         document.getElementById("youtube")?.value.trim() || " "
       ].filter((link) => link)
     };
+
+    // If there's an RSS feed URL, fetch the RSS data to get the image
+    if (data.rssFeed) {
+      try {
+        const rssData = await fetchRSSData(data.rssFeed);
+        if (rssData && rssData.image && rssData.image.url) {
+          // Store the direct CDN URL from the RSS feed
+          data.rssImage = rssData.image.url;
+          console.log("Using RSS feed image URL:", data.rssImage);
+        }
+      } catch (error) {
+        console.error("Error fetching RSS data:", error);
+        // Continue with the submission even if RSS fetch fails
+      }
+    }
 
     // Remove any keys with null or empty values
     Object.keys(data).forEach((key) => {

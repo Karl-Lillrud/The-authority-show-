@@ -305,7 +305,7 @@ endblock %} {% block content %}
             <select id="podcast-select-guest" name="podcastId" required></select>
           </div>
           <div class="field-group full-width">
-            <label for="episode-id">Episode ID</label>
+            <label for="episode-id">Episode</label>
             <select id="episode-id" name="episodeId" required></select>
           </div>
           <div class="field-group full-width">
@@ -383,10 +383,12 @@ endblock %} {% block content %}
     <div id="episode-limit-popup" class="popup" style="display: none;">
       <div class="form-box">
         <h2 class="form-title">Episode Limit Reached</h2>
-        <p>You have reached your episode limit. Buy more slots to create additional episodes.</p>
+        <p>You've reached your episode limit. Unlock additional slots to keep creating more episodes.</p>
         <div class="form-actions">
           <button class="cancel-btn" id="close-limit-popup">Cancel</button>
-          <button class="save-btn" id="buy-credits-btn-popup">Buy Credits</button>
+          <button class="save-btn" id="buy-credits-btn-popup">
+            Unlock for 5,000 credits
+          </button>
         </div>
       </div>
     </div>

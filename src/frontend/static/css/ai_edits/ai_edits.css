@@ -16,25 +16,36 @@ body {
   #tabs {
     display: flex;
     gap: 30px;
-    padding-bottom: 0.5rem;
-    margin-bottom: 23px;
+    justify-content: center;
+    /*padding-bottom: 0.5rem;*/
+    /*margin-bottom: 23px;*/
+    z-index: 1;
   }
   
   #tabs button {
-    padding: 0.5rem 1rem;
+    padding: var(--spacing-md) var(--spacing-lg);
     font-weight: 600;
-    color: #404040;
-    background: transparent;
-    border: none;
+    color: #797979;
+    background: white;
     cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid white;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
   }
-  
-  #tabs button.active,
+
   #tabs button:hover {
     color: #FF7300;
-    border-bottom: 3px solid #FF7300;
+    box-shadow: 0px 0px 6px rgba(255, 100, 0, 0.8);
+  }
+
+  #tabs button.active {
+    color: #FF7300;
+    box-shadow: 0px 0px 6px rgba(255, 100, 0, 0.8);
+    border-color: var(--highlight-color);
+    border-bottom: 1px solid white;
   }
   
   /* Main Content */
@@ -44,11 +55,16 @@ body {
   
   /* Content Box */
 
+  #content {
+    position: relative;
+    z-index: 2;
+  }
+
   #content .content-wrapper {
     background-color: var(--card-bg-light);
     padding: 1.5rem;
     border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(255, 115, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
   }
 
@@ -100,7 +116,7 @@ body {
 .btn.ai-edit-button {
     background-color: var(--highlight-color); 
     color: white;
-    padding: var(--spacing-md) var(--spacing-lg);      
+    padding: var(--spacing-sm) var(--spacing-md);      
     font-size: 1rem;         
     font-weight: 600;
     border: none;
@@ -109,7 +125,11 @@ body {
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: var(--button-shadow);
     margin: var(--spacing-sm);       
-    display: inline-block;   
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
 }
 
 .btn.ai-edit-button:hover {
@@ -142,6 +162,18 @@ body {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+.result-field, #videoResult, #audioResult {
+  width: 100%;
+}
+
+.result-field h4 {
+  margin-top: 15px;
+}
+
+.result-group {
+  padding: 15px 0px;
+}
+
 .result-field pre {
   max-height: 300px;
   overflow-y: auto;
@@ -152,6 +184,11 @@ body {
   border-radius: 0.75rem;
   white-space: pre-wrap;      
   word-break: break-word;     
+}
+
+label {
+  padding: 10px;
+  padding-top: 0;
 }
 
 /* Spinner style */
@@ -188,12 +225,24 @@ button.ai-edit-button.disabled {
     pointer-events: none;
     cursor: not-allowed;
 }
+
 .button-with-help {
   display: inline-flex;
   align-items: center;
   /* Vänd ordningen så att span kommer före knappen */
-  flex-direction: row-reverse;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
   margin: 0.5em 0;
+}
+
+button span.credit-cost {
+  color: var(--highlight-color);
+  font-size: 0.9em;
+  background-color: white;
+  border-radius: var(--radius-small);
+  padding: 7px 10px;
+  display: inline-block;
 }
 
 .help-icon {
@@ -218,10 +267,12 @@ button.ai-edit-button.disabled {
   content: attr(data-tooltip);
   position: absolute;
   bottom: 100%;    /* precis ovanför ikonen */
-  left: 0;         /* ikonens vänstra kant */
+  left: -160px;         /* ikonens vänstra kant */
+  max-width: 320px;
+  min-width: 320px;
   margin-bottom: 6px;
   padding: 6px 8px;
-  white-space: nowrap;
+  /*white-space: nowrap;*/
   background: rgba(0,0,0,0.8);
   color: #fff;
   border-radius: 4px;
@@ -234,4 +285,77 @@ button.ai-edit-button.disabled {
 
 .help-icon:hover::after {
   opacity: 1;
+}
+
+.no-edits-found {
+  text-align: center;
+}
+
+@media (max-width: 850px) {
+  .dashboard {
+    margin-top: 0px !important;
+  }
+
+  main {
+    padding-top: 0px;
+  }
+
+  #tabs {
+    margin-top: 30px;
+    margin-bottom: 30px;
+  }
+
+  #tabs button {
+    border: 1px solid white;
+    border-bottom-right-radius: 1rem;
+    border-bottom-left-radius: 1rem;
+  }
+
+  #tabs button.active {
+    border: 1px solid var(--highlight-color);;
+  }
+}
+
+@media (max-width: 600px) {
+
+  h1, h2 {
+    text-align: center;
+  }
+  
+  input[type="file"] {
+    width: 100%;
+  }
+
+  .content-wrapper, #enhancementTools, #audioAnalysisSection, #audioCuttingSection, #aiCuttingSection {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .result-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .result-field {
+    text-align: center;
+  }
+
+  #tabs {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  #tabs button {
+    margin-bottom: 15px;
+  }
+
+  #tabs button:last-of-type {
+    margin-bottom: 0px;
+  }
+
 }
