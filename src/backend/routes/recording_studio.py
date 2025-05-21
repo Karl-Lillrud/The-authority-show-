@@ -165,25 +165,3 @@ def greenroom():
     guest_id = request.args.get("guestId")
     token = request.args.get("token")
     return render_template('recordingstudio/greenroom.html', guestId=guest_id, token=token)
-
-# Socket.IO event: participant ready
-@socketio.on('participant_ready')
-def handle_participant_ready(data):
-    room = data.get('room')
-    user = data.get('user')
-    emit('participant_ready', {'room': room, 'user': user}, room=room)
-
-# Socket.IO event: recording started
-@socketio.on('recording_started')
-def handle_recording_started(data):
-    room = data.get('room')
-    user = data.get('user')
-    emit('recording_started', {'room': room, 'user': user}, room=room)
-
-# Socket.IO event: recording stopped
-@socketio.on('recording_stopped')
-def handle_recording_stopped(data):
-    room = data.get('room')
-    user = data.get('user')
-    emit('recording_stopped', {'room': room, 'user': user}, room=room)
-
