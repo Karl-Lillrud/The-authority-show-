@@ -44,6 +44,8 @@ from backend.routes.edit_routes import edit_bp
 from backend.routes.enterprise import enterprise_bp  # Import the enterprise blueprint
 from backend.routes.lia import lia_bp  # Corrected: Import lia_bp from backend.routes.lia
 from backend.routes.index import index_bp # This import is correct
+from backend.routes.recording_studio import recording_studio_bp
+from backend import socketio
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -113,6 +115,7 @@ app.register_blueprint(stripe_config_bp)  # Ensure this registration exists
 app.register_blueprint(edit_bp)
 app.register_blueprint(enterprise_bp, url_prefix="/enterprise")  # Register the enterprise blueprint
 app.register_blueprint(lia_bp, url_prefix="/lia")  # Ensure this line uses the correct lia_bp
+app.register_blueprint(recording_studio_bp, url_prefix="/recording-studio")  # Register the recording_studio blueprint
 
 # Register the new index blueprint
 app.register_blueprint(index_bp) # This registration is correct
@@ -173,6 +176,5 @@ init_credit_scheduler(app)  # Add this line after start_scheduler
 
 # Styled startup message
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0", port=8000, debug=True
-    )  # Ensure the port matches your request URL
+    socketio.init_app(app)
+    socketio.run(app, host="0.0.0.0", port=8000, debug=True)
