@@ -17,58 +17,50 @@
                 <span class="status-text">Ready to Record</span>
             </div>
         </div>
-        <div class="studio-controls">
-            <button id="recordButton" class="control-button">
-                <i class="fas fa-microphone"></i>
-                Record
-            </button>
-            <button id="stopButton" class="control-button" disabled>
-                <i class="fas fa-stop"></i>
-                Stop
-            </button>
-            <button id="playButton" class="control-button" disabled>
-                <i class="fas fa-play"></i>
-                Play
-            </button>
-        </div>
     </div>
 
-    <div class="studio-layout">
-        <!-- Main Recording Area -->
-        <div class="recording-area">
-            <div class="waveform-container">
-                <canvas id="waveform"></canvas>
+    <div class="studio-main">
+        <div class="controls-panel">
+            <div class="audio-visualizer">
+                <canvas id="audio-visualizer"></canvas>
             </div>
-            <div class="recording-info">
-                <div class="timer">00:00</div>
-                <div class="recording-status">Ready to record</div>
-            </div>
-        </div>
-
-        <!-- Green Room Section -->
-        <div class="green-room">
-            <div class="green-room-header">
-                <h2>Green Room</h2>
-                <button class="invite-button" id="inviteButton">
-                    <i class="fas fa-user-plus"></i>
-                    Invite Guest
+            
+            <div class="recording-controls">
+                <button id="recordButton" class="control-button record">
+                    <i class="fas fa-microphone"></i>
+                    <span>Start Recording</span>
+                </button>
+                <button id="pauseButton" class="control-button pause" disabled>
+                    <i class="fas fa-pause"></i>
+                    <span>Pause</span>
+                </button>
+                <button id="stopButton" class="control-button stop" disabled>
+                    <i class="fas fa-stop"></i>
+                    <span>Stop</span>
                 </button>
             </div>
 
-            <div class="guests-list">
-                <!-- Guest cards will be dynamically added here -->
+            <div class="audio-settings">
+                <div class="setting-group">
+                    <label for="inputDevice">Input Device</label>
+                    <select id="inputDevice" class="device-select"></select>
+                </div>
+                <div class="setting-group">
+                    <label for="outputDevice">Output Device</label>
+                    <select id="outputDevice" class="device-select"></select>
+                </div>
             </div>
+        </div>
 
-            <div class="green-room-chat">
-                <div class="chat-messages">
-                    <!-- Chat messages will be dynamically added here -->
+        <div class="recording-info">
+            <div class="timer">
+                <span id="recordingTime">00:00:00</span>
+            </div>
+            <div class="recording-levels">
+                <div class="level-meter">
+                    <div class="level-bar"></div>
                 </div>
-                <div class="chat-input">
-                    <input type="text" placeholder="Type a message..." id="chatInput">
-                    <button id="sendMessage">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
+                <span class="level-value">-∞ dB</span>
             </div>
         </div>
     </div>
@@ -84,30 +76,6 @@
                 Discard
             </button>
         </div>
-    </div>
-</div>
-
-<!-- Invite Guest Modal -->
-<div class="modal" id="inviteModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Invite Guest</h3>
-            <button class="close-modal">&times;</button>
-        </div>
-        <form id="inviteForm">
-            <div class="form-group">
-                <label for="guestName">Guest Name</label>
-                <input type="text" id="guestName" required>
-            </div>
-            <div class="form-group">
-                <label for="guestEmail">Email Address</label>
-                <input type="email" id="guestEmail" required>
-            </div>
-            <div class="form-actions">
-                <button type="button" class="close-modal">Cancel</button>
-                <button type="submit" class="invite-button">Send Invitation</button>
-            </div>
-        </form>
     </div>
 </div>
 {% endblock %}
