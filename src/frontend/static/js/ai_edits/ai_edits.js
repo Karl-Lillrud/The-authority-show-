@@ -220,6 +220,7 @@ function showTab(tabName) {
                 </div>
     
                 <div class="result-group">
+                    <label><strong>Guest Name:</strong></label>
                     <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field">
                     <div class="button-with-help">
                         <button class="btn ai-edit-button" onclick="runOsintSearch()">
@@ -261,7 +262,7 @@ function showTab(tabName) {
                 <p><strong>Original Audio</strong></p>
             </div>
 
-            <div style="margin-top: 23px; padding: 1.5rem; padding-bottom: 1rem; border: 1px solid #ddd; border-radius: 12px;">
+            <div class="ap-container" style="margin-top: 23px; padding: 1.5rem; padding-bottom: 1rem; border: 1px solid #ddd; border-radius: 12px; width: 100%;">
                 <h3>Choose Audio Processing Method</h3>
                 <p style="margin-bottom: 20px;">Select one of the following enhancements:</p>
 
@@ -333,11 +334,11 @@ function showTab(tabName) {
                 <div id="soundEffectTimeline"></div>
             </div>
 
-            <div class="button-with-help" style="margin-top: 1rem;">
+            <div class="button-with-help">
                 <a id="downloadEnhanced"
                 class="btn ai-edit-button"
                 download="processed_audio.wav"
-                style="display: none;">
+                style="display: none; margin-top: 1rem;">
                 Download Processed Audio
                 </a>
                 
@@ -364,11 +365,11 @@ function showTab(tabName) {
             <button id="cut-play-pause" class="btn ai-edit-button" style="display:none; margin-bottom:1rem;">
             Play
             </button>
-            <label>
+            <label style="display: block;">
             Start (s):
             <input id="cut-start" type="number" step="0.01" class="input-field" style="width:6em; padding: 5px; margin-left: 5px;">
             </label>
-            <label style="margin-top: 10px;">
+            <label style="margin-top: 10px; margin-bottom: 5px;">
             End (s):
             <input id="cut-end" type="number" step="0.01" class="input-field" style="width:6em; padding: 5px; margin-left: 5px;">
             </label>
@@ -383,11 +384,11 @@ function showTab(tabName) {
                 <div id="cutResult"></div>
             </div>
 
-            <div class="button-with-help" style="margin-top: 1rem;">
+            <div class="button-with-help">
                 <a id="downloadCut"
                 class="btn ai-edit-button"
                 download="cut_audio.wav"
-                style="display: none;">
+                style="display: none; margin-top: 1rem;">
                 Download Cut
                 </a>
             </div>
@@ -460,7 +461,7 @@ function showTab(tabName) {
                 <p><strong>Original Video</strong></p>
                 <video id="originalVideoPlayer" controls style="width: 100%"></video>
             </div>
-            <div class="button-group" style="margin-bottom: 1rem;">
+            <div class="button-group">
                 <div class="button-with-help">
                     <button class="btn ai-edit-button" id="enhanceVideoBtn" onclick="enhanceVideo()">
                         ${labelWithCredits("Enhance Video", "video_enhancement")}
@@ -472,7 +473,7 @@ function showTab(tabName) {
                 </button>
             </div>
             <div id="videoResult"></div>
-            <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none;">
+            <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none; margin-top: 1rem;">
                 Download Enhanced Video
             </a>
           </div>
