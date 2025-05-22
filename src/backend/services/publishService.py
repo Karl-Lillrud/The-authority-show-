@@ -38,7 +38,26 @@ class PublishService:
             podcast = podcast_data_tuple[0].get('podcast')
             log_messages.append(f"Fetched podcast: {podcast.get('podName', podcast_id)}")
 
-            # 2. Generate and upload RSS feed to Azure Blob Storage
+            # 2. Status Update: Mark as Published BEFORE generating RSS
+            update_payload = {
+                "status": "Published",
+                "lastPublishedAt": datetime.datetime.utcnow()
+            }
+            update_result, update_status = self.episode_repo.update_episode(episode_id, user_id, update_payload)
+            if update_status == 200:
+                log_messages.append("Episode status updated to 'Published' before RSS generation.")
+            else:
+                log_messages.append("Warning: Failed to update episode status before RSS generation.")
+
+            # --- RELOAD EPISODE DATA TO GET LATEST STATUS ---
+            episode_data_tuple = self.episode_repo.get_episode(episode_id, user_id)
+            if not episode_data_tuple or episode_data_tuple[1] != 200:
+                log_messages.append("Warning: Could not reload episode after status update.")
+            else:
+                episode = episode_data_tuple[0]
+
+            # 3. Generate and upload RSS feed to Azure Blob Storage
+            # --- ENSURE THE LATEST EPISODE IS INCLUDED ---
             rss_xml = self._generate_rss_feed_xml(podcast_id, podcast, user_id)
             rss_blob_url = self._upload_rss_to_blob(podcast_id, rss_xml, user_id)
             log_messages.append(f"RSS feed uploaded to {rss_blob_url}")
@@ -48,7 +67,6 @@ class PublishService:
                 platform_lower = platform.lower()
                 log_messages.append(f"Processing platform: {platform}")
                 if platform_lower == "spotify":
-                    # No direct API for upload; Spotify polls RSS feed
                     log_messages.append("Spotify: RSS feed updated, Spotify will poll automatically.")
                 elif platform_lower in ["apple", "google", "amazon", "stitcher", "pocketcasts"]:
                     log_messages.append(f"{platform.capitalize()}: RSS feed updated, platform will poll.")
@@ -57,23 +75,18 @@ class PublishService:
                 published_to.append(platform)
                 time.sleep(0.2)
 
-            # 4. Status Updates
-            update_payload = {
-                "status": "Published",
+            # Final update: add platforms
+            final_update_payload = {
                 "publishedToPlatforms": published_to,
                 "lastPublishedAt": datetime.datetime.utcnow()
             }
-            update_result, update_status = self.episode_repo.update_episode(episode_id, user_id, update_payload)
-            if update_status == 200:
-                log_messages.append("Episode status updated to 'Published'.")
-            else:
-                log_messages.append("Warning: Failed to update episode status after publishing.")
+            self.episode_repo.update_episode(episode_id, user_id, final_update_payload)
 
             return {
                 "success": True,
                 "message": f"Episode '{episode.get('title', episode_id)}' processed for publishing.",
                 "details": log_messages,
-                "rssFeedUrl": rss_blob_url  # Add this line if it's not already there
+                "rssFeedUrl": rss_blob_url
             }
         except Exception as e:
             log_messages.append(f"Exception: {str(e)}")
