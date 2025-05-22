@@ -11,7 +11,7 @@ def create_app():
     CORS(app, supports_credentials=True)
     
     # Configure session
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+    app.config['SECRET_KEY'] = os.environ['SECRET_KEY']  # This will raise an error if SECRET_KEY is not set
     app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
