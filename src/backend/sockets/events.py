@@ -39,24 +39,6 @@ def handle_status_update(data):
     sender = data.get('sender')
     emit('status_update', {'room': room, 'status': status, 'sender': sender}, room=room)
 
-@socketio.on('participant_ready')
-def handle_participant_ready(data):
-    room = data.get('room')
-    user = data.get('user')
-    emit('participant_ready', {'room': room, 'user': user}, room=room)
-
-@socketio.on('recording_started')
-def handle_recording_started(data):
-    room = data.get('room')
-    user = data.get('user')
-    emit('recording_started', {'room': room, 'user': user}, room=room)
-
-@socketio.on('recording_stopped')
-def handle_recording_stopped(data):
-    room = data.get('room')
-    user = data.get('user')
-    emit('recording_stopped', {'room': room, 'user': user}, room=room)
-
 @socketio.on('crash_recovery')
 def handle_crash_recovery(data):
     room = data.get('room')
@@ -68,5 +50,5 @@ def handle_crash_recovery(data):
 def handle_recording_status(data):
     room = data.get('room')
     user = data.get('user')
-    status = data.get('status')  # e.g. 'started', 'paused', 'resumed', 'stopped', etc.
+    status = data.get('status')  
     emit('recording_status', {'room': room, 'user': user, 'status': status}, room=room)
