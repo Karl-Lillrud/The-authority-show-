@@ -397,6 +397,7 @@ button span.credit-cost {
     display: flex;
     flex-direction: column;
     align-items: center;
+    align-content: center;
   }
 
   .result-field {
@@ -430,6 +431,11 @@ button span.credit-cost {
 
   .help-icon {
     margin-right: 0;
+  }
+
+  .btn.ai-edit-button {
+    margin-left: 0px;
+    margin-right: 0px;
   }
 
 }
