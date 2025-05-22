@@ -5,16 +5,140 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Editing Options</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/ai_edits/ai_edits_styles.css') }}">
+  <style>
+    /* Additional styles for better visibility of results */
+    .output-section {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #eaeaea;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+    
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .status-message {
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+      margin-bottom: 15px;
+    }
+    
+    /* Improved spinner */
+    .spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 115, 0, 0.2);
+      border-top-color: #FF7300;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>Select the AI modals to run</h1>
+    <h1>Select the AI modules to run</h1>
 
     <div class="option-list" id="option-list"></div>
 
+    <input type="file" id="audio-file" accept="audio/*,video/*" />
+    <div id="file-info" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
     <button class="run-button" id="run-button">Run Selected Edits</button>
 
+    <div style="margin-top: 10px; font-size: 14px; color: #666;">
+      Upload a file and select AI functions to run. Results will appear below.
+    </div>
+
     <div class="status-message" id="status-message"></div>
+
+    <hr>
+
+    <!-- Output Areas (initially hidden) -->
+
+    <div class="output-section" id="transcribe-result" style="display: none;">
+      <h2>Transcript</h2>
+      <pre id="transcriptionResult">Transcript will appear here...</pre>
+    </div>
+
+    <div class="output-section" id="cleanTranscript-result" style="display: none;">
+      <h2>Cleaned Transcript</h2>
+      <pre id="cleanTranscriptResult">Cleaned transcript will appear here...</pre>
+    </div>
+
+    <div class="output-section" id="generateShowNotes-result" style="display: none;">
+      <h2>Show Notes</h2>
+      <pre id="show-notes-output">Show notes will appear here...</pre>
+    </div>
+
+    <div class="output-section" id="aiSuggestions-result" style="display: none;">
+      <h2>AI Suggestions</h2>
+      <pre id="ai-suggestions-output">AI suggestions will appear here...</pre>
+    </div>
+
+    <div class="output-section" id="generateQuotes-result" style="display: none;">
+      <h2>Quotes</h2>
+      <pre id="quotes-output">Generated quotes will appear here...</pre>
+    </div>
+
+    <div class="output-section" id="osintLookup-result" style="display: none;">
+      <h2>OSINT Lookup</h2>
+      <input type="text" id="osint-query" placeholder="Enter a person or company to search..." />
+      <pre id="osint-output">OSINT results will appear here...</pre>
+    </div>
+    
+    <!-- Enhancement Tools Section -->
+    <div id="enhancementTools" style="display: none; margin-top: 30px;">
+      <h2>Enhancement Tools</h2>
+      
+      <div class="option-item" onclick="generateCleanTranscript()">
+        <div class="option-icon">C</div>
+        <div class="option-content">
+          <div class="option-title">Clean Transcript</div>
+          <div class="option-description">Remove filler words and improve readability</div>
+        </div>
+      </div>
+      
+      <div class="option-item" onclick="generateShowNotes()">
+        <div class="option-icon">N</div>
+        <div class="option-content">
+          <div class="option-title">Generate Show Notes</div>
+          <div class="option-description">Create detailed notes from your content</div>
+        </div>
+      </div>
+      
+      <div class="option-item" onclick="generateAISuggestions()">
+        <div class="option-icon">S</div>
+        <div class="option-content">
+          <div class="option-title">AI Suggestions</div>
+          <div class="option-description">Get content improvement recommendations</div>
+        </div>
+      </div>
+      
+      <div class="option-item" onclick="generateQuotes()">
+        <div class="option-icon">Q</div>
+        <div class="option-content">
+          <div class="option-title">Generate Quotes</div>
+          <div class="option-description">Extract quotable moments from your content</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="{{ url_for('static', filename='js/ai_edits/ai_edits_script.js') }}"></script>
