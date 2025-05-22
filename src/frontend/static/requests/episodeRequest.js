@@ -141,6 +141,7 @@ export async function fetchEpisode(episodeId) {
   try {
     const response = await fetch(`/get_episodes/${episodeId}`);
     const data = await response.json();
+    console.log("fetchEpisode response:", data); // Debug log
     if (response.ok) {
       return data;
     } else {
@@ -153,64 +154,37 @@ export async function fetchEpisode(episodeId) {
   }
 }
 
-export async function updateEpisode(episodeId, data) {
-  const isFormData = data instanceof FormData; // Check if data is FormData
+export async function updateEpisode(episodeId, formData) {
+  if (!(formData instanceof FormData)) {
+    throw new Error("Expected FormData for episode update");
+  }
 
   try {
-    const response = await fetch(`/update_episodes/${episodeId}`, {
+    const response = await fetch(`/episodes/${episodeId}`, {
       method: "PUT",
       headers: {
-        // Remove any manual 'Content-Type' setting here if 'isFormData' is true
-        // Fetch will automatically set it correctly for FormData
-        // Example: DO NOT include the line below if isFormData is true
-        // 'Content-Type': isFormData ? undefined : 'application/json', // Let browser set for FormData
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        // Add other necessary headers like Accept if needed
-        Accept: "application/json" // It's good practice to specify what you accept back
+        Accept: "application/json"
+        // Do not set Content-Type; let the browser handle it for FormData
       },
-      // Send FormData directly, or stringify if it's a plain object
-      body: isFormData ? data : JSON.stringify(data)
+      body: formData
     });
 
-    // Log request details for debugging
-    console.log(`Updating episode ${episodeId}. Is FormData: ${isFormData}`);
+    const result = await response.json();
 
     if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json(); // Try to parse error response
-        console.error("Update Episode Error Response:", errorData);
-      } catch (e) {
-        // If response is not JSON (e.g., plain text or HTML error page)
-        errorData = { error: await response.text() };
-        console.error(
-          "Update Episode Non-JSON Error Response:",
-          errorData.error
-        );
-      }
-      // Throw a more informative error
-      throw new Error(
-        errorData?.error ||
-          errorData?.message ||
-          `HTTP error! status: ${response.status}`
-      );
+      throw new Error(result.error || `Failed to update episode (status: ${response.status})`);
     }
 
-    // If response is OK, try to parse JSON, handle potential empty response for 200/204
-    if (response.status === 204) {
-      // No Content
-      return { message: "Episode updated successfully (No Content)" };
-    }
+    console.log(`Updated episode ${episodeId} successfully`);
 
-    const result = await response.json();
-    console.log("Update Episode Success Response:", result);
-    return result; // Contains { message: "..." } or potentially updated episode data
+    return result;
   } catch (error) {
-    console.error("Failed to update episode:", error.message || error);
-    // Return an object with an error key for consistent handling in the calling function
-    return { error: `Failed to update episode: ${error.message || error}` };
+    console.error(`Error updating episode ${episodeId}:`, error);
+    throw error;
   }
 }
+
 
 export async function deleteEpisode(episodeId) {
   try {
