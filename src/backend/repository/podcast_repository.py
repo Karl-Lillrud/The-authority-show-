@@ -1,4 +1,4 @@
-import uuid
+import uuid 
 from datetime import datetime, timezone
 from backend.database.mongo_connection import collection
 from backend.models.podcasts import PodcastSchema
@@ -160,20 +160,6 @@ class PodcastRepository:
             )
             for podcast in podcasts:
                 podcast["_id"] = str(podcast["_id"])
-                # Set image URL from RSS feed if available
-                if podcast.get("rssFeed"):
-                    try:
-                        rss_data, status_code = self.rss_service.fetch_rss_feed(podcast["rssFeed"])
-                        if status_code == 200 and rss_data and rss_data.get("imageUrl"):
-                            # Update the podcast in the database with the RSS image URL
-                            self.collection.update_one(
-                                {"_id": podcast["_id"]},
-                                {"$set": {"rssImage": rss_data["imageUrl"]}}
-                            )
-                            podcast["rssImage"] = rss_data["imageUrl"]
-                            logger.info(f"Updated podcast {podcast['_id']} with RSS image URL: {rss_data['imageUrl']}")
-                    except Exception as e:
-                        logger.error(f"Failed to fetch RSS data for podcast {podcast['_id']}: {e}")
                 # Ensure logoUrl is set (for frontend image display)
                 if not podcast.get("logoUrl") and podcast.get("imageUrl"):
                     podcast["logoUrl"] = podcast["imageUrl"]
@@ -204,18 +190,6 @@ class PodcastRepository:
                 return {"error": "Podcast not found or unauthorized"}, 404
 
             podcast["_id"] = str(podcast["_id"])
-            
-            # Set image URL from RSS feed if available
-            if podcast.get("rssFeed"):
-                try:
-                    rss_data, status_code = self.rss_service.fetch_rss_feed(podcast["rssFeed"])
-                    if status_code == 200 and rss_data and rss_data.get("imageUrl"):
-                        # Use the RSS image URL directly
-                        podcast["imageUrl"] = rss_data["imageUrl"]
-                        logger.info(f"Using RSS image URL for podcast {podcast_id}: {rss_data['imageUrl']}")
-                except Exception as e:
-                    logger.error(f"Failed to fetch RSS data for podcast {podcast_id}: {e}")
-            
             # Ensure logoUrl is set (for frontend image display)
             if not podcast.get("logoUrl") and podcast.get("imageUrl"):
                 podcast["logoUrl"] = podcast["imageUrl"]
@@ -246,7 +220,10 @@ class PodcastRepository:
             if not podcast:
                 raise ValueError("Podcast not found or unauthorized")
 
-            # Perform delete operation
+            # Delete all episodes linked to this podcast before deleting the podcast
+            self.episode_repo.collection.delete_many({"podcast_id": podcast_id})
+
+            # Perform delete operation on podcast
             result = self.collection.delete_one({"_id": podcast_id})
             if result.deleted_count == 1:
                 # --- Add activity log for podcast deletion ---
@@ -393,4 +370,3 @@ class PodcastRepository:
         except Exception as e:
             logger.error("Error in addPodcastWithRss: %s", e, exc_info=True)
             return {"error": "Failed to add podcast with RSS", "details": str(e)}, 500
-
