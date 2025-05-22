@@ -159,6 +159,14 @@
 .activity-section {
   grid-column: 2;
   grid-row: 1 / span 2;
+  background-color: white;
+  border-radius: var(--radius-large);
+  padding: var(--spacing-lg);
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .episodes-section {
@@ -385,18 +393,12 @@
 }
 
 /* Activity Timeline */
-.activity-section {
-  background-color: white;
-  border-radius: var(--radius-large);
-  padding: var(--spacing-lg);
-  box-shadow: var(--card-shadow);
-  border: 1px solid rgba(0, 0, 0, 0.03);
-}
-
 .activity-timeline {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  flex: 1;
+  overflow: hidden;
 }
 
 .timeline-item {
@@ -494,9 +496,11 @@
 }
 
 .activity-timeline-scroll {
-  max-height: 600px; /* Adjust height for ~5 items depending on your item height */
+  flex: 1;
   overflow-y: auto;
   padding-right: 4px; /* For scrollbar space */
+  height: 100%;
+  min-height: 0; /* Important for flex child scrolling */
 }
 
 /* Optional: prettier scrollbar */

@@ -342,15 +342,15 @@ export function renderEpisodeDetail(episode) {
     });
   }
 
-  // Add event listener for the Studio button
-  const studioBtn = document.getElementById("studio-btn");
-  if (studioBtn && !studioBtn.disabled) {
-    studioBtn.addEventListener("click", () => {
-      const podcastId = studioBtn.getAttribute("data-podcast-id");
-      const episodeId = studioBtn.getAttribute("data-episode-id");
-      window.location.href = `recording_studio.html?podcastId=${podcastId}&episodeId=${episodeId}`;
-    });
-  }
+// Add event listener for the Studio button
+const studioBtn = document.getElementById("studio-btn");
+if (studioBtn && !studioBtn.disabled) {
+  studioBtn.addEventListener("click", () => {
+    const podcastId = studioBtn.getAttribute("data-podcast-id");
+    const episodeId = studioBtn.getAttribute("data-episode-id");
+    window.location.href = `/studio?podcastId=${podcastId}&episodeId=${episodeId}`;
+  });
+}
 
   // Fetch and display guests for the episode
   fetchGuestsByEpisode(episode._id)

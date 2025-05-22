@@ -21,6 +21,7 @@ from collections import Counter
 import numpy as np
 import requests
 import soundfile as sf
+from flask import jsonify, g
 from textblob import TextBlob
 from textstat import textstat
 from transformers import pipeline
@@ -789,3 +790,11 @@ def get_matching_font_path(font_name, font_folder):
 
     logger.warning(f"⚠️ No matching font found for: {font_name}")
     return None
+def insufficient_credits_response(feature: str, exc: Exception):
+    logger.warning(
+        f"User {g.user_id} has insufficient credits for {feature}: {exc}"
+    )
+    return jsonify({
+        "error": str(exc),
+        "redirect": "/store"
+    }), 403
