@@ -65,6 +65,41 @@ def register_socketio_events(socketio: SocketIO):
         user = data.get('user')
         emit('recording_stopped', {'room': room, 'user': user}, room=room)
 
+    @socketio.on('join_greenroom')
+    def handle_join_greenroom(data):
+        room = data.get('room')
+        user = data.get('user')
+        join_room(room)
+        users = recording_studio_service.join_greenroom(room, user)
+        emit('greenroom_joined', {'room': room, 'user': user, 'users': users}, room=room)
+
+    @socketio.on('leave_greenroom')
+    def handle_leave_greenroom(data):
+        room = data.get('room')
+        user = data.get('user')
+        leave_room(room)
+        users = recording_studio_service.leave_greenroom(room, user)
+        emit('greenroom_left', {'room': room, 'user': user, 'users': users}, room=room)
+
+    @socketio.on('update_device_settings')
+    def handle_update_device_settings(data):
+        room = data.get('room')
+        user = data.get('user')
+        settings = data.get('settings')
+        emit('device_settings_updated', {'room': room, 'user': user, 'settings': settings}, room=room)
+
+    @socketio.on('host_ready')
+    def handle_host_ready(data):
+        room = data.get('room')
+        user = data.get('user')
+        emit('host_ready', {'room': room, 'user': user}, room=room)
+
+    @socketio.on('move_to_studio')
+    def handle_move_to_studio(data):
+        room = data.get('room')
+        user = data.get('user')
+        emit('move_to_studio', {'room': room, 'user': user}, room=room)
+
 # ---------------------------------------------
 # ROUTES
 # ---------------------------------------------
@@ -155,3 +190,9 @@ def recording_studio():
     if not g.user_id:
         return redirect(url_for('auth.login'))
     return render_template('recordingstudio/recording_studio.html')
+
+@recording_studio_bp.route('/greenroom')
+def greenroom():
+    if not g.user_id:
+        return redirect(url_for('auth_bp.signin'))
+    return render_template('greenroom/greenroom.html')

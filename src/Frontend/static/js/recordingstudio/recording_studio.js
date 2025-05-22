@@ -294,11 +294,11 @@ class RecordingStudio {
         const videoBlob = new Blob(this.videoChunks, { type: 'video/webm' });
         const formData = new FormData();
         formData.append('video', videoBlob);
-        formData.append('episode_id', document.getElementById('episode-id-display').textContent);
+        const episodeId = document.getElementById('episode-id-display').textContent;
 
         try {
-            const response = await fetch('/api/recordings/save', {
-                method: 'POST',
+            const response = await fetch(`/api/episodes/${episodeId}`, {
+                method: 'PUT',
                 body: formData
             });
 
