@@ -5,11 +5,11 @@ from io import BytesIO
 from backend.database.mongo_connection import get_fs
 from backend.utils.ai_utils import (
     remove_filler_words, calculate_clarity_score, analyze_sentiment, analyze_emotions
-    , enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav,get_sentence_timestamps_fuzzy, 
-    convert_to_pcm_wav, transcribe_with_whisper, detect_filler_words, classify_sentence_relevance,
-    analyze_certainty_levels, get_sentence_timestamps, detect_long_pauses,
-    generate_ai_show_notes, suggest_sound_effects, translate_text, mix_background,
-    pick_dominant_emotion, fetch_sfx_for_emotion
+    , enhance_audio_with_ffmpeg, detect_background_noise, get_sentence_timestamps_fuzzy, 
+    convert_to_pcm_wav, transcribe_with_whisper, detect_filler_words,
+    analyze_certainty_levels, detect_long_pauses,
+    generate_ai_show_notes, translate_text, mix_background,
+    pick_dominant_emotion, fetch_sfx_for_emotion, 
 )
 from backend.repository.ai_models import save_file, get_file_data, get_file_by_id
 from elevenlabs.client import ElevenLabs
@@ -17,29 +17,9 @@ from backend.utils.blob_storage import upload_file_to_blob
 from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.edit_repository import create_edit_entry
 from flask import g
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
-
-TEXTSTAT_AVAILABLE = False
-try:
-    import backend.utils.ai_utils as ai_utils_module
-    TEXTSTAT_AVAILABLE = True
-except ModuleNotFoundError as e:
-    if 'textstat.backend' in str(e) or 'textstat' in str(e):
-        logger.warning(
-            "Failed to load 'backend.utils.ai_utils' or its dependency 'textstat' due to: %s. "
-            "Functionality dependent on textstat will be unavailable.", e
-        )
-        TEXTSTAT_AVAILABLE = False
-    else:
-        logger.error(f"An unexpected ModuleNotFoundError occurred while importing ai_utils: {e}", exc_info=True)
-        raise
-except ImportError as e:
-    logger.warning(
-        "An ImportError occurred while trying to load 'backend.utils.ai_utils', possibly related to textstat: %s. "
-        "Textstat-dependent functionality may be unavailable.", e
-    )
-    TEXTSTAT_AVAILABLE = False
 
 fs = get_fs()
 episode_repo = EpisodeRepository()
@@ -47,15 +27,7 @@ episode_repo = EpisodeRepository()
 class AudioService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        if not TEXTSTAT_AVAILABLE:
-            self.logger.warning(
-                "AudioService initialized, but textstat-dependent features are UNAVAILABLE "
-                "due to import errors concerning 'textstat' or 'ai_utils'."
-            )
-        else:
-            self.logger.info(
-                "AudioService initialized. Textstat-dependent features are expected to be available via ai_utils."
-            )
+        self.logger.info("AudioService initialized with full ai_utils support.")
 
     def enhance_audio(self, audio_bytes: bytes, filename: str, episode_id: str) -> str:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
@@ -88,8 +60,6 @@ class AudioService:
                 "edit_type": "enhanced"
             }
         )
-
-
         os.remove(temp_in_path)
         os.remove(temp_out_path)
 
@@ -104,18 +74,18 @@ class AudioService:
         try:
             # 1) Basic transcript analysis
             transcript     = transcribe_with_whisper(temp_path)
-            cleaned        = ai_utils_module.remove_filler_words(transcript) if TEXTSTAT_AVAILABLE else transcript
-            clarity_score  = ai_utils_module.calculate_clarity_score(cleaned) if TEXTSTAT_AVAILABLE else None
+            cleaned        = remove_filler_words(transcript)
+            clarity_score  = calculate_clarity_score(cleaned)
             noise_result   = detect_background_noise(temp_path)
-            sentiment      = ai_utils_module.analyze_sentiment(transcript) if TEXTSTAT_AVAILABLE else None
+            sentiment      = analyze_sentiment(transcript)
 
             # 2) Emotion detection
             #    a) Translate to English (for more accurate emotion models)
             translated     = translate_text(transcript, "English")
             #    b) Run your emotion classifier
-            emotion_data   = ai_utils_module.analyze_emotions(translated) if TEXTSTAT_AVAILABLE else None
+            emotion_data   = analyze_emotions(translated)
             #    c) Pick the most frequent emotion label
-            dominant_emotion = pick_dominant_emotion(emotion_data) if TEXTSTAT_AVAILABLE else None
+            dominant_emotion = pick_dominant_emotion(emotion_data)
 
             # 3) Return only the core analysis results + dominant emotion
             return {
@@ -127,9 +97,7 @@ class AudioService:
                 "emotions":           emotion_data,
                 "dominant_emotion":   dominant_emotion
             }
-
         finally:
-            # Always clean up the temp file
             os.remove(temp_path)
     
     def generate_background_and_mix(self, audio_bytes: bytes, emotion: str) -> dict:
@@ -218,7 +186,6 @@ class AudioService:
     def ai_cut_audio(self, file_bytes: bytes, filename: str, episode_id: Optional[str] = None) -> dict:
         logger.info(f"Starting AI cut for file: {filename}")
         
-        # Convert audio to PCM WAV format using FFmpeg
         try:
             converted_bytes = convert_to_pcm_wav(file_bytes)
         except Exception as e:
@@ -253,10 +220,10 @@ class AudioService:
                 if hasattr(w, "start") and hasattr(w, "end")
             ]
 
-            cleaned_transcript = ai_utils_module.remove_filler_words(transcript) if TEXTSTAT_AVAILABLE else transcript
+            cleaned_transcript = remove_filler_words(transcript) 
             noise_result = detect_background_noise(temp_path)
-            filler_sentences = ai_utils_module.detect_filler_words(transcript) if TEXTSTAT_AVAILABLE else []
-            sentence_certainty = ai_utils_module.analyze_certainty_levels(transcript) if TEXTSTAT_AVAILABLE else []
+            filler_sentences = detect_filler_words(transcript)  
+            sentence_certainty = analyze_certainty_levels(transcript) 
 
             logger.info(f"Certainty results computed")
 
@@ -300,7 +267,7 @@ class AudioService:
 
                     os.remove(tmp_cut.name)
 
-            sentiment = ai_utils_module.analyze_sentiment(transcript) if TEXTSTAT_AVAILABLE else None
+            sentiment = analyze_sentiment(transcript)
             show_notes = generate_ai_show_notes(transcript)
 
             return {
@@ -341,7 +308,7 @@ class AudioService:
             tmp.write(audio_bytes)
             temp_input_path = tmp.name
 
-        temp_output_path = None  # ✅ Ensure this is always defined
+        temp_output_path = None 
 
         try:
             elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
@@ -397,8 +364,6 @@ class AudioService:
             os.remove(temp_input_path)
             if temp_output_path and os.path.exists(temp_output_path):
                 os.remove(temp_output_path)
-
-
 
     def split_audio_on_silence(wav_path, min_len=500, silence_thresh_db=-35):
         audio = AudioSegment.from_wav(wav_path)
@@ -465,8 +430,6 @@ class AudioService:
                     "edit_type": "ai_cut_cleaned"
                 }
             )
-
-
             return blob_url
         finally:
             for path in [tmp_path, cleaned_path]:
@@ -576,8 +539,6 @@ class AudioService:
                     "edit_type": "manual_clip"
                 }
             )
-
-
             return blob_url
         finally:
             for path in [input_path, output_path]:
@@ -621,8 +582,6 @@ class AudioService:
                     "edit_type": "ai_cut_cleaned"
                 }
             )
-
-
             return blob_url
         finally:
             for path in [tmp_path, cleaned_path]:
@@ -764,9 +723,6 @@ class AudioService:
         Use GPT to generate a creative SFX plan based on transcript segments.
         Fallbacks to gpt-3.5-turbo if gpt-4 fails (rate limit, context length, etc).
         """
-        import json, os
-        from openai import OpenAI
-
         logger.info(f"Generating SFX plan from {len(transcript_segments)} transcript segments")
         segments_text = "\n".join([
             f"[{s['start']:.2f}s - {s['end']:.2f}s]: {s['text']}"
@@ -812,7 +768,7 @@ class AudioService:
         openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
         def call_gpt(model_name):
-            logger.info(f"🔁 Calling model: {model_name}")
+            logger.info(f"Calling model: {model_name}")
             response = openai_client.chat.completions.create(
                 model=model_name,
                 messages=[
@@ -826,7 +782,7 @@ class AudioService:
         for model in ["gpt-4", "gpt-3.5-turbo"]:
             try:
                 content = call_gpt(model)
-                logger.info(f"✅ Response from {model}: {content[:200]}...")
+                logger.info(f"Response from {model}: {content[:200]}...")
                 result = json.loads(content)
                 if isinstance(result, list):
                     return [
@@ -841,13 +797,13 @@ class AudioService:
                 elif isinstance(result, dict) and "sfx_plan" in result:
                     return result["sfx_plan"]
             except json.JSONDecodeError as e:
-                logger.warning(f"⚠️ GPT ({model}) response is not valid JSON: {e}")
+                logger.warning(f"GPT ({model}) response is not valid JSON: {e}")
                 logger.debug(f"Raw: {content}")
             except Exception as e:
-                logger.warning(f"⚠️ GPT call with {model} failed: {e}")
+                logger.warning(f"GPT call with {model} failed: {e}")
                 continue
 
-        logger.error("❌ All GPT model calls failed")
+        logger.error("All GPT model calls failed")
         return []
 
 
