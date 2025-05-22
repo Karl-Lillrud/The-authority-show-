@@ -101,9 +101,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Load episodes for the selected podcast
   async function loadEpisodesForPodcast(podcastId) {
     console.log(`[publish.js] loadEpisodesForPodcast called with podcastId: ${podcastId}`);
-    // Use the correct ID for the episode select element from publish.html
-    const episodeSelectElement = document.getElementById("episode-select"); 
-    
+    const episodeSelectElement = document.getElementById("episode-select");
+
     episodeSelectElement.innerHTML = '<option value="">Loading episodes...</option>';
     episodeSelectElement.disabled = true;
     episodeDetailsPreview.classList.add("hidden");
@@ -115,55 +114,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       console.log(`[publish.js] Fetching episodes for podcast ID ${podcastId} via fetchEpisodesByPodcast()...`);
-      const episodesData = await fetchEpisodesByPodcast(podcastId); // Uses /episodes/by_podcast/<podcast_id>
-      // Note: fetchEpisodesByPodcast in episodeRequest.js already returns data.episodes if successful
-      // So, episodesData should be the array of episodes directly.
-      // If it returns { episodes: [...] }, then const episodes = episodesData.episodes;
+      const episodesData = await fetchEpisodesByPodcast(podcastId);
       const episodes = Array.isArray(episodesData) ? episodesData : (episodesData && Array.isArray(episodesData.episodes) ? episodesData.episodes : []);
 
       console.log(`[publish.js] fetchEpisodesByPodcast() raw response for podcast ${podcastId}:`, JSON.stringify(episodes, null, 2));
-      
+
       episodeSelectElement.innerHTML = ''; // Clear previous options
       episodeSelectElement.disabled = false;
 
       if (episodes && episodes.length > 0) {
-        // Sort episodes by created_at or createdAt in descending order (newest first)
-        episodes.sort((a, b) => {
-          const dateA = new Date(a.created_at || a.createdAt || 0); // Fallback to epoch if undefined
-          const dateB = new Date(b.created_at || b.createdAt || 0); // Fallback to epoch if undefined
-          return dateB - dateA; 
-        });
+        // Filter out episodes with status "published"
+        const unpublishedEpisodes = episodes.filter(episode => episode.status?.toLowerCase() !== "published");
 
-        episodeSelectElement.innerHTML = '<option value="">-- Select an Episode --</option>';
-        episodes.forEach(episode => {
-          if (episode && episode._id && episode.title) {
-            console.log(`[publish.js] Adding episode option: ID=${episode._id}, Title=${episode.title}, Status=${episode.status}`);
-            const option = document.createElement("option");
-            option.value = episode._id;
-            
-            // Display status like [Published] or (Status)
-            let statusText = '';
-            if (episode.status) {
-              if (episode.status.toLowerCase() === "published") {
-                statusText = " [Published]";
-              } else {
-                statusText = ` (${episode.status})`;
-              }
-            }
-            option.textContent = `${episode.title}${statusText}`;
-            
-            // Apply class based on status
-            if (episode.status && episode.status.toLowerCase() === "published") {
-              option.className = "published";
+        if (unpublishedEpisodes.length > 0) {
+          episodeSelectElement.innerHTML = '<option value="">-- Select an Episode --</option>';
+          unpublishedEpisodes.forEach(episode => {
+            if (episode && episode._id && episode.title) {
+              console.log(`[publish.js] Adding episode option: ID=${episode._id}, Title=${episode.title}, Status=${episode.status}`);
+              const option = document.createElement("option");
+              option.value = episode._id;
+              option.textContent = `${episode.title} (${episode.status || "Unpublished"})`;
+              episodeSelectElement.appendChild(option);
             } else {
-              option.className = "non-published"; // Or a more generic class
+              console.warn("[publish.js] Skipping invalid episode object:", JSON.stringify(episode, null, 2));
             }
-
-            episodeSelectElement.appendChild(option);
-          } else {
-            console.warn("[publish.js] Skipping invalid episode object:", JSON.stringify(episode, null, 2));
-          }
-        });
+          });
+        } else {
+          episodeSelectElement.innerHTML = '<option value="">No unpublished episodes found for this podcast</option>';
+          episodeSelectElement.disabled = true;
+          console.log(`[publish.js] No unpublished episodes found for podcast ${podcastId}.`);
+        }
       } else {
         episodeSelectElement.innerHTML = '<option value="">No episodes found for this podcast</option>';
         episodeSelectElement.disabled = true;
