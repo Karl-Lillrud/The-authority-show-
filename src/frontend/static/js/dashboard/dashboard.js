@@ -9,6 +9,10 @@ import { svgdashboard } from "./svgdashboard.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
 import { getActivitiesRequest } from "/static/requests/activityRequests.js";
 
+import { fetchGuestsRequest } from "/static/requests/guestRequests.js";
+// filepath: c:\Users\matai\Desktop\The knowledge formula\The-authority-show-\src\frontend\static\js\dashboard\dashboard.js
+// ...befintliga imports...
+
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     // Kör alla asynkrona datahämtningar parallellt
