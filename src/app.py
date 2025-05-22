@@ -15,7 +15,10 @@ from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp
 from backend.routes.credits_routes import credits_bp
 from backend.routes.team import team_bp
-from backend.routes.guest import guest_bp
+from backend.routes.email_change import email_change_bp  # Add this import
+from backend.routes.guest import (
+    guest_bp,
+)  # Ensure the guest blueprint is correctly imported
 from backend.routes.user_to_team import usertoteam_bp
 from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
@@ -57,16 +60,36 @@ template_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "fron
 static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "static")
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
-socketio = SocketIO(app, cors_allowed_origins="*")  # Create instance
 
-CORS(app, resources={r"/*": {"origins": [
-    "https://devapp.podmanager.ai",
-    "https://app.podmanager.ai",
-    "http://127.0.0.1:8000",
-]}})
+# Initialize SocketIO
+socketio = SocketIO(app, cors_allowed_origins="*")
 
+CORS(
+    app,
+    resources={
+        r"/*": {
+            "origins": [
+                "https://devapp.podmanager.ai",  # Test Branch (testMain)
+                "https://app.podmanager.ai",  # Live branch (Main)
+                "http://127.0.0.1:8000",  # Localhost
+                "http://localhost:8000",   # Also allow localhost
+            ],
+            "supports_credentials": True,  # Add this line
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Add this line
+            "allow_headers": ["Content-Type", "Authorization"]  # Add this line
+        }
+    }
+)
+
+# These can cause GET https://app.podmanager.ai/ 503 (Service Unavailable) error in the browser if not set
 app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED_URL_SCHEME"] = "https"
+app.config["PREFERRED_URL_SCHEME"] = "https"
+
+# Configure session cookies
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Register blueprints
 app.register_blueprint(auth_bp)
@@ -75,8 +98,9 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
-app.register_blueprint(Mailing_list_bp)
-app.register_blueprint(guest_bp)
+app.register_blueprint(email_change_bp)  # Add this line
+app.register_blueprint(Mailing_list_bp)  # <--- Here is the registration
+app.register_blueprint(guest_bp)  # Ensure the guest blueprint is correctly registered
 app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)
 app.register_blueprint(credits_bp)
