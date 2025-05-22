@@ -1,209 +1,268 @@
 import os
 import datetime
-from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
-from pymongo import MongoClient
-from bson.objectid import ObjectId
-from xml.etree.ElementTree import Element, SubElement, tostring
-from io import BytesIO
-import threading
 import requests
 import time
 from flask import current_app
+from backend.repository.episode_repository import EpisodeRepository
+from backend.repository.podcast_repository import PodcastRepository
+from azure.storage.blob import BlobServiceClient
 
-AZURE_CONN_STR = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
-CONTAINER_NAME = os.getenv('AZURE_BLOB_CONTAINER', 'podcast-audio')
-
-blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
-container_client = blob_service_client.get_container_client(CONTAINER_NAME)
-
-MONGO_URI = os.getenv('MONGO_URI')
-mongo_client = MongoClient(MONGO_URI)
-db = mongo_client['podcast_db']
-episodes_col = db['episodes']
-podcasts_col = db['podcasts']
-downloads_col = db['downloads']
-
-# === SAS URL Generation ===
-def create_sas_upload_url(filename, content_type):
-    blob_name = f"uploads/{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{filename}"
-    sas_token = generate_blob_sas(
-        account_name=blob_service_client.account_name,
-        container_name=CONTAINER_NAME,
-        blob_name=blob_name,
-        account_key=blob_service_client.credential.account_key,
-        permission=BlobSasPermissions(write=True),
-        expiry=datetime.datetime.utcnow() + datetime.timedelta(minutes=15),
-        content_type=content_type,
-    )
-    upload_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME}/{blob_name}?{sas_token}"
-    blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME}/{blob_name}"
-    return upload_url, blob_url
-
-
-# === Save Episode Metadata ===
-def save_episode_to_db(data, publish_date):
-    episode_doc = {
-        "title": data['title'],
-        "description": data['description'],
-        "episodeNumber": data['episodeNumber'],
-        "seasonNumber": data['seasonNumber'],
-        "explicit": data['explicit'],
-        "audioUrl": data['audioUrl'],
-        "publishDate": publish_date,
-        "status": "uploaded",
-        "createdAt": datetime.datetime.utcnow(),
-        "updatedAt": datetime.datetime.utcnow(),
-    }
-    result = episodes_col.insert_one(episode_doc)
-    return result.inserted_id
-
-
-# === Trigger Encoding (simulate or call Azure Function) ===
-def trigger_encoding_job(episode_id):
-    # Replace with Azure Function HTTP call or Queue trigger in prod
-    def encoding_sim():
-        import time
-        time.sleep(10)  # simulate encoding time
-        episodes_col.update_one(
-            {"_id": ObjectId(episode_id)},
-            {"$set": {"status": "encoded", "updatedAt": datetime.datetime.utcnow()}}
-        )
-    threading.Thread(target=encoding_sim).start()
-
-
-# === RSS Feed Generation ===
-def generate_rss_feed(podcast_id):
-    # For simplicity: get all episodes for podcast_id ordered by publishDate
-    # Here podcast_id is a string, you may map podcasts separately in your model
-    episodes = list(episodes_col.find({"status": "encoded", "publishDate": {"$lte": datetime.datetime.utcnow()}}).sort("publishDate", 1))
-
-    rss = Element('rss', version='2.0', attrib={
-        'xmlns:itunes': 'http://www.itunes.com/dtds/podcast-1.0.dtd',
-        'xmlns:media': 'http://search.yahoo.com/mrss/'
-    })
-    channel = SubElement(rss, 'channel')
-    SubElement(channel, 'title').text = "Your Podcast Title"
-    SubElement(channel, 'link').text = "https://yourdomain.com/podcast/" + podcast_id
-    SubElement(channel, 'description').text = "Podcast description here"
-    SubElement(channel, 'language').text = "en-us"
-    SubElement(channel, 'itunes:explicit').text = "yes" if any(e['explicit'] for e in episodes) else "no"
-
-    for ep in episodes:
-        item = SubElement(channel, 'item')
-        SubElement(item, 'title').text = ep['title']
-        SubElement(item, 'description').text = ep['description']
-        SubElement(item, 'pubDate').text = ep['publishDate'].strftime('%a, %d %b %Y %H:%M:%S GMT')
-        SubElement(item, 'guid').text = str(ep['_id'])
-        enclosure = SubElement(item, 'enclosure')
-        enclosure.set('url', ep['audioUrl'])
-        enclosure.set('type', 'audio/mpeg')
-        # Add iTunes tags as needed
-        SubElement(item, 'itunes:episode').text = str(ep.get('episodeNumber', 1))
-        SubElement(item, 'itunes:season').text = str(ep.get('seasonNumber', 1))
-        SubElement(item, 'itunes:explicit').text = "yes" if ep.get('explicit', False) else "no"
-
-    xml_str = tostring(rss, encoding='utf-8')
-    return xml_str
-
-
-# === Download Analytics ===
-def record_download(episode_id):
-    downloads_col.insert_one({
-        "episodeId": ObjectId(episode_id),
-        "timestamp": datetime.datetime.utcnow(),
-        # Optionally add IP, user-agent etc
-    })
-
-
-# === Audio Proxy Stream ===
-def get_episode_audio_stream(episode_id):
-    ep = episodes_col.find_one({"_id": ObjectId(episode_id)})
-    if not ep:
-        raise Exception("Episode not found")
-
-    url = ep['audioUrl']
-    r = requests.get(url, stream=True)
-    if r.status_code != 200:
-        raise Exception("Failed to fetch audio")
-
-    # Return raw stream as file-like object
-    return BytesIO(r.content)
-
-
-# === Podcast Directory Notifications (stubs) ===
-def notify_spotify(episode_id):
-    # Use Spotify Podcast API with OAuth2 token
-    # For demo, just log
-    print(f"Notify Spotify about episode {episode_id}")
-
-
-def notify_google_podcasts(episode_id):
-    # Google Podcasts uses RSS feed URL submit - manual for now or via Search Console API
-    print(f"Notify Google Podcasts about episode {episode_id}")
-
-
-# === Publish Service ===
 class PublishService:
     def __init__(self):
-        # self.episode_repo = EpisodeRepository() # Example
-        # self.podcast_repo = PodcastRepository() # Example
+        self.episode_repo = EpisodeRepository()
+        self.podcast_repo = PodcastRepository()
+        # Load credentials from environment
+        self.spotify_client_id = os.getenv("SPOTIFY_CLIENT_ID")
+        self.spotify_client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
+        self.spotify_refresh_token = os.getenv("SPOTIFY_REFRESH_TOKEN")
+        self.rss_feed_base_url = os.getenv("RSS_FEED_BASE_URL")  
+        self.azure_conn_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+        self.rss_blob_container = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
+
+    def publish_episode(self, episode_id, user_id, platforms):
+        log_messages = []
+        try:
+            # 1. Data Retrieval
+            episode_data_tuple = self.episode_repo.get_episode(episode_id, user_id)
+            if not episode_data_tuple or episode_data_tuple[1] != 200:
+                return {"success": False, "error": "Episode not found or access denied.", "details": log_messages}
+            episode = episode_data_tuple[0]
+            log_messages.append(f"Fetched episode: {episode.get('title', episode_id)}")
+
+            podcast_id = episode.get('podcast_id')
+            if not podcast_id:
+                return {"success": False, "error": "Episode not linked to a podcast.", "details": log_messages}
+            podcast_data_tuple = self.podcast_repo.get_podcast_by_id(user_id, podcast_id)
+            if not podcast_data_tuple or podcast_data_tuple[1] != 200:
+                return {"success": False, "error": "Podcast not found or access denied.", "details": log_messages}
+            podcast = podcast_data_tuple[0].get('podcast')
+            log_messages.append(f"Fetched podcast: {podcast.get('podName', podcast_id)}")
+
+            # 2. Generate and upload RSS feed to Azure Blob Storage
+            rss_xml = self._generate_rss_feed_xml(podcast_id, podcast, user_id)
+            rss_blob_url = self._upload_rss_to_blob(podcast_id, rss_xml, user_id)
+            log_messages.append(f"RSS feed uploaded to {rss_blob_url}")
+
+            published_to = []
+            for platform in platforms:
+                platform_lower = platform.lower()
+                log_messages.append(f"Processing platform: {platform}")
+                if platform_lower == "spotify":
+                    # No direct API for upload; Spotify polls RSS feed
+                    log_messages.append("Spotify: RSS feed updated, Spotify will poll automatically.")
+                elif platform_lower in ["apple", "google", "amazon", "stitcher", "pocketcasts"]:
+                    log_messages.append(f"{platform.capitalize()}: RSS feed updated, platform will poll.")
+                else:
+                    log_messages.append(f"Platform '{platform}' not specifically implemented; assuming RSS-based.")
+                published_to.append(platform)
+                time.sleep(0.2)
+
+            # 4. Status Updates
+            update_payload = {
+                "status": "Published",
+                "publishedToPlatforms": published_to,
+                "lastPublishedAt": datetime.datetime.utcnow()
+            }
+            update_result, update_status = self.episode_repo.update_episode(episode_id, user_id, update_payload)
+            if update_status == 200:
+                log_messages.append("Episode status updated to 'Published'.")
+            else:
+                log_messages.append("Warning: Failed to update episode status after publishing.")
+
+            return {
+                "success": True,
+                "message": f"Episode '{episode.get('title', episode_id)}' processed for publishing.",
+                "details": log_messages
+            }
+        except Exception as e:
+            log_messages.append(f"Exception: {str(e)}")
+            return {
+                "success": False,
+                "error": f"An unexpected error occurred during publishing: {str(e)}",
+                "details": log_messages
+            }
+
+    def _generate_rss_feed_xml(self, podcast_id, podcast, user_id):
+        # Fetch all published episodes for this podcast
+        episodes_data, _ = self.episode_repo.get_episodes_by_podcast(podcast_id, user_id)
+        episodes = episodes_data.get("episodes", [])
+
+        from email.utils import format_datetime
+        import datetime
+
+        def format_duration(seconds):
+            if not seconds or not isinstance(seconds, (int, float)) or seconds < 0:
+                return "00:00:00"
+            try:
+                seconds = int(seconds)
+                hours = seconds // 3600
+                minutes = (seconds % 3600) // 60
+                secs = seconds % 60
+                return f"{hours:02}:{minutes:02}:{secs:02}"
+            except:
+                return "00:00:00"
+
+        items_xml = ""
+        for ep in episodes:
+            if ep.get("status", "").lower() == "published":
+                pub_date_str = ""
+                try:
+                    pub_date_obj = ep.get('publishDate')
+                    if isinstance(pub_date_obj, str):
+                        pub_date_obj = datetime.datetime.fromisoformat(pub_date_obj.replace('Z', '+00:00'))
+                    if isinstance(pub_date_obj, datetime.datetime):
+                        if pub_date_obj.tzinfo is None:
+                            pub_date_obj = pub_date_obj.replace(tzinfo=datetime.timezone.utc)
+                        pub_date_str = format_datetime(pub_date_obj)
+                except Exception as e:
+                    current_app.logger.error(f"Error formatting pubDate for episode {ep.get('_id')}: {e}")
+
+                episode_image = ep.get('imageUrl', podcast.get('logoUrl', ''))
+                episode_keywords = ", ".join(ep.get('keywords', [])) if ep.get('keywords') else ""
+
+                items_xml += f"""
+                <item>
+                    <title><![CDATA[{ep.get('title', 'No Title')}]]></title>
+                    <description><![CDATA[{ep.get('description', '')}]]></description>
+                    <itunes:summary><![CDATA[{ep.get('summary', ep.get('description', ''))}]]></itunes:summary>
+                    <itunes:subtitle><![CDATA[{ep.get('subtitle', '')}]]></itunes:subtitle>
+                    <enclosure url="{ep.get('audioUrl', '')}" length="{ep.get('fileSize', 0) or 0}" type="{ep.get('fileType', 'audio/mpeg')}" />
+                    <guid isPermaLink="false">{ep.get('_id', '')}</guid>
+                    <pubDate>{pub_date_str}</pubDate>
+                    <itunes:duration>{format_duration(ep.get('duration'))}</itunes:duration>
+                    <itunes:explicit>{"yes" if ep.get('explicit') else "no"}</itunes:explicit>
+                    <itunes:episode>{ep.get('episode', '')}</itunes:episode>
+                    <itunes:season>{ep.get('season', '')}</itunes:season>
+                    <itunes:episodeType>{ep.get('episodeType', 'full')}</itunes:episodeType>
+                    {f'<itunes:image href="{episode_image}" />' if episode_image else ''}
+                    {f'<link>{ep.get("link", "")}</link>' if ep.get("link") else ''}
+                    {f'<itunes:keywords>{episode_keywords}</itunes:keywords>' if episode_keywords else ''}
+                    <itunes:author><![CDATA[{ep.get('author', podcast.get('author', podcast.get('ownerName', '')))}]]></itunes:author>
+                </item>
+                """
+
+        # Podcast categories
+        categories_xml = ""
+        podcast_categories = podcast.get('category')
+        if isinstance(podcast_categories, str) and podcast_categories:
+            categories_xml += f'<itunes:category text="{podcast_categories.strip()}" />\n'
+        elif isinstance(podcast_categories, list):
+            for cat_obj in podcast_categories:
+                if isinstance(cat_obj, dict) and cat_obj.get('text'):
+                    main_cat_text = cat_obj['text'].strip()
+                    sub_cat_xml = ""
+                    if cat_obj.get('subcategory') and isinstance(cat_obj['subcategory'], dict) and cat_obj['subcategory'].get('text'):
+                        sub_cat_text = cat_obj['subcategory']['text'].strip()
+                        sub_cat_xml = f'<itunes:category text="{sub_cat_text}" />'
+                    categories_xml += f'<itunes:category text="{main_cat_text}">{sub_cat_xml}</itunes:category>\n'
+
+        # Construct the full RSS feed URL for atom:link
+        full_feed_url = ""
+        if self.rss_feed_base_url:
+            full_feed_url = self.rss_feed_base_url.replace("<g.user_id>", str(user_id)).replace("<podcast_id>", str(podcast_id)) + "feed.xml"
+
+        rss_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+        <rss version="2.0"
+             xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+             xmlns:content="http://purl.org/rss/1.0/modules/content/"
+             xmlns:atom="http://www.w3.org/2005/Atom">
+        <channel>
+            <title><![CDATA[{podcast.get('podName', 'No Podcast Title')}]]></title>
+            <link>{podcast.get('podUrl', '')}</link>
+            <description><![CDATA[{podcast.get('description', '')}]]></description>
+            <language>{podcast.get('language', 'en-us')}</language>
+            <copyright><![CDATA[{podcast.get('copyright_info', f'© {datetime.datetime.now().year} {podcast.get("ownerName", "")}')}]]></copyright>
+            <lastBuildDate>{format_datetime(datetime.datetime.now(datetime.timezone.utc))}</lastBuildDate>
+            {f'<atom:link href="{full_feed_url}" rel="self" type="application/rss+xml" />' if full_feed_url else ''}
+            <itunes:author><![CDATA[{podcast.get('author', podcast.get('ownerName', ''))}]]></itunes:author>
+            <itunes:summary><![CDATA[{podcast.get('description', '')}]]></itunes:summary>
+            <itunes:type>{podcast.get('itunes_type', 'episodic')}</itunes:type>
+            <itunes:owner>
+                <itunes:name><![CDATA[{podcast.get('ownerName', '')}]]></itunes:name>
+                <itunes:email>{podcast.get('email', '')}</itunes:email>
+            </itunes:owner>
+            {f'<itunes:image href="{podcast.get("logoUrl", "")}" />' if podcast.get("logoUrl") else ''}
+            <itunes:explicit>{"yes" if podcast.get('explicit') else "no"}</itunes:explicit>
+            {categories_xml}
+            {items_xml}
+        </channel>
+        </rss>
+        """
+        return rss_xml.strip()
+
+    def _upload_rss_to_blob(self, podcast_id, rss_xml, user_id=None):
+        """
+        Uploads the RSS XML to Azure Blob Storage at the path matching RSS_FEED_BASE_URL.
+        """
+        blob_service_client = BlobServiceClient.from_connection_string(self.azure_conn_str)
+        if not user_id:
+            raise Exception("user_id is required to build the RSS blob path.")
+        blob_path = f"podmanagerfiles/users/{user_id}/podcasts/{podcast_id}/rss/feed.xml"
+        container_name = self.rss_blob_container  # Should be 'podmanagerfiles' or similar
+
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
+        blob_client.upload_blob(rss_xml, overwrite=True, content_type="application/rss+xml")
+        # Dynamically construct the public URL by replacing placeholders in RSS_FEED_BASE_URL
+        feed_url = self.rss_feed_base_url.replace("<g.user_id>", str(user_id)).replace("<podcast_id>", str(podcast_id)) + "feed.xml"
+        return feed_url
+
+    def _get_spotify_access_token(self):
+        # Example: Client Credentials Flow
+        auth_url = "https://accounts.spotify.com/api/token"
+        client_id = self.spotify_client_id
+        client_secret = self.spotify_client_secret
+        if not client_id or not client_secret:
+            raise Exception("Spotify credentials not set in environment variables.")
+        response = requests.post(
+            auth_url,
+            data={"grant_type": "client_credentials"},
+            auth=(client_id, client_secret),
+        )
+        if response.status_code != 200:
+            raise Exception(f"Spotify token request failed: {response.text}")
+        return response.json()["access_token"]
+
+    def _ping_spotify_rss(self, rss_url, token):
+        # Spotify does not have a public API for direct RSS ping, but you can notify via their dashboard or wait for polling.
+        # If you have a private endpoint or integration, implement here.
+        # Example (pseudo):
+        # requests.post("https://api.spotify.com/v1/podcasts/notify", headers={"Authorization": f"Bearer {token}"}, json={"rss_url": rss_url})
         pass
 
-    def publish_episode(self, episode_id, platforms, notes):
+    def _ping_apple_podcasts(self, rss_url):
+        # Apple Podcasts does not have a public API for pinging, but you can use their Podcasts Connect dashboard.
+        # Optionally, you can try to POST to https://podcastsconnect.apple.com/ or use their API if you have access.
+        pass
+
+    def _ping_google_podcasts(self, rss_url):
+        # Google Podcasts does not have a public API for pinging, but you can use their Search Console to submit the RSS.
+        pass
+
+    def _ping_amazon_music(self, rss_url):
+        # Amazon Music does not have a public API for pinging, but you can use their portal to submit the RSS.
+        pass
+
+    def _ping_stitcher(self, rss_url):
+        # Stitcher does not have a public API for pinging, but you can use their portal to submit the RSS.
+        pass
+
+    def _ping_pocketcasts(self, rss_url):
+        # Pocket Casts does not have a public API for pinging, but you can use their portal to submit the RSS.
+        pass
+
+    def generate_rss_index(feeds):
         """
-        Handles the logic for publishing an episode to the specified platforms.
-        This is a placeholder and should be implemented with actual publishing integrations.
+        Generates an index XML or HTML file listing all podcast RSS feeds.
+        'feeds' should be a list of dicts: [{"title": ..., "url": ...}, ...]
         """
-        current_app.logger.info(f"PublishService: Attempting to publish episode {episode_id} to {platforms}. Notes: '{notes}'")
+        # Example: Generate a simple HTML index
+        html = "<html><head><title>Podcast RSS Feeds</title></head><body><h1>All Podcast Feeds</h1><ul>"
+        for feed in feeds:
+            html += f'<li><a href="{feed["url"]}">{feed["title"]}</a></li>'
+        html += "</ul></body></html>"
+        return html
 
-        # --- Placeholder Logic ---
-        # 1. Fetch episode details (audio file, metadata, etc.)
-        # episode = self.episode_repo.get_by_id(episode_id)
-        # if not episode:
-        #     return {"success": False, "error": "Episode not found"}
-        #
-        # podcast = self.podcast_repo.get_by_id(episode.podcast_id) # Assuming episode has podcast_id
-        # if not podcast:
-        #     return {"success": False, "error": "Associated podcast not found"}
-
-        # 2. For each platform in 'platforms':
-        #    - Check if integration is configured (e.g., API keys for Spotify, Apple via RSS update)
-        #    - Perform platform-specific publishing actions
-        #    - Log success/failure for each platform
-
-        log_messages = []
-
-        for platform in platforms:
-            log_messages.append(f"Simulating publishing to {platform}...")
-            time.sleep(1) # Simulate work
-            # Example:
-            # if platform == "spotify":
-            #   result = self._publish_to_spotify(episode, podcast)
-            #   log_messages.append(f"Spotify: {result['message']}")
-            # elif platform == "apple":
-            #   # Apple Podcasts usually updates via RSS feed changes.
-            #   # This might involve ensuring the episode is in the RSS feed and the feed is valid.
-            #   log_messages.append("Apple Podcasts: RSS feed update simulated.")
-            # else:
-            #   log_messages.append(f"Platform '{platform}' not yet implemented.")
-            log_messages.append(f"Successfully simulated publishing to {platform}.")
-        
-        # --- End Placeholder Logic ---
-
-        # In a real scenario, you'd collect results from actual API calls.
-        # For now, we assume success.
-        
-        # Update episode status to 'Published' or similar
-        # self.episode_repo.update_episode_status(episode_id, "Published", platforms_published_to=platforms)
-        
-        current_app.logger.info(f"PublishService: Successfully processed publish request for episode {episode_id}.")
-        return {
-            "success": True,
-            "message": f"Episode {episode_id} processed for publishing to {', '.join(platforms)}.",
-            "details": log_messages
-        }
-
-    # Example placeholder for a specific platform
-    # def _publish_to_spotify(self, episode_data, podcast_data):
-    #     # Connect to Spotify API, upload audio, metadata, etc.
-    #     return {"success": True, "message": "Published to Spotify (simulated)"}
+    # Usage (not automatic, call as needed):
+    # feeds = [{"title": podcast["podName"], "url": f"https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/users/{podcast['ownerId']}/podcasts/{podcast['_id']}/rss/feed.xml"} for podcast in all_podcasts]
+    # index_html = generate_rss_index(feeds)
+    # Upload index_html to your public /rss/ folder if you want a directory listing.
