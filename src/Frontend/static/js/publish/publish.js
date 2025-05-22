@@ -1,6 +1,5 @@
-import { publishEpisode } from "/static/js/publish/publishRequests.js"
-import { fetchAllEpisodes, fetchEpisode } from "/static/js/publish/episodeRequests.js"
-import { svgIcons } from "/static/js/components/svgIcons.js"
+import { publishEpisode } from "/static/requests/publishRequests.js"
+import { fetchEpisode } from "/static/requests/episodeRequest.js"
 import { showNotification } from "/static/js/components/notifications.js"
 import { fetchPodcasts } from "/static/requests/podcastRequests.js"
 import { fetchEpisodesByPodcast } from "/static/requests/episodeRequest.js"
@@ -36,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const platformToggles = document.querySelectorAll('.platform-toggle input[type="checkbox"]')
   const publishNotes = document.getElementById("publish-notes")
 
+  // Load podcasts into the dropdown using /get_podcasts
   async function loadPodcasts() {
     try {
       podcastSelect.innerHTML = '<option value="">Loading podcasts...</option>'
@@ -50,13 +50,16 @@ document.addEventListener("DOMContentLoaded", () => {
           podcastSelect.appendChild(option)
         }
       })
+      podcastSelect.disabled = podcasts.length === 0
     } catch (error) {
       console.error("Error loading podcasts:", error)
       podcastSelect.innerHTML = '<option value="">Error loading podcasts</option>'
+      podcastSelect.disabled = true
       episodeSelect.disabled = true
     }
   }
 
+  // Load episodes for the selected podcast using /episodes/by_podcast/<podcast_id>
   async function loadEpisodesForPodcast(podcastId) {
     episodeSelect.innerHTML = '<option value="">Loading episodes...</option>'
     episodeSelect.disabled = true
@@ -80,10 +83,12 @@ document.addEventListener("DOMContentLoaded", () => {
         episodeSelect.disabled = false
       } else {
         episodeSelect.innerHTML = '<option value="">No episodes found for this podcast</option>'
+        episodeSelect.disabled = true
       }
     } catch (error) {
       console.error("Error loading episodes:", error)
       episodeSelect.innerHTML = '<option value="">Error loading episodes</option>'
+      episodeSelect.disabled = true
     }
   }
 

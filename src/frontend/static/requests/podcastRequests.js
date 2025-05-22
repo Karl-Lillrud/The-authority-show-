@@ -117,3 +117,5 @@ function extractSocialMediaLinks(description, link) {
   // Your existing implementation
   // ...
 }
+
+// All fetches use /get_podcasts and /get_podcasts/<id> which are now correct in backend

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class PodcastRepository:
     def __init__(self):
-        self.collection = collection.database.Podcasts
+        self.collection = collection.database.Podcasts  # Ensure capital "P"
         self.activity_service = ActivityService()  # Add this line
         self.episode_repo = EpisodeRepository()  # Initialize EpisodeRepository
         self.rss_service = RSSService()  # Initialize RSSService instance
@@ -25,7 +25,7 @@ class PodcastRepository:
     @staticmethod
     def get_podcasts_by_user_id(user_id):
         """Fetch podcasts for a specific user."""
-        return list(collection.Podcasts.find({"ownerId": user_id}))
+        return list(collection.database.Podcasts.find({"ownerId": user_id}))  # Capital "P"
 
     def add_podcast(self, user_id, data):  # user_id here is the owner's ID
         try:
@@ -100,7 +100,7 @@ class PodcastRepository:
             }
 
             # Insert into database
-            result = self.collection.insert_one(podcast_item)
+            result = self.collection.insert_one(podcast_item)  # self.collection is Podcasts
             if result.inserted_id:
                 # --- Add activity log for podcast creation using ActivityService ---
                 try:

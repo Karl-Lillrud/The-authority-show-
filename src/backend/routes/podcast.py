@@ -6,7 +6,7 @@ from backend.repository.podcast_repository import PodcastRepository
 podcast_bp = Blueprint("podcast_bp", __name__)
 
 # Create repository instance
-podcast_repo = PodcastRepository()
+podcast_repo = PodcastRepository()  # Uses Podcasts collection internally
 
 # Configure logger
 logger = logging.getLogger(__name__)
