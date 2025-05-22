@@ -307,12 +307,24 @@ document.addEventListener("DOMContentLoaded", () => {
     formBox.style.width = "100%";
     formBox.innerHTML = `<h2>Fill Required Details</h2>
       <form id="missing-fields-form">
-        ${missingFields.map(f => `
+        ${missingFields.map(f => {
+          let inputValue = "";
+          let inputType = "text";
+          if (f.type === "episode" && f.key === "pubDate") {
+            // Pre-fill with current date-time if publishDate is missing
+            const now = new Date();
+            // Adjust for local timezone offset to get correct ISO string for datetime-local
+            const timezoneOffset = now.getTimezoneOffset() * 60000; //offset in milliseconds
+            const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 16);
+            inputValue = localISOTime;
+            inputType = "datetime-local";
+          }
+          return `
           <div class="field-group">
             <label>${f.label} (${f.type})</label>
-            <input type="text" name="${f.type}_${f.key}" value="" required />
+            <input type="${inputType}" name="${f.type}_${f.key}" value="${inputValue}" required />
           </div>
-        `).join("")}
+        `}).join("")}
         <div style="margin-top:1rem;display:flex;gap:1rem;">
           <button type="submit" class="save-btn">Save & Continue</button>
           <button type="button" id="cancel-missing-fields" class="cancel-btn">Cancel</button>
@@ -330,10 +342,16 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       // Update podcast/episode objects with new values
       missingFields.forEach(f => {
-        const val = formBox.querySelector(`[name='${f.type}_${f.key}']`).value.trim();
+        const inputElement = formBox.querySelector(`[name='${f.type}_${f.key}']`);
+        let val = inputElement.value.trim();
+        if (f.type === "episode" && f.key === "pubDate" && inputElement.type === "datetime-local") {
+          // Ensure the datetime-local value is converted to ISO string UTC for backend
+          val = new Date(val).toISOString();
+        }
+        
         if (f.type === "podcast") podcast[f.key] = val;
         else if (f.type === "episode") {
-          if (f.key === "pubDate") episode.publishDate = val;
+          if (f.key === "pubDate") episode.publishDate = val; // Ensure your episode model uses publishDate
           else episode[f.key] = val;
         }
       });
