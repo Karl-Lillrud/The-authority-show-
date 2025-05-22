@@ -33,7 +33,7 @@ def audio_enhancement():
         try:
             consume_credits(user_id, "audio_enhancement")
         except ValueError as e:
-            return insufficient_credits_response("ai_audio_cutting", e)
+            return insufficient_credits_response("audio_enhancement", e)
         
         subscription_service = SubscriptionService()
         subscription = subscription_service.get_user_subscription(user_id)
@@ -87,10 +87,7 @@ def audio_analysis():
         return jsonify(analysis_result)
 
     except ValueError as e:
-        return jsonify({
-            "error": str(e),
-            "redirect": "/store"
-        }), 403
+            return insufficient_credits_response("audio_analysis", e)
 
     except Exception as e:
         logger.error(f"Error analyzing audio: {str(e)}")
@@ -132,11 +129,7 @@ def clip_audio():
         try:
             consume_credits(g.user_id, "audio_cutting")
         except ValueError as e:
-            logger.warning(f"User {g.user_id} has insufficient credits for audio_cutting.")
-            return jsonify({
-                "error": str(e),
-                "redirect": "/store"
-            }), 403
+            return insufficient_credits_response("audio_cutting", e)
 
         start_time = clips[0]["start"]
         end_time = clips[0]["end"]
@@ -176,11 +169,7 @@ def ai_cut_audio():
         try:
             consume_credits(g.user_id, "ai_audio_cutting")
         except ValueError as e:
-            logger.warning(f"User {g.user_id} has insufficient credits for ai_audio_cutting.")
-            return jsonify({
-                "error": str(e),
-                "redirect": "/store"
-            }), 403
+            return insufficient_credits_response("ai_audio_cutting", e)
 
         result = audio_service.ai_cut_audio_from_id(file_id, episode_id=episode_id)
         return jsonify(result)
