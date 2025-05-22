@@ -212,7 +212,7 @@ class TranscriptionService:
 
         voice_map = VOICE_MAPS.get(language)
         if not voice_map:
-            raise ValueError(f"Inget voice_map för språk '{language}'")
+            raise ValueError(f"No voice for'{language}'")
     
         default_voice = next(iter(voice_map.values()), None)
 
@@ -224,7 +224,7 @@ class TranscriptionService:
 
             voice_id = voice_map.get(speaker) or default_voice
             if not voice_id:
-                raise ValueError(f"Ingen voice_id för {speaker} i {language}")
+                raise ValueError(f"No voice_id for {speaker} in {language}")
 
             target_dur = end_ms - start_ms
             if target_dur <= 0:
