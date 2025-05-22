@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, current_app, Response, send_file
+from flask import Blueprint, render_template, request, jsonify, current_app, Response, send_file, g
 from backend.services.publishService import PublishService  # Only import the class
 from bson.objectid import ObjectId
 import datetime
@@ -80,30 +80,31 @@ def api_publish_episode(episode_id):
     API endpoint to initiate the publishing process for an episode.
     Expects a JSON payload with 'platforms' (list) and optional 'notes' (string).
     """
+    if not hasattr(g, "user_id") or not g.user_id:
+        current_app.logger.warning(f"Unauthorized attempt to publish episode {episode_id}: No user_id in g")
+        return jsonify({"success": False, "error": "User not authenticated"}), 401
+
     try:
         data = request.get_json()
         if not data:
             return jsonify({"success": False, "error": "Invalid JSON payload"}), 400
 
         platforms = data.get('platforms')
-        notes = data.get('notes', '')
 
         if not episode_id:
             return jsonify({"success": False, "error": "Episode ID is required"}), 400
         if not platforms or not isinstance(platforms, list):
             return jsonify({"success": False, "error": "Platforms list is required"}), 400
 
-        current_app.logger.info(f"Publish request for episode {episode_id} to platforms: {platforms}. Notes: {notes}")
+        current_app.logger.info(f"Publish request for episode {episode_id} by user {g.user_id} to platforms: {platforms}.")
         
         publish_service = PublishService()
-        result = publish_service.publish_episode(episode_id, platforms, notes)
+        result = publish_service.publish_episode(episode_id, g.user_id, platforms)
 
         if result.get("success"):
-            # Here you might also want to update the episode's status in the database
-            # e.g., episode_repo.update_episode_status(episode_id, "Published")
             return jsonify(result), 200
         else:
-            return jsonify(result), 500 # Or a more specific error code based on result
+            return jsonify(result), 500 
 
     except Exception as e:
         current_app.logger.error(f"Error in api_publish_episode for episode {episode_id}: {str(e)}", exc_info=True)

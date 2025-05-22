@@ -1,6 +1,6 @@
 export async function publishEpisode(episodeId, platforms, notes) {
   try {
-    const response = await fetch(`/api/publish_episode/${episodeId}`, {
+    const response = await fetch(`/publish/api/publish_episode/${episodeId}`, { // Added /publish prefix
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -14,13 +14,17 @@ export async function publishEpisode(episodeId, platforms, notes) {
 
     if (!response.ok) {
       console.error("Publishing error response:", result);
-      throw new Error(result.error || `HTTP error! status: ${response.status}`);
+      // Check if result.error exists, otherwise use a generic message or response.statusText
+      const errorMessage = result.error || result.message || `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
     }
     return result; // Should contain { success: true, message: "...", data: ... }
   } catch (error) {
     console.error("Error in publishEpisode request:", error);
     // Return a structured error for the UI to handle
-    return { success: false, error: error.message || "Failed to connect to the server." };
+    // Ensure error.message is a string.
+    const errorMessageString = (typeof error.message === 'string') ? error.message : "Failed to connect to the server.";
+    return { success: false, error: errorMessageString };
   }
 }
 

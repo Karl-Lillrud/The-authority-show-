@@ -214,6 +214,70 @@ body {
   display: none !important;
 }
 
+/* Styles for the RSS Feed Popup */
+.popup.rss-feed-popup .form-box {
+  background-color: #fff;
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  text-align: left;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.popup.rss-feed-popup h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.5em;
+  color: #333;
+}
+
+.popup.rss-feed-popup p {
+  margin-bottom: 15px;
+  line-height: 1.6;
+  color: #555;
+}
+
+.popup.rss-feed-popup .field-group {
+  margin-bottom: 20px;
+}
+
+.popup.rss-feed-popup .field-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #444;
+}
+
+.popup.rss-feed-popup #rss-feed-url-display {
+  background-color: #f8f8f8;
+}
+
+.popup.rss-feed-popup h3 {
+  margin-top: 25px;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.popup.rss-feed-popup ul a {
+  color: var(--primary-color); /* Or your link color */
+  text-decoration: none;
+}
+
+.popup.rss-feed-popup ul a:hover {
+  text-decoration: underline;
+}
+
+.popup.rss-feed-popup .action-btn,
+.popup.rss-feed-popup .save-btn { /* Assuming .save-btn is your primary button style */
+  padding: 10px 18px;
+  font-size: 1em;
+  /* Add other button styles if needed */
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .publish-container {

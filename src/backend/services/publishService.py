@@ -17,7 +17,7 @@ class PublishService:
         self.spotify_refresh_token = os.getenv("SPOTIFY_REFRESH_TOKEN")
         self.rss_feed_base_url = os.getenv("RSS_FEED_BASE_URL")  
         self.azure_conn_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-        self.rss_blob_container = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
+        self.rss_blob_container = os.getenv("AZURE_STORAGE_CONTAINER_NAME") # Changed from AZURE_STORAGE_ACCOUNT_NAME
 
     def publish_episode(self, episode_id, user_id, platforms):
         log_messages = []
@@ -72,7 +72,8 @@ class PublishService:
             return {
                 "success": True,
                 "message": f"Episode '{episode.get('title', episode_id)}' processed for publishing.",
-                "details": log_messages
+                "details": log_messages,
+                "rssFeedUrl": rss_blob_url  # Add this line if it's not already there
             }
         except Exception as e:
             log_messages.append(f"Exception: {str(e)}")
@@ -197,13 +198,56 @@ class PublishService:
         blob_service_client = BlobServiceClient.from_connection_string(self.azure_conn_str)
         if not user_id:
             raise Exception("user_id is required to build the RSS blob path.")
-        blob_path = f"podmanagerfiles/users/{user_id}/podcasts/{podcast_id}/rss/feed.xml"
-        container_name = self.rss_blob_container  # Should be 'podmanagerfiles' or similar
+        
+        # The blob_path should be relative to the container.
+        # Example: "users/{user_id}/podcasts/{podcast_id}/rss/feed.xml"
+        # The container name itself is 'podmanagerfiles'.
+        blob_path = f"users/{user_id}/podcasts/{podcast_id}/rss/feed.xml" # Path within the container
+        
+        container_name = self.rss_blob_container # This should now correctly be "podmanagerfiles"
+
+        current_app.logger.info(f"Attempting to upload RSS to container: '{container_name}', blob path: '{blob_path}'")
 
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
         blob_client.upload_blob(rss_xml, overwrite=True, content_type="application/rss+xml")
+        
         # Dynamically construct the public URL by replacing placeholders in RSS_FEED_BASE_URL
+        # Ensure RSS_FEED_BASE_URL is correctly defined, e.g.,
+        # https://<ACCOUNT_NAME>.blob.core.windows.net/<CONTAINER_NAME>/users/<g.user_id>/podcasts/<podcast_id>/
+        # The feed_url should then append "feed.xml" to this base.
+        
+        # The existing logic for feed_url construction seems to assume RSS_FEED_BASE_URL
+        # already includes the account and container, and ends just before the user/podcast part.
+        # Example: RSS_FEED_BASE_URL="https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/"
+        # Then the path part would be "users/<g.user_id>/podcasts/<podcast_id>/feed.xml"
+        # Let's adjust the feed_url construction to be more robust if RSS_FEED_BASE_URL might vary.
+
+        # Assuming RSS_FEED_BASE_URL is like: "https://<ACCOUNT_NAME>.blob.core.windows.net/<CONTAINER_NAME>/"
+        # And the blob_path is "users/.../feed.xml"
+        # A more direct construction of the public URL:
+        account_name = blob_service_client.account_name
+        public_url_base = f"https://{account_name}.blob.core.windows.net/{container_name}/"
+        
+        feed_url = public_url_base + blob_path # blob_path already includes "users/.../feed.xml"
+
+        # If your RSS_FEED_BASE_URL is already structured to include the dynamic parts,
+        # the original replacement logic is fine, but ensure it's correct.
+        # For now, using the direct construction above for clarity.
+        # If you revert, ensure RSS_FEED_BASE_URL is like:
+        # "https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/users/<g.user_id>/podcasts/<podcast_id>/"
+        # and then:
+        # feed_url = self.rss_feed_base_url.replace("<g.user_id>", str(user_id)).replace("<podcast_id>", str(podcast_id)) + "feed.xml"
+        # This original logic is likely correct if RSS_FEED_BASE_URL is set up as expected.
+        # Let's stick to the original logic for feed_url if RSS_FEED_BASE_URL is correctly defined.
+        
+        # Reverting to original feed_url logic, assuming RSS_FEED_BASE_URL is correctly set up.
+        # Ensure RSS_FEED_BASE_URL = "https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/users/<g.user_id>/podcasts/<podcast_id>/"
+        if not self.rss_feed_base_url:
+            current_app.logger.error("RSS_FEED_BASE_URL is not set in environment variables.")
+            raise Exception("RSS_FEED_BASE_URL is not configured.")
+            
         feed_url = self.rss_feed_base_url.replace("<g.user_id>", str(user_id)).replace("<podcast_id>", str(podcast_id)) + "feed.xml"
+        current_app.logger.info(f"RSS feed URL generated: {feed_url}")
         return feed_url
 
     def _get_spotify_access_token(self):

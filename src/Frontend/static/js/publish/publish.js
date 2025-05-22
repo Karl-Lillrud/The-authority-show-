@@ -360,6 +360,84 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
+  function showRssFeedPopup(rssFeedUrl) {
+    // Remove any existing modal
+    let existingModal = document.getElementById("rss-feed-popup");
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "rss-feed-popup";
+    modal.className = "popup rss-feed-popup"; // Add a class for specific styling
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100vw";
+    modal.style.height = "100vh";
+    modal.style.background = "rgba(0,0,0,0.7)";
+    modal.style.zIndex = "10000"; // Ensure it's on top
+    modal.style.display = "flex";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent = "center";
+
+    const popupContent = document.createElement("div");
+    popupContent.className = "form-box"; // Use existing form-box styling or create new
+    popupContent.style.maxWidth = "600px";
+    popupContent.style.width = "90%";
+    
+    popupContent.innerHTML = `
+      <span class="close-btn" id="close-rss-popup" style="float:right; cursor:pointer; font-size: 1.5rem;">&times;</span>
+      <h2>Your Podcast RSS Feed is Ready!</h2>
+      <p>Your episode has been published and your RSS feed has been updated. You can copy the URL below to submit it to podcast directories that require manual submission or to check your feed.</p>
+      
+      <div class="field-group">
+        <label for="rss-feed-url-display">RSS Feed URL:</label>
+        <input type="text" id="rss-feed-url-display" value="${rssFeedUrl}" readonly style="width: calc(100% - 16px); padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        <button id="copy-rss-url-btn" class="action-btn" style="padding: 8px 12px; margin-left: 5px;">Copy URL</button>
+      </div>
+
+      <h3>Submit to Directories:</h3>
+      <ul style="list-style: none; padding-left: 0;">
+        <li style="margin-bottom: 8px;"><a href="https://podcasters.spotify.com/" target="_blank" rel="noopener noreferrer">Spotify for Podcasters</a> (Usually polls automatically, but you can check status)</li>
+        <li style="margin-bottom: 8px;"><a href="https://podcastsconnect.apple.com/" target="_blank" rel="noopener noreferrer">Apple Podcasts Connect</a></li>
+        <li style="margin-bottom: 8px;"><a href="https://podcastsmanager.google.com/" target="_blank" rel="noopener noreferrer">Google Podcasts Manager</a></li>
+        <li style="margin-bottom: 8px;"><a href="https://podcasters.amazon.com/podcasts" target="_blank" rel="noopener noreferrer">Amazon Music for Podcasters</a></li>
+        <li style="margin-bottom: 8px;"><a href="https://www.pocketcasts.com/submit/" target="_blank" rel="noopener noreferrer">Pocket Casts</a></li>
+        <li style="margin-bottom: 8px;"><a href="https://castbox.fm/creator/" target="_blank" rel="noopener noreferrer">Castbox Creator Studio</a></li>
+        <li style="margin-bottom: 8px;"><a href="https://podcastaddict.com/submit" target="_blank" rel="noopener noreferrer">Podcast Addict</a></li>
+        <!-- Add more platform links as needed -->
+      </ul>
+      <div class="form-actions" style="text-align: right; margin-top: 20px;">
+        <button id="close-rss-feed-popup-btn" class="save-btn">Close</button>
+      </div>
+    `;
+    modal.appendChild(popupContent);
+    document.body.appendChild(modal);
+
+    const closePopup = () => document.body.removeChild(modal);
+    document.getElementById("close-rss-popup").onclick = closePopup;
+    document.getElementById("close-rss-feed-popup-btn").onclick = closePopup;
+    
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closePopup();
+        }
+    });
+
+    document.getElementById("copy-rss-url-btn").onclick = () => {
+        const urlInput = document.getElementById("rss-feed-url-display");
+        urlInput.select();
+        urlInput.setSelectionRange(0, 99999); // For mobile devices
+        try {
+            document.execCommand("copy");
+            showNotification("Success", "RSS Feed URL copied to clipboard!", "success");
+        } catch (err) {
+            showNotification("Error", "Failed to copy URL. Please copy manually.", "error");
+            console.error('Failed to copy text: ', err);
+        }
+    };
+  }
+
+
   publishNowBtn.addEventListener("click", async () => {
     const episodeId = episodeSelect.value;
     const selectedPlatforms = [];
@@ -415,6 +493,10 @@ document.addEventListener("DOMContentLoaded", () => {
           episodeSelect.value = "";
           if (podcastSelect.value) {
               loadEpisodesForPodcast(podcastSelect.value);
+          }
+          // Show RSS feed popup after successful publish
+          if (result.rssFeedUrl) {
+            showRssFeedPopup(result.rssFeedUrl);
           }
         } else {
           addToLog(`Publishing failed: ${result.error || "Unknown error"}`);
