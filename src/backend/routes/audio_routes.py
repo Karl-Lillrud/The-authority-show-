@@ -1,9 +1,9 @@
 # audio_routes.py
 import logging
-import base64
 import requests
 import json
 from flask import Blueprint, request, jsonify, g, Response
+
 from backend.services.audioService import AudioService
 from backend.services.subscriptionService import SubscriptionService
 from backend.services.creditService import consume_credits
@@ -12,9 +12,6 @@ from backend.utils.subscription_access import get_max_duration_limit
 from backend.utils.ai_utils import check_audio_duration
 from backend.repository.edit_repository import create_edit_entry
 from backend.repository.episode_repository import EpisodeRepository
-from backend.repository.ai_models import get_file_by_id
-
-
 
 episode_repo = EpisodeRepository()
 logger = logging.getLogger(__name__)
@@ -36,12 +33,8 @@ def audio_enhancement():
         try:
             consume_credits(user_id, "audio_enhancement")
         except ValueError as e:
-            logger.warning(f"Insufficient credits for user {user_id}: {e}")
-            return jsonify({
-                "error": str(e),
-                "redirect": "/store"
-            }), 403
-
+            return insufficient_credits_response("ai_audio_cutting", e)
+        
         subscription_service = SubscriptionService()
         subscription = subscription_service.get_user_subscription(user_id)
         plan = subscription.get("plan", "FREE")
