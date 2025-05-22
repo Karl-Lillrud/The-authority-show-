@@ -890,9 +890,6 @@ input:focus {
   margin-top: 0.25rem;
 }
 
-
-
-
 /* Subscription Form */
 .subscription-form-container {
   margin-top: 2rem;
@@ -1201,10 +1198,39 @@ input:focus:invalid {
   box-shadow: none !important;
 }
 
-/* Email change button container */
+/* Email field container for placing button next to input */
 .email-field-container {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
+}
+
+.email-field-container input {
+  flex: 1;
+}
+
+/* Compact styling for the change email button */
+.change-email-btn.compact {
+  padding: 4px 10px;
+  min-width: auto;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  height: fit-content;
+  background-color: var(--account-primary-light);
+  color: var(--account-primary);
+  border: 1px solid var(--account-border);
+}
+
+.change-email-btn.compact svg {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+}
+
+.change-email-btn.compact:hover {
+  background-color: var(--account-primary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

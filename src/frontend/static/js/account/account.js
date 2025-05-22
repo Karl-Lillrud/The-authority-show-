@@ -63,20 +63,30 @@ document.addEventListener("DOMContentLoaded", () => {
   function addChangeEmailButton() {
     const emailInput = document.getElementById("email");
     if (emailInput) {
+      // Create a container div to hold both email input and button
+      const emailContainer = document.createElement("div");
+      emailContainer.className = "email-field-container";
+      
+      // Move email input inside the container
+      const parent = emailInput.parentNode;
+      parent.insertBefore(emailContainer, emailInput);
+      emailContainer.appendChild(emailInput);
+      
+      // Create the change email button with compact styling
       const changeEmailBtn = document.createElement("button");
       changeEmailBtn.type = "button";
-      changeEmailBtn.className = "secondary-button change-email-btn";
+      changeEmailBtn.className = "secondary-button change-email-btn compact";
       changeEmailBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
           <path d="m12 15 3-3-3-3"></path>
           <path d="M15 12H3"></path>
         </svg>
-        Change Email
+        Change
       `;
       
-      // Insert button after email input
-      emailInput.parentNode.insertBefore(changeEmailBtn, emailInput.nextSibling);
+      // Add the button to the container
+      emailContainer.appendChild(changeEmailBtn);
       
       // Add click event
       changeEmailBtn.addEventListener("click", showEmailChangeModal);
@@ -813,9 +823,18 @@ document.addEventListener("DOMContentLoaded", () => {
       if (uploadButton) uploadButton.style.display = "none";
       if (profilePicOverlay) profilePicOverlay.style.display = "none";
 
-      // Remove change email button if exists
-      if (changeEmailBtn) {
-        changeEmailBtn.remove();
+      // Remove change email button and restore input to original position
+      const emailContainer = document.querySelector(".email-field-container");
+      if (emailContainer) {
+        const emailInput = emailContainer.querySelector("#email");
+        const formGroup = emailContainer.parentNode;
+        
+        if (emailInput && formGroup) {
+          // Move email input back to its original position
+          emailContainer.removeChild(emailInput);
+          formGroup.insertBefore(emailInput, emailContainer);
+          formGroup.removeChild(emailContainer);
+        }
       }
 
       // Load account data but preserve profile picture
