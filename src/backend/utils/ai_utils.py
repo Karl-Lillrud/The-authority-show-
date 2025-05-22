@@ -1,6 +1,7 @@
 # ai_utils.py
 import re
 import logging
+from flask import jsonify, g
 from textblob import TextBlob
 from textstat import textstat
 from transformers import pipeline
@@ -76,3 +77,12 @@ def analyze_emotions(text: str) -> List[dict]:
                 "emotions": result  # List of dicts with label + score
             })
     return results
+
+def insufficient_credits_response(feature: str, exc: Exception):
+    logger.warning(
+        f"User {g.user_id} has insufficient credits for {feature}: {exc}"
+    )
+    return jsonify({
+        "error": str(exc),
+        "redirect": "/store"
+    }), 403
