@@ -18,22 +18,28 @@ body {
   font-size: 2rem;
   font-weight: 700;
   color: var(--text-color-dark, #2c3e50);
-  margin-bottom: 1.5rem;
-  text-align: center;
+  text-align: left;
   position: relative;
-  padding-bottom: 0.75rem;
+  padding-bottom: 0; /* Remove bottom padding */
+  margin-bottom: 0.7rem; /* Less margin below text, more below line */
+}
+
+.dashboard-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text-color-dark, #2c3e50);
+  text-align: left;
+  margin-bottom: 0.7rem;
+  display: block;
+  /* No orange line, no ::after */
 }
 
 .page-title::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 4px;
-  background-color: var(--highlight-color, #ff7f3f);
-  border-radius: 2px;
+  display: none !important;
+}
+
+.dashboard-header {
+  margin-bottom: 2.2rem; /* More space below the line and the next section */
 }
 
 .publish-form-section {

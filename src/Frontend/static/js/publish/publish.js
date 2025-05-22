@@ -241,9 +241,109 @@ document.addEventListener("DOMContentLoaded", () => {
     loadEpisodePreview(episodeId);
   });
 
+  // Helper: Check for missing required RSS fields for selected platforms
+  function getMissingRequiredFields(podcast, episode, selectedPlatforms) {
+    // Always required for all platforms:
+    const requiredPodcastFields = [
+      { key: "podName", label: "Podcast Title" },
+      { key: "description", label: "Podcast Description" },
+      { key: "logoUrl", label: "Podcast Artwork (logoUrl)" },
+      { key: "ownerName", label: "Podcast Owner Name" },
+      { key: "email", label: "Podcast Owner Email" },
+      { key: "language", label: "Podcast Language" },
+      { key: "author", label: "Podcast Author" }
+    ];
+    const requiredEpisodeFields = [
+      { key: "title", label: "Episode Title" },
+      { key: "description", label: "Episode Description" },
+      { key: "audioUrl", label: "Episode Audio URL" },
+      { key: "pubDate", label: "Episode Publish Date" }, // May be publishDate
+      { key: "explicit", label: "Explicit (yes/no)" }
+    ];
+
+    // Add more strict requirements for Apple/Spotify if needed
+    // e.g., Apple requires itunes:category, etc.
+
+    let missing = [];
+    requiredPodcastFields.forEach(f => {
+      if (!podcast || !podcast[f.key] || podcast[f.key].toString().trim() === "") {
+        missing.push({ type: "podcast", ...f });
+      }
+    });
+    requiredEpisodeFields.forEach(f => {
+      // pubDate may be publishDate in your model
+      let val = episode ? (f.key === "pubDate" ? (episode.publishDate || episode.pubDate) : episode[f.key]) : null;
+      if (!val || val.toString().trim() === "") {
+        missing.push({ type: "episode", ...f });
+      }
+    });
+    return missing;
+  }
+
+  // Helper: Show modal to fill missing fields
+  function showMissingFieldsModal(missingFields, podcast, episode, onSave) {
+    // Remove any existing modal
+    let existingModal = document.getElementById("missing-fields-modal");
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "missing-fields-modal";
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100vw";
+    modal.style.height = "100vh";
+    modal.style.background = "rgba(0,0,0,0.7)";
+    modal.style.zIndex = "9999";
+    modal.style.display = "flex";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent = "center";
+
+    const formBox = document.createElement("div");
+    formBox.style.background = "#fff";
+    formBox.style.padding = "2rem";
+    formBox.style.borderRadius = "8px";
+    formBox.style.maxWidth = "400px";
+    formBox.style.width = "100%";
+    formBox.innerHTML = `<h2>Fill Required Details</h2>
+      <form id="missing-fields-form">
+        ${missingFields.map(f => `
+          <div class="field-group">
+            <label>${f.label} (${f.type})</label>
+            <input type="text" name="${f.type}_${f.key}" value="" required />
+          </div>
+        `).join("")}
+        <div style="margin-top:1rem;display:flex;gap:1rem;">
+          <button type="submit" class="save-btn">Save & Continue</button>
+          <button type="button" id="cancel-missing-fields" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    `;
+    modal.appendChild(formBox);
+    document.body.appendChild(modal);
+
+    document.getElementById("cancel-missing-fields").onclick = () => {
+      document.body.removeChild(modal);
+    };
+
+    formBox.querySelector("#missing-fields-form").onsubmit = (e) => {
+      e.preventDefault();
+      // Update podcast/episode objects with new values
+      missingFields.forEach(f => {
+        const val = formBox.querySelector(`[name='${f.type}_${f.key}']`).value.trim();
+        if (f.type === "podcast") podcast[f.key] = val;
+        else if (f.type === "episode") {
+          if (f.key === "pubDate") episode.publishDate = val;
+          else episode[f.key] = val;
+        }
+      });
+      document.body.removeChild(modal);
+      onSave();
+    };
+  }
+
   publishNowBtn.addEventListener("click", async () => {
     const episodeId = episodeSelect.value;
-    // const notes = publishNotes.value; // Removed
     const selectedPlatforms = [];
     platformToggles.forEach((toggle) => {
       if (toggle.checked) {
@@ -262,43 +362,66 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    publishNowBtn.disabled = true;
-    publishNowBtn.textContent = "Publishing...";
-    addToLog(`Starting publishing process for episode ID: ${episodeId}`);
-    addToLog(`Selected platforms: ${selectedPlatforms.join(", ")}`);
-    // if (notes) { // Removed
-    //   addToLog(`Publish notes: ${notes}`); // Removed
-    // } // Removed
-
+    // Fetch selected podcast and episode objects for validation
+    const podcast = (window._publishPodcastsCache || []).find(p => p._id === podcastSelect.value);
+    let episode = null;
     try {
-      // Using the publishEpisode function from publishRequests.js which calls /api/publish_episode/<episode_id>
-      const result = await publishEpisode(episodeId, selectedPlatforms, null); // Pass null or undefined for notes
-      if (result.success) {
-        addToLog(`Successfully published episode: ${result.message}`);
-        showNotification("Success", `Episode published successfully! ${result.message || ''}`, "success");
-        // Optionally, update episode status in the dropdown or reload episodes
-        // For now, just clear selection
-        episodeDetailsPreview.classList.add("hidden");
-        episodeSelect.value = "";
-        // publishNotes.value = ""; // Removed
-        // Consider reloading episodes for the current podcast to reflect any status changes
-        if (podcastSelect.value) {
-            loadEpisodesForPodcast(podcastSelect.value);
+      episode = await fetchEpisode(episodeId);
+    } catch (e) {}
+
+    // Check for missing required fields
+    const missingFields = getMissingRequiredFields(podcast, episode, selectedPlatforms);
+    if (missingFields.length > 0) {
+      showMissingFieldsModal(missingFields, podcast, episode, async () => {
+        // After user fills missing fields, proceed to publish
+        await doPublish();
+      });
+      return;
+    }
+
+    // Proceed to publish if nothing missing
+    await doPublish();
+
+    async function doPublish() {
+      publishNowBtn.disabled = true;
+      publishNowBtn.textContent = "Publishing...";
+      addToLog(`Starting publishing process for episode ID: ${episodeId}`);
+      addToLog(`Selected platforms: ${selectedPlatforms.join(", ")}`);
+
+      try {
+        const result = await publishEpisode(episodeId, selectedPlatforms, null);
+        if (result.success) {
+          addToLog(`Successfully published episode: ${result.message}`);
+          showNotification("Success", `Episode published successfully! ${result.message || ''}`, "success");
+          episodeDetailsPreview.classList.add("hidden");
+          episodeSelect.value = "";
+          if (podcastSelect.value) {
+              loadEpisodesForPodcast(podcastSelect.value);
+          }
+        } else {
+          addToLog(`Publishing failed: ${result.error || "Unknown error"}`);
+          showNotification("Error", `Failed to publish episode. ${result.error || "Unknown error"}`, "error");
         }
-      } else {
-        addToLog(`Publishing failed: ${result.error || "Unknown error"}`);
-        showNotification("Error", `Failed to publish episode. ${result.error || "Unknown error"}`, "error");
+      } catch (error) {
+        console.error("[publish.js] Error publishing episode:", error);
+        addToLog(`Critical error during publishing: ${error.message}`);
+        showNotification("Error", `An error occurred during publishing: ${error.message}`, "error");
+      } finally {
+        publishNowBtn.disabled = false;
+        publishNowBtn.textContent = "Publish Now";
       }
-    } catch (error) {
-      console.error("[publish.js] Error publishing episode:", error);
-      addToLog(`Critical error during publishing: ${error.message}`);
-      showNotification("Error", `An error occurred during publishing: ${error.message}`, "error");
-    } finally {
-      publishNowBtn.disabled = false;
-      publishNowBtn.textContent = "Publish Now";
     }
   });
 
   // Initial load
   loadPodcasts();
+
+  // Cache podcasts for validation
+  async function cachePodcasts() {
+    const podcastData = await fetchPodcasts();
+    window._publishPodcastsCache = Array.isArray(podcastData.podcast)
+      ? podcastData.podcast
+      : (Array.isArray(podcastData.podcasts) ? podcastData.podcasts : []);
+  }
+  cachePodcasts();
 });

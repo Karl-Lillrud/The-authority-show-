@@ -267,6 +267,7 @@ function setDynamicPageTitle() {
       "/episode-to-do": "Episode To-Do",
       "/enterprise": "Enterprise",
       "/lia": "LIA", // Add this line
+      "/publish": "Publish", // <-- Add this line for the publish endpoint
     };
 
     const currentPath = window.location.pathname;

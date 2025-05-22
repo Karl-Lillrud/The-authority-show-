@@ -1,14 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, current_app, Response, send_file
-from backend.services.publishService import ( # Corrected import path
-    create_sas_upload_url,
-    save_episode_to_db,
-    trigger_encoding_job,
-    generate_rss_feed,
-    record_download,
-    notify_spotify,
-    notify_google_podcasts,
-    get_episode_audio_stream
-)
+from backend.services.publishService import PublishService  # Only import the class
 from bson.objectid import ObjectId
 import datetime
 
@@ -30,7 +21,9 @@ def get_sas_url():
         return jsonify({"error": "Missing filename or contentType"}), 400
 
     try:
-        upload_url, blob_url = create_sas_upload_url(filename, content_type)
+        # Use a method on PublishService for SAS URL generation
+        publish_service = PublishService()
+        upload_url, blob_url = publish_service.create_sas_upload_url(filename, content_type)
         return jsonify({"uploadUrl": upload_url, "blobUrl": blob_url})
     except Exception as e:
         current_app.logger.error(f"SAS URL generation failed: {e}")

@@ -266,3 +266,19 @@ class PublishService:
     # feeds = [{"title": podcast["podName"], "url": f"https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/users/{podcast['ownerId']}/podcasts/{podcast['_id']}/rss/feed.xml"} for podcast in all_podcasts]
     # index_html = generate_rss_index(feeds)
     # Upload index_html to your public /rss/ folder if you want a directory listing.
+
+    def create_sas_upload_url(self, filename, content_type):
+        blob_service_client = BlobServiceClient.from_connection_string(self.azure_conn_str)
+        blob_name = f"uploads/{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{filename}"
+        sas_token = blob_service_client.generate_blob_sas(
+            account_name=blob_service_client.account_name,
+            container_name=self.rss_blob_container,
+            blob_name=blob_name,
+            account_key=blob_service_client.credential.account_key,
+            permission="w",
+            expiry=datetime.datetime.utcnow() + datetime.timedelta(minutes=15),
+            content_type=content_type,
+        )
+        upload_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{self.rss_blob_container}/{blob_name}?{sas_token}"
+        blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{self.rss_blob_container}/{blob_name}"
+        return upload_url, blob_url
