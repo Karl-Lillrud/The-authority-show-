@@ -119,49 +119,10 @@
               </div>
             </div>
 
-    <!-- Workspace Tab -->
-    <div id="workspace-tab" class="tab-pane">
-      <div class="card">
-        <div class="card-content">
-          <h2 class="section-title">AI Editing Tools</h2>
-          <div id="workspaceArea" class="workspace-area">
-            <div class="tabs-list workspace-tabs">
-              <button class="workspace-tab-btn active" data-workspace="transcription">Transcription</button>
-              <button class="workspace-tab-btn" data-workspace="audio">Audio</button>
-              <button class="workspace-tab-btn" data-workspace="video">Video</button>
-            </div>
-            <div id="content">
-              <!-- AI editing tools will be dynamically loaded here -->
-            </div>
-          </div>
-        </div>
+      <!-- Workspace Tab -->
+      <div id="workspace-tab" class="tab-pane">
+        <iframe src="/transcription/ai_edits_index?episodeId={{ episode_id }}" style="width: 100%; height: 1000px; border: none;"></iframe>
       </div>
-    </div>
-          </div>
-        </div>
-      </div>  
-
-      <!-- Right Sidebar (Timeline) -->
-      <div id="timelineSidebar" class="sidebar right-sidebar">
-        <div class="card">
-          <div class="card-content">
-            <div class="tab-header">
-              <h2 class="section-title">
-                <i class="fas fa-clock"></i>
-                Timeline
-              </h2>
-            </div>
-            <div class="timeline-badges">
-              <span class="badge">Recording: <span id="timelineRecordingDate">2025-05-01</span></span>
-              <span class="badge">Release: <span id="timelineReleaseDate">2025-05-08</span></span>
-            </div>
-            <div id="timeline" class="timeline">
-              <!-- Timeline will be populated by JavaScript -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
   <!-- Task Detail Modal -->
   <div id="taskModal" class="modal">

@@ -160,6 +160,20 @@ class PodcastRepository:
             )
             for podcast in podcasts:
                 podcast["_id"] = str(podcast["_id"])
+                # Set image URL from RSS feed if available
+                if podcast.get("rssFeed"):
+                    try:
+                        rss_data, status_code = self.rss_service.fetch_rss_feed(podcast["rssFeed"])
+                        if status_code == 200 and rss_data and rss_data.get("imageUrl"):
+                            # Update the podcast in the database with the RSS image URL
+                            self.collection.update_one(
+                                {"_id": podcast["_id"]},
+                                {"$set": {"rssImage": rss_data["imageUrl"]}}
+                            )
+                            podcast["rssImage"] = rss_data["imageUrl"]
+                            logger.info(f"Updated podcast {podcast['_id']} with RSS image URL: {rss_data['imageUrl']}")
+                    except Exception as e:
+                        logger.error(f"Failed to fetch RSS data for podcast {podcast['_id']}: {e}")
                 # Ensure logoUrl is set (for frontend image display)
                 if not podcast.get("logoUrl") and podcast.get("imageUrl"):
                     podcast["logoUrl"] = podcast["imageUrl"]
@@ -190,6 +204,18 @@ class PodcastRepository:
                 return {"error": "Podcast not found or unauthorized"}, 404
 
             podcast["_id"] = str(podcast["_id"])
+            
+            # Set image URL from RSS feed if available
+            if podcast.get("rssFeed"):
+                try:
+                    rss_data, status_code = self.rss_service.fetch_rss_feed(podcast["rssFeed"])
+                    if status_code == 200 and rss_data and rss_data.get("imageUrl"):
+                        # Use the RSS image URL directly
+                        podcast["imageUrl"] = rss_data["imageUrl"]
+                        logger.info(f"Using RSS image URL for podcast {podcast_id}: {rss_data['imageUrl']}")
+                except Exception as e:
+                    logger.error(f"Failed to fetch RSS data for podcast {podcast_id}: {e}")
+            
             # Ensure logoUrl is set (for frontend image display)
             if not podcast.get("logoUrl") and podcast.get("imageUrl"):
                 podcast["logoUrl"] = podcast["imageUrl"]

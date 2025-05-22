@@ -408,7 +408,15 @@ def get_isolated_audio():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@transcription_bp.route("/ai_edits_index", methods=["GET"])
+def render_ai_edits_index():
+    episode_id = request.args.get("episodeId")
+    if not episode_id:
+        return "Missing episodeId", 400
+    return render_template("ai_edits/ai_edits_index.html", episode_id=episode_id)
 
+# Full AI edit workspace
 @transcription_bp.route("/ai_edits", methods=["GET"])
 def render_ai_edits():
     episode_id = request.args.get("episodeId")
@@ -417,14 +425,10 @@ def render_ai_edits():
         return jsonify({"error": "Invalid or missing episode ID"}), 400
 
     logger.info(f"Rendering AI Edits page for episode ID: {episode_id}")
-    try:
-        return render_template("ai_edits/ai_edits.html", 
-                               episode_id=episode_id, 
-                               user_id=session.get("user_id"))
-    except Exception as e:
-        logger.error(f"Error rendering ai_edits.html: {e}")
-        return jsonify({"error": "Failed to render AI Edits page"}), 500
-    
+    return render_template("ai_edits/ai_edits.html", 
+                           episode_id=episode_id, 
+                           user_id=session.get("user_id"))
+
 @transcription_bp.route("/analyze_sentiment_sfx", methods=["POST"])
 def analyze_sentiment_sfx():
     data = request.json

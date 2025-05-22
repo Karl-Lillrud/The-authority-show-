@@ -77,86 +77,46 @@ def delete_episode(episode_id):
     return jsonify(response), status
 
 
-@episode_bp.route("/update_episodes/<episode_id>", methods=["PUT"])
+@episode_bp.route("/episodes/<episode_id>", methods=["PUT"])
 def update_episode(episode_id):
-    # --- Start Debug Logging ---
+    # --- Debug Logging ---
     logger.debug(f"Update request received for episode {episode_id}")
-    logger.debug(f"Request Headers: {request.headers}")
+    logger.debug(f"Request Headers: {dict(request.headers)}")
     logger.debug(f"Request Content-Type: {request.content_type}")
     logger.debug(f"Request Content-Length: {request.content_length}")
     # --- End Debug Logging ---
 
+    # Check authentication
     if not hasattr(g, "user_id") or not g.user_id:
         logger.warning(f"Unauthorized attempt to update episode {episode_id}: No user_id in g")
         return jsonify({"error": "User not authenticated"}), 401
 
-    # Check if the episode exists and belongs to the user
-    try:
-        existing_episode, _ = episode_repo.get_episode(episode_id, g.user_id)
-        if not existing_episode or existing_episode.get("error"):
-            logger.warning(f"Episode {episode_id} not found or user {g.user_id} not authorized.")
-            return jsonify({"error": "Episode not found or not authorized"}), 404
-    except Exception as e:
-        logger.error(f"Error checking episode existence for {episode_id}: {e}", exc_info=True)
-        return jsonify({"error": "Failed to verify episode"}), 500
-
-    data = {}
-    audio_file = None
-
+    # Ensure content type is multipart/form-data
     content_type = request.content_type
-
-    if content_type and content_type.startswith("multipart/form-data"):
-        logger.debug("Processing multipart/form-data for episode update")
-        data = request.form.to_dict()
-        if "audioFile" in request.files:
-            audio_file = request.files["audioFile"]
-            logger.debug(f"Audio file '{audio_file.filename}' received in multipart form.")
-
-    elif content_type and content_type == "application/json":
-        logger.debug("Processing application/json for episode update")
-        data = request.get_json() or {}
-
-    else:
+    if not content_type or not content_type.startswith("multipart/form-data"):
         logger.warning(f"Unsupported content type for episode update: {content_type}")
-        return jsonify({"error": f"Unsupported content type: {content_type}"}), 415
+        return jsonify({"error": f"Expected multipart/form-data, received {content_type or 'none'}"}), 415
 
+    # Extract form data and audio file
+    data = request.form.to_dict()
+    audio_file = request.files.get("audioFile")
+    logger.debug(f"Form data: {data}")
+    logger.debug(f"Audio file: {audio_file.filename if audio_file else None}")
+
+    # Validate input
     if not data and not audio_file:
-        logger.warning("No data or audio file provided for episode update.")
+        logger.warning("No data or audio file provided for episode update")
         return jsonify({"error": "No data or audio file provided"}), 400
 
-    if audio_file and audio_file.filename != "":
-        filename = secure_filename(audio_file.filename)
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
-        audio_file.save(file_path)
-        data["audioUrl"] = url_for("episode_bp.uploaded_audio_file", filename=filename, _external=True)
-        data["fileSize"] = os.path.getsize(file_path)
-        data["fileType"] = audio_file.mimetype
-        logger.info(f"Audio file saved: {file_path}, URL: {data['audioUrl']}")
-
-    elif "audioFile" in request.files and request.files["audioFile"].filename == "":
-        logger.debug("audioFile field present in form but no file was uploaded.")
-
-    if "duration" in data and data["duration"]:
-        try:
-            data["duration"] = int(data["duration"])
-        except (ValueError, TypeError):
-            logger.warning(f"Invalid duration value '{data['duration']}', setting to None.")
-            data["duration"] = None
-    elif "duration" in data and not data["duration"]:
-        logger.debug("Duration field is empty, setting to None.")
-        data["duration"] = None
-
-    logger.debug(f"Calling episode_repo.update_episode with final data: {data}")
-    response, status = episode_repo.update_episode(episode_id, g.user_id, data)
-
-    return jsonify(response), status
-
-
-@episode_bp.route("/uploads/episode_audio/<filename>")
-def uploaded_audio_file(filename):
-    logger.debug(f"Serving uploaded audio file: {filename} from {UPLOAD_FOLDER}")
-    return send_from_directory(UPLOAD_FOLDER, filename)
-
+    try:
+        # Pass data and audio file to repository
+        response, status = episode_repo.update_episode(episode_id, g.user_id, data, audio_file=audio_file)
+        if status == 200:
+            logger.info(f"Episode {episode_id} updated successfully by user {g.user_id}")
+        return jsonify(response), status
+    except Exception as e:
+        logger.error(f"Error updating episode {episode_id}: {e}", exc_info=True)
+        return jsonify({"error": f"Failed to update episode: {str(e)}"}), 500
 
 @episode_bp.route("/episode/<episode_id>", methods=["GET"])
 def episode_detail(episode_id):

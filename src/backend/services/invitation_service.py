@@ -1,6 +1,8 @@
 from flask import url_for
 from backend.database.mongo_connection import collection
-from backend.utils.email_utils import send_guest_invitation_email
+from backend.utils.email_utils import send_email, send_guest_invitation_email
+import uuid
+from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
@@ -73,3 +75,43 @@ class InvitationService:
         except Exception as e:
             logger.error(f"Failed to send guest invitation: {e}", exc_info=True)
             return {"error": f"Failed to send guest invitation: {str(e)}"}, 500
+
+    @staticmethod
+    def send_session_invitation(email, episode_id):
+        """
+        Generates an invitation token, saves it in the database, and sends an email to the guest.
+        """
+        try:
+            # Generate a unique token for the invitation
+            invite_token = str(uuid.uuid4())
+            expiration_time = datetime.utcnow() + timedelta(hours=24)  # Token expires in 24 hours
+
+            # Save the invitation in the "invites" table
+            invitation = {
+                "email": email,
+                "episode_id": episode_id,
+                "invite_token": invite_token,
+                "created_at": datetime.utcnow(),
+                "expires_at": expiration_time,
+                "status": "pending"
+            }
+            collection.database.Invitations.insert_one(invitation)
+
+            # Generate the link to join the session
+            join_url = url_for(
+                "recording_studio_bp.recording_studio",
+                _external=True,
+                token=invite_token
+            )
+
+            # Send the invitation email
+            subject = "You're Invited to Join the Recording Session"
+            body = f"Click the link below to join the session:\n\n{join_url}"
+            send_email(email, subject, body)
+
+            logger.info(f"Session invitation email sent to {email}")
+            return {"message": "Invitation sent successfully", "invite_token": invite_token}, 201
+
+        except Exception as e:
+            logger.error(f"Failed to send session invitation: {e}", exc_info=True)
+            return {"error": f"Failed to send session invitation: {str(e)}"}, 500

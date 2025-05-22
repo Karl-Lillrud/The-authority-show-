@@ -68,23 +68,27 @@ function showManualGuestPopup(selectElement) {
   const popupContent = document.createElement("div");
   popupContent.className = "form-box";
   popupContent.innerHTML = `
-  <span id="close-manual-guest-popup" class="close-btn">&times;</span>
-  <h2 class="form-title">Add Guest Manually</h2>
-  <form id="manual-guest-form">
-    <div class="field-group full-width">
-      <label for="manual-guest-name">Guest Name</label>
-      <input type="text" id="manual-guest-name" name="guestName" required />
-    </div>
-    <div class="field-group full-width">
-      <label for="manual-guest-email">Guest Email</label>
-      <input type="email" id="manual-guest-email" name="guestEmail" required />
-    </div>
-    <div class="form-actions">
-      <button type="button" id="cancel-manual-guest" class="cancel-btn">Cancel</button>
-      <button type="submit" class="save-btn">Add Guest</button>
-    </div>
-  </form>
-`;
+    <span id="close-manual-guest-popup" class="close-btn">&times;</span>
+    <h2 class="form-title">Add Guest Manually</h2>
+    <form id="manual-guest-form">
+      <div class="field-group full-width">
+        <label for="manual-guest-name">Guest Name</label>
+        <input type="text" id="manual-guest-name" name="guestName" required />
+      </div>
+      <div class="field-group full-width">
+        <label for="manual-guest-email">Guest Email</label>
+        <input type="email" id="manual-guest-email" name="guestEmail" required />
+      </div>
+      <div class="field-group full-width">
+        <label for="manual-guest-calendar">Google Calendar Event Link (Optional)</label>
+        <input type="url" id="manual-guest-calendar" name="guestCalendar" placeholder="Enter Google Calendar event link (optional)" />
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancel-manual-guest" class="cancel-btn">Cancel</button>
+        <button type="submit" class="save-btn">Add Guest</button>
+      </div>
+    </form>
+  `;
   popup.appendChild(popupContent);
   document.body.appendChild(popup);
 
@@ -98,63 +102,60 @@ function showManualGuestPopup(selectElement) {
     document.body.removeChild(popup);
   });
 
-  // Manual guest form submission using addGuestRequest
+  // Manual guest form submission
   popup
     .querySelector("#manual-guest-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
-      const guestName = document
-        .getElementById("manual-guest-name")
-        .value.trim();
-      const guestEmail = document
-        .getElementById("manual-guest-email")
-        .value.trim();
+      const guestName = document.getElementById("manual-guest-name").value.trim();
+      const guestEmail = document.getElementById("manual-guest-email").value.trim();
+      const guestCalendar = document.getElementById("manual-guest-calendar").value.trim();
       const podcastId =
         shared.selectedPodcastId ||
-        document.getElementById("podcast-select")?.value; // Use selectedPodcastId if available
+        document.getElementById("podcast-select")?.value;
 
-      console.log("Guest Name:", guestName); // Log guest name
-      console.log("Guest Email:", guestEmail); // Log guest email
-      console.log("Podcast ID:", podcastId); // Log podcast ID
+      console.log("Guest Name:", guestName);
+      console.log("Guest Email:", guestEmail);
+      console.log("Google Calendar Link:", guestCalendar || "Not provided");
+      console.log("Podcast ID:", podcastId);
 
       if (guestName && guestEmail && podcastId) {
         try {
-          const guest = await addGuestRequest({
+          const guestData = {
             name: guestName,
             email: guestEmail,
-            podcastId
-          });
+            podcastId,
+            calendarLink: guestCalendar || null, // Include optional calendar link
+          };
 
-          // Check for the success message in the response from the backend
+          const guest = await addGuestRequest(guestData);
+
           if (guest && guest.message === "Guest added successfully") {
             document.body.removeChild(popup);
-            // Fetch and render the updated guest list
             await renderGuestSelection(selectElement, guest.guest_id);
-            showNotification("Success", "Guest added successfully!", "success"); // Success notification
+            showNotification("Success", "Guest added successfully!", "success");
           } else {
-            // Handle failure from the backend
             showNotification(
               "Error",
               guest.error || "Failed to add guest.",
               "error"
-            ); // Error notification
+            );
           }
         } catch (error) {
           console.error("Error adding guest:", error);
-          showNotification("Error", "Failed to add guest.", "error"); // Show error notification
+          showNotification("Error", "Failed to add guest.", "error");
         }
       } else {
-        // Replace alert with showNotification
         showNotification(
           "Error",
-          "Please fill in all required fields.",
+          "Please fill in all required fields (Name, Email, Podcast).",
           "error"
         );
       }
     });
 }
 
-async function showAddGuestPopup() {
+export async function showAddGuestPopup() {
   console.log("%c[guest-functions.js] showAddGuestPopup() CALLED.", "color: blue; font-weight: bold;");
   const popup = document.getElementById("guest-popup");
 
@@ -248,17 +249,31 @@ async function loadEpisodesForPodcast(podcastId, episodeSelectElement) {
   try {
     const episodes = await fetchEpisodesByPodcast(podcastId);
     if (episodes && episodes.length > 0) {
-      episodeSelectElement.innerHTML = '<option value="">Select Episode</option>'; 
+      // Sort episodes by created_at or createdAt (handle both cases)
+      episodes.sort((a, b) => {
+        const dateA = new Date(a.created_at || a.createdAt);
+        const dateB = new Date(b.created_at || b.createdAt);
+        return dateB - dateA; // Sort in descending order (newest first)
+      });
+
+      episodeSelectElement.innerHTML = '<option value="">Select Episode</option>';
       episodes.forEach((episode) => {
         const option = document.createElement("option");
-        option.value = episode._id; 
-        option.textContent = episode.title;
+        option.value = episode._id;
+        // Append [Published] to published episodes
+        option.textContent = episode.status && episode.status.toLowerCase() === "published" 
+          ? `${episode.title} [Published]` 
+          : episode.title;
+        // Apply class based on status
+        option.className = episode.status && episode.status.toLowerCase() === "published" 
+          ? "published" 
+          : "non-published";
         episodeSelectElement.appendChild(option);
       });
       episodeSelectElement.disabled = false;
     } else {
       episodeSelectElement.innerHTML = '<option value="">No Episodes Found for this Podcast</option>';
-      episodeSelectElement.disabled = true; 
+      episodeSelectElement.disabled = true;
     }
   } catch (error) {
     console.error(`[guest-functions.js] Error fetching episodes for podcast ${podcastId}:`, error);
@@ -267,7 +282,6 @@ async function loadEpisodesForPodcast(podcastId, episodeSelectElement) {
     showNotification("Error", "Could not load episodes.", "error");
   }
 }
-
 
 // Function to close the Add Guest popup
 function closeAddGuestPopup() {

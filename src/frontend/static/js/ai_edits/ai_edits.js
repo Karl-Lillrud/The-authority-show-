@@ -34,6 +34,7 @@ window.acceptSfx = acceptSfx;
 window.rejectSfx = rejectSfx;
 window.replaceSfx = replaceSfx;
 
+
 window.CURRENT_USER_ID = localStorage.getItem("user_id");
 const urlParams = new URLSearchParams(window.location.search);
 const episodeIdFromUrl = urlParams.get("episodeId");
@@ -62,10 +63,14 @@ const CREDIT_COSTS = {
     ai_intro_outro: 800,
     ai_intro_outro_audio: 500,
 };
+const RegionsPlugin = window.WaveSurferRegions;
+if (!RegionsPlugin) {
+  console.error("Regions plugin not loaded — did you include wavesurfer.regions.min.js?");
+}
 
 function labelWithCredits(text, key) {
     const cost = CREDIT_COSTS[key];
-    return `${text} <span style="color: gray; font-size: 0.9em;">(${cost} credits)</span>`;
+    return `${text} <span class="credit-cost">${cost} credits</span>`;
 }
 
 function showTab(tabName) {
@@ -77,8 +82,20 @@ function showTab(tabName) {
     
     // Add active class to clicked button
     const clickedButton = document.querySelector(`.workspace-tab-btn[data-workspace="${tabName}"]`);
-    if (clickedButton) {
-        clickedButton.classList.add('active');
+    
+    // Add active class to the clicked button
+    if (tabName === 'transcription') {
+      document.getElementById('tab-transcription').classList.add('active');
+      document.getElementById('tab-audio').classList.remove('active');
+      document.getElementById('tab-video').classList.remove('active');
+    } else if (tabName === 'audio') {
+      document.getElementById('tab-transcription').classList.remove('active');
+      document.getElementById('tab-audio').classList.add('active');
+      document.getElementById('tab-video').classList.remove('active');
+    } else if (tabName === 'video') {
+      document.getElementById('tab-transcription').classList.remove('active');
+      document.getElementById('tab-audio').classList.remove('active');
+      document.getElementById('tab-video').classList.add('active');
     }
 
     const content = document.getElementById('content');
@@ -86,7 +103,9 @@ function showTab(tabName) {
 
     if (tabName === 'transcription') {
         content.innerHTML = `
-            <h2>🎙 AI-Powered Transcription</h2>
+          <div class="content-wrapper">
+            <h1>AI-Powered Transcription</h1>
+
             <input type="file" id="fileUploader" accept="audio/*,video/*">
             <div class="button-with-help">
                 <button class="btn ai-edit-button" onclick="transcribe()">
@@ -97,10 +116,13 @@ function showTab(tabName) {
             <div class="result-field">
                 <pre id="transcriptionResult"></pre>
             </div>
-    
+
+          </div>
+
+          <div class="content-wrapper">
             <div id="enhancementTools";">
-                <hr/>
-                <h3>Enhancement Tools</h3>
+                <h2>Enhancement Tools</h2>
+
     
                 <div class="result-group">
                     <div class="button-with-help">
@@ -115,7 +137,9 @@ function showTab(tabName) {
                 </div>
 
                 <div class="result-group">
-                    <label for="languageSelect">Language:</label>
+                    <label for="languageSelect">
+                      <strong>Language:</strong>
+                    </label>
                     <select id="languageSelect" class="input-field">
                         <option value="English">English</option>
                         <option value="Spanish">Spanish</option>
@@ -183,8 +207,8 @@ function showTab(tabName) {
                 <div class="result-group">
                     <label for="quoteImageMethodSelect"><strong>Quote Image Style:</strong></label>
                     <select id="quoteImageMethodSelect" class="input-field" style="margin-bottom: 0.5rem;">
-                        <option value="local">🖼 Local Template</option>
-                        <option value="dalle">🎨 DALL·E AI Image</option>
+                        <option value="local">Local Template</option>
+                        <option value="dalle">DALL·E AI Image</option>
                     </select>
                     <button class="btn ai-edit-button" onclick="generateQuoteImages()">
                         ${labelWithCredits("Generate Quote Images", "ai_quote_images")}
@@ -196,6 +220,7 @@ function showTab(tabName) {
                 </div>
     
                 <div class="result-group">
+                    <label><strong>Guest Name:</strong></label>
                     <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field">
                     <div class="button-with-help">
                         <button class="btn ai-edit-button" onclick="runOsintSearch()">
@@ -226,21 +251,22 @@ function showTab(tabName) {
                     <div class="result-field" id="introOutroAudioResult"></div>
                 </div>
             </div>
+          </div>
         `;
     }else if (tabName === 'audio') {
         content.innerHTML = `
-            <h2>AI Audio Enhancement</h2>
+          <div class="content-wrapper">
+            <h1>AI Audio Enhancement</h1>
             <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
             <div id="originalAudioContainer" style="display: none; margin-bottom: 1rem;">
                 <p><strong>Original Audio</strong></p>
-                <audio id="originalAudioPlayer" controls style="width: 100%"></audio>
             </div>
 
-            <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 12px;">
+            <div class="ap-container" style="margin-top: 23px; padding: 1.5rem; padding-bottom: 1rem; border: 1px solid #ddd; border-radius: 12px; width: 100%;">
                 <h3>Choose Audio Processing Method</h3>
-                <p style="margin-bottom: 1rem;">Select one of the following enhancements:</p>
+                <p style="margin-bottom: 20px;">Select one of the following enhancements:</p>
 
-            <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
+            <div id="voiceIsolationSection" style="margin-bottom: 10px;">
                 <h4><strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
                 <div class="button-with-help">
                     <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
@@ -272,10 +298,11 @@ function showTab(tabName) {
                 </div>
             </div>
             </div>
+          </div>
 
+          <div class="content-wrapper">
             <div id="audioAnalysisSection">
-            <hr/>
-            <h3>AI Analysis</h3>
+            <h2>AI Analysis</h2>
 
             <label for="audioSourceSelectAnalysis"><strong>Audio Source:</strong></label>
             <select id="audioSourceSelectAnalysis" class="input-field" style="margin-bottom: 1rem;">
@@ -307,20 +334,21 @@ function showTab(tabName) {
                 <div id="soundEffectTimeline"></div>
             </div>
 
-            <div class="button-with-help" style="margin-top: 1rem;">
+            <div class="button-with-help">
                 <a id="downloadEnhanced"
                 class="btn ai-edit-button"
                 download="processed_audio.wav"
-                style="display: none;">
+                style="display: none; margin-top: 1rem;">
                 Download Processed Audio
                 </a>
                 
             </div>
             </div>
+          </div>
 
+          <div class="content-wrapper">
             <div id="audioCuttingSection">
-            <hr/>
-            <h3>Audio Cutting</h3>
+            <h2>Audio Cutting</h2>
 
             <label for="audioSourceSelectCutting"><strong>Audio Source:</strong></label>
             <select id="audioSourceSelectCutting" class="input-field" style="margin-bottom: 1rem;">
@@ -328,13 +356,22 @@ function showTab(tabName) {
                 <option value="isolated">Isolated</option>
                 <option value="original">Original</option>
             </select>
-            <br/>
-
-            <label>Start:
-                <input type="number" id="startTime" min="0" step="0.1" class="input-field">
+            <button class="btn ai-edit-button" id="loadCuttingWaveformBtn" style="margin-bottom: 1rem;">
+                Load Audio Waveform
+            </button>
+            
+            <div id="waveformCut" style="margin: 1rem 0; height: 128px;"></div>
+            
+            <button id="cut-play-pause" class="btn ai-edit-button" style="display:none; margin-bottom:1rem;">
+            Play
+            </button>
+            <label style="display: block;">
+            Start (s):
+            <input id="cut-start" type="number" step="0.01" class="input-field" style="width:6em; padding: 5px; margin-left: 5px;">
             </label>
-            <label>End:
-                <input type="number" id="endTime" min="0" step="0.1" class="input-field">
+            <label style="margin-top: 10px; margin-bottom: 5px;">
+            End (s):
+            <input id="cut-end" type="number" step="0.01" class="input-field" style="width:6em; padding: 5px; margin-left: 5px;">
             </label>
 
             <div class="button-with-help">
@@ -347,19 +384,20 @@ function showTab(tabName) {
                 <div id="cutResult"></div>
             </div>
 
-            <div class="button-with-help" style="margin-top: 1rem;">
+            <div class="button-with-help">
                 <a id="downloadCut"
                 class="btn ai-edit-button"
                 download="cut_audio.wav"
-                style="display: none;">
+                style="display: none; margin-top: 1rem;">
                 Download Cut
                 </a>
             </div>
             </div>
+          </div>
 
+          <div class="content-wrapper">
             <div id="aiCuttingSection">
-            <hr/>
-            <h3>AI Cutting + Transcript</h3>
+            <h2>AI Cutting + Transcript</h2>
 
             <label for="audioSourceSelectAICut"><strong>Audio Source:</strong></label>
             <select id="audioSourceSelectAICut" class="input-field" style="margin-bottom: 1rem;">
@@ -367,7 +405,7 @@ function showTab(tabName) {
                 <option value="isolated">Isolated</option>
                 <option value="original">Original</option>
             </select>
-
+            
             <div class="button-with-help">
                 <button class="btn ai-edit-button" onclick="aiCutAudio()">
                 ${labelWithCredits("Run AI Cut", "ai_audio_cutting")}
@@ -383,16 +421,47 @@ function showTab(tabName) {
                 <pre id="aiSuggestedCuts"></pre>
             </div>
             </div>
+          </div>
         `;
+           // Automatically trigger waveform rendering after loading audio tab
+            
+        setTimeout(() => {
+            const cuttingSelect = document.getElementById("audioSourceSelectCutting");
+            if (cuttingSelect && rawAudioBlob) {
+                cuttingSelect.value = "original";
+                cuttingSelect.dispatchEvent(new Event("change"));
+            }
+        }, 0);
+        const loadCutBtn = document.getElementById("loadCuttingWaveformBtn");
+        if (loadCutBtn) {
+            loadCutBtn.onclick = () => {
+                const source = document.getElementById("audioSourceSelectCutting").value;
+                let blob = null;
+
+                if (source === "original") blob = rawAudioBlob;
+                else if (source === "enhanced") blob = enhancedAudioBlob;
+                else if (source === "isolated") blob = isolatedAudioBlob;
+
+                document.getElementById('waveformCut').style.display = "block";
+                if (blob) {
+                    initWaveformCutting(blob);
+                } else {
+                    document.getElementById("waveformCut").innerHTML =
+                        "<p>No audio available for the selected source.</p>";
+                }
+            };
+        }
+
     } else if (tabName === 'video') {
         content.innerHTML = `
-            <h2>AI Video Enhancement</h2>
+          <div class="content-wrapper">
+            <h1>AI Video Enhancement</h1>
             <input type="file" id="videoUploader" accept="video/*" onchange="previewOriginalVideo()">
             <div id="originalVideoContainer" style="display: none; margin-bottom: 1rem;">
                 <p><strong>Original Video</strong></p>
                 <video id="originalVideoPlayer" controls style="width: 100%"></video>
             </div>
-            <div class="button-group" style="margin-bottom: 1rem;">
+            <div class="button-group">
                 <div class="button-with-help">
                     <button class="btn ai-edit-button" id="enhanceVideoBtn" onclick="enhanceVideo()">
                         ${labelWithCredits("Enhance Video", "video_enhancement")}
@@ -404,19 +473,20 @@ function showTab(tabName) {
                 </button>
             </div>
             <div id="videoResult"></div>
-            <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none;">
+            <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none; margin-top: 1rem;">
                 Download Enhanced Video
             </a>
+          </div>
         `;
     }
-}
+  }
 
-// Add event listeners when the page loads
-document.addEventListener('DOMContentLoaded', function() {
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Workspace tab switching
     const workspaceButtons = document.querySelectorAll('.workspace-tab-btn');
-    
     workspaceButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const tabName = this.getAttribute('data-workspace');
             showTab(tabName);
         });
@@ -424,7 +494,120 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Show transcription tab by default
     showTab('transcription');
+
+    // Prevent double-click/spam-clicking to avoid duplicate credit usage
+    document.body.addEventListener("click", function (event) {
+        const button = event.target.closest("button.ai-edit-button");
+        if (!button || button.disabled) return;
+
+        button.disabled = true;
+        button.classList.add("disabled");
+
+        setTimeout(() => {
+            button.disabled = false;
+            button.classList.remove("disabled");
+        }, 1000);
+    }, true);
+
+    // Audio Cutting: Render waveform + drag to select cut region
+    const cuttingSource = document.getElementById("audioSourceSelectCutting");
+    if (cuttingSource) {
+        cuttingSource.addEventListener("change", function () {
+            const source = this.value;
+            let blob = null;
+
+            if (source === "original") blob = rawAudioBlob;
+            if (source === "enhanced") blob = enhancedAudioBlob;
+            if (source === "isolated") blob = isolatedAudioBlob;
+
+            if (blob) {
+                initWaveformCutting(blob);
+            } else {
+                document.getElementById("waveformCut").innerHTML =
+                    "<p>No audio available for the selected source.</p>";
+            }
+        });
+    }
 });
+
+let waveformCut = null;
+let selectedRegion = null;
+
+function initWaveformCutting(blob) {
+    // Clean up any existing instance
+    if (waveformCut) {
+        waveformCut.destroy();
+        document.getElementById("waveformCut").innerHTML = "";
+    }
+    // Create a new WaveSurfer instance with the Regions plugin
+    waveformCut = WaveSurfer.create({
+        container: "#waveformCut",
+        waveColor: "#ccc",
+        progressColor: "#f69229",
+        height: 128,
+        barWidth: 2,
+        responsive: true,
+        backend: "WebAudio",
+        plugins: [
+            RegionsPlugin.create({
+                dragSelection: true
+            })
+        ]
+    });
+
+    // Load the audio from the blob
+    waveformCut.load(URL.createObjectURL(blob));
+
+    waveformCut.on("ready", () => {
+        // Add a default region
+        const duration = waveformCut.getDuration();
+        selectedRegion = waveformCut.addRegion({
+            start: 0,
+            end: Math.min(5, duration),
+            color: "rgba(255, 87, 34, 0.3)",
+            drag: true,
+            resize: true
+        });
+
+        // Show & wire the Play/Pause button
+        const btn = document.getElementById("cut-play-pause");
+        btn.style.display = "inline-block";
+        btn.onclick = () => {
+        waveformCut.isPlaying() ? waveformCut.pause() : waveformCut.play();
+        };
+        waveformCut.on("play",  () => { btn.textContent = "Pause"; });
+        waveformCut.on("pause", () => { btn.textContent = "Play"; });
+
+
+        // Sync numeric inputs with region
+        const startInput = document.getElementById("cut-start");
+        const endInput   = document.getElementById("cut-end");
+        startInput.value = selectedRegion.start.toFixed(2);
+        endInput.value   = selectedRegion.end.toFixed(2);
+
+        startInput.oninput = () => {
+        const v = parseFloat(startInput.value);
+        if (!isNaN(v) && v < selectedRegion.end) {
+            selectedRegion.update({ start: v });
+        }
+        };
+        endInput.oninput = () => {
+        const v = parseFloat(endInput.value);
+        if (!isNaN(v) && v > selectedRegion.start) {
+            selectedRegion.update({ end: v });
+        }
+        };
+    });
+
+    // Keep inputs in sync whenever the user drags/resizes the region
+    waveformCut.on("region-updated", (region) => {
+        selectedRegion = region;
+        document.getElementById("cut-start").value = region.start.toFixed(2);
+        document.getElementById("cut-end").value   = region.end.toFixed(2);
+    });
+}
+
+
 
 let rawTranscript = "";
 let fullTranscript = "";
@@ -432,6 +615,7 @@ let fullTranscript = "";
 async function transcribe() {
     const fileInput = document.getElementById('fileUploader');
     const resultContainer = document.getElementById('transcriptionResult');
+    
     const file = fileInput.files[0];
     if (!file) {
         alert('Please upload a file.');
@@ -454,6 +638,7 @@ async function transcribe() {
             method: 'POST',
             body: formData,
         });
+        resultContainer.parentElement.style.display = "block";
 
         hideSpinner("transcriptionResult");
 
@@ -502,6 +687,7 @@ async function translateTranscript() {
           language: lang
         })
       });
+      resultContainer.parentElement.style.display = "block";
       hideSpinner("translateResult");
   
       const data = await res.json();
@@ -529,6 +715,7 @@ async function generateCleanTranscript() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: fullTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const errorData = await res.json();
@@ -561,6 +748,7 @@ async function generateAISuggestions() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const data = await res.json();
@@ -595,6 +783,7 @@ async function generateShowNotes() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const data = await res.json();
@@ -627,6 +816,7 @@ async function generateQuotes() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const data = await res.json();
@@ -666,6 +856,7 @@ async function generateQuoteImages() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ quotes, method })  // 👈 använder vald metod
         });
+        container.parentElement.style.display = "block";
 
         const data = await res.json();
         container.innerHTML = "";
@@ -724,6 +915,7 @@ async function runOsintSearch() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ guest_name: guestName })
         });
+        container.parentElement.style.display = "block";
         if (response.status === 403) {
             const data = await response.json();
             container.innerHTML = `
@@ -761,6 +953,7 @@ async function generatePodcastIntroOutro() {
                 transcript: rawTranscript
             })
         });
+        container.parentElement.style.display = "block";
         if (res.status === 403) {
             const data = await res.json();
             container.innerHTML = `
@@ -795,6 +988,7 @@ async function convertIntroOutroToSpeech() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ script })
         });
+        container.style.display = "block";
 
         const data = await res.json();
 
@@ -808,7 +1002,6 @@ async function convertIntroOutroToSpeech() {
 
         if (data.audio_base64) {
             container.innerHTML = `
-                <hr/>
                 <audio controls src="${data.audio_base64}"></audio>
                 <a href="${data.audio_base64}" download="intro_outro.mp3" class="btn ai-edit-button">
                     Download Intro/Outro Audio
@@ -847,6 +1040,7 @@ async function enhanceAudio() {
             method: "POST",
             body: formData
         });
+        container.parentElement.style.display = "block";
 
         const result = await response.json();
 
@@ -857,13 +1051,14 @@ async function enhanceAudio() {
             `;
             return;
         }
-        if (!response.ok) {
-            container.innerHTML = `Error: ${result.error || response.statusText}`;
-            return;
+        if (!response.ok || !result.enhanced_audio_url) {
+            throw new Error(result.error || "Enhancement failed.");
         }
 
-        const blobUrl = result.enhanced_audio_url; // Ensure this is returned by the backend
-        if (!blobUrl) throw new Error("No enhanced audio URL returned.");
+        const blobUrl = result.enhanced_audio_url || result.clipUrl;
+        if (!blobUrl) {
+            throw new Error("No audio URL returned")
+        }
 
         const audioRes = await fetch(`/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
@@ -873,10 +1068,8 @@ async function enhanceAudio() {
         activeAudioBlob = blob;
         activeAudioId = "external";
 
-        container.innerHTML = `
-            <p>Audio enhancement complete!</p>
-            <audio controls src="${url}" style="width: 100%;"></audio>
-        `;
+        container.innerHTML = '<p>Audio enhancement complete!</p>';
+        renderAudioPlayer("audioControls", blob, "enhancedAudioPlayer")
 
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
@@ -915,6 +1108,7 @@ async function runVoiceIsolation() {
             method: "POST",
             body: formData
         });
+        container.parentElement.style.display = "block";
 
         if (response.status === 403) {
             const data = await response.json();
@@ -936,17 +1130,11 @@ async function runVoiceIsolation() {
         activeAudioBlob = blob;
         activeAudioId = "external";
 
-        container.innerHTML = `
-            <p>Isolated Audio</p>
-            <audio controls src="${url}" style="width: 100%;"></audio>
-        `;
+        renderAudioPlayer(containerId, blob, "isolatedAudioPlayer");
 
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
         document.getElementById("aiCuttingSection").style.display = "block";
-
-        const mixBtn = document.getElementById("mixBackgroundBtn");
-        mixBtn.style.display = "none";
 
         const dl = document.getElementById("downloadIsolatedVoice");
         dl.href = url;
@@ -978,6 +1166,7 @@ async function analyzeEnhancedAudio() {
 
     const res = await fetch("/audio_analysis", { method: "POST", body: fd })
     const data = await res.json()
+    container.parentElement.style.display = "block";
     if (!res.ok) throw new Error(data.error || res.statusText)
 
     container.innerText = `
@@ -1004,7 +1193,7 @@ async function analyzeEnhancedAudio() {
   }
 }
 
-/* Hjälper att rendera suggestion-listan */
+
 let selectedSoundFX = {}
 function renderSoundSuggestions(data, timeline) {
   timeline.innerHTML = "<h4>AI-Driven Sound Suggestions</h4>"
@@ -1160,8 +1349,8 @@ function renderSfxPlan(sfxPlan, timeline) {
 }
 
 async function cutAudio() {
-    const startInput = document.getElementById("startTime");
-    const endInput = document.getElementById("endTime");
+    const startInput = document.getElementById("cut-start");
+    const endInput = document.getElementById("cut-end");
     const cutResult = document.getElementById("cutResult");
     const dl = document.getElementById("downloadCut");
 
@@ -1196,6 +1385,7 @@ async function cutAudio() {
             method: "POST",
             body: formData
         });
+        cutResult.parentElement.style.display = "block";
 
         const result = await response.json();
 
@@ -1290,6 +1480,8 @@ async function aiCutAudio() {
                 })
             });
         }
+        containerTranscript.parentElement.style.display = "block";
+        containerCuts.parentElement.style.display = "block";
 
         const data = await response.json();
 
@@ -1486,7 +1678,7 @@ async function loadAudioEditsForEpisode(episodeId) {
         const edits = await response.json();
 
         if (!Array.isArray(edits) || edits.length === 0) {
-            container.innerHTML = "<p>No edits found.</p>";
+            container.innerHTML = "<p class='no-edits-found'>No edits found.</p>";
             return;
         }
 
@@ -1533,6 +1725,7 @@ async function enhanceVideo() {
             method: "POST",
             body: formData,
         });
+        container.style.display = "block";
 
         if (!uploadResponse.ok) {
             throw new Error(`Video upload failed: ${uploadResponse.statusText}`);
@@ -1586,17 +1779,12 @@ function previewOriginalAudio() {
     const file = fileInput.files[0];
     if (!file) return;
 
-    const audioURL = URL.createObjectURL(file);
-    const audioPlayer = document.getElementById("originalAudioPlayer");
-
-    if (audioPlayer) {
-        audioPlayer.src = audioURL;
-        audioPlayer.load();
-        document.getElementById("originalAudioContainer").style.display = "block";
-    }
-
-    // Store raw audio
     rawAudioBlob = file;
+
+    const container = document.getElementById("originalAudioContainer");
+    container.style.display = "block";
+
+    renderAudioPlayer("originalAudioContainer", rawAudioBlob, "originalAudioPlayer")
 }
 
 function previewOriginalVideo() {
@@ -1683,22 +1871,6 @@ function getSelectedEpisodeId() {
     return sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
 }
 
-// prevent doubleclikc/spamclicking on the functions to loose credits
-document.addEventListener("DOMContentLoaded", () => {
-    document.body.addEventListener("click", function (event) {
-        const button = event.target.closest("button.ai-edit-button");
-        if (!button || button.disabled) return;
-
-        button.disabled = true;
-        button.classList.add("disabled");
-
-        // Re-enable after 3k milliseconds (3seconds)
-        setTimeout(() => {
-            button.disabled = false;
-            button.classList.remove("disabled");
-        }, 3000);
-    }, true);  
-});
 
 async function generateAudioClip() {
   const container = document.getElementById("audioClipResult");
@@ -1712,6 +1884,7 @@ async function generateAudioClip() {
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ translated_transcription: translated })
     });
+    container.style.display = "block";
     hideSpinner("audioClipResult");
 
     if (!res.ok) throw new Error(`Server svarade ${res.status}`);
@@ -1729,3 +1902,83 @@ async function generateAudioClip() {
     container.innerText = `Failed to generate audio clip: ${err.message}`;
   }
 }
+
+function renderWaveform(audioBlob) {
+    const container = document.getElementById("waveform");
+    if (!container) return;
+
+    container.innerHTML = ""
+
+    const url = URL.createObjectURL(audioBlob);
+    const audioEl = document.getElementById("enhancedAudioPlayer");
+    if (!audioEl) return;
+
+    const wavesurfer = WaveSurfer.create({
+        container: "#waveform",
+        waveColor: "#ccc",
+        progressColor: "#f69229",
+        height: 96,
+        barWidth: 2,
+        responsive: true,
+        backend: "MediaElement",
+        mediaControls: false,
+        media: audioEl
+
+    });
+    wavesurfer.load(url);
+}
+
+function renderAudioPlayer(containerId, audioBlob, playerId, options = {}) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+
+    const url = URL.createObjectURL(audioBlob);
+
+    const audioEl = document.createElement("audio");
+    audioEl.id = playerId;
+    audioEl.src = url;
+    audioEl.style.display = "none";
+    container.appendChild(audioEl);
+
+    const playBtn = document.createElement("button");
+    playBtn.className = "btn ai-edit-button";
+    playBtn.textContent = "Play";
+    container.appendChild(playBtn);
+
+    const waveformDiv = document.createElement("div");
+    waveformDiv.id = `${playerId}_waveform`;
+    waveformDiv.style = "width: 100%; height: 96px; margin-top: 1rem;";
+    container.appendChild(waveformDiv);
+
+    const wavesurfer = WaveSurfer.create({
+        container: `#${playerId}_waveform`,
+        waveColor: "#ccc",
+        progressColor: "#f69229",
+        height: 96,
+        barWidth: 2,
+        responsive: true,
+        backend: "MediaElement",
+        media: audioEl
+    });
+
+    wavesurfer.load(url);
+
+    playBtn.addEventListener("click", () => {
+        if (audioEl.paused) {
+            audioEl.play();
+            playBtn.textContent = "Pause";
+        } else {
+            audioEl.pause();
+            playBtn.textContent = "Play";
+        }
+    });
+
+    audioEl.addEventListener("ended", () => {
+        playBtn.textContent = "Play";
+    });
+
+    if (options.onWaveformClick) {
+        wavesurfer.on("click", options.onWaveformClick);
+    }
+}
+
