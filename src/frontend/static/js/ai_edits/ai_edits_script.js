@@ -39,6 +39,7 @@ const aiOptions = [
     description: "Convert audio to text using AI transcription",
     icon: "T",
     cost: CREDIT_COSTS.transcription,
+    handler: transcribe,
   },
   {
     id: "enhanceAudio",
@@ -46,6 +47,7 @@ const aiOptions = [
     description: "Improve audio quality and reduce background noise",
     icon: "A",
     cost: CREDIT_COSTS.audio_enhancement,
+    handler: enhanceAudio,
   },
   {
     id: "isolateVoice",
@@ -53,6 +55,7 @@ const aiOptions = [
     description: "Separate voice from background sounds",
     icon: "V",
     cost: CREDIT_COSTS.voice_isolation,
+    handler: runVoiceIsolation,
   },
   {
     id: "cleanTranscript",
@@ -60,6 +63,7 @@ const aiOptions = [
     description: "Remove filler words and improve readability",
     icon: "C",
     cost: CREDIT_COSTS.clean_transcript,
+    handler: generateCleanTranscript,
   },
   {
     id: "generateShowNotes",
@@ -67,6 +71,7 @@ const aiOptions = [
     description: "Create detailed notes from your content",
     icon: "N",
     cost: CREDIT_COSTS.show_notes,
+    handler: generateShowNotes,
   },
   {
     id: "aiSuggestions",
@@ -74,6 +79,7 @@ const aiOptions = [
     description: "Get content improvement recommendations",
     icon: "S",
     cost: CREDIT_COSTS.ai_suggestions,
+    handler: generateAISuggestions,
   },
   {
     id: "generateQuotes",
@@ -81,6 +87,7 @@ const aiOptions = [
     description: "Extract quotable moments from your content",
     icon: "Q",
     cost: CREDIT_COSTS.ai_quotes,
+    handler: generateQuotes,
   },
   {
     id: "osintLookup",
@@ -88,6 +95,7 @@ const aiOptions = [
     description: "Research additional information from open sources",
     icon: "O",
     cost: CREDIT_COSTS.ai_osint,
+    handler: runOsintSearch,
   },
 ]
 
@@ -167,6 +175,26 @@ document.addEventListener("DOMContentLoaded", () => {
       runSelectedFunctions(selected)
     })
   }
+
+  // Add file info display
+  const mainFileInput = document.getElementById("audio-file")
+  if (mainFileInput) {
+    mainFileInput.addEventListener("change", function () {
+      const fileInfo = document.getElementById("file-info")
+      if (fileInfo) {
+        if (this.files && this.files[0]) {
+          const file = this.files[0]
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2)
+          fileInfo.textContent = `Selected file: ${file.name} (${fileSizeMB} MB)`
+
+          // Store the file in rawAudioBlob for use in functions
+          rawAudioBlob = file
+        } else {
+          fileInfo.textContent = ""
+        }
+      }
+    })
+  }
 })
 
 // Render the AI options with checkboxes
@@ -195,15 +223,142 @@ function renderAIOptions(optionList) {
 }
 
 // Run the selected AI functions
-function runSelectedFunctions(functionNames) {
+async function runSelectedFunctions(functionNames) {
   showStatus(`Running: ${functionNames.join(", ")}`, "info")
 
-  // Redirect to the main AI edits page with the selected functions
-  const episodeId = getSelectedEpisodeId()
-  if (episodeId) {
-    window.location.href = `/ai_edits?episodeId=${episodeId}&functions=${functionNames.join(",")}`
-  } else {
-    showStatus("No episode selected. Please select an episode first.", "error")
+  // Create a container for results if it doesn't exist
+  let resultsContainer = document.getElementById("ai-results-container")
+  if (!resultsContainer) {
+    resultsContainer = document.createElement("div")
+    resultsContainer.id = "ai-results-container"
+    resultsContainer.className = "results-container"
+    const container = document.querySelector(".container")
+    if (container) {
+      container.appendChild(resultsContainer)
+    } else {
+      console.error("Container element not found")
+      return
+    }
+  }
+
+  // Create result sections for each selected function if they don't exist
+  functionNames.forEach((funcName) => {
+    const resultSectionId = `${funcName}-result`
+    if (!document.getElementById(resultSectionId)) {
+      const resultSection = document.createElement("div")
+      resultSection.id = resultSectionId
+      resultSection.className = "output-section"
+      resultSection.style.display = "none"
+
+      const heading = document.createElement("h3")
+      const option = aiOptions.find((opt) => opt.id === funcName)
+      heading.textContent = option ? option.title : funcName
+
+      const content = document.createElement("div")
+      content.className = "result-content"
+
+      resultSection.appendChild(heading)
+      resultSection.appendChild(content)
+      resultsContainer.appendChild(resultSection)
+    }
+  })
+
+  // Hide all output sections first
+  document.querySelectorAll(".output-section").forEach((section) => {
+    section.style.display = "none"
+    section.classList.remove("visible")
+  })
+
+  // Disable run button during processing
+  const runButton = document.getElementById("run-button")
+  if (runButton) {
+    runButton.disabled = true
+    runButton.textContent = "Processing..."
+  }
+
+  try {
+    // Process functions sequentially
+    for (const funcName of functionNames) {
+      // Find the function in aiOptions
+      const option = aiOptions.find((opt) => opt.id === funcName)
+      if (!option || !option.handler) {
+        showStatus(`Function ${funcName} not found or has no handler`, "error")
+        continue
+      }
+
+      // Execute the function
+      showStatus(`Running: ${option.title}...`, "info")
+
+      try {
+        // Execute the handler function
+        await option.handler()
+
+        // Show the result section with animation
+        const resultSection = document.getElementById(`${funcName}-result`)
+        if (resultSection) {
+          resultSection.style.display = "block"
+          setTimeout(() => resultSection.classList.add("visible"), 10)
+        }
+
+        showStatus(`Completed: ${option.title}`, "info")
+      } catch (error) {
+        // If there's an error, still show the section but with error message
+        const resultSection = document.getElementById(`${funcName}-result`)
+        if (resultSection) {
+          resultSection.style.display = "block"
+          setTimeout(() => resultSection.classList.add("visible"), 10)
+
+          const resultContent = resultSection.querySelector(".result-content") || resultSection
+          if (resultContent) {
+            resultContent.innerHTML = `<p class="error-message">Error: ${error.message}</p>`
+          }
+        }
+
+        showStatus(`Error in ${option.title}: ${error.message}`, "error")
+      }
+    }
+  } finally {
+    // Re-enable run button
+    if (runButton) {
+      runButton.disabled = false
+      runButton.textContent = "Run Selected Edits"
+    }
+    showStatus("All selected functions completed", "info")
+  }
+}
+
+// Execute a function and capture its output
+async function executeFunction(func, resultContainerId) {
+  const resultContainer = document.getElementById(resultContainerId)
+
+  // Create a proxy for the original function to capture its output
+  const originalConsoleLog = console.log
+  const logs = []
+
+  console.log = (...args) => {
+    logs.push(args.join(" "))
+    originalConsoleLog(...args)
+  }
+
+  try {
+    // Execute the function
+    await func()
+
+    // Update the result container with any console output
+    if (logs.length > 0 && resultContainer) {
+      resultContainer.innerHTML += `
+        <pre class="console-output">${logs.join("\n")}</pre>
+      `
+    }
+
+    // Show the result section with animation
+    if (resultContainer) {
+      resultContainer.style.display = "block"
+      setTimeout(() => resultContainer.classList.add("visible"), 10)
+    }
+  } finally {
+    // Restore original console.log
+    console.log = originalConsoleLog
   }
 }
 
@@ -689,60 +844,126 @@ function initWaveformCutting(blob) {
 
 // Transcription function
 async function transcribe() {
-  const fileInput = document.getElementById("fileUploader")
-  const resultContainer = document.getElementById("transcriptionResult")
-  const file = fileInput.files[0]
+  // Try to get the file input from either the tab content or the main page
+  let fileInput = document.getElementById("fileUploader")
+  if (!fileInput) {
+    fileInput = document.getElementById("audio-file")
+    if (!fileInput) {
+      alert("File uploader element not found. Please upload a file using the file input above.")
+      return
+    }
+  }
+
+  const file = fileInput.files && fileInput.files[0]
   if (!file) {
-    alert("Please upload a file.")
+    alert("Please upload a file before transcribing.")
     return
   }
 
-  const episodeId = getSelectedEpisodeId()
-  if (!episodeId) {
-    alert("No episode selected.")
-    return
+  // Get or create the transcription result element
+  let transcriptionResult = document.getElementById("transcriptionResult")
+  if (!transcriptionResult) {
+    // Try to find the parent container
+    let transcribeResult = document.getElementById("transcribe-result")
+    if (!transcribeResult) {
+      // Create the container if it doesn't exist
+      transcribeResult = document.createElement("div")
+      transcribeResult.id = "transcribe-result"
+      transcribeResult.className = "output-section"
+      transcribeResult.style.display = "block"
+
+      const heading = document.createElement("h2")
+      heading.textContent = "Transcript"
+
+      transcriptionResult = document.createElement("pre")
+      transcriptionResult.id = "transcriptionResult"
+
+      transcribeResult.appendChild(heading)
+      transcribeResult.appendChild(transcriptionResult)
+
+      // Add to the container
+      const container = document.querySelector(".container")
+      if (container) {
+        container.appendChild(transcribeResult)
+      } else {
+        alert("Container not found. Please refresh the page.")
+        return
+      }
+    } else {
+      // If the container exists but not the result element
+      transcriptionResult = document.createElement("pre")
+      transcriptionResult.id = "transcriptionResult"
+      transcribeResult.appendChild(transcriptionResult)
+    }
   }
 
-  showSpinner("transcriptionResult")
+  // Make sure the container is visible
+  const transcribeResultContainer = document.getElementById("transcribe-result")
+  if (transcribeResultContainer) {
+    transcribeResultContainer.style.display = "block"
+    transcribeResultContainer.classList.add("visible")
+  }
+
+  // Show loading indicator
+  transcriptionResult.innerHTML = '<div class="spinner"></div><p>Transcribing audio... Please wait.</p>'
+  showStatus("Transcribing audio... This may take a moment.", "info")
+
+  // Get episode ID (or use a default if not available)
+  const episodeId = getSelectedEpisodeId() || "default_episode"
+
   const formData = new FormData()
   formData.append("file", file)
-  formData.append("episode_id", episodeId) // Include episode ID
+  formData.append("episode_id", episodeId)
 
   try {
+    console.log("Starting transcription for file:", file.name)
     const response = await fetch("/transcription/transcribe", {
       method: "POST",
       body: formData,
     })
 
-    hideSpinner("transcriptionResult")
+    console.log("Transcription API response status:", response.status)
+    const result = await response.json()
+    console.log("Transcription result received:", result)
 
     if (response.status === 403) {
-      const errorData = await response.json()
-      resultContainer.innerHTML = `
-        <p style="color: red;">${errorData.error || "You don't have enough credits."}</p>
-        ${errorData.redirect ? `<a href="${errorData.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+      transcriptionResult.innerHTML = `
+        <p style="color: red;">${result.error || "You don't have enough credits."}</p>
+        ${result.redirect ? `<a href="${result.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
       `
+      showStatus("Transcription failed: Not enough credits", "error")
       return
     }
 
-    if (response.ok) {
-      const result = await response.json()
-      rawTranscript = result.raw_transcription || ""
-      fullTranscript = result.full_transcript || ""
-
-      resultContainer.innerText = rawTranscript
-      document.getElementById("enhancementTools").style.display = "block"
-
-      if (result.credit_warning) {
-        alert("Transcription completed, but your credits are too low. Please visit the store.")
-      }
-
-      // Only consume credits after successful transcription
-      await consumeStoreCredits("transcription")
+    if (!response.ok) {
+      throw new Error(result.error || "Transcription failed")
     }
+
+    // Store the transcripts in global variables
+    rawTranscript = result.raw_transcription || ""
+    fullTranscript = result.full_transcript || ""
+
+    // Display the transcript
+    transcriptionResult.innerHTML = rawTranscript || "No transcript was returned from the server."
+
+    // Show enhancement tools if they exist
+    const enhancementTools = document.getElementById("enhancementTools")
+    if (enhancementTools) {
+      enhancementTools.style.display = "block"
+    }
+
+    if (result.credit_warning) {
+      alert("Transcription completed, but your credits are too low. Please visit the store.")
+    }
+
+    // Only consume credits after successful transcription
+    await consumeStoreCredits("transcription")
+
+    showStatus("Transcription completed successfully!", "info")
   } catch (error) {
-    hideSpinner("transcriptionResult")
-    resultContainer.innerText = `Transcription failed: ${error.message}`
+    console.error("Transcription error:", error)
+    transcriptionResult.innerHTML = `<p style="color: red;">Transcription failed: ${error.message}</p>`
+    showStatus(`Transcription failed: ${error.message}`, "error")
   }
 }
 
@@ -779,12 +1000,60 @@ async function translateTranscript() {
 
 // Clean transcript function
 async function generateCleanTranscript() {
-  const containerId = "cleanTranscriptResult"
-  const container = document.getElementById(containerId)
+  // First, ensure we have a container for the result
+  let container = document.getElementById("cleanTranscriptResult")
+  if (!container) {
+    // Try to find the parent container
+    let resultSection = document.getElementById("cleanTranscript-result")
+    if (!resultSection) {
+      // Create the container if it doesn't exist
+      resultSection = document.createElement("div")
+      resultSection.id = "cleanTranscript-result"
+      resultSection.className = "output-section"
+      resultSection.style.display = "block"
 
-  showSpinner(containerId)
+      const heading = document.createElement("h2")
+      heading.textContent = "Cleaned Transcript"
+
+      container = document.createElement("pre")
+      container.id = "cleanTranscriptResult"
+
+      resultSection.appendChild(heading)
+      resultSection.appendChild(container)
+
+      // Add to the container
+      const mainContainer = document.querySelector(".container")
+      if (mainContainer) {
+        mainContainer.appendChild(resultSection)
+      } else {
+        alert("Container not found. Please refresh the page.")
+        return
+      }
+    } else {
+      // If the container exists but not the result element
+      container = document.createElement("pre")
+      container.id = "cleanTranscriptResult"
+      resultSection.appendChild(container)
+    }
+  }
+
+  // Make sure the container is visible
+  const resultSection = document.getElementById("cleanTranscript-result")
+  if (resultSection) {
+    resultSection.style.display = "block"
+    resultSection.classList.add("visible")
+  }
+
+  // Show loading indicator
+  container.innerHTML = '<div class="spinner"></div><p>Cleaning transcript... Please wait.</p>'
+  showStatus("Cleaning transcript...", "info")
 
   try {
+    if (!fullTranscript) {
+      container.innerHTML = '<p style="color: red;">No transcript available. Please transcribe first.</p>'
+      return
+    }
+
     const res = await fetch("/transcription/clean", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -801,23 +1070,73 @@ async function generateCleanTranscript() {
     }
 
     const data = await res.json()
-    container.innerText = data.clean_transcript || "No clean result."
+    container.innerHTML = data.clean_transcript || "No clean result."
 
     // Only consume credits after successful clean transcript generation
     await consumeStoreCredits("clean_transcript")
+    showStatus("Transcript cleaned successfully!", "info")
   } catch (err) {
-    container.innerText = "Failed to clean transcript. Server says: " + err.message
+    container.innerHTML = `<p style="color: red;">Failed to clean transcript: ${err.message}</p>`
+    showStatus(`Failed to clean transcript: ${err.message}`, "error")
   }
 }
 
 // AI Suggestions function
 async function generateAISuggestions() {
-  const containerId = "aiSuggestionsResult"
-  const container = document.getElementById(containerId)
+  // First, ensure we have a container for the result
+  let container = document.getElementById("ai-suggestions-output")
+  if (!container) {
+    // Try to find the parent container
+    let resultSection = document.getElementById("aiSuggestions-result")
+    if (!resultSection) {
+      // Create the container if it doesn't exist
+      resultSection = document.createElement("div")
+      resultSection.id = "aiSuggestions-result"
+      resultSection.className = "output-section"
+      resultSection.style.display = "block"
 
-  showSpinner(containerId)
+      const heading = document.createElement("h2")
+      heading.textContent = "AI Suggestions"
+
+      container = document.createElement("pre")
+      container.id = "ai-suggestions-output"
+
+      resultSection.appendChild(heading)
+      resultSection.appendChild(container)
+
+      // Add to the container
+      const mainContainer = document.querySelector(".container")
+      if (mainContainer) {
+        mainContainer.appendChild(resultSection)
+      } else {
+        alert("Container not found. Please refresh the page.")
+        return
+      }
+    } else {
+      // If the container exists but not the result element
+      container = document.createElement("pre")
+      container.id = "ai-suggestions-output"
+      resultSection.appendChild(container)
+    }
+  }
+
+  // Make sure the container is visible
+  const resultSection = document.getElementById("aiSuggestions-result")
+  if (resultSection) {
+    resultSection.style.display = "block"
+    resultSection.classList.add("visible")
+  }
+
+  // Show loading indicator
+  container.innerHTML = '<div class="spinner"></div><p>Generating AI suggestions... Please wait.</p>'
+  showStatus("Generating AI suggestions...", "info")
 
   try {
+    if (!rawTranscript) {
+      container.innerHTML = '<p style="color: red;">No transcript available. Please transcribe first.</p>'
+      return
+    }
+
     const res = await fetch("/transcription/ai_suggestions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -836,23 +1155,73 @@ async function generateAISuggestions() {
     const data = await res.json()
     const primary = data.primary_suggestions || ""
     const additional = (data.additional_suggestions || []).join("\n")
-    container.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions."
+    container.innerHTML = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions."
 
     // Only consume credits after successful AI suggestions generation
     await consumeStoreCredits("ai_suggestions")
+    showStatus("AI suggestions generated successfully!", "info")
   } catch (err) {
-    container.innerText = "Failed to generate suggestions: " + err.message
+    container.innerHTML = `<p style="color: red;">Failed to generate suggestions: ${err.message}</p>`
+    showStatus(`Failed to generate suggestions: ${err.message}`, "error")
   }
 }
 
 // Show notes function
 async function generateShowNotes() {
-  const containerId = "showNotesResult"
-  const container = document.getElementById(containerId)
+  // First, ensure we have a container for the result
+  let container = document.getElementById("show-notes-output")
+  if (!container) {
+    // Try to find the parent container
+    let resultSection = document.getElementById("generateShowNotes-result")
+    if (!resultSection) {
+      // Create the container if it doesn't exist
+      resultSection = document.createElement("div")
+      resultSection.id = "generateShowNotes-result"
+      resultSection.className = "output-section"
+      resultSection.style.display = "block"
 
-  showSpinner(containerId)
+      const heading = document.createElement("h2")
+      heading.textContent = "Show Notes"
+
+      container = document.createElement("pre")
+      container.id = "show-notes-output"
+
+      resultSection.appendChild(heading)
+      resultSection.appendChild(container)
+
+      // Add to the container
+      const mainContainer = document.querySelector(".container")
+      if (mainContainer) {
+        mainContainer.appendChild(resultSection)
+      } else {
+        alert("Container not found. Please refresh the page.")
+        return
+      }
+    } else {
+      // If the container exists but not the result element
+      container = document.createElement("pre")
+      container.id = "show-notes-output"
+      resultSection.appendChild(container)
+    }
+  }
+
+  // Make sure the container is visible
+  const resultSection = document.getElementById("generateShowNotes-result")
+  if (resultSection) {
+    resultSection.style.display = "block"
+    resultSection.classList.add("visible")
+  }
+
+  // Show loading indicator
+  container.innerHTML = '<div class="spinner"></div><p>Generating show notes... Please wait.</p>'
+  showStatus("Generating show notes...", "info")
 
   try {
+    if (!rawTranscript) {
+      container.innerHTML = '<p style="color: red;">No transcript available. Please transcribe first.</p>'
+      return
+    }
+
     const res = await fetch("/transcription/show_notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -869,23 +1238,73 @@ async function generateShowNotes() {
     }
 
     const data = await res.json()
-    container.innerText = data.show_notes || "No notes."
+    container.innerHTML = data.show_notes || "No notes."
 
     // Only consume credits after successful show notes generation
     await consumeStoreCredits("show_notes")
+    showStatus("Show notes generated successfully!", "info")
   } catch (err) {
-    container.innerText = "Failed to generate show notes: " + err.message
+    container.innerHTML = `<p style="color: red;">Failed to generate show notes: ${err.message}</p>`
+    showStatus(`Failed to generate show notes: ${err.message}`, "error")
   }
 }
 
 // Generate quotes function
 async function generateQuotes() {
-  const containerId = "quotesResult"
-  const container = document.getElementById(containerId)
+  // First, ensure we have a container for the result
+  let container = document.getElementById("quotes-output")
+  if (!container) {
+    // Try to find the parent container
+    let resultSection = document.getElementById("generateQuotes-result")
+    if (!resultSection) {
+      // Create the container if it doesn't exist
+      resultSection = document.createElement("div")
+      resultSection.id = "generateQuotes-result"
+      resultSection.className = "output-section"
+      resultSection.style.display = "block"
 
-  showSpinner(containerId)
+      const heading = document.createElement("h2")
+      heading.textContent = "Quotes"
+
+      container = document.createElement("pre")
+      container.id = "quotes-output"
+
+      resultSection.appendChild(heading)
+      resultSection.appendChild(container)
+
+      // Add to the container
+      const mainContainer = document.querySelector(".container")
+      if (mainContainer) {
+        mainContainer.appendChild(resultSection)
+      } else {
+        alert("Container not found. Please refresh the page.")
+        return
+      }
+    } else {
+      // If the container exists but not the result element
+      container = document.createElement("pre")
+      container.id = "quotes-output"
+      resultSection.appendChild(container)
+    }
+  }
+
+  // Make sure the container is visible
+  const resultSection = document.getElementById("generateQuotes-result")
+  if (resultSection) {
+    resultSection.style.display = "block"
+    resultSection.classList.add("visible")
+  }
+
+  // Show loading indicator
+  container.innerHTML = '<div class="spinner"></div><p>Generating quotes... Please wait.</p>'
+  showStatus("Generating quotes...", "info")
 
   try {
+    if (!rawTranscript) {
+      container.innerHTML = '<p style="color: red;">No transcript available. Please transcribe first.</p>'
+      return
+    }
+
     const res = await fetch("/transcription/quotes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -901,12 +1320,14 @@ async function generateQuotes() {
       return
     }
     const data = await res.json()
-    container.innerText = data.quotes || "No quotes."
+    container.innerHTML = data.quotes || "No quotes."
 
     // Only consume credits after successful quotes generation
     await consumeStoreCredits("ai_quotes")
+    showStatus("Quotes generated successfully!", "info")
   } catch (err) {
-    container.innerText = "Failed to generate quotes: " + err.message
+    container.innerHTML = `<p style="color: red;">Failed to generate quotes: ${err.message}</p>`
+    showStatus(`Failed to generate quotes: ${err.message}`, "error")
   }
 }
 
@@ -1096,9 +1517,31 @@ async function convertIntroOutroToSpeech() {
 async function enhanceAudio() {
   const containerId = "audioControls"
   const container = document.getElementById(containerId)
+  if (!container) {
+    // Create a container for results if it doesn't exist
+    const resultsContainer = document.getElementById("ai-results-container") || document.querySelector(".container")
+    if (resultsContainer) {
+      const newContainer = document.createElement("div")
+      newContainer.id = "audioControls"
+      newContainer.className = "result-field"
+      resultsContainer.appendChild(newContainer)
+    } else {
+      alert("Results container not found. Please refresh the page and try again.")
+      return
+    }
+  }
 
-  const input = document.getElementById("audioUploader")
-  const file = input.files[0]
+  // Try to get the file input from either the tab content or the main page
+  let input = document.getElementById("audioUploader")
+  if (!input) {
+    input = document.getElementById("audio-file")
+    if (!input) {
+      alert("Audio uploader element not found. Please upload a file using the file input above.")
+      return
+    }
+  }
+
+  const file = input.files && input.files[0]
   if (!file) return alert("Upload an audio file first.")
 
   const episodeId = getSelectedEpisodeId()
@@ -1145,13 +1588,20 @@ async function enhanceAudio() {
     container.innerHTML = "<p>Audio enhancement complete!</p>"
     renderAudioPlayer("audioControls", blob, "enhancedAudioPlayer")
 
-    document.getElementById("audioAnalysisSection").style.display = "block"
-    document.getElementById("audioCuttingSection").style.display = "block"
-    document.getElementById("aiCuttingSection").style.display = "block"
+    const audioAnalysisSection = document.getElementById("audioAnalysisSection")
+    if (audioAnalysisSection) audioAnalysisSection.style.display = "block"
+
+    const audioCuttingSection = document.getElementById("audioCuttingSection")
+    if (audioCuttingSection) audioCuttingSection.style.display = "block"
+
+    const aiCuttingSection = document.getElementById("aiCuttingSection")
+    if (aiCuttingSection) aiCuttingSection.style.display = "block"
 
     const dl = document.getElementById("downloadEnhanced")
-    dl.href = url
-    dl.style.display = "inline-block"
+    if (dl) {
+      dl.href = url
+      dl.style.display = "inline-block"
+    }
 
     // Only consume credits after successful audio enhancement
     await consumeStoreCredits("audio_enhancement")
@@ -1163,10 +1613,35 @@ async function enhanceAudio() {
 // Voice isolation function
 async function runVoiceIsolation() {
   const containerId = "isolatedVoiceResult"
-  const container = document.getElementById(containerId)
+  let container = document.getElementById(containerId)
+  if (!container) {
+    // Create a container for results if it doesn't exist
+    const resultsContainer = document.getElementById("ai-results-container") || document.querySelector(".container")
+    if (resultsContainer) {
+      container = document.createElement("div")
+      container.id = containerId
+      container.className = "result-field"
+      const heading = document.createElement("h3")
+      heading.textContent = "Voice Isolation Result"
+      resultsContainer.appendChild(heading)
+      resultsContainer.appendChild(container)
+    } else {
+      alert("Results container not found. Please refresh the page and try again.")
+      return
+    }
+  }
 
-  const input = document.getElementById("audioUploader")
-  const file = input.files[0]
+  // Try to get the file input from either the tab content or the main page
+  let input = document.getElementById("audioUploader")
+  if (!input) {
+    input = document.getElementById("audio-file")
+    if (!input) {
+      alert("Audio uploader element not found. Please upload a file using the file input above.")
+      return
+    }
+  }
+
+  const file = input.files && input.files[0]
   if (!file) return alert("Upload an audio file first.")
 
   const episodeId = getSelectedEpisodeId()
@@ -1206,13 +1681,20 @@ async function runVoiceIsolation() {
 
     renderAudioPlayer(containerId, blob, "isolatedAudioPlayer")
 
-    document.getElementById("audioAnalysisSection").style.display = "block"
-    document.getElementById("audioCuttingSection").style.display = "block"
-    document.getElementById("aiCuttingSection").style.display = "block"
+    const audioAnalysisSection = document.getElementById("audioAnalysisSection")
+    if (audioAnalysisSection) audioAnalysisSection.style.display = "block"
+
+    const audioCuttingSection = document.getElementById("audioCuttingSection")
+    if (audioCuttingSection) audioCuttingSection.style.display = "block"
+
+    const aiCuttingSection = document.getElementById("aiCuttingSection")
+    if (aiCuttingSection) aiCuttingSection.style.display = "block"
 
     const dl = document.getElementById("downloadIsolatedVoice")
-    dl.href = url
-    dl.style.display = "inline-block"
+    if (dl) {
+      dl.href = url
+      dl.style.display = "inline-block"
+    }
 
     // Only consume credits after successful voice isolation
     await consumeStoreCredits("voice_isolation")
@@ -1698,7 +2180,12 @@ async function applySelectedCuts() {
 // Enhance video function
 async function enhanceVideo() {
   const fileInput = document.getElementById("videoUploader")
-  const file = fileInput.files[0]
+  if (!fileInput) {
+    alert("Video uploader element not found. Please make sure you're on the correct tab.")
+    return
+  }
+
+  const file = fileInput.files && fileInput.files[0]
   if (!file) {
     alert("Please upload a video file.")
     return
@@ -1706,6 +2193,11 @@ async function enhanceVideo() {
 
   const containerId = "videoResult"
   const container = document.getElementById(containerId)
+  if (!container) {
+    alert("Video result container not found. Please make sure you're on the correct tab.")
+    return
+  }
+
   showSpinner(containerId)
 
   try {
@@ -1752,8 +2244,10 @@ async function enhanceVideo() {
     `
 
     const dl = document.getElementById("downloadVideo")
-    dl.href = videoURL
-    dl.style.display = "inline-block"
+    if (dl) {
+      dl.href = videoURL
+      dl.style.display = "inline-block"
+    }
 
     // Only consume credits after successful video enhancement
     await consumeStoreCredits("video_enhancement")
@@ -1765,12 +2259,22 @@ async function enhanceVideo() {
 // Preview original audio function
 function previewOriginalAudio() {
   const fileInput = document.getElementById("audioUploader")
-  const file = fileInput.files[0]
+  if (!fileInput) {
+    console.error("Audio uploader element not found")
+    return
+  }
+
+  const file = fileInput.files && fileInput.files[0]
   if (!file) return
 
   rawAudioBlob = file
 
   const container = document.getElementById("originalAudioContainer")
+  if (!container) {
+    console.error("Original audio container not found")
+    return
+  }
+
   container.style.display = "block"
 
   renderAudioPlayer("originalAudioContainer", rawAudioBlob, "originalAudioPlayer")
@@ -1779,11 +2283,23 @@ function previewOriginalAudio() {
 // Preview original video function
 function previewOriginalVideo() {
   const fileInput = document.getElementById("videoUploader")
-  const file = fileInput.files[0]
+  if (!fileInput) {
+    console.error("Video uploader element not found")
+    return
+  }
+
+  const file = fileInput.files && fileInput.files[0]
   if (!file) return
+
   const videoURL = URL.createObjectURL(file)
   const videoPlayer = document.getElementById("originalVideoPlayer")
   const container = document.getElementById("originalVideoContainer")
+
+  if (!videoPlayer || !container) {
+    console.error("Video player or container elements not found")
+    return
+  }
+
   videoPlayer.src = videoURL
   container.style.display = "block"
 }
@@ -1829,7 +2345,7 @@ function renderAudioPlayer(containerId, audioBlob, playerId, options = {}) {
   const audioEl = document.createElement("audio")
   audioEl.id = playerId
   audioEl.src = url
-  audioEl.style.display = "none"
+  audioEl.style = "display: none;"
   container.appendChild(audioEl)
 
   const playBtn = document.createElement("button")
