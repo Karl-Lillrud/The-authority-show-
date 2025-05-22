@@ -153,35 +153,55 @@ class PodcastRepository:
             user_account_ids = [str(account["_id"]) for account in user_accounts]
 
             if not user_account_ids:
+                logger.info(f"No accounts found for ownerId {user_id} when fetching podcasts.")
                 return {"podcast": []}, 200  # No podcasts if no accounts
 
-            podcasts = list(
-                self.collection.find({"accountId": {"$in": user_account_ids}})
-            )
-            for podcast in podcasts:
-                podcast["_id"] = str(podcast["_id"])
+            podcasts_cursor = self.collection.find({"accountId": {"$in": user_account_ids}})
+            podcasts = []
+            for podcast_doc in podcasts_cursor:
+                podcast_doc["_id"] = str(podcast_doc["_id"])
+
+                # Ensure podName is a valid string for the frontend
+                pod_name = podcast_doc.get("podName")
+                if not pod_name or not isinstance(pod_name, str) or not pod_name.strip():
+                    logger.warning(f"Podcast _id {podcast_doc['_id']} has missing or invalid podName ('{pod_name}'). Defaulting to 'Untitled Podcast'.")
+                    podcast_doc["podName"] = "Untitled Podcast"
+                else:
+                    podcast_doc["podName"] = pod_name.strip()
+                
+                logger.debug(f"Processing podcast for dropdown: _id={podcast_doc['_id']}, podName='{podcast_doc['podName']}'")
+
                 # Set image URL from RSS feed if available
-                if podcast.get("rssFeed"):
+                if podcast_doc.get("rssFeed"):
                     try:
-                        rss_data, status_code = self.rss_service.fetch_rss_feed(podcast["rssFeed"])
+                        # Ensure self.rss_service is initialized if you use it here
+                        # For now, assuming it's available or this logic is adapted
+                        rss_data, status_code = self.rss_service.fetch_rss_feed(podcast_doc["rssFeed"])
                         if status_code == 200 and rss_data and rss_data.get("imageUrl"):
                             # Update the podcast in the database with the RSS image URL
                             self.collection.update_one(
-                                {"_id": podcast["_id"]},
+                                {"_id": podcast_doc["_id"]},
                                 {"$set": {"rssImage": rss_data["imageUrl"]}}
                             )
-                            podcast["rssImage"] = rss_data["imageUrl"]
-                            logger.info(f"Updated podcast {podcast['_id']} with RSS image URL: {rss_data['imageUrl']}")
+                            podcast_doc["rssImage"] = rss_data["imageUrl"]
+                            logger.info(f"Updated podcast {podcast_doc['_id']} with RSS image URL: {rss_data['imageUrl']}")
                     except Exception as e:
-                        logger.error(f"Failed to fetch RSS data for podcast {podcast['_id']}: {e}")
+                        logger.error(f"Failed to fetch RSS data for podcast {podcast_doc['_id']} during get_podcasts: {e}", exc_info=True)
                 # Ensure logoUrl is set (for frontend image display)
-                if not podcast.get("logoUrl") and podcast.get("imageUrl"):
-                    podcast["logoUrl"] = podcast["imageUrl"]
+                if not podcast_doc.get("logoUrl") and podcast_doc.get("imageUrl"): # Check imageUrl from RSS or other sources
+                    podcast_doc["logoUrl"] = podcast_doc["imageUrl"]
+                elif not podcast_doc.get("logoUrl") and podcast_doc.get("rssImage"): # Fallback to rssImage if imageUrl not present
+                    podcast_doc["logoUrl"] = podcast_doc["rssImage"]
+                
+                podcasts.append(podcast_doc)
 
+
+            logger.info(f"Successfully fetched {len(podcasts)} podcasts for user {user_id} (ownerId).")
             return {"podcast": podcasts}, 200
 
         except Exception as e:
-            return {"error": "Failed to fetch podcasts", "details": str(e)}, 500
+            logger.error(f"❌ ERROR in PodcastRepository.get_podcasts for user {user_id}: {str(e)}", exc_info=True)
+            raise # Re-raise the exception to be caught by the route handler
 
     def get_podcast_by_id(self, user_id, podcast_id):
         try:

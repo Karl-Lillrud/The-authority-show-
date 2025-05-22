@@ -43,16 +43,15 @@ def add_podcast():
 def get_podcasts():
     """Gets all podcasts for the current user."""
     if not hasattr(g, "user_id") or not g.user_id:
+        logger.warning("Unauthorized access in /get_podcasts, g.user_id is missing. Request cookies: %s", request.cookies)
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
         response, status_code = podcast_repo.get_podcasts(g.user_id)
-        # Ensure the response includes the 'image' field for each podcast
-        # If not, update the repository to include it in the returned data
         return jsonify(response), status_code
     except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to fetch podcasts: {str(e)}"}), 500
+        logger.error("❌ ERROR in /get_podcasts route: %s", e, exc_info=True)
+        return jsonify({"error": f"Failed to fetch podcasts due to an internal server error."}), 500
 
 
 @podcast_bp.route("/get_podcasts/<podcast_id>", methods=["GET"])

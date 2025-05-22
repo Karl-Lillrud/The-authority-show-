@@ -23,14 +23,32 @@ export async function addPodcast(podcastData) {
 // Function to get all podcasts
 export async function fetchPodcasts() {
   try {
+    console.log("[podcastRequests.js] Attempting to fetch /get_podcasts");
     const response = await fetch("/get_podcasts", {
       method: "GET",
       headers: { "Content-Type": "application/json" }
     });
-    return await response.json();
+    console.log(`[podcastRequests.js] /get_podcasts response status: ${response.status}`);
+    if (!response.ok) {
+      // Try to parse error json, but prepare for non-json errors too
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        errorData = { error: `HTTP error! status: ${response.status}, non-JSON response` };
+      }
+      console.error("[podcastRequests.js] Error fetching podcasts, server returned error:", errorData);
+      // Return the error structure so loadPodcasts can inspect podcastData.error
+      return errorData; 
+    }
+    const jsonData = await response.json();
+    console.log("[podcastRequests.js] Successfully fetched and parsed podcasts:", jsonData);
+    return jsonData;
   } catch (error) {
-    console.error("Error fetching podcasts:", error);
-    throw error;
+    console.error("[podcastRequests.js] Network or other error in fetchPodcasts:", error);
+    // Ensure a structure with an .error field is returned or thrown for consistency
+    // Throwing will make it go to loadPodcasts's catch block
+    throw error; 
   }
 }
 

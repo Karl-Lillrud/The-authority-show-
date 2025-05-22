@@ -100,7 +100,7 @@
 </div>
 {% endblock %}
 
-{% block scripts_extra %}
+{% block page_specific_scripts %}
 <script type="module" src="{{ url_for('static', filename='requests/publishRequests.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/publish/publish.js') }}"></script>
 {% endblock %}

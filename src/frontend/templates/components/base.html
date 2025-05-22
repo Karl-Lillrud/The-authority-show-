@@ -58,5 +58,12 @@
     {% include 'components/footer.html' %}
     <!-- Include Notification Templates -->
     {% include "/components/notifications.html" %}
-  </body>
-</html>
+    {% block scripts %}{% endblock %} <!-- Ensure scripts block is present -->
+    {% block page_specific_scripts %}
+        <!-- Page-specific scripts will be injected here -->
+    {% endblock %}
+    <!-- Example of a global script that might load after page-specific ones -->
+    <script src="{{ url_for('static', filename='js/components/some_global_script.js') }}"></script>y>
+
+
+</html>  </body></html>
