@@ -69,11 +69,7 @@ def register_socketio_events(socketio: SocketIO):
 # ---------------------------------------------
 # ROUTES
 # ---------------------------------------------
-@recording_studio_bp.route('/studio')
-def recording_studio():
-    if not g.user_id:
-        return redirect(url_for('auth.login'))
-    return render_template('recordingstudio/recording_studio.html')
+
 
 @recording_studio_bp.route('/invite', methods=['POST'])
 def create_invitation():
