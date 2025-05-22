@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const publishStatusDiv = document.getElementById("publish-status");
   const publishLogPre = document.getElementById("publish-log");
   const platformToggles = document.querySelectorAll('.platform-toggle input[type="checkbox"]');
-  const publishNotes = document.getElementById("publish-notes");
+  // const publishNotes = document.getElementById("publish-notes"); // Removed
 
   // Load podcasts into the dropdown
   async function loadPodcasts() {
@@ -243,7 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   publishNowBtn.addEventListener("click", async () => {
     const episodeId = episodeSelect.value;
-    const notes = publishNotes.value;
+    // const notes = publishNotes.value; // Removed
     const selectedPlatforms = [];
     platformToggles.forEach((toggle) => {
       if (toggle.checked) {
@@ -266,21 +266,21 @@ document.addEventListener("DOMContentLoaded", () => {
     publishNowBtn.textContent = "Publishing...";
     addToLog(`Starting publishing process for episode ID: ${episodeId}`);
     addToLog(`Selected platforms: ${selectedPlatforms.join(", ")}`);
-    if (notes) {
-      addToLog(`Publish notes: ${notes}`);
-    }
+    // if (notes) { // Removed
+    //   addToLog(`Publish notes: ${notes}`); // Removed
+    // } // Removed
 
     try {
       // Using the publishEpisode function from publishRequests.js which calls /api/publish_episode/<episode_id>
-      const result = await publishEpisode(episodeId, selectedPlatforms, notes); 
+      const result = await publishEpisode(episodeId, selectedPlatforms, null); // Pass null or undefined for notes
       if (result.success) {
         addToLog(`Successfully published episode: ${result.message}`);
         showNotification("Success", `Episode published successfully! ${result.message || ''}`, "success");
         // Optionally, update episode status in the dropdown or reload episodes
-        // For now, just clear selection and notes
+        // For now, just clear selection
         episodeDetailsPreview.classList.add("hidden");
         episodeSelect.value = "";
-        publishNotes.value = "";
+        // publishNotes.value = ""; // Removed
         // Consider reloading episodes for the current podcast to reflect any status changes
         if (podcastSelect.value) {
             loadEpisodesForPodcast(podcastSelect.value);
