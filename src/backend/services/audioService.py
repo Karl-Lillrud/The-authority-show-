@@ -255,8 +255,8 @@ class AudioService:
 
             cleaned_transcript = ai_utils_module.remove_filler_words(transcript) if TEXTSTAT_AVAILABLE else transcript
             noise_result = detect_background_noise(temp_path)
-            filler_sentences = text_utils.detect_filler_words(transcript) if TEXTSTAT_AVAILABLE else []
-            sentence_certainty = text_utils.analyze_certainty_levels(transcript) if TEXTSTAT_AVAILABLE else []
+            filler_sentences = ai_utils_module.detect_filler_words(transcript) if TEXTSTAT_AVAILABLE else []
+            sentence_certainty = ai_utils_module.analyze_certainty_levels(transcript) if TEXTSTAT_AVAILABLE else []
 
             logger.info(f"Certainty results computed")
 

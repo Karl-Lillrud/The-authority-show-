@@ -9,7 +9,7 @@ from backend.services.subscriptionService import SubscriptionService
 from backend.services.creditService import consume_credits
 from backend.utils.blob_storage import upload_file_to_blob  
 from backend.utils.subscription_access import get_max_duration_limit
-from backend.utils.ai_utils import check_audio_duration
+from backend.utils.ai_utils import check_audio_duration,insufficient_credits_response
 from backend.repository.edit_repository import create_edit_entry
 from backend.repository.episode_repository import EpisodeRepository
 
