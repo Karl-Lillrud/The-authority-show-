@@ -707,7 +707,9 @@ async function translateTranscript() {
 async function generateCleanTranscript() {
     const containerId = "cleanTranscriptResult";
     const container = document.getElementById(containerId);
+    const wrapper = resultContainer.parentElement;
 
+    wrapper.style.display = "block";
     showSpinner(containerId);
 
     try {
