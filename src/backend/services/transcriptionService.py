@@ -1,11 +1,10 @@
 #src/backend/services/transcriptionService.py
 import os
-import openai
 import logging
 import re
 from pydub import AudioSegment, effects
 from datetime import datetime, timezone
-from typing import List, Tuple
+from typing import List
 from io import BytesIO
 from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import fs
@@ -17,7 +16,6 @@ from backend.utils.ai_utils import (
     render_quote_images_local,
     translate_text,
     suggest_sound_effects,
-    get_sentence_timestamps,
     remove_filler_words, 
     analyze_emotions
 )
@@ -44,11 +42,8 @@ VOICE_MAPS = {
 class TranscriptionService:
     def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
         """
-        Transkriberar ljudet och grupperar ord till meningar med korrekta tidsstämplar.
+        Transcribes audio and groups words into sentences with accurate timestamps.
         """
-        from io import BytesIO
-        from datetime import datetime, timezone
-        import re
 
         logger.info("Starting transcription (group by sentence)")
 
@@ -166,7 +161,6 @@ class TranscriptionService:
         logger.info(f"Translating transcript to {target_language} (bulk) with timestamps and speakers…")
         lines = raw_transcription.split("\n")
 
-        # 1) Extrahera prefix (timestamp+speaker) och ersätt textdelen med placeholder
         placeholder_map = []
         bulk_text_parts = []
         for idx, line in enumerate(lines):
@@ -174,24 +168,19 @@ class TranscriptionService:
             if m:
                 prefix, body = m.groups()
             else:
-                # om formatet avviker, behandla hela raden som "body" (utan prefix)
                 prefix, body = "", line
 
             placeholder = f"__LINE{idx}__"
             placeholder_map.append((placeholder, prefix))
             bulk_text_parts.append(body or placeholder)
-            # vi lägger in placeholder även för tomma body så att antalet delar matchar
         bulk_text = "\n".join(bulk_text_parts)
 
-        # 2) Kör en bulk-översättning på hela texten
         try:
             translated_bulk = translate_text(bulk_text, target_language)
         except Exception as e:
             logger.warning(f"Bulk translation failed: {e}")
-            # fallback: gör rad-för-rad (originalmetoden)
             return "\n".join(self._translate_line_by_line(lines, target_language))
 
-        # 3) Återsätt varje rad med prefix + översatt text
         translated_lines = translated_bulk.split("\n")
         final_lines = []
         for idx, translated_body in enumerate(translated_lines):
@@ -210,46 +199,38 @@ class TranscriptionService:
         return {"emotions": emotion_data, "sound_effects": sfx_suggestions}
     
     def generate_audio_from_translated(self, raw_transcription: str, language: str) -> bytes:
-        
-        # 1) Bygg och sortera segment
+     
         segments = self.build_segments_from_raw(raw_transcription)
         segments.sort(key=lambda s: s["start"])
 
         if not segments:
-            raise ValueError("Inga giltiga segment hittades i raw_transcription.")
+            raise ValueError("No valid segments in raw_transcription.")
 
-        # 2) Beräkna total längd (i ms)
         total_ms = int(max(s["end"] for s in segments) * 1000)
 
-        # 3) Starta en tyst AudioSegment av total längd
         final = AudioSegment.silent(duration=total_ms)
 
-        # 4) Hämta röster för språket
         voice_map = VOICE_MAPS.get(language)
         if not voice_map:
             raise ValueError(f"Inget voice_map för språk '{language}'")
-        # Om du vill ha en default-voice:
+    
         default_voice = next(iter(voice_map.values()), None)
 
-        # 5) Generera varje TTS och lägg ovanpå på rätt tidpunkt
         for seg in segments:
             start_ms = int(seg["start"] * 1000)
             end_ms   = int(seg["end"]   * 1000)
             text     = seg["text"]
             speaker  = seg["speaker"]
 
-            # Välj voice_id, fallback till default
             voice_id = voice_map.get(speaker) or default_voice
             if not voice_id:
                 raise ValueError(f"Ingen voice_id för {speaker} i {language}")
 
-            # Skippa segment med noll-längd
             target_dur = end_ms - start_ms
             if target_dur <= 0:
                 logger.warning(f"Segment vid {seg['start']}s har längd {target_dur} ms – skippar")
                 continue
 
-            # TTS-anrop
             tts_stream = client.text_to_speech.convert(
                 text=text,
                 voice_id=voice_id,
@@ -259,7 +240,6 @@ class TranscriptionService:
             tts_bytes = b"".join(tts_stream)
             tts_audio = AudioSegment.from_file(BytesIO(tts_bytes), format="mp3")
 
-            # Anpassa längd (speedup om för långt, annars fyll tystnad)
             actual = len(tts_audio)
             if actual > target_dur:
                 speed = actual / target_dur
@@ -267,10 +247,8 @@ class TranscriptionService:
             else:
                 tts_audio += AudioSegment.silent(duration=(target_dur - actual))
 
-            # Overlay på exakt start_ms
             final = final.overlay(tts_audio, position=start_ms)
 
-        # 6) Exportera som MP3-bytes
         buf = BytesIO()
         final.export(buf, format="mp3")
         return buf.getvalue()
