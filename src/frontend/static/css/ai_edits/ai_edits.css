@@ -193,15 +193,6 @@ body {
   display: none;
 }
 
-#audioControls {
-    margin-bottom: 10px;
-  }
-
-.language-wrapper, .quoteImageMethodSelect-wrapper, .guestName-wrapper {
-  width: 100%;
-  margin: 0px 10px 10px 10px;
-}
-
 .result-field h4 {
   margin-top: 15px;
 }
@@ -211,14 +202,13 @@ body {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  flex-wrap: wrap;
 }
 
 .result-field pre {
   max-height: 300px;
   overflow-y: auto;
   overflow-x: hidden;         
-  padding: 15px;
+  padding: 8px;
   background-color: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 0.75rem;
@@ -234,14 +224,14 @@ label {
 
 /* Spinner style */
 .spinner {
-  display: block;
+  display: inline-block;
   width: 30px;
   height: 30px;
   border: 4px solid #ccc;
   border-top-color: #333;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto;
+  margin: 10px auto;
 }
 
 @keyframes spin {
@@ -285,10 +275,6 @@ button span.credit-cost {
   padding: 7px 10px;
   display: inline-block;
 }
-
- #loadCuttingWaveformBtn {
-    margin-top: 0px;
-  }
 
 .help-icon {
   display: inline-block;
@@ -388,16 +374,11 @@ button span.credit-cost {
     align-items: center;
   }
 
-  .language-wrapper, .quoteImageMethodSelect-wrapper, .guestName-wrapper {
-    text-align: center;
-  }
-
   .result-group {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    align-content: center;
   }
 
   .result-field {
@@ -421,21 +402,12 @@ button span.credit-cost {
     flex-direction: column;
   }
 
-  #loadCuttingWaveformBtn {
-    margin-top: var(--spacing-sm);
-  }
-
   .ap-container {
     text-align: center;
   }
 
   .help-icon {
     margin-right: 0;
-  }
-
-  .btn.ai-edit-button {
-    margin-left: 0px;
-    margin-right: 0px;
   }
 
 }

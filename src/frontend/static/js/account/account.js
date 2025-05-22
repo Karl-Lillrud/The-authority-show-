@@ -13,154 +13,7 @@ import {
   updateSubscriptionUI
 } from "/static/js/account/subscription.js";
 
-// Add email change modal HTML to the document
-const emailChangeModalHTML = `
-<div id="email-change-modal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Change Email Address</h3>
-      <span class="close-modal">&times;</span>
-    </div>
-    <div class="modal-body">
-      <form id="email-change-form">
-        <div class="form-group">
-          <label for="new-email">New Email Address <span class="required">*</span></label>
-          <input type="email" id="new-email" name="newEmail" required>
-          <div class="form-hint">You will need to verify this email address</div>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="primary-button">Send Verification Email</button>
-          <button type="button" class="secondary-button cancel-email-change">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-`;
-
 document.addEventListener("DOMContentLoaded", () => {
-  // Add modal to document
-  document.body.insertAdjacentHTML('beforeend', emailChangeModalHTML);
-
-  // Get modal elements
-  const emailChangeModal = document.getElementById("email-change-modal");
-  const emailChangeForm = document.getElementById("email-change-form");
-  const closeModalBtn = emailChangeModal.querySelector(".close-modal");
-  const cancelBtn = emailChangeModal.querySelector(".cancel-email-change");
-
-  // Function to show email change modal
-  function showEmailChangeModal() {
-    emailChangeModal.style.display = "block";
-  }
-
-  // Function to hide email change modal
-  function hideEmailChangeModal() {
-    emailChangeModal.style.display = "none";
-    emailChangeForm.reset();
-  }
-
-  // Add change email button to email field when in edit mode
-  function addChangeEmailButton() {
-    const emailInput = document.getElementById("email");
-    if (emailInput) {
-      // Create a container div to hold both email input and button
-      const emailContainer = document.createElement("div");
-      emailContainer.className = "email-field-container";
-      
-      // Move email input inside the container
-      const parent = emailInput.parentNode;
-      parent.insertBefore(emailContainer, emailInput);
-      emailContainer.appendChild(emailInput);
-      
-      // Create the change email button with compact styling
-      const changeEmailBtn = document.createElement("button");
-      changeEmailBtn.type = "button";
-      changeEmailBtn.className = "secondary-button change-email-btn compact";
-      changeEmailBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-          <path d="m12 15 3-3-3-3"></path>
-          <path d="M15 12H3"></path>
-        </svg>
-        Change
-      `;
-      
-      // Add the button to the container
-      emailContainer.appendChild(changeEmailBtn);
-      
-      // Add click event
-      changeEmailBtn.addEventListener("click", showEmailChangeModal);
-    }
-  }
-
-  // Handle email change form submission
-  emailChangeForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    
-    const newEmail = document.getElementById("new-email").value;
-    const submitButton = emailChangeForm.querySelector('.primary-button');
-    
-    // Save original button text
-    const originalButtonText = submitButton.innerHTML;
-    
-    // Show loading spinner
-    submitButton.innerHTML = `
-      <svg class="spinner" viewBox="0 0 50 50">
-        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-      </svg>
-      Sending...
-    `;
-    submitButton.disabled = true;
-    
-    try {
-      const response = await fetch("/api/email/change", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "same-origin",
-        body: JSON.stringify({ newEmail }),
-      });
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("Email change endpoint not found. Please try again later.");
-        }
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to initiate email change");
-      }
-      
-      const result = await response.json();
-      
-      showNotification(
-        "Success",
-        "Please check your email to confirm the change",
-        "success"
-      );
-      hideEmailChangeModal();
-    } catch (error) {
-      console.error("Error:", error);
-      showNotification(
-        "Error",
-        error.message || "An error occurred while processing your request",
-        "error"
-      );
-      
-      // Restore button on error
-      submitButton.innerHTML = originalButtonText;
-      submitButton.disabled = false;
-    }
-  });
-
-  // Close modal events
-  closeModalBtn.addEventListener("click", hideEmailChangeModal);
-  cancelBtn.addEventListener("click", hideEmailChangeModal);
-  window.addEventListener("click", (event) => {
-    if (event.target === emailChangeModal) {
-      hideEmailChangeModal();
-    }
-  });
-
   // Hides the edit buttons when in non-edit mode
   const formActions = document.querySelector(".form-actions");
   const uploadBtn = document.getElementById("upload-pic");
@@ -248,6 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Function to load account data
   async function loadAccountData(preserveProfilePic = false) {
     try {
+      // Explicitly call fetchAccount
       const wrapper = await fetchAccount();
       const account = wrapper.account;
 
@@ -269,11 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const phoneInput = document.getElementById("phone");
 
       if (fullNameInput) fullNameInput.value = account.full_name || "";
-      if (emailInput) {
-        emailInput.value = account.email || "";
-        emailInput.readOnly = true; // Make email field read-only
-        emailInput.classList.add('readonly-field'); // Add a class for styling
-      }
+      if (emailInput) emailInput.value = account.email || "";
       if (phoneInput) phoneInput.value = account.phone || "";
 
       // Update the display values
@@ -699,6 +549,7 @@ document.addEventListener("DOMContentLoaded", () => {
       event.preventDefault();
 
       const fullName = document.getElementById("full-name").value;
+      const email = document.getElementById("email").value;
       const phone = document.getElementById("phone").value; // Optional field
 
       // Validate required fields
@@ -707,8 +558,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      if (!email.trim()) {
+        showNotification("Error", "Email is required", "error");
+        return;
+      }
+
       const profileData = {
         full_name: fullName,
+        email: email,
         phone: phone || null // Allow phone to be null if not provided
       };
 
@@ -724,6 +581,8 @@ document.addEventListener("DOMContentLoaded", () => {
             // Update the display values in the read-only view
             document.getElementById("display-full-name").textContent =
               fullName || "Not provided";
+            document.getElementById("display-email").textContent =
+              email || "Not provided";
             document.getElementById("display-phone").textContent =
               phone || "Not provided";
             
@@ -792,7 +651,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const uploadButton = document.getElementById("upload-pic");
     const profilePicOverlay = document.querySelector(".profile-pic-overlay");
     const formFields = profileForm.querySelectorAll("input, textarea");
-    const changeEmailBtn = document.querySelector(".change-email-btn");
 
     // Toggle between view and edit modes
     if (isEditMode) {
@@ -809,11 +667,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (uploadButton) uploadButton.style.display = "inline-block";
       if (profilePicOverlay) profilePicOverlay.style.display = "flex";
 
-      // Add change email button if not exists
-      if (!changeEmailBtn) {
-        addChangeEmailButton();
-      }
-
       // Load account data but preserve profile picture
       loadAccountData(true);
     } else {
@@ -824,11 +677,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Update display values before switching back to view mode
       const fullNameInput = document.getElementById("full-name");
+      const emailInput = document.getElementById("email");
       const phoneInput = document.getElementById("phone");
 
       if (fullNameInput && document.getElementById("display-full-name")) {
         document.getElementById("display-full-name").textContent =
           fullNameInput.value || "Not provided";
+      }
+
+      if (emailInput && document.getElementById("display-email")) {
+        document.getElementById("display-email").textContent =
+          emailInput.value || "Not provided";
       }
 
       if (phoneInput && document.getElementById("display-phone")) {
@@ -839,20 +698,6 @@ document.addEventListener("DOMContentLoaded", () => {
       // Hide upload button and profile pic overlay
       if (uploadButton) uploadButton.style.display = "none";
       if (profilePicOverlay) profilePicOverlay.style.display = "none";
-
-      // Remove change email button and restore input to original position
-      const emailContainer = document.querySelector(".email-field-container");
-      if (emailContainer) {
-        const emailInput = emailContainer.querySelector("#email");
-        const formGroup = emailContainer.parentNode;
-        
-        if (emailInput && formGroup) {
-          // Move email input back to its original position
-          emailContainer.removeChild(emailInput);
-          formGroup.insertBefore(emailInput, emailContainer);
-          formGroup.removeChild(emailContainer);
-        }
-      }
 
       // Load account data but preserve profile picture
       loadAccountData(true);
