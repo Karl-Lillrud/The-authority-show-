@@ -22,9 +22,8 @@ from backend.services.videoService import VideoService
 from backend.services.creditService import consume_credits
 from backend.repository.edit_repository import save_transcription_edit
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
-from backend.utils.transcription_utils import check_audio_duration
 from backend.utils.subscription_access import get_max_duration_limit
-from backend.utils.text_utils import get_osint_info, create_podcast_scripts_paid, text_to_speech_with_elevenlabs
+from backend.utils.ai_utils import get_osint_info, create_podcast_scripts_paid, text_to_speech_with_elevenlabs,check_audio_duration
 
 
 transcription_bp = Blueprint("transcription", __name__)

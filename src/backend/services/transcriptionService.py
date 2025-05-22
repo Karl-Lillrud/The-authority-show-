@@ -9,8 +9,7 @@ from typing import List, Tuple
 from io import BytesIO
 from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import fs
-from backend.utils.ai_utils import remove_filler_words, analyze_emotions
-from backend.utils.text_utils import (
+from backend.utils.ai_utils import (
     generate_ai_suggestions,
     generate_show_notes,
     generate_ai_quotes,
@@ -18,7 +17,9 @@ from backend.utils.text_utils import (
     render_quote_images_local,
     translate_text,
     suggest_sound_effects,
-    get_sentence_timestamps
+    get_sentence_timestamps,
+    remove_filler_words, 
+    analyze_emotions
 )
 
 logger = logging.getLogger(__name__)

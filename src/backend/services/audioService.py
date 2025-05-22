@@ -3,17 +3,14 @@ from typing import Optional
 from pydub import AudioSegment, silence
 from io import BytesIO 
 from backend.database.mongo_connection import get_fs
-from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav,get_sentence_timestamps_fuzzy, convert_to_pcm_wav
 from backend.utils.ai_utils import (
     remove_filler_words, calculate_clarity_score, analyze_sentiment, analyze_emotions
-)
-from backend.utils.text_utils import (
-    transcribe_with_whisper, detect_filler_words, classify_sentence_relevance,
+    , enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav,get_sentence_timestamps_fuzzy, 
+    convert_to_pcm_wav, transcribe_with_whisper, detect_filler_words, classify_sentence_relevance,
     analyze_certainty_levels, get_sentence_timestamps, detect_long_pauses,
     generate_ai_show_notes, suggest_sound_effects, translate_text, mix_background,
     pick_dominant_emotion, fetch_sfx_for_emotion
 )
-import backend.utils.text_utils as text_utils
 from backend.repository.ai_models import save_file, get_file_data, get_file_by_id
 from elevenlabs.client import ElevenLabs
 from backend.utils.blob_storage import upload_file_to_blob
