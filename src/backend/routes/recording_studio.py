@@ -1,5 +1,4 @@
-from flask import Blueprint, render_template, session, g, redirect, url_for
-from flask import request, jsonify, Blueprint, url_for, render_template
+from flask import Blueprint, render_template, session, g, redirect, url_for, request, jsonify
 from flask_socketio import join_room, leave_room, emit, SocketIO
 from datetime import datetime
 
@@ -69,7 +68,6 @@ def register_socketio_events(socketio: SocketIO):
 # ---------------------------------------------
 # ROUTES
 # ---------------------------------------------
-
 
 @recording_studio_bp.route('/invite', methods=['POST'])
 def create_invitation():
@@ -152,6 +150,8 @@ def verify_invite(invite_token):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@recording_studio_bp.route('/recording_studio', methods=['GET'])
+@recording_studio_bp.route('/studio')
 def recording_studio():
+    if not g.user_id:
+        return redirect(url_for('auth.login'))
     return render_template('recordingstudio/recording_studio.html')
