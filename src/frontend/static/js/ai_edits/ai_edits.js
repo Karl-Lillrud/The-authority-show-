@@ -614,7 +614,8 @@ let fullTranscript = "";
 async function transcribe() {
     const fileInput = document.getElementById('fileUploader');
     const resultContainer = document.getElementById('transcriptionResult');
-    
+    const wrapper = resultContainer.parentElement;
+
     const file = fileInput.files[0];
     if (!file) {
         alert('Please upload a file.');
@@ -626,8 +627,9 @@ async function transcribe() {
         alert("No episode selected.");
         return;
     }
-
+    wrapper.style.display = "block";
     showSpinner("transcriptionResult");
+    
     const formData = new FormData();
     formData.append('file', file);
     formData.append('episode_id', episodeId);  // Include episode ID
