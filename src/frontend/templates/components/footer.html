@@ -4,10 +4,14 @@
 />
 <footer>
   <p>
-    © 2023 PodManager. All rights reserved.
+    © <span id="current-year"></span> PodManager. All rights reserved.
     <a href="{{ url_for('frontend.terms_of_service_page') }}">Terms of Service</a><span class="footer-sep"> | </span>
     <a href="{{ url_for('frontend.privacy_policy_page') }}">Privacy Policy</a><span class="footer-sep"> | </span>
     <a href="{{ url_for('frontend.about_page') }}">About PodManager</a>
   </p>
 </footer>
+
+<script>
+  document.getElementById('current-year').textContent = new Date().getFullYear();
+</script>
 
