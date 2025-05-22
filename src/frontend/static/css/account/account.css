@@ -949,6 +949,43 @@ input:focus:invalid {
   animation: pulse 0.5s;
 }
 
+/* Spinner Animation */
+.spinner {
+  width: 18px;
+  height: 18px;
+  animation: rotate 2s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+.spinner .path {
+  stroke: currentColor;
+  stroke-linecap: round;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
+
 /* Responsive Styles */
 @media (max-width: 992px) {
   .account-settings-wrapper {
