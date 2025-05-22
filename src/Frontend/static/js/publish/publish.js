@@ -87,6 +87,14 @@ document.addEventListener("DOMContentLoaded", () => {
           );
         }
       });
+
+      // Preselect the podcast if only one is available
+      if (podcasts.length === 1) {
+        podcastSelect.value = podcasts[0]._id;
+        console.log(`[publish.js] Only one podcast found. Preselecting podcast ID: ${podcasts[0]._id}`);
+        loadEpisodesForPodcast(podcasts[0]._id); // Automatically load episodes for the preselected podcast
+      }
+
       console.log("[publish.js] Finished populating podcast dropdown.");
     } catch (error) {
       podcastSelect.innerHTML = '<option value="">Error loading podcasts</option>';
