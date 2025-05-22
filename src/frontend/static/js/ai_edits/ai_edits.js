@@ -316,7 +316,7 @@ function showTab(tabName) {
             <h2>AI Analysis</h2>
 
             <label for="audioSourceSelectAnalysis"><strong>Audio Source:</strong></label>
-            <select id="audioSourceSelectAnalysis" class="input-field">
+            <select id="audioSourceSelectAnalysis" class="input-field" style="margin-bottom: 5px;">
                 <option value="enhanced">Enhanced</option>
                 <option value="isolated">Isolated</option>
                 <option value="original">Original</option>
@@ -376,7 +376,7 @@ function showTab(tabName) {
             <button id="cut-play-pause" class="btn ai-edit-button" style="display:none; margin-bottom:1rem;">
             Play
             </button>
-            <label style="display: block;">
+            <label style="display: block; margin-top: 5px;">
             Start (s):
             <input id="cut-start" type="number" step="0.01" class="input-field" style="width:6em; padding: 5px; margin-left: 5px;">
             </label>
@@ -411,7 +411,7 @@ function showTab(tabName) {
             <h2>AI Cutting + Transcript</h2>
 
             <label for="audioSourceSelectAICut"><strong>Audio Source:</strong></label>
-            <select id="audioSourceSelectAICut" class="input-field">
+            <select id="audioSourceSelectAICut" class="input-field" style="margin-bottom: 5px;">
                 <option value="enhanced">Enhanced</option>
                 <option value="isolated">Isolated</option>
                 <option value="original">Original</option>

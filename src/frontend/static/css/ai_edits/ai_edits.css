@@ -286,6 +286,10 @@ button span.credit-cost {
   display: inline-block;
 }
 
+ #loadCuttingWaveformBtn {
+    margin-top: 0px;
+  }
+
 .help-icon {
   display: inline-block;
   /* flytta ut mot knappen på höger sida av ikonen */
@@ -414,6 +418,10 @@ button span.credit-cost {
 
   .button-with-help {
     flex-direction: column;
+  }
+
+  #loadCuttingWaveformBtn {
+    margin-top: var(--spacing-sm);
   }
 
   .ap-container {
