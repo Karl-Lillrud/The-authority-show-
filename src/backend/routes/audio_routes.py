@@ -218,11 +218,7 @@ def cut_audio_from_blob():
         try:
             consume_credits(g.user_id, "audio_cutting")
         except ValueError as e:
-            logger.warning(f"User {g.user_id} has insufficient credits for audio_cutting.")
-            return jsonify({
-                "error": str(e),
-                "redirect": "/store"
-            }), 403
+            return insufficient_credits_response("cut_from_blob", e)
 
         audio_file = request.files["audio"]
         episode_id = request.form["episode_id"]
@@ -262,11 +258,7 @@ def ai_cut_from_blob():
         try:
             consume_credits(g.user_id, "ai_audio_cutting")
         except ValueError as e:
-            logger.warning(f"User {g.user_id} has insufficient credits for ai_audio_cutting.")
-            return jsonify({
-                "error": str(e),
-                "redirect": "/store"
-            }), 403
+            return insufficient_credits_response("ai_audio_cutting", e)
 
         audio_file = request.files["audio"]
         episode_id = request.form["episode_id"]

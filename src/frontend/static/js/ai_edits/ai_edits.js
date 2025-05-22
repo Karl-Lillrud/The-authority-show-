@@ -308,7 +308,6 @@ function showTab(tabName) {
             <select id="audioSourceSelectAnalysis" class="input-field" style="margin-bottom: 1rem;">
                 <option value="enhanced">Enhanced</option>
                 <option value="isolated">Isolated</option>
-                <option value="original">Original</option>
             </select>
 
             <div class="button-with-help">
