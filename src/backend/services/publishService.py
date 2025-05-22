@@ -25,43 +25,50 @@ class PublishService:
             # 1. Data Retrieval
             episode_data_tuple = self.episode_repo.get_episode(episode_id, user_id)
             if not episode_data_tuple or episode_data_tuple[1] != 200:
+                log_messages.append(f"Error: Episode {episode_id} not found or access denied for user {user_id}.")
                 return {"success": False, "error": "Episode not found or access denied.", "details": log_messages}
             episode = episode_data_tuple[0]
             log_messages.append(f"Fetched episode: {episode.get('title', episode_id)}")
 
             podcast_id = episode.get('podcast_id')
             if not podcast_id:
+                log_messages.append(f"Error: Episode {episode_id} is not linked to a podcast.")
                 return {"success": False, "error": "Episode not linked to a podcast.", "details": log_messages}
+            
             podcast_data_tuple = self.podcast_repo.get_podcast_by_id(user_id, podcast_id)
             if not podcast_data_tuple or podcast_data_tuple[1] != 200:
+                log_messages.append(f"Error: Podcast {podcast_id} not found or access denied for user {user_id}.")
                 return {"success": False, "error": "Podcast not found or access denied.", "details": log_messages}
             podcast = podcast_data_tuple[0].get('podcast')
             log_messages.append(f"Fetched podcast: {podcast.get('podName', podcast_id)}")
 
-            # 2. Status Update: Mark as Published BEFORE generating RSS
+            # 2. Status Update: Mark as published and set publishDate BEFORE generating RSS
+            now_utc = datetime.datetime.now(datetime.timezone.utc)
             update_payload = {
-                "status": "Published",
-                "lastPublishedAt": datetime.datetime.utcnow()
+                "status": "published",  # Ensure status is lowercase
+                "publishDate": now_utc,  # Ensure publishDate is set to current UTC time
+                "lastPublishedAt": now_utc
             }
+            
+            current_app.logger.info(f"Attempting to update episode {episode_id} with payload: {update_payload}")
             update_result, update_status = self.episode_repo.update_episode(episode_id, user_id, update_payload)
+            
             if update_status == 200:
-                log_messages.append("Episode status updated to 'Published' before RSS generation.")
+                log_messages.append(f"Episode status set to 'published' and publishDate to {now_utc.isoformat()} before RSS generation.")
+                current_app.logger.info(f"Episode {episode_id} status and publishDate updated successfully.")
             else:
-                log_messages.append("Warning: Failed to update episode status before RSS generation.")
-
-            # --- RELOAD EPISODE DATA TO GET LATEST STATUS ---
-            episode_data_tuple = self.episode_repo.get_episode(episode_id, user_id)
-            if not episode_data_tuple or episode_data_tuple[1] != 200:
-                log_messages.append("Warning: Could not reload episode after status update.")
-            else:
-                episode = episode_data_tuple[0]
+                log_messages.append(f"Warning: Failed to update episode status/publishDate. Status: {update_status}, Result: {update_result}")
+                current_app.logger.warning(f"Failed to update episode {episode_id} status/publishDate. Status: {update_status}, Result: {update_result}")
+                return {"success": False, "error": "Failed to update episode status for publishing.", "details": log_messages}
 
             # 3. Generate and upload RSS feed to Azure Blob Storage
-            # --- ENSURE THE LATEST EPISODE IS INCLUDED ---
-            rss_xml = self._generate_rss_feed_xml(podcast_id, podcast, user_id)
+            current_app.logger.info(f"Generating RSS feed for podcast {podcast_id} by user {user_id}. Episode being published: {episode_id}")
+            rss_xml = self._generate_rss_feed_xml(podcast_id, podcast, user_id, publishing_episode_id=episode_id)
             rss_blob_url = self._upload_rss_to_blob(podcast_id, rss_xml, user_id)
-            log_messages.append(f"RSS feed uploaded to {rss_blob_url}")
+            log_messages.append(f"RSS feed generated and uploaded to {rss_blob_url}")
+            current_app.logger.info(f"RSS feed for {podcast_id} uploaded to {rss_blob_url}")
 
+            # 4. Platform Processing
             published_to = []
             for platform in platforms:
                 platform_lower = platform.lower()
@@ -77,10 +84,10 @@ class PublishService:
 
             # Final update: add platforms
             final_update_payload = {
-                "publishedToPlatforms": published_to,
-                "lastPublishedAt": datetime.datetime.utcnow()
+                "publishedToPlatforms": published_to
             }
             self.episode_repo.update_episode(episode_id, user_id, final_update_payload)
+            log_messages.append("Episode platform metadata updated.")
 
             return {
                 "success": True,
@@ -89,6 +96,7 @@ class PublishService:
                 "rssFeedUrl": rss_blob_url
             }
         except Exception as e:
+            current_app.logger.error(f"Unexpected error in publish_episode for {episode_id} by user {user_id}: {str(e)}", exc_info=True)
             log_messages.append(f"Exception: {str(e)}")
             return {
                 "success": False,
@@ -96,11 +104,29 @@ class PublishService:
                 "details": log_messages
             }
 
-    def _generate_rss_feed_xml(self, podcast_id, podcast, user_id):
+    def _generate_rss_feed_xml(self, podcast_id, podcast, user_id, publishing_episode_id=None):
         # Fetch all published episodes for this podcast
-        episodes_data, _ = self.episode_repo.get_episodes_by_podcast(podcast_id, user_id)
-        episodes = episodes_data.get("episodes", [])
+        current_app.logger.info(f"[_generate_rss_feed_xml] Fetching episodes for podcast_id: {podcast_id}, user_id: {user_id}")
+        episodes_data, status_code = self.episode_repo.get_episodes_by_podcast(podcast_id, user_id)
+        
+        if status_code != 200:
+            current_app.logger.error(f"[_generate_rss_feed_xml] Failed to fetch episodes for podcast {podcast_id}. Status: {status_code}, Data: {episodes_data}")
+            return "<?xml version='1.0' encoding='UTF-8'?><rss><channel><title>Error fetching episodes</title></channel></rss>"
 
+        episodes = episodes_data.get("episodes", [])
+        current_app.logger.info(f"[_generate_rss_feed_xml] Found {len(episodes)} total episodes for podcast {podcast_id} before filtering.")
+
+        # Log details of the episode that was intended to be published, as found in the fetched list
+        if publishing_episode_id:
+            found_publishing_episode_in_list = False
+            for ep_check in episodes:
+                if str(ep_check.get('_id')) == str(publishing_episode_id):  # Ensure ID comparison is robust
+                    found_publishing_episode_in_list = True
+                    current_app.logger.info(f"[_generate_rss_feed_xml] Data for currently publishing episode '{publishing_episode_id}' (Title: {ep_check.get('title')}) as found in fetched list: Status='{ep_check.get('status')}', PubDate='{ep_check.get('publishDate')}'")
+                    break
+            if not found_publishing_episode_in_list:
+                 current_app.logger.warning(f"[_generate_rss_feed_xml] Publishing episode {publishing_episode_id} NOT FOUND in the list fetched from DB for podcast {podcast_id}. This means it won't be in the RSS if its status isn't 'published' or if it's missing from the query result.")
+        
         from email.utils import format_datetime
         import datetime
 
@@ -222,7 +248,7 @@ class PublishService:
         current_app.logger.info(f"Attempting to upload RSS to container: '{container_name}', blob path: '{blob_path}'")
 
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
-        blob_client.upload_blob(rss_xml, overwrite=True, content_type="application/rss+xml")
+        blob_client.upload_blob(rss_xml, overwrite=True, content_type="application/rss+xml") # overwrite=True is already set
         
         # Dynamically construct the public URL by replacing placeholders in RSS_FEED_BASE_URL
         # Ensure RSS_FEED_BASE_URL is correctly defined, e.g.,
