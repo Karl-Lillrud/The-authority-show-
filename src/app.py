@@ -86,6 +86,11 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED_URL_SCHEME"] = "https"
 app.config["PREFERRED_URL_SCHEME"] = "https"
 
+# Configure session cookies
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 # Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(podcast_bp)
