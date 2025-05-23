@@ -363,51 +363,7 @@ def get_audio_info():
         logger.error(f"ERROR: Failed to process audio - {str(e)}")
         return jsonify({"error": f"Failed to process audio: {str(e)}"}), 500
 
-@transcription_bp.route("/voice_isolate", methods=["POST"])
-def isolate_voice():
-    if "audio" not in request.files or "episode_id" not in request.form:
-        return jsonify({"error": "Audio file and episode_id are required"}), 400
 
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Authentication required"}), 401
-
-    # Consume credits BEFORE processing
-    try:
-        consume_credits(user_id, "voice_isolation")
-    except ValueError as e:
-        logger.warning(f"User {user_id} has insufficient credits for voice isolation.")
-        return jsonify({
-            "error": str(e),
-            "redirect": "/store"
-        }), 403
-
-    audio_file = request.files["audio"]
-    episode_id = request.form["episode_id"]
-    filename = audio_file.filename
-    audio_bytes = audio_file.read()
-
-    try:
-        blob_url = audio_service.isolate_voice(audio_bytes, filename, episode_id)
-        return jsonify({"isolated_blob_url": blob_url})  
-    except Exception as e:
-        logger.error(f"Error during voice isolation: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-    
-@transcription_bp.route("/get_isolated_audio", methods=["GET"])
-def get_isolated_audio():
-    url = request.args.get("url")
-    if not url:
-        return jsonify({"error": "Missing URL"}), 400
-    
-    try:
-        response = requests.get(url)
-        return Response(response.content, content_type="audio/wav")
-    
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    
 @transcription_bp.route("/ai_edits_index", methods=["GET"])
 def render_ai_edits_index():
     episode_id = request.args.get("episodeId")
