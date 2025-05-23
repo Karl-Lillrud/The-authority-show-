@@ -44,10 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Define triggerFileUpload function ---
   function triggerFileUpload() {
     if (profilePicInput) {
-      console.log("Triggering file input click..."); // Add log
       profilePicInput.click(); // Programmatically click the hidden file input
-    } else {
-      console.error("Profile picture input element not found!"); // Add error log
     }
   }
   // --- End define triggerFileUpload function ---
@@ -56,83 +53,94 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleFileSelect(event) {
     const file = event.target.files[0];
     if (file && profilePic) {
-      console.log("File selected:", file.name); // Add log
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        profilePic.src = e.target.result; // Preview the selected image
-        // --- Call the upload function ---
-        uploadProfilePicture(file)
-          .then((data) => {
-            if (data.profilePicUrl) {
-              // Optionally update the displayed image source again from the server URL
-              // profilePic.src = data.profilePicUrl;
-              showNotification(
-                "Success",
-                "Profile picture updated successfully!",
-                "success"
-              );
-            } else {
-              showNotification(
-                "Error",
-                data.error || "Failed to upload profile picture.",
-                "error"
-              );
-            }
-          })
-          .catch((error) => {
-            console.error("Error uploading profile picture:", error);
+      // Store the current profile picture URL
+      const currentProfilePicUrl = profilePic.src;
+
+      // --- Call the upload function ---
+      uploadProfilePicture(file)
+        .then((data) => {
+          if (data.profilePicUrl) {
+            // Create a new Image object to preload the new image
+            const img = new Image();
+            img.onload = function() {
+              profilePic.src = data.profilePicUrl;
+              // Store the new URL in localStorage as a backup
+              localStorage.setItem('lastProfilePicUrl', data.profilePicUrl);
+            };
+            img.onerror = function() {
+              profilePic.src = currentProfilePicUrl;
+            };
+            img.src = data.profilePicUrl;
+
+            showNotification(
+              "Success",
+              "Profile picture updated successfully!",
+              "success"
+            );
+          } else {
             showNotification(
               "Error",
-              `Upload failed: ${error.message}`,
+              data.error || "Failed to upload profile picture.",
               "error"
             );
-            // Optionally revert the preview if upload fails
-            // loadAccountData(); // Or store original URL and revert
-          });
-        // --- End upload function call ---
-      };
-      reader.readAsDataURL(file);
+            profilePic.src = currentProfilePicUrl;
+          }
+        })
+        .catch((error) => {
+          showNotification(
+            "Error",
+            `Upload failed: ${error.message}`,
+            "error"
+          );
+          profilePic.src = currentProfilePicUrl;
+        });
     }
   }
   // --- End define handleFileSelect function ---
 
   // Function to load account data
-  async function loadAccountData() {
+  async function loadAccountData(preserveProfilePic = false) {
     try {
       // Explicitly call fetchAccount
       const wrapper = await fetchAccount();
       const account = wrapper.account;
 
-      // Set profile picture
+      // Set profile picture only if not preserving current one
       if (profilePic) {
-        if (account.profilePicUrl) {
-          profilePic.src = account.profilePicUrl;
-        } else {
-          profilePic.src = "/static/images/profilepic.png"; // Correct default path
+        const currentSrc = profilePic.src;
+        if (!preserveProfilePic) {
+          if (account.profile_pic_url) {
+            profilePic.src = account.profile_pic_url;
+          } else {
+            profilePic.src = "/static/images/profilepic.png";
+          }
         }
       }
 
-      // Set other profile data
-      document.getElementById("full-name").value = account.full_name || "";
-      document.getElementById("email").value = account.email || "";
-      document.getElementById("phone").value = account.phone || "";
+      // Set form field values
+      const fullNameInput = document.getElementById("full-name");
+      const emailInput = document.getElementById("email");
+      const phoneInput = document.getElementById("phone");
+
+      if (fullNameInput) fullNameInput.value = account.full_name || "";
+      if (emailInput) emailInput.value = account.email || "";
+      if (phoneInput) phoneInput.value = account.phone || "";
 
       // Update the display values
-      document.getElementById("display-full-name").textContent =
-        account.full_name || "Not provided";
-      document.getElementById("display-email").textContent =
-        account.email || "Not provided";
-      document.getElementById("display-phone").textContent =
-        account.phone || "Not provided";
+      const displayFullName = document.getElementById("display-full-name");
+      const displayEmail = document.getElementById("display-email");
+      const displayPhone = document.getElementById("display-phone");
+
+      if (displayFullName) displayFullName.textContent = account.full_name || "Not provided";
+      if (displayEmail) displayEmail.textContent = account.email || "Not provided";
+      if (displayPhone) displayPhone.textContent = account.phone || "Not provided";
     } catch (error) {
-      console.error("Error loading account data:", error);
       showNotification(
         "Error",
         `Failed to load account data: ${error.message}`,
         "error"
       );
-      // Set default profile picture on error as well
-      if (profilePic) {
+      if (profilePic && !preserveProfilePic) {
         profilePic.src = "/static/images/profilepic.png";
       }
     }
@@ -422,8 +430,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Initialize profile data
-  loadAccountData();
+  // Initialize profile data with preserved profile picture
+  loadAccountData(true);
+  
+  // Try to restore profile picture from localStorage
+  restoreProfilePicture();
 
   // Cancel edit button (switches back to view mode)
   const cancelEditBtn = document.getElementById("cancel-edit-btn");
@@ -639,7 +650,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileActions = document.querySelector(".profile-actions");
     const uploadButton = document.getElementById("upload-pic");
     const profilePicOverlay = document.querySelector(".profile-pic-overlay");
-    const formFields = profileForm.querySelectorAll("input, textarea"); // Get form fields from the form itself
+    const formFields = profileForm.querySelectorAll("input, textarea");
 
     // Toggle between view and edit modes
     if (isEditMode) {
@@ -648,16 +659,18 @@ document.addEventListener("DOMContentLoaded", () => {
       profileInfoCard.style.display = "none";
       profileActions.style.display = "none";
 
-      // IMPORTANT - Enable all form fields for editing (removing disabled attribute)
       formFields.forEach((field) => {
-        field.disabled = false; // Remove disabled attribute
+        field.disabled = false;
       });
 
       // Show upload button and profile pic overlay
       if (uploadButton) uploadButton.style.display = "inline-block";
       if (profilePicOverlay) profilePicOverlay.style.display = "flex";
+
+      // Load account data but preserve profile picture
+      loadAccountData(true);
     } else {
-      // Switch back to view mode code remains the same
+      // Switch back to view mode
       profileForm.style.display = "none";
       profileInfoCard.style.display = "block";
       profileActions.style.display = "flex";
@@ -685,6 +698,9 @@ document.addEventListener("DOMContentLoaded", () => {
       // Hide upload button and profile pic overlay
       if (uploadButton) uploadButton.style.display = "none";
       if (profilePicOverlay) profilePicOverlay.style.display = "none";
+
+      // Load account data but preserve profile picture
+      loadAccountData(true);
     }
 
     // Show or hide required indicators based on mode
@@ -751,7 +767,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Delete account form submission
   const deleteForm = document.querySelector(".delete-form");
   if (deleteForm) {
-    deleteForm.addEventListener("submit", (event) => {
+    deleteForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
       const confirmText = document.getElementById("delete-confirm").value;
@@ -780,32 +796,42 @@ document.addEventListener("DOMContentLoaded", () => {
         deleteEmail: email,
       };
 
-      console.log("Confirm data:", confirmData); // debugging log
-
-      deleteUserAccount(confirmData)
-        .then((data) => {
-          if (data.message) {
-            showNotification(
-              "Success",
-              "Account deleted successfully",
-              "success"
-            );
-            // Redirect to logout or home page after successful deletion
-            if (data.redirect) {
-              redirect_to_login();
-            }
-          } else {
-            showNotification("Error", "Failed to delete account", "error");
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
+      try {
+        const data = await deleteUserAccount(confirmData);
+        
+        if (data.message) {
           showNotification(
-            "Error",
-            "An error occurred while deleting account",
+            "Success",
+            "Account deleted successfully",
+            "success"
+          );
+          
+          // Wait for the notification to be visible
+          setTimeout(async () => {
+            try {
+              // Attempt to logout
+              await redirect_to_login();
+            } catch (error) {
+              console.error("Error during logout:", error);
+              // If logout fails, redirect to signin page anyway
+              window.location.href = "/signin";
+            }
+          }, 1000);
+        } else {
+          showNotification(
+            "Error", 
+            "Failed to delete account", 
             "error"
           );
-        });
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        showNotification(
+          "Error",
+          error.message || "An error occurred while deleting account",
+          "error"
+        );
+      }
     });
   }
 
@@ -902,14 +928,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Profile picture upload
   if (profilePicOverlay) {
     profilePicOverlay.addEventListener("click", triggerFileUpload);
-    console.log("Overlay click listener added."); // Add log
   } else {
     console.warn("Profile picture overlay not found."); // Add warning
   }
 
   if (uploadButton) {
     uploadButton.addEventListener("click", triggerFileUpload);
-    console.log("Upload button click listener added."); // Add log
   } else {
     console.warn("Upload button not found."); // Add warning
   }
@@ -917,7 +941,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Add event listener for the file input change
   if (profilePicInput) {
     profilePicInput.addEventListener("change", handleFileSelect);
-    console.log("File input change listener added."); // Add log
   } else {
     console.error(
       "Profile picture input element not found for change listener!"
@@ -1002,6 +1025,14 @@ document.addEventListener("DOMContentLoaded", () => {
         activateSection(targetId);
       });
     });
+
+  // Add a function to restore profile picture if needed
+  function restoreProfilePicture() {
+    const savedUrl = localStorage.getItem('lastProfilePicUrl');
+    if (savedUrl && profilePic) {
+      profilePic.src = savedUrl;
+    }
+  }
 });
 
 // Function to toggle between view and edit modes

@@ -7,32 +7,49 @@ body {
     background-color: var(--background-light);
     color: #404040;
   }
-  
+
+  #app h4 {
+    color: var(--text-color-light);
+  }
+
+  #app {
+    min-height: calc(100vh - 60px);
+  }
 
   /* Tabs */
   #tabs {
     display: flex;
-    gap: 1rem;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
+    gap: 30px;
+    justify-content: center;
+    /*padding-bottom: 0.5rem;*/
+    /*margin-bottom: 23px;*/
+    z-index: 1;
   }
   
   #tabs button {
-    padding: 0.5rem 1rem;
+    padding: var(--spacing-md) var(--spacing-lg);
     font-weight: 600;
-    color: #404040;
-    background: transparent;
-    border: none;
+    color: #797979;
+    background: white;
     cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid white;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
   }
-  
-  #tabs button.active,
+
   #tabs button:hover {
     color: #FF7300;
-    border-bottom: 3px solid #FF7300;
+    box-shadow: 0px 0px 6px rgba(255, 100, 0, 0.8);
+  }
+
+  #tabs button.active {
+    color: #FF7300;
+    box-shadow: 0px 0px 6px rgba(255, 100, 0, 0.8);
+    border-color: var(--highlight-color);
+    border-bottom: 1px solid white;
   }
   
   /* Main Content */
@@ -41,23 +58,42 @@ body {
   }
   
   /* Content Box */
+
   #content {
+    position: relative;
+    z-index: 2;
+  }
+
+  #content .content-wrapper {
     background-color: var(--card-bg-light);
     padding: 1.5rem;
     border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(255, 115, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+  }
+
+  #content .content-wrapper:last-of-type {
+    margin-bottom: 0;
   }
   
   /* File Upload */
   input[type="file"] {
     border: 2px dashed #ccc;
     padding: 1rem;
-    width: 100%;
     border-radius: 0.75rem;
     background: #fafafa;
     text-align: center;
     cursor: pointer;
     margin-bottom: 1rem;
+    margin-top: var(--spacing-md);
+    display: block;
+  }
+
+  /* Select */
+  select, input[type="text"] {
+    margin-right: 15px;
+    padding: 5px 5px;
+    border: 1px solid darkgray;
   }
   
   /* Buttons */
@@ -76,12 +112,17 @@ body {
   button:hover {
     background-color: #e46600;
   }
+
+  #audioEnhancementSection .button-with-help, #voiceIsolationSection .button-with-help {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
   
   /* Results */
   #transcriptionResult,
   #audioResult,
   #videoResult {
-    margin-top: 1.5rem;
+    margin-top: 15px;
     white-space: pre-wrap;
     background: #f9f9f9;
     border: 1px solid #ddd;
@@ -92,7 +133,7 @@ body {
 .btn.ai-edit-button {
     background-color: var(--highlight-color); 
     color: white;
-    padding: var(--spacing-md) var(--spacing-lg);      
+    padding: var(--spacing-sm) var(--spacing-md);      
     font-size: 1rem;         
     font-weight: 600;
     border: none;
@@ -100,8 +141,13 @@ body {
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: var(--button-shadow);
-    margin: var(--spacing-sm);       
-    display: inline-block;   
+    margin: var(--spacing-sm);   
+    margin-left: 0;    
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
 }
 
 .btn.ai-edit-button:hover {
@@ -134,6 +180,30 @@ body {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+.result-field {
+  margin-top: 15px;
+  display: none;
+}
+
+.result-field, #videoResult, #audioResult {
+  width: 100%;
+}
+
+#waveformCut, #videoResult {
+  display: none;
+}
+
+.result-field h4 {
+  margin-top: 15px;
+}
+
+.result-group {
+  padding: 15px 0px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
 .result-field pre {
   max-height: 300px;
   overflow-y: auto;
@@ -144,6 +214,12 @@ body {
   border-radius: 0.75rem;
   white-space: pre-wrap;      
   word-break: break-word;     
+}
+
+label {
+  padding-top: 0;
+  display: inline-block;
+  margin-right: 10px;
 }
 
 /* Spinner style */
@@ -165,7 +241,6 @@ body {
 }
 
 .edit-history-container {
-  border-top: 1px solid #ccc;
   padding-top: 1.5rem;
 }
 
@@ -180,4 +255,159 @@ button.ai-edit-button.disabled {
     opacity: 0.6;
     pointer-events: none;
     cursor: not-allowed;
+}
+
+.button-with-help {
+  display: flex;
+  align-items: center;
+  /* Vänd ordningen så att span kommer före knappen */
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: left;
+  margin: 0;
+}
+
+button span.credit-cost {
+  color: var(--highlight-color);
+  font-size: 0.9em;
+  background-color: white;
+  border-radius: var(--radius-small);
+  padding: 7px 10px;
+  display: inline-block;
+}
+
+.help-icon {
+  display: inline-block;
+  /* flytta ut mot knappen på höger sida av ikonen */
+  margin-right: 6px;
+  margin-left: 0;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  background: #666;
+  border-radius: 50%;
+  cursor: default;
+  position: relative;
+}
+
+.help-icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;    /* precis ovanför ikonen */
+  left: -160px;         /* ikonens vänstra kant */
+  max-width: 320px;
+  min-width: 320px;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  /*white-space: nowrap;*/
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 11px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 10;
+}
+
+.help-icon:hover::after {
+  opacity: 1;
+}
+
+.no-edits-found {
+  text-align: center;
+}
+
+@media (max-width: 850px) {
+  .dashboard {
+    margin-top: 0px !important;
+  }
+
+  main {
+    padding-top: 0px;
+  }
+
+  #tabs {
+    margin-top: 30px;
+    margin-bottom: 30px;
+  }
+
+  #tabs button {
+    border: 1px solid white;
+    border-bottom-right-radius: 1rem;
+    border-bottom-left-radius: 1rem;
+  }
+
+  #tabs button.active {
+    border: 1px solid var(--highlight-color);;
+  }
+}
+
+@media (max-width: 600px) {
+
+  h1, h2 {
+    text-align: center;
+  }
+  
+  input[type="file"] {
+    width: 100%;
+  }
+
+  select, input[type="text"] {
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
+
+  label {
+    margin-bottom: 5px;
+  }
+
+  .content-wrapper, #enhancementTools, #audioAnalysisSection, #audioCuttingSection, #aiCuttingSection {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .result-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .result-field {
+    text-align: center;
+  }
+
+  #tabs {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  #tabs button {
+    margin-bottom: 15px;
+  }
+
+  #tabs button:last-of-type {
+    margin-bottom: 0px;
+  }
+
+  .button-with-help {
+    flex-direction: column;
+  }
+
+  .ap-container {
+    text-align: center;
+  }
+
+  .help-icon {
+    margin-right: 0;
+  }
+
 }

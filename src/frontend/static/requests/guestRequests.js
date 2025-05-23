@@ -8,7 +8,7 @@ export async function addGuestRequest(payload) {
 
     if (!res.ok) {
       const errorData = await res.json();
-      console.error("Backend error:", errorData.error);
+      console.error(errorData.error);
 
       // If Google Calendar is not connected, show a specific error
       if (errorData.error.includes("connect your Google Calendar")) {

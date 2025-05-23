@@ -1,23 +1,23 @@
 #src/backend/services/transcriptionService.py
 import os
-import openai
 import logging
 import re
 from pydub import AudioSegment, effects
 from datetime import datetime, timezone
-from typing import List, Tuple
+from typing import List
 from io import BytesIO
 from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import fs
-from backend.utils.ai_utils import remove_filler_words, analyze_emotions
-from backend.utils.text_utils import (
+from backend.utils.ai_utils import (
     generate_ai_suggestions,
     generate_show_notes,
     generate_ai_quotes,
-    generate_quote_images,
+    generate_quote_images_dalle,
+    render_quote_images_local,
     translate_text,
     suggest_sound_effects,
-    get_sentence_timestamps
+    remove_filler_words, 
+    analyze_emotions
 )
 
 logger = logging.getLogger(__name__)
@@ -27,23 +27,27 @@ VOICE_MAPS = {
     "English": {
         "Speaker 1": os.getenv("VOICE_ID_EN_1"),
         "Speaker 2": os.getenv("VOICE_ID_EN_2"),
+        "Speaker 3": os.getenv("VOICE_ID_EN_3"),
+        "Speaker 4": os.getenv("VOICE_ID_EN_4"),
     },
     "Spanish": {
         "Speaker 1": os.getenv("VOICE_ID_ES_1"),
         "Speaker 2": os.getenv("VOICE_ID_ES_2"),
+        "Speaker 3": os.getenv("VOICE_ID_ES_3"),
+        "Speaker 4": os.getenv("VOICE_ID_ES_4"),
     },
 }
 
 
 class TranscriptionService:
     def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
-        from io import BytesIO
-        from datetime import datetime, timezone
-        import re
-        
-        logger.info("Starting transcription")
+        """
+        Transcribes audio and groups words into sentences with accurate timestamps.
+        """
 
-        # === steg 1: ElevenLabs-transkription ===
+        logger.info("Starting transcription (group by sentence)")
+
+        # === steg 1: ElevenLabs-transkription (word granularity) ===
         audio_data = BytesIO(file_data)
         transcription_result = client.speech_to_text.convert(
             file=audio_data,
@@ -54,7 +58,7 @@ class TranscriptionService:
         )
         if not transcription_result.text:
             raise Exception("Transcription returned no text.")
-        transcription_text = transcription_result.text.strip()
+        full_text = transcription_result.text.strip()
 
         # === steg 2: spara fil i GridFS ===
         file_id = fs.put(
@@ -63,16 +67,16 @@ class TranscriptionService:
             metadata={"upload_timestamp": datetime.now(timezone.utc), "type": "transcription"}
         )
 
-        # === steg 3: bygg word_timings + speaker_map ===
+        # === steg 3: bygg per-ord-lista och speaker_map ===
+        word_timings = []
         speaker_map = {}
         speaker_counter = 1
-        word_timings = []
         for w in transcription_result.words:
             txt = w.text.strip()
             if not txt:
                 continue
             start = round(w.start, 2)
-            end   = round(w.end,   2)
+            end = round(w.end, 2)
             word_timings.append({
                 "word": txt,
                 "start": start,
@@ -83,42 +87,47 @@ class TranscriptionService:
                 speaker_map[w.speaker_id] = f"Speaker {speaker_counter}"
                 speaker_counter += 1
 
-        # === steg 4: dela upp i meningar och behåll kronologisk ordning ===
-        sentences = re.split(r'(?<=[\.!?])\s+', transcription_text)
-        raw_entries = []  # list of (start_time, line)
-        prev_end_time = 0.0
-        for sentence in sentences:
-            sent = sentence.strip()
+        # === steg 4: dela full_text i meningar ===
+        sentences = re.split(r'(?<=[\.\?\!])\s+', full_text)
+
+        # === steg 5: gruppera ord till meningar ===
+        raw_entries = []  # (start_time, end_time, speaker, sentence_text)
+        idx = 0
+        for sent in sentences:
+            sent = sent.strip()
             if not sent:
                 continue
-            # hämta tidsintervall för meningen från ord-timings, baserat på föregående slut-tid
-            ts = get_sentence_timestamps(sent, word_timings, prev_end_time)
-            start, end = ts["start"], ts["end"]
-            prev_end_time = end
-            # hitta talare för första ordet i segmentet
-            first = next((wt for wt in word_timings if wt["start"] == start), None)
-            speaker = speaker_map.get(first["speaker_id"], "Speaker 1") if first else "Speaker 1"
-            line = f"[{start:.2f}-{end:.2f}] {speaker}: {sent}"
-            raw_entries.append((start, line))
+            words = sent.split()
+            # hitta start/end för mening baserat på ord_timings sekventiellt
+            # start = first matching word start, end = last matching word end
+            start_time, end_time = None, None
+            speaker = None
+            for w in word_timings[idx:]:
+                if w["word"] == words[0] and start_time is None:
+                    start_time = w["start"]
+                if start_time is not None:
+                    # mappa speaker från första ord
+                    if speaker is None:
+                        speaker = speaker_map[w["speaker_id"]]
+                    if w["word"] == words[-1]:
+                        end_time = w["end"]
+                        # flytta idx framåt för nästa sentence
+                        idx = word_timings.index(w) + 1
+                        break
+            # fallback om ej hittat
+            if start_time is None or end_time is None:
+                continue
+            raw_entries.append((start_time, end_time, speaker or "Speaker 1", sent))
 
-        # === steg 5: fallback om ingen mening fångades ===
-        if not raw_entries:
-            for wt in word_timings:
-                line = (
-                    f"[{wt['start']:.2f}-{wt['end']:.2f}] "
-                    f"{speaker_map[wt['speaker_id']]}: {wt['word']}"
-                )
-                raw_entries.append((wt["start"], line))
-
-        # === steg 6: sortera per start-tid och slå ihop ===
+        # === steg 6: format och sortera ===
         raw_entries.sort(key=lambda x: x[0])
-        raw_lines = [line for _, line in raw_entries]
+        raw_lines = [f"[{s:.2f}-{e:.2f}] {sp}: {txt}" for s, e, sp, txt in raw_entries]
         raw_transcription = "\n".join(raw_lines)
 
         return {
             "file_id": str(file_id),
             "raw_transcription": raw_transcription,
-            "full_transcript": transcription_text
+            "full_transcript": full_text
         }
 
     def get_clean_transcript(self, transcript_text: str) -> str:
@@ -138,35 +147,50 @@ class TranscriptionService:
         q = generate_ai_quotes(transcript_text)
         return str(q)
 
-    def get_quote_images(self, quotes: List[str]) -> List[str]:
-        logger.info("Generating quote images...")
-        return generate_quote_images(quotes)
+    def get_quote_images(self, quotes: List[str], method: str = "dalle") -> List[str]:
+        if method == "local":
+            return render_quote_images_local(quotes)
+        else:
+            return generate_quote_images_dalle(quotes)
 
     def translate_transcript(self, raw_transcription: str, target_language: str) -> str:
         """
-        Translate each sentence in raw_transcription preserving timestamps and speaker labels.
+        Translate the entire raw_transcription in one go (for speed), preserving
+        timestamps and speaker labels by using placeholders.
         """
-        logger.info(f"Translating transcript to {target_language} with timestamps and speakers...")
+        logger.info(f"Translating transcript to {target_language} (bulk) with timestamps and speakers…")
         lines = raw_transcription.split("\n")
-        translated = []
-        for line in lines:
-            m = re.match(r"^(\[.*?\]\s*Speaker\s*\d+:)\s*(.*)$", line)
+
+        placeholder_map = []
+        bulk_text_parts = []
+        for idx, line in enumerate(lines):
+            m = re.match(r"^(\[[0-9]+\.[0-9]{2}-[0-9]+\.[0-9]{2}\]\s*Speaker\s*\d+:)\s*(.*)$", line)
             if m:
-                prefix, text = m.groups()
-                try:
-                    trans = translate_text(text, target_language)
-                except Exception as e:
-                    logger.warning(f"Translation failed for line '{text}': {e}")
-                    trans = text
-                translated.append(f"{prefix} {trans}")
+                prefix, body = m.groups()
             else:
-                # if line doesn't match expected format, translate whole
-                try:
-                    trans = translate_text(line, target_language)
-                except:
-                    trans = line
-                translated.append(trans)
-        return "\n".join(translated)
+                prefix, body = "", line
+
+            placeholder = f"__LINE{idx}__"
+            placeholder_map.append((placeholder, prefix))
+            bulk_text_parts.append(body or placeholder)
+        bulk_text = "\n".join(bulk_text_parts)
+
+        try:
+            translated_bulk = translate_text(bulk_text, target_language)
+        except Exception as e:
+            logger.warning(f"Bulk translation failed: {e}")
+            return "\n".join(self._translate_line_by_line(lines, target_language))
+
+        translated_lines = translated_bulk.split("\n")
+        final_lines = []
+        for idx, translated_body in enumerate(translated_lines):
+            placeholder, prefix = placeholder_map[idx]
+            if prefix:
+                final_lines.append(f"{prefix} {translated_body}")
+            else:
+                final_lines.append(translated_body)
+
+        return "\n".join(final_lines)
 
     def get_sentiment_and_sfx(self, transcript_text: str):
         logger.info("Running sentiment & sound suggestion analysis...")
@@ -175,31 +199,38 @@ class TranscriptionService:
         return {"emotions": emotion_data, "sound_effects": sfx_suggestions}
     
     def generate_audio_from_translated(self, raw_transcription: str, language: str) -> bytes:
-        # 1) Bygg och sortera segment
+     
         segments = self.build_segments_from_raw(raw_transcription)
         segments.sort(key=lambda s: s["start"])
 
-        # 2) Beräkna total längd (i ms)
+        if not segments:
+            raise ValueError("No valid segments in raw_transcription.")
+
         total_ms = int(max(s["end"] for s in segments) * 1000)
 
-        # 3) Starta en “tyst” AudioSegment av total längd
         final = AudioSegment.silent(duration=total_ms)
 
         voice_map = VOICE_MAPS.get(language)
         if not voice_map:
-            raise ValueError(f"Inget voice_map för språk '{language}'")
+            raise ValueError(f"No voice for'{language}'")
+    
+        default_voice = next(iter(voice_map.values()), None)
 
-        # 4) Generera varje TTS och lägg ovanpå på rätt tidpunkt
         for seg in segments:
             start_ms = int(seg["start"] * 1000)
             end_ms   = int(seg["end"]   * 1000)
             text     = seg["text"]
             speaker  = seg["speaker"]
-            voice_id = voice_map.get(speaker)
-            if not voice_id:
-                raise ValueError(f"Ingen voice_id för {speaker} i {language}")
 
-            # TTS
+            voice_id = voice_map.get(speaker) or default_voice
+            if not voice_id:
+                raise ValueError(f"No voice_id for {speaker} in {language}")
+
+            target_dur = end_ms - start_ms
+            if target_dur <= 0:
+                logger.warning(f"Segment vid {seg['start']}s har längd {target_dur} ms – skippar")
+                continue
+
             tts_stream = client.text_to_speech.convert(
                 text=text,
                 voice_id=voice_id,
@@ -209,19 +240,15 @@ class TranscriptionService:
             tts_bytes = b"".join(tts_stream)
             tts_audio = AudioSegment.from_file(BytesIO(tts_bytes), format="mp3")
 
-            # Anpassa längd
-            target_dur = end_ms - start_ms
-            actual     = len(tts_audio)
+            actual = len(tts_audio)
             if actual > target_dur:
                 speed = actual / target_dur
                 tts_audio = effects.speedup(tts_audio, playback_speed=speed)
             else:
                 tts_audio += AudioSegment.silent(duration=(target_dur - actual))
 
-            # Overlay på exakt start_ms
             final = final.overlay(tts_audio, position=start_ms)
 
-        # 5) Exportera som MP3
         buf = BytesIO()
         final.export(buf, format="mp3")
         return buf.getvalue()
@@ -246,5 +273,23 @@ class TranscriptionService:
             raise ValueError("Ingen giltig segmentrad hittades i transcriptet.")
         return segments
 
-    
+    def _translate_line_by_line(self, lines: List[str], target_language: str) -> List[str]:
+        """
+        Tidigare beteende: översätt varje enskild rad separat.
+        """
+        translated = []
+        for line in lines:
+            m = re.match(r"^(\[.*?\]\s*Speaker\s*\d+:)\s*(.*)$", line)
+            if m:
+                prefix, body = m.groups()
+            else:
+                prefix, body = "", line
+
+            try:
+                trans = translate_text(body, target_language)
+            except Exception as e:
+                logger.warning(f"Translation failed for line '{body}': {e}")
+                trans = body
+            translated.append(f"{prefix} {trans}" if prefix else trans)
+        return translated
     

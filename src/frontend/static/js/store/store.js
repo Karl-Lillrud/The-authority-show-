@@ -140,10 +140,12 @@ window.addEventListener("focus", resetCheckoutButton);
 
 window.addEventListener("resize", () => {
   setupCart();
+  setupMobileCartToggles();
 });
 
 function initializeStoreLayout() {
   setupCart();
+  setupMobileCartToggles();
   setupAddToCartButtons();
   setupPlaceholderImages();
 }
@@ -214,167 +216,170 @@ function setupAddToCartButtons() {
 
 function setupCart() {
   const shoppingCart = document.getElementById("shoppingCart");
+  if (!shoppingCart) return;
+
   const checkoutBtn = document.getElementById("checkoutBtn");
 
-  shoppingCart.replaceWith(shoppingCart.cloneNode(true));
-  const newShoppingCart = document.getElementById("shoppingCart");
-  const newCheckoutBtn = document.getElementById("checkoutBtn");
+  const cartParent = shoppingCart.parentNode;
+  const newShoppingCart = shoppingCart.cloneNode(true);
+  shoppingCart.remove();
+  cartParent.appendChild(newShoppingCart);
+  
+  const newCheckoutBtn = newShoppingCart.querySelector("#checkoutBtn");
 
   loadCartFromStorage();
 
-  newCheckoutBtn.addEventListener("click", async function () {
-    if (this.disabled) return;
+  if (newCheckoutBtn) {
+    newCheckoutBtn.addEventListener("click", async function () {
+      if (this.disabled) return;
 
-    if (!stripe) {
-      console.error("Stripe is not initialized. Cannot proceed.");
-      showNotification(
-        "Payment Error",
-        "Payment system is not ready. Please try again shortly.",
-        "error",
-        5000
-      );
-      resetCheckoutButton();
-      return;
-    }
-
-    try {
-      this.disabled = true;
-      this.textContent = "Processing...";
-      showNotification("Processing", "Initiating checkout...", "info", 3000);
-
-      const creditItems = cart.filter((item) => item.type === "Credit Pack");
-      const subscriptionItems = cart.filter(
-        (item) => item.type === "Subscription"
-      );
-      // Add filter for episode packs
-      const episodeItems = cart.filter((item) => item.type === "Episode Pack");
-
-      if (
-        subscriptionItems.length > 1 ||
-        (subscriptionItems[0] && subscriptionItems[0].quantity > 1)
-      ) {
+      if (!stripe) {
+        console.error("Stripe is not initialized. Cannot proceed.");
         showNotification(
-          "Invalid Cart",
-          "You can only purchase one subscription at a time.",
-          "warning",
-          5000
-        );
-        resetCheckoutButton();
-        return;
-      }
-
-      // Update condition to check all relevant item types
-      if (
-        creditItems.length === 0 &&
-        subscriptionItems.length === 0 &&
-        episodeItems.length === 0 // Add check for episode items
-      ) {
-        showNotification(
-          "Empty Cart",
-          "Your cart is empty or contains unsupported items.",
-          "warning",
-          5000
-        );
-        resetCheckoutButton();
-        return;
-      }
-
-      const items = [];
-
-      if (creditItems.length > 0) {
-        creditItems.forEach((item) => {
-          const credits = getCreditsForProduct(item.id);
-          items.push({
-            productId: item.id,
-            name: item.name,
-            type: "credit",
-            price: item.price.toFixed(2),
-            quantity: item.quantity,
-            credits: credits
-          });
-        });
-      }
-
-      if (subscriptionItems.length === 1) {
-        const subscription = subscriptionItems[0];
-        const plan = getPlanForProduct(subscription.id);
-        items.push({
-          productId: subscription.id,
-          name: subscription.name,
-          type: "subscription",
-          price: subscription.price.toFixed(2),
-          quantity: 1,
-          plan: plan
-        });
-      }
-
-      // Add processing for episode items
-      if (episodeItems.length > 0) {
-        episodeItems.forEach((item) => {
-          // Assuming each episode pack grants 1 slot, adjust if needed
-          const episodeSlots = 1;
-          items.push({
-            productId: item.id,
-            name: item.name,
-            type: "episode", // Use 'episode' type for backend
-            price: item.price.toFixed(2),
-            quantity: item.quantity,
-            episodeSlots: episodeSlots * item.quantity // Calculate total slots
-          });
-        });
-      }
-
-      const payload = { items };
-
-      const checkoutUrl = apiBaseUrl
-        ? `${apiBaseUrl}/create-checkout-session`
-        : "/create-checkout-session";
-      const response = await fetch(checkoutUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        credentials: "same-origin"
-      });
-
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("text/html")) {
-        showNotification(
-          "Session Expired",
-          "Your session has expired. Please log in again.",
+          "Payment Error",
+          "Payment system is not ready. Please try again shortly.",
           "error",
           5000
         );
-        setTimeout(() => {
-          window.location.href =
-            "/signin?redirect=" + encodeURIComponent(window.location.pathname);
-        }, 2000);
         resetCheckoutButton();
         return;
       }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create checkout session");
-      }
+      try {
+        this.disabled = true;
+        this.textContent = "Processing...";
+        showNotification("Processing", "Initiating checkout...", "info", 3000);
 
-      const data = await response.json();
-      if (data.sessionId) {
-        await stripe.redirectToCheckout({ sessionId: data.sessionId });
-        clearCart();
-      } else {
-        throw new Error(data.error || "Unknown error");
+        const creditItems = cart.filter((item) => item.type === "Credit Pack");
+        const subscriptionItems = cart.filter(
+          (item) => item.type === "Subscription"
+        );
+        const episodeItems = cart.filter((item) => item.type === "Episode Pack");
+
+        if (
+          subscriptionItems.length > 1 ||
+          (subscriptionItems[0] && subscriptionItems[0].quantity > 1)
+        ) {
+          showNotification(
+            "Invalid Cart",
+            "You can only purchase one subscription at a time.",
+            "warning",
+            5000
+          );
+          resetCheckoutButton();
+          return;
+        }
+
+        if (
+          creditItems.length === 0 &&
+          subscriptionItems.length === 0 &&
+          episodeItems.length === 0
+        ) {
+          showNotification(
+            "Empty Cart",
+            "Your cart is empty or contains unsupported items.",
+            "warning",
+            5000
+          );
+          resetCheckoutButton();
+          return;
+        }
+
+        const items = [];
+
+        if (creditItems.length > 0) {
+          creditItems.forEach((item) => {
+            const credits = getCreditsForProduct(item.id);
+            items.push({
+              productId: item.id,
+              name: item.name,
+              type: "credit",
+              price: item.price.toFixed(2),
+              quantity: item.quantity,
+              credits: credits
+            });
+          });
+        }
+
+        if (subscriptionItems.length === 1) {
+          const subscription = subscriptionItems[0];
+          const plan = getPlanForProduct(subscription.id);
+          items.push({
+            productId: subscription.id,
+            name: subscription.name,
+            type: "subscription",
+            price: subscription.price.toFixed(2),
+            quantity: 1,
+            plan: plan
+          });
+        }
+
+        if (episodeItems.length > 0) {
+          episodeItems.forEach((item) => {
+            const episodeSlots = 1;
+            items.push({
+              productId: item.id,
+              name: item.name,
+              type: "episode",
+              price: item.price.toFixed(2),
+              quantity: item.quantity,
+              episodeSlots: episodeSlots * item.quantity
+            });
+          });
+        }
+
+        const payload = { items };
+
+        const checkoutUrl = apiBaseUrl
+          ? `${apiBaseUrl}/create-checkout-session`
+          : "/create-checkout-session";
+        const response = await fetch(checkoutUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "same-origin"
+        });
+
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("text/html")) {
+          showNotification(
+            "Session Expired",
+            "Your session has expired. Please log in again.",
+            "error",
+            5000
+          );
+          setTimeout(() => {
+            window.location.href =
+              "/signin?redirect=" + encodeURIComponent(window.location.pathname);
+          }, 2000);
+          resetCheckoutButton();
+          return;
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to create checkout session");
+        }
+
+        const data = await response.json();
+        if (data.sessionId) {
+          await stripe.redirectToCheckout({ sessionId: data.sessionId });
+          clearCart();
+        } else {
+          throw new Error(data.error || "Unknown error");
+        }
+      } catch (err) {
+        console.error("Error during checkout:", err);
+        showNotification(
+          "Checkout Failed",
+          "Unable to complete checkout. Please try again or contact support.",
+          "error",
+          5000
+        );
+        resetCheckoutButton();
       }
-    } catch (err) {
-      console.error("Error during checkout:", err);
-      showNotification(
-        "Checkout Failed",
-        "Unable to complete checkout. Please try again or contact support.",
-        "error",
-        5000
-      );
-      resetCheckoutButton();
-    }
-  });
+    });
+  }
 }
 
 function closeCartOnClickOutside(e) {
@@ -681,4 +686,55 @@ function loadCartFromStorage() {
       cart = [];
     }
   }
+}
+
+function setupMobileCartToggles() {
+  const shoppingCart = document.getElementById("shoppingCart");
+  const openCartArrowBtn = document.getElementById("openCartArrowBtn");
+  const cartOverlay = document.getElementById("cartOverlay");
+
+  if (!shoppingCart || !openCartArrowBtn || !cartOverlay) {
+    // console.warn("Mobile cart toggle elements not all found. Skipping toggle setup.");
+    return;
+  }
+
+  const openCart = () => {
+    shoppingCart.classList.add("is-open");
+    cartOverlay.classList.add("is-visible");
+    // Prevent body scroll only on mobile when cart is a full overlay
+    if (window.innerWidth <= 992) {
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  const closeCart = () => {
+    shoppingCart.classList.remove("is-open");
+    cartOverlay.classList.remove("is-visible");
+    document.body.style.overflow = ''; // Always restore body scroll
+  };
+
+  // Ensure listeners are fresh by removing old ones if any (optional, but good for re-calls)
+  // However, simple re-adding is usually fine if elements are stable or replaced wholesale.
+  openCartArrowBtn.onclick = openCart; // Use onclick to easily overwrite if called again
+  cartOverlay.onclick = closeCart;
+
+  // Event delegation for the close button inside the cart
+  // This listener is attached to shoppingCart, so if shoppingCart itself is replaced, this needs re-attachment.
+  // Given setupCart can replace shoppingCart, this also needs to be robust.
+  // For simplicity, let's assume shoppingCart element reference is stable after setupCart call in initializeStoreLayout.
+  // If setupCart replaces the #shoppingCart DOM element, then this delegated listener needs to be added to the *new* element.
+  // The current structure calls setupMobileCartToggles AFTER setupCart, so `shoppingCart` should be the current one.
+  
+  // Remove previous listener to avoid duplicates if function is called multiple times on same element
+  // This is a bit verbose. A more structured approach might use a flag or more complex listener management.
+  const existingCloseHandler = shoppingCart.__closeCartHandler;
+  if (existingCloseHandler) {
+    shoppingCart.removeEventListener("click", existingCloseHandler);
+  }
+  shoppingCart.__closeCartHandler = (event) => {
+    if (event.target.closest("#closeCartBtn")) {
+      closeCart();
+    }
+  };
+  shoppingCart.addEventListener("click", shoppingCart.__closeCartHandler);
 }

@@ -75,6 +75,7 @@
   box-shadow: var(--card-shadow);
   transition: all var(--transition-normal);
   border: 1px solid rgba(0, 0, 0, 0.03);
+  position: relative; /* Required for absolute positioning of the notification icon */
 }
 
 .stat-card:hover {
@@ -158,6 +159,14 @@
 .activity-section {
   grid-column: 2;
   grid-row: 1 / span 2;
+  background-color: white;
+  border-radius: var(--radius-large);
+  padding: var(--spacing-lg);
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .episodes-section {
@@ -226,6 +235,26 @@
 
 .team-leaderboard {
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+}
+
+.leaderboard-trophy-container{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 18px;
+}
+
+.leaderboard-table-container{
+  display: flex;
+  justify-content: center; 
+  width: 100%;
 }
 
 .leaderboard-table {
@@ -234,6 +263,39 @@
   border-spacing: 0;
   border-radius: var(--radius-medium);
   overflow: hidden;
+  margin-top: 10px;
+  margin-bottom: 24px;
+  max-width: 600px;
+}
+
+.team-leaderboard-title{
+  color: var(--highlight-color);
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.team-leaderboard-description{
+  color: var(--text-color-light);
+  font-size: 1rem;
+  max-width: 420px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.team-leaderboard-attention-container{
+  margin-top: 10px;
+  margin-bottom: 18px;
+}
+
+.team-leaderboard-attention{
+  background: #fff3e0;
+  color: #ff9800;
+  font-weight: 600;
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(255,127,63,0.07);
 }
 
 .leaderboard-table th {
@@ -331,18 +393,12 @@
 }
 
 /* Activity Timeline */
-.activity-section {
-  background-color: white;
-  border-radius: var(--radius-large);
-  padding: var(--spacing-lg);
-  box-shadow: var(--card-shadow);
-  border: 1px solid rgba(0, 0, 0, 0.03);
-}
-
 .activity-timeline {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  flex: 1;
+  overflow: hidden;
 }
 
 .timeline-item {
@@ -440,9 +496,11 @@
 }
 
 .activity-timeline-scroll {
-  max-height: 600px; /* Adjust height for ~5 items depending on your item height */
+  flex: 1;
   overflow-y: auto;
   padding-right: 4px; /* For scrollbar space */
+  height: 100%;
+  min-height: 0; /* Important for flex child scrolling */
 }
 
 /* Optional: prettier scrollbar */
@@ -788,25 +846,162 @@
   box-shadow: var(--card-shadow-hover2);
 }
 
-/* Smaller icon for the "Create New Episode" button */
 .create-episode .stat-icon {
-  width: 24px; /* Smaller width */
-  height: 24px; /* Smaller height */
-  background-color: #2196f3; /* Blue background for episode icon */
-  border-radius: 50%; /* Ensure it's circular */
+  width: 24px;
+  height: 24px; 
+  background-color: #2196f3; 
+  border-radius: 50%; 
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white; /* Icon color */
-  box-shadow: none; /* Remove any shadow */
-  border: none; /* Remove any border */
+  color: white; 
+  box-shadow: none; 
+  border: none; 
 }
 
 .create-episode .stat-icon svg {
-  width: 16px; /* Adjust SVG size */
+  width: 16px; 
   height: 16px;
-  fill: none; /* Ensure no fill color */
-  stroke: white; /* Match the stroke color */
+  fill: none; 
+  stroke: white; 
+}
+
+
+.stat-card .notification-container {
+  position: absolute;
+  top: 50%; 
+  right: 10px; 
+  transform: translateY(-50%); 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-icon {
+  position: relative;
+  cursor: pointer;
+  font-size: 20px;
+  color: #ff9800; 
+  background-color: #fff; 
+  border: 2px solid #ff9800; 
+  border-radius: 50%; 
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+  transition: transform 0.2s ease-in-out;
+}
+
+.notification-icon:hover {
+  transform: scale(1.1); 
+}
+
+.notification-icon .notification-count {
+  position: absolute;
+  top: 50%;
+  right: 50%;
+  transform: translate(50%, -50%); /* Center the number */
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Dark overlay */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(6px); /* Blur effect */
+}
+
+.form-box {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 2rem;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative; /* Ensure the close button is positioned relative to this box */
+}
+
+.form-box .close-btn {
+  position: absolute;
+  top: 10px; /* Adjust as needed */
+  right: 10px; /* Adjust as needed */
+  font-size: 1.5rem;
+  color: #333;
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+  z-index: 10;
+  transition: color 0.2s ease-in-out;
+}
+
+.form-box .close-btn:hover {
+  color: #ff0000; /* Change color on hover */
+}
+
+/* Dashboard Popup Styles */
+.dashboard-popup .popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Dark overlay */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(6px); /* Blur effect */
+}
+
+.dashboard-popup .form-box {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 2rem;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative; /* Ensure the close button is positioned relative to this box */
+}
+
+.dashboard-popup .form-box .close-btn {
+  position: absolute;
+  top: 10px; /* Adjust as needed */
+  right: 10px; /* Adjust as needed */
+  font-size: 1.5rem;
+  color: #333;
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+  z-index: 10;
+  transition: color 0.2s ease-in-out;
+}
+
+.dashboard-popup .form-box .close-btn:hover {
+  color: #ff0000; /* Change color on hover */
 }
 
 /* Responsive */
