@@ -1,4 +1,4 @@
-import { publishEpisode } from "/static/requests/publishRequests.js";
+import { publishEpisode, getSasUrl } from "/static/requests/publishRequests.js"; // Import getSasUrl
 import { fetchEpisode } from "/static/requests/episodeRequest.js"; // For episode preview
 import { showNotification } from "/static/js/components/notifications.js";
 import { fetchPodcasts } from "/static/requests/podcastRequests.js"; // For podcast dropdown
@@ -249,27 +249,59 @@ document.addEventListener("DOMContentLoaded", () => {
       { key: "explicit", label: "Explicit (yes/no)" }
     ];
 
-    // Add more strict requirements for Apple/Spotify if needed
-    // e.g., Apple requires itunes:category, etc.
+    // Optional but recommended tags for best compatibility
+    const recommendedPodcastFields = [
+      { key: "itunes_keywords", label: "Podcast Keywords (itunes:keywords)" },
+      { key: "itunes_block", label: "Podcast Block (itunes:block)" },
+      { key: "googleplay_author", label: "Google Play Author" },
+      { key: "googleplay_email", label: "Google Play Email" },
+      { key: "googleplay_image", label: "Google Play Image" },
+      { key: "spotify_locked", label: "Spotify Locked" }
+    ];
+    const recommendedEpisodeFields = [
+      { key: "itunes_keywords", label: "Episode Keywords (itunes:keywords)" },
+      { key: "itunes_title", label: "Episode iTunes Title" },
+      { key: "itunes_block", label: "Episode Block (itunes:block)" },
+      { key: "googleplay_author", label: "Google Play Author" },
+      { key: "googleplay_email", label: "Google Play Email" },
+      { key: "googleplay_image", label: "Google Play Image" },
+      { key: "spotify_locked", label: "Spotify Locked" }
+    ];
 
     let missing = [];
+    let recommended = [];
+
     requiredPodcastFields.forEach(f => {
       if (!podcast || !podcast[f.key] || podcast[f.key].toString().trim() === "") {
         missing.push({ type: "podcast", ...f });
       }
     });
     requiredEpisodeFields.forEach(f => {
-      // pubDate may be publishDate in your model
       let val = episode ? (f.key === "pubDate" ? (episode.publishDate || episode.pubDate) : episode[f.key]) : null;
       if (!val || val.toString().trim() === "") {
         missing.push({ type: "episode", ...f });
       }
     });
-    return missing;
+
+    // Check recommended fields (not required)
+    recommendedPodcastFields.forEach(f => {
+      if (!podcast || !podcast[f.key] || podcast[f.key].toString().trim() === "") {
+        recommended.push({ type: "podcast", ...f });
+      }
+    });
+    recommendedEpisodeFields.forEach(f => {
+      if (!episode || !episode[f.key] || episode[f.key].toString().trim() === "") {
+        recommended.push({ type: "episode", ...f });
+      }
+    });
+
+    // Return both lists
+    return { missing, recommended };
   }
 
-  // Helper: Show modal to fill missing fields
-  function showMissingFieldsModal(missingFields, podcast, episode, onSave) {
+  // Helper: Show modal to fill missing fields (required and recommended)
+  function showMissingFieldsModal(missingFieldsObj, podcast, episode, onSave) {
+    const { missing, recommended } = missingFieldsObj;
     // Remove any existing modal
     let existingModal = document.getElementById("missing-fields-modal");
     if (existingModal) existingModal.remove();
@@ -293,33 +325,56 @@ document.addEventListener("DOMContentLoaded", () => {
     formBox.style.borderRadius = "8px";
     formBox.style.maxWidth = "400px";
     formBox.style.width = "100%";
+    // Make the list scrollable and smaller
+    formBox.style.maxHeight = "70vh";
+    formBox.style.overflowY = "auto";
+
+    // Helper to clean label text (remove (podcast), (episode), and (itunes:block) etc.)
+    function cleanLabel(label) {
+      // Remove anything in parentheses, including the parentheses and any whitespace before them
+      return label.replace(/\s*\([^)]+\)/g, "").trim();
+    }
+
     formBox.innerHTML = `<h2>Required Details</h2>
       <form id="missing-fields-form">
-        ${missingFields.map(f => {
+        <div style="max-height: 45vh; overflow-y: auto;">
+        ${missing.map(f => {
           let inputField = "";
           if (f.type === "episode" && f.key === "pubDate") {
-            // Pre-fill with current date-time if publishDate is missing
             const now = new Date();
-            const timezoneOffset = now.getTimezoneOffset() * 60000; // Offset in milliseconds
+            const timezoneOffset = now.getTimezoneOffset() * 60000;
             const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 16);
             inputField = `<input type="datetime-local" name="${f.type}_${f.key}" value="${localISOTime}" required />`;
           } else if (f.key === "explicit") {
-            // Use radio buttons for yes/no questions, displayed side by side
             inputField = `
               <div style="display: flex; gap: 1rem;">
                 <label><input type="radio" name="${f.type}_${f.key}" value="yes" required /> Yes</label>
                 <label><input type="radio" name="${f.type}_${f.key}" value="no" required /> No</label>
               </div>
             `;
+          } else if (f.key === "logoUrl" && f.type === "podcast") { // Handle podcast artwork
+            inputField = `<input type="file" name="${f.type}_${f.key}" accept="image/*" required />`;
           } else {
             inputField = `<input type="text" name="${f.type}_${f.key}" required />`;
           }
           return `
           <div class="field-group">
-            <label>${f.label} (${f.type})</label>
+            <label>${cleanLabel(f.label)} <span style="color:orange;font-size:0.9em;">(Required)</span></label>
             ${inputField}
           </div>
         `}).join("")}
+        ${recommended.length > 0 ? `<h3 style="margin-top:2rem;">Recommended (Optional)</h3>` : ""}
+        ${recommended.map(f => {
+          let inputField = `<input type="text" name="${f.type}_${f.key}" />`;
+          // Note: If logoUrl could be recommended, this would need similar file input logic.
+          // Currently, logoUrl is only in the 'required' list.
+          return `
+          <div class="field-group">
+            <label>${cleanLabel(f.label)} <span style="color:#888;font-size:0.9em;">(Optional)</span></label>
+            ${inputField}
+          </div>
+        `}).join("")}
+        </div>
         <div style="margin-top:1rem;display:flex;gap:1rem;">
           <button type="submit" class="save-btn">Save & Continue</button>
           <button type="button" id="cancel-missing-fields" class="cancel-btn">Cancel</button>
@@ -333,24 +388,69 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.removeChild(modal);
     };
 
-    formBox.querySelector("#missing-fields-form").onsubmit = (e) => {
+    formBox.querySelector("#missing-fields-form").onsubmit = async (e) => { // Make async
       e.preventDefault();
-      // Update podcast/episode objects with new values
-      missingFields.forEach(f => {
-        const inputElement = formBox.querySelector(`[name='${f.type}_${f.key}']:checked`) || 
-                             formBox.querySelector(`[name='${f.type}_${f.key}']`);
-        let val = inputElement.value.trim();
-        if (f.type === "episode" && f.key === "pubDate" && inputElement.type === "datetime-local") {
-          val = new Date(val).toISOString(); // Convert datetime-local to ISO string
+      const submitButton = formBox.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      submitButton.textContent = "Saving...";
+
+      try {
+        for (const f of [...missing, ...recommended]) { // Use for...of for async/await
+          const inputElement = formBox.querySelector(`[name='${f.type}_${f.key}']:checked`) ||
+                               formBox.querySelector(`[name='${f.type}_${f.key}']`);
+          if (!inputElement) continue;
+
+          if (f.key === "logoUrl" && f.type === "podcast" && inputElement.type === "file") {
+            if (inputElement.files && inputElement.files[0]) {
+              const imageFile = inputElement.files[0];
+              try {
+                addToLog(`Uploading podcast artwork: ${imageFile.name}`);
+                const { uploadUrl, blobUrl } = await getSasUrl(imageFile.name, imageFile.type);
+                
+                const headers = {
+                  'x-ms-blob-type': 'BlockBlob',
+                  'Content-Type': imageFile.type
+                };
+
+                await fetch(uploadUrl, {
+                  method: 'PUT',
+                  body: imageFile,
+                  headers: headers
+                });
+                podcast.logoUrl = blobUrl; // Update the podcast object
+                addToLog(`Podcast artwork uploaded: ${blobUrl}`);
+                showNotification("Success", "Podcast artwork uploaded successfully.", "success");
+              } catch (uploadError) {
+                console.error("Error uploading podcast artwork:", uploadError);
+                addToLog(`Error uploading podcast artwork: ${uploadError.message}`);
+                showNotification("Error", `Failed to upload podcast artwork: ${uploadError.message}`, "error");
+                // Optionally, re-enable button and return if upload is critical
+                // submitButton.disabled = false;
+                // submitButton.textContent = "Save & Continue";
+                // return; 
+              }
+            }
+          } else {
+            let val = inputElement.value.trim();
+            if (f.type === "episode" && f.key === "pubDate" && inputElement.type === "datetime-local") {
+              val = new Date(val).toISOString();
+            }
+            if (f.type === "podcast") podcast[f.key] = val;
+            else if (f.type === "episode") {
+              if (f.key === "pubDate") episode.publishDate = val;
+              else episode[f.key] = val;
+            }
+          }
         }
-        if (f.type === "podcast") podcast[f.key] = val;
-        else if (f.type === "episode") {
-          if (f.key === "pubDate") episode.publishDate = val;
-          else episode[f.key] = val;
-        }
-      });
-      document.body.removeChild(modal);
-      onSave();
+        document.body.removeChild(modal);
+        onSave(); // Call the original onSave callback
+      } catch (error) {
+        console.error("Error processing missing fields form:", error);
+        addToLog(`Error saving missing fields: ${error.message}`);
+        showNotification("Error", "An error occurred while saving details.", "error");
+        submitButton.disabled = false; // Re-enable button on error
+        submitButton.textContent = "Save & Continue";
+      }
     };
   }
 
@@ -453,23 +553,54 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Fetch selected podcast and episode objects for validation
+    // Ensure _publishPodcastsCache is populated before this.
     const podcast = (window._publishPodcastsCache || []).find(p => p._id === podcastSelect.value);
     let episode = null;
-    try {
-      episode = await fetchEpisode(episodeId);
-    } catch (e) {}
-
-    // Check for missing required fields
-    const missingFields = getMissingRequiredFields(podcast, episode, selectedPlatforms);
-    if (missingFields.length > 0) {
-      showMissingFieldsModal(missingFields, podcast, episode, async () => {
-        // After user fills missing fields, proceed to publish
-        await doPublish();
-      });
-      return;
+    if (episodeId) { // Only fetch if an episode is selected
+        try {
+          // Use the globally available episode object if it matches, otherwise fetch
+          if (window._currentEpisodePreview && window._currentEpisodePreview._id === episodeId) {
+            episode = window._currentEpisodePreview;
+          } else {
+            episode = await fetchEpisode(episodeId);
+            window._currentEpisodePreview = episode; // Cache it
+          }
+        } catch (e) {
+            addToLog(`Error fetching episode details for validation: ${e.message}`);
+            showNotification("Error", "Could not retrieve episode details for validation.", "error");
+            return;
+        }
     }
 
-    // Proceed to publish if nothing missing
+
+    // Check for missing required and recommended fields
+    const missingFieldsObj = getMissingRequiredFields(podcast, episode, selectedPlatforms);
+    
+    if (missingFieldsObj.missing.length > 0 || missingFieldsObj.recommended.length > 0) {
+      showMissingFieldsModal(missingFieldsObj, podcast, episode, () => {
+        // This callback is executed after the modal saves and closes.
+        // The 'podcast' and 'episode' objects are updated by the modal itself.
+        // We do NOT call doPublish() here.
+        // The user must click "Publish Now" again.
+        
+        // Re-enable the publish button if it was disabled during modal interaction.
+        publishNowBtn.disabled = false; 
+        publishNowBtn.textContent = "Publish Now";
+        addToLog("Missing fields have been updated. Please click 'Publish Now' again to proceed.");
+        showNotification("Info", "Details updated. Click 'Publish Now' again to publish.", "info");
+        
+        // If the episode was updated (e.g., publishDate), refresh its preview
+        if (episodeId && episode) { // episode object should be updated by reference
+            loadEpisodePreview(episodeId); // Reload preview with potentially new data
+        }
+      });
+      return; // Stop further execution for this click, user needs to click "Publish Now" again
+    }
+
+    // If we reach here, it means either:
+    // 1. There were no missing fields initially.
+    // 2. The modal was shown, user saved, and this is a *new* click on "Publish Now" 
+    //    and the missing fields check passed this time.
     await doPublish();
 
     async function doPublish() {
@@ -479,16 +610,18 @@ document.addEventListener("DOMContentLoaded", () => {
       addToLog(`Selected platforms: ${selectedPlatforms.join(", ")}`);
 
       try {
-        const result = await publishEpisode(episodeId, selectedPlatforms, null);
+        const result = await publishEpisode(episodeId, selectedPlatforms, null); // Notes field removed
         if (result.success) {
           addToLog(`Successfully published episode: ${result.message}`);
           showNotification("Success", `Episode published successfully! ${result.message || ''}`, "success");
           episodeDetailsPreview.classList.add("hidden");
-          episodeSelect.value = "";
-          if (podcastSelect.value) {
-              loadEpisodesForPodcast(podcastSelect.value);
+          // Reset episode selection and reload episodes for the current podcast
+          const currentPodcastId = podcastSelect.value;
+          episodeSelect.value = ""; 
+          if (currentPodcastId) {
+              loadEpisodesForPodcast(currentPodcastId); // Reload to remove published episode
           }
-          // Show RSS feed popup after successful publish
+          
           if (result.rssFeedUrl) {
             showRssFeedPopup(result.rssFeedUrl);
           }
@@ -512,10 +645,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Cache podcasts for validation
   async function cachePodcasts() {
-    const podcastData = await fetchPodcasts();
-    window._publishPodcastsCache = Array.isArray(podcastData.podcast)
-      ? podcastData.podcast
-      : (Array.isArray(podcastData.podcasts) ? podcastData.podcasts : []);
+    try {
+        const podcastData = await fetchPodcasts();
+        // Ensure the structure is { podcast: [...] } or { podcasts: [...] }
+        window._publishPodcastsCache = Array.isArray(podcastData.podcast)
+          ? podcastData.podcast
+          : (podcastData.podcasts && Array.isArray(podcastData.podcasts) ? podcastData.podcasts : []);
+        if (!window._publishPodcastsCache || window._publishPodcastsCache.length === 0) {
+            console.warn("[publish.js] Podcast cache is empty after fetching.");
+        }
+    } catch (error) {
+        console.error("[publish.js] Failed to cache podcasts:", error);
+        window._publishPodcastsCache = [];
+    }
   }
-  cachePodcasts();
+  cachePodcasts(); // Call it to ensure cache is populated on page load
 });

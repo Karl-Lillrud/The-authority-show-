@@ -265,4 +265,105 @@ class RSSService:
         )
         return uploaded_feed_url
 
-    # ...existing code for _generate_rss_feed_xml and _upload_rss_to_blob_and_get_url...
+    def _generate_rss_feed_xml(self, podcast_details, episodes_list, full_feed_url_for_atom_link, publishing_episode_id=None):
+        def xml_escape(val):
+            if val is None:
+                return ""
+            return str(val).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+        items_xml = ""
+        for ep in episodes_list:
+            if ep.get('status', '').lower() != 'published':
+                continue
+
+            pub_date_str = ep.get('publishDate') or ep.get('pubDate')
+            if not pub_date_str:
+                continue
+
+            pub_date_dt = datetime.strptime(pub_date_str, "%Y-%m-%dT%H:%M:%S.%fZ") if '.' in pub_date_str else datetime.strptime(pub_date_str, "%Y-%m-%dT%H:%M:%SZ")
+            formatted_pub_date = pub_date_dt.strftime("%a, %d %b %Y %H:%M:%S +0000")
+
+            episode_guid = ep.get('guid') or ep.get('_id')
+            episode_duration_formatted = format_duration_for_rss(ep.get('duration'))
+            episode_image_url = ep.get('imageUrl', podcast_details.get('logoUrl', ''))
+
+            # Optional tags
+            itunes_keywords = ep.get('itunes_keywords') or ep.get('keywords')
+            itunes_title = ep.get('itunes_title') or ep.get('title')
+            itunes_block = ep.get('itunes_block')
+            googleplay_author = ep.get('googleplay_author') or ep.get('author')
+            googleplay_email = ep.get('googleplay_email')
+            googleplay_image = ep.get('googleplay_image') or episode_image_url
+            spotify_locked = ep.get('spotify_locked')
+
+            items_xml += f"""
+            <item>
+                <title><![CDATA[{ep.get('title', 'No Title')}]]></title>
+                <itunes:title><![CDATA[{itunes_title or ''}]]></itunes:title>
+                <link>{xml_escape(ep.get('link', podcast_details.get('podUrl', '')))}</link>
+                <description><![CDATA[{ep.get('description', '')}]]></description>
+                <pubDate>{formatted_pub_date}</pubDate>
+                <guid isPermaLink="false">{episode_guid}</guid>
+                <enclosure url="{xml_escape(ep.get('audioUrl', ''))}" length="{ep.get('fileSize', 0)}" type="{ep.get('fileType', 'audio/mpeg')}"/>
+                <itunes:author><![CDATA[{ep.get('author', podcast_details.get('author', podcast_details.get('ownerName', '')))}]]></itunes:author>
+                <itunes:subtitle><![CDATA[{ep.get('subtitle', '')}]]></itunes:subtitle>
+                <itunes:summary><![CDATA[{ep.get('description', '')}]]></itunes:summary>
+                <itunes:duration>{episode_duration_formatted}</itunes:duration>
+                <itunes:explicit>{"yes" if ep.get('explicit') else "no"}</itunes:explicit>
+                {f'<itunes:season>{ep.get("season")}</itunes:season>' if ep.get("season") else ''}
+                {f'<itunes:episode>{ep.get("episode")}</itunes:episode>' if ep.get("episode") else ''}
+                <itunes:episodeType>{ep.get('episodeType', 'full').lower()}</itunes:episodeType>
+                {f'<itunes:image href="{episode_image_url}" />' if episode_image_url else ''}
+                {f'<itunes:keywords>{xml_escape(",".join(itunes_keywords) if isinstance(itunes_keywords, list) else itunes_keywords)}</itunes:keywords>' if itunes_keywords else ''}
+                {f'<itunes:block>{xml_escape(itunes_block)}</itunes:block>' if itunes_block else ''}
+                {f'<googleplay:author>{xml_escape(googleplay_author)}</googleplay:author>' if googleplay_author else ''}
+                {f'<googleplay:email>{xml_escape(googleplay_email)}</googleplay:email>' if googleplay_email else ''}
+                {f'<googleplay:image href="{googleplay_image}" />' if googleplay_image else ''}
+                {f'<spotify:locked>{xml_escape(spotify_locked)}</spotify:locked>' if spotify_locked else ''}
+            </item>
+            """
+
+        # Optional podcast-level tags
+        podcast_keywords = podcast_details.get('itunes_keywords') or podcast_details.get('keywords')
+        podcast_block = podcast_details.get('itunes_block')
+        podcast_googleplay_author = podcast_details.get('googleplay_author') or podcast_details.get('author')
+        podcast_googleplay_email = podcast_details.get('googleplay_email') or podcast_details.get('email')
+        podcast_googleplay_image = podcast_details.get('googleplay_image') or podcast_details.get('logoUrl')
+        podcast_spotify_locked = podcast_details.get('spotify_locked')
+
+        formatted_last_build_date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
+        rss_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+        <rss version="2.0"
+             xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+             xmlns:content="http://purl.org/rss/1.0/modules/content/"
+             xmlns:atom="http://www.w3.org/2005/Atom"
+             xmlns:googleplay="http://www.google.com/schemas/play-podcasts/1.0"
+             xmlns:spotify="http://www.spotify.com/ns/rss">
+        <channel>
+            <title><![CDATA[{podcast_details.get('podName', 'No Podcast Title')}]]></title>
+            <link>{xml_escape(podcast_details.get('podUrl', ''))}</link>
+            <description><![CDATA[{podcast_details.get('description', '')}]]></description>
+            <language>{xml_escape(podcast_details.get('language', 'en-us'))}</language>
+            <copyright><![CDATA[{podcast_details.get('copyright_info', f'© {datetime.now().year} {podcast_details.get("ownerName", "")}')}]]></copyright>
+            <lastBuildDate>{formatted_last_build_date}</lastBuildDate>
+            {f'<atom:link href="{full_feed_url_for_atom_link}" rel="self" type="application/rss+xml" />' if full_feed_url_for_atom_link else ''}
+            <itunes:author><![CDATA[{podcast_details.get('author', podcast_details.get('ownerName', ''))}]]></itunes:author>
+            <itunes:summary><![CDATA[{podcast_details.get('description', '')}]]></itunes:summary>
+            <itunes:type>{podcast_details.get('itunes_type', 'episodic').lower()}</itunes:type>
+            <itunes:owner>
+                <itunes:name><![CDATA[{podcast_details.get('ownerName', '')}]]></itunes:name>
+                <itunes:email>{xml_escape(podcast_details.get('email', ''))}</itunes:email>
+            </itunes:owner>
+            {f'<itunes:image href="{podcast_details.get("logoUrl", "")}" />' if podcast_details.get("logoUrl") else ''}
+            <itunes:explicit>{"yes" if podcast_details.get('explicit') else "no"}</itunes:explicit>
+            {f'<itunes:keywords>{xml_escape(",".join(podcast_keywords) if isinstance(podcast_keywords, list) else podcast_keywords)}</itunes:keywords>' if podcast_keywords else ''}
+            {f'<itunes:block>{xml_escape(podcast_block)}</itunes:block>' if podcast_block else ''}
+            {f'<googleplay:author>{xml_escape(podcast_googleplay_author)}</googleplay:author>' if podcast_googleplay_author else ''}
+            {f'<googleplay:email>{xml_escape(podcast_googleplay_email)}</googleplay:email>' if podcast_googleplay_email else ''}
+            {f'<googleplay:image href="{podcast_googleplay_image}" />' if podcast_googleplay_image else ''}
+            {f'<spotify:locked>{xml_escape(podcast_spotify_locked)}</spotify:locked>' if podcast_spotify_locked else ''}
+            {items_xml}
+        </channel>
+        </rss>
+        """
+        return rss_xml.strip()

@@ -5,6 +5,7 @@ from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.podcast_repository import PodcastRepository
 from backend.services.rss_Service import RSSService
 from backend.utils.blob_storage import upload_file_to_blob  # For any generic blob uploads
+from azure.storage.blob import BlobServiceClient # Add this import
 
 class PublishService:
     def __init__(self):
@@ -12,6 +13,9 @@ class PublishService:
         self.podcast_repo = PodcastRepository()
         self.rss_service = RSSService()
         self.rss_feed_base_url = os.getenv("RSS_FEED_BASE_URL")
+        # Initialize Azure configuration for PublishService
+        self.azure_storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+        self.azure_storage_container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME")
 
     def publish_episode(self, episode_id, user_id, platforms):
         log_messages = []
@@ -39,9 +43,9 @@ class PublishService:
             # 2. Status Update: Mark as published and set publishDate BEFORE generating RSS
             now_utc = datetime.datetime.now(datetime.timezone.utc)
             update_payload = {
-                "status": "published",  # Ensure status is lowercase
-                "publishDate": now_utc,  # Ensure publishDate is set to current UTC time
-                "lastPublishedAt": now_utc
+                "status": "published",
+                "publishDate": now_utc.isoformat()  # Convert to ISO string
+                # Remove 'lastPublishedAt' unless you add it to your schema
             }
             
             current_app.logger.info(f"Attempting to update episode {episode_id} with payload: {update_payload}")
@@ -171,17 +175,33 @@ class PublishService:
     # Upload index_html to your public /rss/ folder if you want a directory listing.
 
     def create_sas_upload_url(self, filename, content_type):
-        blob_service_client = BlobServiceClient.from_connection_string(self.azure_conn_str)
-        blob_name = f"uploads/{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{filename}"
+        if not self.azure_storage_connection_string or not self.azure_storage_container_name:
+            current_app.logger.error("Azure Storage connection string or container name is not configured.")
+            raise ValueError("Azure Storage not configured for SAS URL generation.")
+
+        blob_service_client = BlobServiceClient.from_connection_string(self.azure_storage_connection_string)
+        # Sanitize filename to prevent path traversal or invalid characters for a blob name segment
+        safe_filename_segment = "".join(c if c.isalnum() or c in ['.', '-', '_'] else '_' for c in filename)
+        if len(safe_filename_segment) > 100: # Limit length of filename part
+            name, ext = os.path.splitext(safe_filename_segment)
+            safe_filename_segment = name[:90] + ext
+
+        blob_name = f"uploads/{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{safe_filename_segment}"
+        
+        account_key = blob_service_client.credential.account_key
+        if not account_key:
+            current_app.logger.error("Failed to retrieve account key from BlobServiceClient. Check connection string.")
+            raise ValueError("Could not retrieve storage account key for SAS token generation.")
+
         sas_token = blob_service_client.generate_blob_sas(
             account_name=blob_service_client.account_name,
-            container_name=self.rss_blob_container,
+            container_name=self.azure_storage_container_name, # Use initialized container name
             blob_name=blob_name,
-            account_key=blob_service_client.credential.account_key,
-            permission="w",
-            expiry=datetime.datetime.utcnow() + datetime.timedelta(minutes=15),
+            account_key=account_key,
+            permission="w", # Write permission
+            expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1), # Increased expiry to 1 hour
             content_type=content_type,
         )
-        upload_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{self.rss_blob_container}/{blob_name}?{sas_token}"
-        blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{self.rss_blob_container}/{blob_name}"
+        upload_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{self.azure_storage_container_name}/{blob_name}?{sas_token}"
+        blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{self.azure_storage_container_name}/{blob_name}"
         return upload_url, blob_url
