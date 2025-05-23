@@ -2,13 +2,20 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Tuple, Any, Optional
-
-from marshmallow import ValidationError
+from pydantic import BaseModel, Field
 
 from backend.database.mongo_connection import collection
-from backend.models.comments import Comment  # Changed from CommentSchema to Comment
 
 logger = logging.getLogger(__name__)
+
+# Define Pydantic model for Comment
+class Comment(BaseModel):
+    id: Optional[str] = Field(default=None, alias="_id")
+    userId: str
+    podtaskId: str
+    text: str
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    updatedAt: Optional[datetime] = None
 
 class CommentRepository:
     
@@ -75,9 +82,6 @@ class CommentRepository:
                 logger.error("Database insert returned without error but no ID was created")
                 return {"error": "Failed to add comment"}, 500
                 
-        except ValidationError as err:
-            logger.warning(f"Validation error during comment creation: {err.messages}")
-            return {"error": "Invalid data", "details": err.messages}, 400
         except Exception as e:
             logger.error(f"Error adding comment: {e}", exc_info=True)
             return {"error": f"Failed to add comment: {str(e)}"}, 500

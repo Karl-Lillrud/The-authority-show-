@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime
 from backend.database.mongo_connection import collection
-from backend.models.users_to_teams import UserToTeamSchema
-from marshmallow import ValidationError
+from backend.models.users_to_teams import UserToTeam
+from pydantic import ValidationError
 from uuid import uuid4
 from backend.services.activity_service import ActivityService  # Add this import
 
@@ -18,16 +18,12 @@ class UserToTeamRepository:
 
     def add_user_to_team(self, data):
         try:
-            # Validate required fields
-            if not data.get("teamId") or not data.get("userId") or not data.get("role"):
-                return {"error": "Missing teamId, userId, or role"}, 400
+            # Validate data using Pydantic
+            validated_data = UserToTeam(**data)
 
-            user_to_team_schema = UserToTeamSchema()
-            validated_data = user_to_team_schema.load(data)
-
-            user_id = str(validated_data.get("userId"))
-            team_id = str(validated_data.get("teamId"))
-            role = validated_data.get("role")
+            user_id = validated_data.userId
+            team_id = validated_data.teamId
+            role = validated_data.role
 
             team = self.teams_collection.find_one({"_id": team_id})
             if not team:
@@ -45,13 +41,8 @@ class UserToTeamRepository:
 
             user_to_team_id = str(uuid4())
 
-            user_to_team_item = {
-                "_id": user_to_team_id,
-                "userId": user_id,
-                "teamId": team_id,
-                "role": role,
-                "assignedAt": datetime.utcnow(),
-            }
+            user_to_team_item = validated_data.dict()
+            user_to_team_item["_id"] = user_to_team_id
 
             result = self.users_to_teams_collection.insert_one(user_to_team_item)
 
@@ -83,20 +74,20 @@ class UserToTeamRepository:
                 return {"error": "Failed to add user to team."}, 500
 
         except ValidationError as err:
-            return {"error": "Invalid data", "details": err.messages}, 400
+            return {"error": "Invalid data", "details": err.errors()}, 400
         except Exception as e:
             logger.error(f"Error adding user to team: {e}", exc_info=True)
             return {"error": f"Failed to add user to team: {str(e)}"}, 500
 
     def remove_user_from_team(self, data):
         try:
-            user_to_team_schema = UserToTeamSchema()
-            validated_data = user_to_team_schema.load(data)
+            # Validate data using Pydantic
+            validated_data = UserToTeam(**data)
 
             user_team_relation = self.users_to_teams_collection.find_one(
                 {
-                    "userId": validated_data["userId"],
-                    "teamId": validated_data["teamId"],
+                    "userId": validated_data.userId,
+                    "teamId": validated_data.teamId,
                 }
             )
 
@@ -105,8 +96,8 @@ class UserToTeamRepository:
 
             result = self.users_to_teams_collection.delete_one(
                 {
-                    "userId": validated_data["userId"],
-                    "teamId": validated_data["teamId"],
+                    "userId": validated_data.userId,
+                    "teamId": validated_data.teamId,
                 }
             )
 
@@ -116,7 +107,7 @@ class UserToTeamRepository:
             # --- Log activity for leaving a team ---
             try:
                 self.activity_service.log_activity(
-                    user_id=validated_data["userId"],
+                    user_id=validated_data.userId,
                     activity_type="team_left",
                     description=f"Left team '{user_team_relation.get('teamId', '')}'.",
                     details={"teamId": user_team_relation.get("teamId", "")},
@@ -129,7 +120,7 @@ class UserToTeamRepository:
             return {"message": "User removed from team successfully"}, 200
 
         except ValidationError as err:
-            return {"error": "Invalid data", "details": err.messages}, 400
+            return {"error": "Invalid data", "details": err.errors()}, 400
         except Exception as e:
             logger.error(f"Error removing user from team: {e}", exc_info=True)
             return {"error": f"Failed to remove user from team: {str(e)}"}, 500

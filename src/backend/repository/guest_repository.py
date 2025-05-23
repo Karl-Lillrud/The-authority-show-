@@ -5,12 +5,24 @@ import email.utils
 from datetime import datetime, timezone
 
 from backend.database.mongo_connection import collection
-from backend.models.guests import GuestSchema
 from backend.services.activity_service import ActivityService
-from marshmallow import ValidationError
+from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from typing import Optional, List
 
 logger = logging.getLogger(__name__)
 
+# Define Pydantic model for Guest
+class Guest(BaseModel):
+    id: Optional[str] = Field(default=None, alias="_id")
+    name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    bio: Optional[str] = None
+    socialMedia: Optional[dict] = None
+    image: Optional[HttpUrl] = None
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    updatedAt: Optional[datetime] = None
 
 class GuestRepository:
     def __init__(self):
@@ -49,47 +61,20 @@ class GuestRepository:
 
             current_date = datetime.now(timezone.utc)
 
-            try:
-                guest_data = GuestSchema().load(data)
-            except ValidationError as e:
-                return {"error": f"Invalid guest data: {e.messages}"}, 400
+            # Validate data using Pydantic
+            validated_data = Guest(**data)
 
-            guest_id = str(uuid.uuid4())
-            guest_item = {
-                "_id": guest_id,
-                "episodeId": episode_id,
-                "name": guest_data.name.strip(),
-                "image": guest_data.image or "",
-                "description": guest_data.description or "",
-                "bio": guest_data.bio or guest_data.description or "",
-                "email": guest_data.email.strip(),
-                "areasOfInterest": guest_data.areasOfInterest or [],
-                "status": "Pending",
-                "scheduled": 0,
-                "completed": 0,
-                "created_at": current_date,
-                "calendarEventId": guest_data.get("calendarEventId", ""),
-                "recordingAt": episode.get("recordingAt", None),  
-            }
+            # Convert to dictionary for MongoDB insertion
+            guest_data = validated_data.dict(by_alias=True)
+            guest_data["_id"] = guest_data.pop("id", None)
+            guest_data["createdAt"] = current_date
+            guest_data["updatedAt"] = current_date
 
-            self.collection.insert_one(guest_item)
-
-            try:
-                self.activity_service.log_activity(
-                    user_id=user_id,
-                    activity_type="guest_added",
-                    description=f"Added guest '{guest_item['name']}' to episode.",
-                    details={
-                        "guestId": guest_id,
-                        "episodeId": episode_id,
-                        "guestName": guest_item["name"],
-                    },
-                )
-            except Exception as act_err:
-                logger.error("Failed to log activity", exc_info=True)
-
-            return {"message": "Guest added successfully", "guest_id": guest_id}, 201
-
+            result = self.collection.insert_one(guest_data)
+            if result.inserted_id:
+                return {"message": "Guest added successfully", "guest_id": str(result.inserted_id)}, 201
+            else:
+                return {"error": "Failed to add guest"}, 500
         except Exception as e:
             logger.exception("Failed to add guest")
             return {"error": f"Failed to add guest: {str(e)}"}, 500

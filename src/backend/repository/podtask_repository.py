@@ -3,14 +3,25 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Tuple, Any, Optional, Union
 
-from marshmallow import ValidationError
+from pydantic import BaseModel, Field
 
 from backend.database.mongo_connection import collection
-from backend.models.podtasks import Podtask  # Changed from PodtaskSchema to Podtask
 from backend.services.taskService import extract_highlights, process_default_tasks
 
 logger = logging.getLogger(__name__)
 
+# Define Pydantic model for PodTask
+class PodTask(BaseModel):
+    id: Optional[str] = Field(default=None, alias="_id")
+    title: str
+    description: Optional[str] = None
+    status: str
+    assignedTo: Optional[List[str]] = None
+    dueDate: Optional[datetime] = None
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    updatedAt: Optional[datetime] = None
+    tags: Optional[List[str]] = None
+    metadata: Optional[Dict] = None
 
 class PodtaskRepository:
     
@@ -24,10 +35,9 @@ class PodtaskRepository:
     
     def register_podtask(self, user_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         try:
-            # Validate data through schema
-            schema = PodtaskSchema()
-            validated_data = schema.load(data)
-            
+            # Validate data using Pydantic
+            validated_data = PodTask(**data)
+
             # Assign podcast ID if missing
             if not validated_data.get("podcastId"):
                 podcast_result = self._get_default_podcast_id(user_id)
@@ -62,9 +72,6 @@ class PodtaskRepository:
                 logger.error("Database insert returned without error but no ID was created")
                 return {"error": "Failed to register podtask"}, 500
                 
-        except ValidationError as err:
-            logger.warning(f"Validation error during podtask registration: {err.messages}")
-            return {"error": "Invalid data", "details": err.messages}, 400
         except Exception as e:
             logger.error(f"Error registering podtask: {e}", exc_info=True)
             return {"error": f"Failed to register podtask: {str(e)}"}, 500
@@ -189,10 +196,16 @@ class PodtaskRepository:
                 logger.warning(f"Permission denied for user {user_id} on task {task_id}")
                 return {"error": "Permission denied"}, 403
 
-            update_fields = self._prepare_update_fields(task, data)
-            logger.debug(f"Update fields: {update_fields}")
+            # Validate data using Pydantic
+            validated_data = PodTask(**data)
 
-            result = self.podtasks_collection.update_one({"_id": task_id}, {"$set": update_fields})
+            # Prepare update fields
+            update_data = validated_data.dict(exclude_unset=True, by_alias=True)
+            update_data["updatedAt"] = datetime.utcnow()
+
+            result = self.podtasks_collection.update_one(
+                {"_id": task_id}, {"$set": update_data}
+            )
             logger.debug(f"Matched: {result.matched_count}, Modified: {result.modified_count}")
 
             message = "Task updated successfully" if result.modified_count else "No changes made to the task"
@@ -201,30 +214,6 @@ class PodtaskRepository:
         except Exception as e:
             logger.error(f"Error updating task {task_id}: {e}", exc_info=True)
             return {"error": f"Failed to update task: {str(e)}"}, 500
-
-    def _prepare_update_fields(self, existing_task: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
-        description = data.get("description", existing_task.get("description", "")).strip()
-        highlights = extract_highlights(description) if description and description != existing_task.get("description") else None
-
-        fields = [
-            "podcastId", "episodeId", "teamId", "members", "guestId", "name", "action",
-            "dayCount", "description", "actionUrl", "urlDescribe", "submissionReq",
-            "status", "assignedAt", "dueDate", "priority", "highlights", "dependencies", "aiTool"
-        ]
-
-        update_fields = {
-            field: data[field] if field in data else existing_task.get(field)
-            for field in fields
-        }
-
-        if highlights is not None:
-            update_fields["highlights"] = highlights
-
-        if data.get("status") == "completed" and existing_task.get("status") != "completed":
-            update_fields["completed_at"] = datetime.now(timezone.utc)
-
-        update_fields["updated_at"] = datetime.now(timezone.utc)
-        return update_fields
 
     def bulk_update_status(self, user_id: str, task_ids: List[str], new_status: str) -> Tuple[Dict[str, Any], int]:
         try:

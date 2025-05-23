@@ -2,13 +2,21 @@ import logging
 import uuid
 import json
 from datetime import datetime, timezone
-from marshmallow import ValidationError
+from pydantic import BaseModel, Field
+from typing import Optional, List
 from backend.database.mongo_connection import collection
-from backend.models.teams import Team  # Changed from TeamSchema to Team
 from backend.services.activity_service import ActivityService  # Add this import
 
 logger = logging.getLogger(__name__)
 
+# Define Pydantic model for Team
+class Team(BaseModel):
+    id: Optional[str] = Field(default=None, alias="_id")
+    name: str
+    description: Optional[str] = None
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    updatedAt: Optional[datetime] = None
+    members: Optional[List[dict]] = None
 
 class TeamRepository:
     def __init__(self):
@@ -21,10 +29,14 @@ class TeamRepository:
 
     def add_team(self, user_id, user_email, data):
         try:
-            team_schema = Team()
-            validated_data = team_schema.load(data)
+            # Validate data using Pydantic
+            validated_data = Team(**data)
 
             team_id = str(uuid.uuid4())  # Ensure team_id is a string
+
+            # Convert to dictionary for MongoDB insertion
+            team_data = validated_data.dict(by_alias=True)
+            team_data["_id"] = team_data.pop("id", None)
 
             team_item = {
                 "_id": team_id,
@@ -99,8 +111,6 @@ class TeamRepository:
                 "redirect_url": "/team.html",
             }, 201
 
-        except ValidationError as err:
-            return {"error": "Invalid data", "details": err.messages}, 400
         except Exception as e:
             logger.error(f"Error adding team: {e}", exc_info=True)
             return {"error": f"Failed to add team: {str(e)}"}, 500
@@ -211,8 +221,8 @@ class TeamRepository:
             if not team:
                 return {"error": "Team not found"}, 404
 
-            team_schema = Team()
-            validated_data = team_schema.load(data, partial=True)
+            # Validate data using Pydantic
+            validated_data = Team(**data)
 
             def are_values_different(old, new):
                 if isinstance(old, str) and isinstance(new, str):
@@ -240,8 +250,6 @@ class TeamRepository:
             else:
                 return {"message": "No changes made to the team."}, 200
 
-        except ValidationError as err:
-            return {"error": "Invalid data", "details": err.messages}, 400
         except Exception as e:
             logger.error(f"Error editing team: {e}", exc_info=True)
             return {"error": f"Failed to edit team: {str(e)}"}, 500
