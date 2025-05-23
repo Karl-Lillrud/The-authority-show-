@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 class PodcastRepository:
     def __init__(self):
-<<<<<<< HEAD
         self.collection = collection.database.Podcasts
         self.activity_service = ActivityService()
         self.episode_repo = EpisodeRepository()
@@ -21,17 +20,6 @@ class PodcastRepository:
     @staticmethod
     def get_podcasts_by_user_id(user_id):
         return list(collection.Podcasts.find({"ownerId": user_id}))
-=======
-        self.collection = collection.database.Podcasts  # Ensure capital "P"
-        self.activity_service = ActivityService()  # Add this line
-        self.episode_repo = EpisodeRepository()  # Initialize EpisodeRepository
-        self.rss_service = RSSService()  # Initialize RSSService instance
-
-    @staticmethod
-    def get_podcasts_by_user_id(user_id):
-        """Fetch podcasts for a specific user."""
-        return list(collection.database.Podcasts.find({"ownerId": user_id}))  # Capital "P"
->>>>>>> 9c74069c75ef2b0b4bd742363a1bc94bb390ad5e
 
     def add_podcast(self, user_id, data):
         try:
