@@ -13,12 +13,13 @@ logger = logging.getLogger(__name__)
 class PodcastRepository:
     def __init__(self):
         self.collection = collection.database.Podcasts
-        self.activity_service = ActivityService()
-        self.episode_repo = EpisodeRepository()
-        self.rss_service = RSSService()
+        self.activity_service = ActivityService()  # Add this line
+        self.episode_repo = EpisodeRepository()  # Initialize EpisodeRepository
+        self.rss_service = RSSService()  # Initialize RSSService instance
 
     @staticmethod
     def get_podcasts_by_user_id(user_id):
+        """Fetch podcasts for a specific user."""
         return list(collection.Podcasts.find({"ownerId": user_id}))
 
     def add_podcast(self, user_id, data):
@@ -76,6 +77,7 @@ class PodcastRepository:
                 "hostImage": validated_data.get("hostImage", ""),
             }
 
+            # Insert into database
             result = self.collection.insert_one(podcast_item)
             if result.inserted_id:
                 try:
@@ -115,18 +117,36 @@ class PodcastRepository:
             user_account_ids = [str(account["_id"]) for account in user_accounts]
 
             if not user_account_ids:
-                return {"podcast": []}, 200
+                return {"podcast": []}, 200  # No podcasts if no accounts
 
-            podcasts = list(self.collection.find({"accountId": {"$in": user_account_ids}}))
+            podcasts = list(
+                self.collection.find({"accountId": {"$in": user_account_ids}})
+            )
             for podcast in podcasts:
                 podcast["_id"] = str(podcast["_id"])
+                # Set image URL from RSS feed if available
+                if podcast.get("rssFeed"):
+                    try:
+                        rss_data, status_code = self.rss_service.fetch_rss_feed(podcast["rssFeed"])
+                        if status_code == 200 and rss_data and rss_data.get("imageUrl"):
+                            # Update the podcast in the database with the RSS image URL
+                            self.collection.update_one(
+                                {"_id": podcast["_id"]},
+                                {"$set": {"rssImage": rss_data["imageUrl"]}}
+                            )
+                            podcast["rssImage"] = rss_data["imageUrl"]
+                            logger.info(f"Updated podcast {podcast['_id']} with RSS image URL: {rss_data['imageUrl']}")
+                    except Exception as e:
+                        logger.error(f"Failed to fetch RSS data for podcast {podcast['_id']}: {e}")
+                # Ensure logoUrl is set (for frontend image display)
                 if not podcast.get("logoUrl") and podcast.get("imageUrl"):
                     podcast["logoUrl"] = podcast["imageUrl"]
 
             return {"podcast": podcasts}, 200
 
         except Exception as e:
-            return {"error": "Failed to fetch podcasts", "details": str(e)}, 500
+            logger.error(f"❌ ERROR in PodcastRepository.get_podcasts for user {user_id}: {str(e)}", exc_info=True)
+            raise # Re-raise the exception to be caught by the route handler
 
     def get_podcast_by_id(self, user_id, podcast_id):
         try:
