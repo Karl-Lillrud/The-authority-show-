@@ -248,79 +248,64 @@ class RSSService:
             logger.error(f"An unexpected error occurred while fetching RSS feed {rss_url}. Type: {type(e).__name__}, Error: {e}", exc_info=True)
             return {"error": f"Failed to process RSS feed: {type(e).__name__} - {str(e)}"}, 500
 
-    def generate_podcast_rss_feed_and_upload(self, podcast_id, user_id, podcast_details, episodes_list, rss_feed_public_base_url_template, publishing_episode_id=None):
-        # Construct the full_feed_url_for_atom_link
-        # This should be the final public URL of the RSS feed.
-        # Example: "https://yourdomain.com/rss/user_id/podcast_id/feed.xml"
-        # The exact structure depends on how you serve/store the RSS feed.
-        # For Azure Blob, it would be the public URL of the blob.
-        
-        # Determine the blob name/path
-        # This path should match what _upload_rss_to_blob_and_get_url uses.
-        blob_name = f"users/{user_id}/podcasts/{podcast_id}/rss/feed.xml"
-        
-        if not self.azure_conn_str or not self.rss_blob_container:
-            logger.error("Azure Storage connection string or container name is not configured for RSS feed URL generation.")
-            # Fallback or raise error, depending on desired behavior
-            full_feed_url_for_atom_link = "" # Or some default/placeholder
+    def generate_podcast_rss_feed_and_upload(self, podcast_id, user_id, podcast_details, episodes_list, atom_link_url=None, publishing_episode_id=None):
+        # This method will generate the RSS XML and upload it.
+        # The atom_link_url parameter is the URL that should be used for <atom:link rel="self">.
+        # If atom_link_url is None, it will construct a default one based on the direct blob path.
+
+        final_atom_link_url = atom_link_url
+
+        if not final_atom_link_url:
+            # Fallback: Construct atom link based on direct blob storage URL pattern
+            # This is a predictive construction.
+            blob_name = f"users/{user_id}/podcasts/{podcast_id}/rss/feed.xml"
+            if not self.azure_conn_str or not self.rss_blob_container:
+                logger.warning("Azure Storage not configured for default atom:link URL generation. Atom link might be missing or incorrect.")
+                final_atom_link_url = "" # Or handle as an error
+            else:
+                # This requires AZURE_STORAGE_ACCOUNT_NAME to be available or parsed.
+                account_name_from_env = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
+                if not account_name_from_env:
+                    # Attempt to parse from connection string if not in env (more complex)
+                    # For simplicity, assume it's in env or connection string is simple.
+                    # Example parsing (very basic, might not cover all connection string formats):
+                    try:
+                        parts = {p.split('=', 1)[0].lower(): p.split('=', 1)[1] for p in self.azure_conn_str.split(';') if '=' in p}
+                        account_name_from_env = parts.get('accountname')
+                    except Exception:
+                        logger.error("Could not parse AZURE_STORAGE_ACCOUNT_NAME from connection string for atom:link.")
+                        account_name_from_env = "your-storage-account" # Placeholder
+
+                container_name_from_env = self.rss_blob_container
+                final_atom_link_url = f"https://{account_name_from_env}.blob.core.windows.net/{container_name_from_env}/{blob_name}"
+            logger.info(f"Constructed fallback atom:link self URL: {final_atom_link_url}")
         else:
-            # Assuming azure_storage_account_name is accessible or part of connection string parsing
-            # For simplicity, let's assume the base URL is correctly configured in .env
-            # and rss_feed_public_base_url_template is the account's blob endpoint.
-            
-            # A simplified approach if rss_feed_public_base_url_template is like "https://<account>.blob.core.windows.net/<container>"
-            # For now, let's assume the blob_name is appended to a base URL.
-            # This needs to be the *actual* public URL of the feed.
-            # The _upload_rss_to_blob_and_get_url method returns this.
-            # So, we might need to generate XML first, upload, get URL, then re-gen with atom link, or pass it.
-            # For now, let's construct it based on known patterns.
-            # This is a common chicken-and-egg problem with atom:link self.
-            # One solution is to have a fixed, predictable URL structure.
-            
-            # Let's assume rss_feed_public_base_url_template is something like:
-            # "https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/"
-            # And the path is "users/<user_id>/podcasts/<podcast_id>/rss/feed.xml"
-            
-            # A more direct way: the URL is known once uploaded.
-            # For now, let's construct it predictively.
-            # This should ideally be the URL returned by _upload_rss_to_blob_and_get_url
-            # For simplicity in this step, we'll construct it.
-            # This might require a two-pass generation or a fixed URL scheme.
-            
-            # The URL that _upload_rss_to_blob_and_get_url will produce:
-            account_name_from_env = os.getenv("AZURE_STORAGE_ACCOUNT_NAME", "podmanagerstorage") # Fallback to .env
-            container_name_from_env = self.rss_blob_container
-            
-            full_feed_url_for_atom_link = f"https://{account_name_from_env}.blob.core.windows.net/{container_name_from_env}/{blob_name}"
-            logger.info(f"Constructed atom:link self URL: {full_feed_url_for_atom_link}")
+            logger.info(f"Using provided atom:link self URL: {final_atom_link_url}")
 
-
-        # Generate RSS XML
+        # Generate RSS XML using the determined atom link URL
         rss_xml_content = self._generate_rss_feed_xml(
             podcast_details=podcast_details,
             episodes_list=episodes_list,
-            full_feed_url_for_atom_link=full_feed_url_for_atom_link, # Pass the constructed URL
+            full_feed_url_for_atom_link=final_atom_link_url, 
             publishing_episode_id=publishing_episode_id
         )
+        
         # Upload RSS XML to Azure Blob Storage
-        # The _upload_rss_to_blob_and_get_url should use the same blob_name logic
         uploaded_feed_url = self._upload_rss_to_blob_and_get_url(
             podcast_id=podcast_id,
             user_id=user_id,
             rss_xml=rss_xml_content
         )
         
-        # If the uploaded_feed_url is different from the predicted full_feed_url_for_atom_link
-        # and atom:link self is critical, you might need to re-generate the XML
-        # with the correct URL from upload and re-upload.
-        # For now, we assume the prediction is accurate enough or the discrepancy is acceptable.
-        if uploaded_feed_url != full_feed_url_for_atom_link:
-            logger.warning(f"Atom link URL mismatch. Predicted: {full_feed_url_for_atom_link}, Actual Uploaded: {uploaded_feed_url}. Consider re-generating if exact match is needed.")
-            # Optionally, re-generate and re-upload if a perfect match is required:
-            # rss_xml_content = self._generate_rss_feed_xml(...) using uploaded_feed_url
-            # self._upload_rss_to_blob_and_get_url(...) with new content, ensuring same blob_name
+        # Log if the actual uploaded URL (direct blob URL) differs from the one used in atom:link,
+        # especially if atom_link_url was the proxy and uploaded_feed_url is the direct. This is expected.
+        if uploaded_feed_url and final_atom_link_url and uploaded_feed_url != final_atom_link_url:
+            logger.info(f"Atom link URL ('{final_atom_link_url}') differs from direct uploaded blob URL ('{uploaded_feed_url}'). This is expected if using a proxy URL for atom:link.")
+        elif not uploaded_feed_url:
+            logger.error("RSS feed upload failed, no URL returned from _upload_rss_to_blob_and_get_url.")
+            return None # Critical failure
 
-        return uploaded_feed_url
+        return uploaded_feed_url # Return the direct URL of the uploaded blob
 
     def _generate_rss_feed_xml(self, podcast_details, episodes_list, full_feed_url_for_atom_link, publishing_episode_id=None):
         def xml_escape(val):

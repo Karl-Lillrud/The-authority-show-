@@ -7,7 +7,7 @@ from backend.services.rss_Service import RSSService
 from backend.utils.blob_storage import upload_file_to_blob  # For any generic blob uploads
 from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions # Modified import
 import time # Add this import
-from backend.utils.slug_utils import slugify # Import slugify
+from backend.database.mongo_connection import mongo # Import mongo
 
 class PublishService:
     def __init__(self):
@@ -20,6 +20,48 @@ class PublishService:
         self.azure_storage_container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME")
         self.base_url = os.getenv("LOCAL_BASE_URL") if os.getenv("ENVIRONMENT") == "local" else os.getenv("PROD_BASE_URL")
 
+
+    def _find_podcast_details_by_identifier(self, identifier_to_find):
+        podcasts_collection = mongo.db.Podcasts 
+        accounts_collection = mongo.db.Accounts
+    
+        matched_podcasts = []
+        # Iterate through all podcasts, compare their names directly with the identifier.
+        for p_data in podcasts_collection.find({}, {"_id": 1, "podName": 1, "accountId": 1}):
+            current_pod_name = p_data.get("podName")
+            # Direct comparison for podName
+            if current_pod_name == identifier_to_find:
+                account = accounts_collection.find_one({"_id": p_data.get("accountId")}, {"ownerId": 1})
+                if account and account.get("ownerId"):
+                    matched_podcasts.append({
+                        "podcast_id": str(p_data["_id"]),
+                        "user_id": str(account["ownerId"]) 
+                    })
+                else:
+                    current_app.logger.warning(f"Found podcast with name '{identifier_to_find}' (ID: {p_data['_id']}) but could not find its account or ownerId.")
+        
+        if not matched_podcasts:
+            try:
+                if len(identifier_to_find) == 36: 
+                    potential_podcast_by_id = podcasts_collection.find_one({"_id": identifier_to_find}, {"_id": 1, "accountId": 1})
+                    if potential_podcast_by_id:
+                        account = accounts_collection.find_one({"_id": potential_podcast_by_id.get("accountId")}, {"ownerId": 1})
+                        if account and account.get("ownerId"):
+                            current_app.logger.info(f"Interpreting '{identifier_to_find}' as a direct podcast_id for RSS proxy.")
+                            return str(potential_podcast_by_id["_id"]), str(account["ownerId"])
+            except Exception as e:
+                current_app.logger.info(f"Could not interpret '{identifier_to_find}' as podcast_id during fallback: {e}")
+            return None, None 
+    
+        if len(matched_podcasts) > 1:
+            current_app.logger.warning(
+                f"Multiple podcasts found for identifier (podName) '{identifier_to_find}'. Using the first one: {matched_podcasts[0]['podcast_id']}"
+            )
+        
+        if not matched_podcasts: # Ensure we return None, None if still no matches after all checks
+            return None, None
+
+        return matched_podcasts[0]["podcast_id"], matched_podcasts[0]["user_id"]
 
     def publish_episode(self, episode_id, user_id, platforms):
         log_messages = []
@@ -70,18 +112,6 @@ class PublishService:
                 return {"success": False, "error": "Could not fetch episodes for podcast.", "details": log_messages}
             all_episodes_list = all_episodes_data.get("episodes", [])
 
-            # RSSService returns the direct blob URL
-            direct_rss_blob_url = self.rss_service.generate_podcast_rss_feed_and_upload(
-                podcast_id=podcast_id,
-                user_id=user_id, # This user_id is the ownerId
-                podcast_details=podcast,
-                episodes_list=all_episodes_list,
-                rss_feed_public_base_url_template=self.rss_feed_base_url, # This might not be used if RSS service constructs full URL
-                publishing_episode_id=episode_id
-            )
-            current_app.logger.info(f"[PublishService] Direct RSS Blob URL from RSSService: {direct_rss_blob_url}") # Added log
-            log_messages.append(f"RSS feed generated and uploaded to direct blob URL: {direct_rss_blob_url}")
-            
             # Construct the new proxy URL
             proxy_rss_feed_url = None # Initialize to None
             if direct_rss_blob_url: # Only construct proxy URL if blob upload was successful
@@ -94,32 +124,62 @@ class PublishService:
                      proxy_rss_feed_url = direct_rss_blob_url # Fallback
                 else:
                     podcast_name = podcast.get('podName')
-                    podcast_name_slug = slugify(podcast_name)
-
-                    if not podcast_name_slug: # Fallback if slug is empty
+                    
+                    # Use raw podcast_name as the identifier.
+                    # Browsers/clients will URL-encode this if it contains spaces/special chars.
+                    # Flask's <path:...> converter will decode it on the server side.
+                    if not podcast_name or not podcast_name.strip(): 
                         current_app.logger.warning(
-                            f"Generated empty slug for podcast name '{podcast_name}'. "
-                            f"Falling back to podcast_id '{podcast_id}' for proxy URL."
+                            f"Podcast name is empty or whitespace for podcast_id '{podcast_id}'. "
+                            f"Falling back to podcast_id for proxy URL identifier."
                         )
-                        # Use podcast_id as fallback slug to ensure URL is valid, though not using podName
-                        # Or, decide if an error should be raised or if publishing should be blocked.
-                        # For now, using podcast_id ensures the URL structure is maintained.
-                        # This part of the URL will be used by the /rss/<slug>/feed.xml route.
-                        # If it's a podcast_id, the route needs to handle that possibility too or we ensure slug is never empty.
-                        # Let's assume slugify always produces something or we handle empty podName earlier.
-                        # If podName is None or empty, slugify returns "", so we must handle this.
-                        # A simple fallback is to use the podcast_id itself if the slug is empty.
-                        url_identifier = podcast_id if not podcast_name_slug else podcast_name_slug
+                        url_identifier = podcast_id 
                     else:
-                        url_identifier = podcast_name_slug
+                        url_identifier = podcast_name # Use raw podName
                         
                     proxy_rss_feed_url = f"{app_base_url.rstrip('/')}/rss/{url_identifier}/feed.xml"
                 log_messages.append(f"User-facing RSS feed proxy URL: {proxy_rss_feed_url}")
             else:
                 # proxy_rss_feed_url remains None if direct_rss_blob_url is None
-                log_messages.append("Warning: Direct RSS blob URL not available, so proxy URL cannot be generated.")
+                log_messages.append("Warning: Direct RSS blob URL not available, so proxy URL cannot be generated for atom:link or frontend.")
+
+            # RSSService generates and uploads the feed.
+            # Pass the determined proxy_rss_feed_url to be used as the atom:link self.
+            # If proxy_rss_feed_url is None, RSSService might use its own default or the direct blob URL.
+            direct_rss_blob_url_from_service = self.rss_service.generate_podcast_rss_feed_and_upload(
+                podcast_id=podcast_id,
+                user_id=user_id, 
+                podcast_details=podcast,
+                episodes_list=all_episodes_list,
+                atom_link_url=proxy_rss_feed_url, # Pass the generated proxy URL for atom:link
+                publishing_episode_id=episode_id
+            )
+
+            # Ensure direct_rss_blob_url is updated if it was initially None or if the service returned a new one
+            # (though typically it should be the same if already generated, this handles if it was deferred)
+            if not direct_rss_blob_url:
+                direct_rss_blob_url = direct_rss_blob_url_from_service
             
-            current_app.logger.info(f"[PublishService] Final proxy_rss_feed_url to be sent to frontend: {proxy_rss_feed_url}") # Added log
+            if not direct_rss_blob_url:
+                 log_messages.append("Critical Error: RSS feed could not be generated or uploaded. Direct blob URL is still None.")
+                 # Handle critical failure if direct_rss_blob_url is still None after service call
+                 return {"success": False, "error": "RSS feed generation/upload failed critically.", "details": log_messages}
+
+
+            current_app.logger.info(f"[PublishService] Direct RSS Blob URL from RSSService: {direct_rss_blob_url}") 
+            log_messages.append(f"RSS feed generated and uploaded to direct blob URL: {direct_rss_blob_url}")
+            
+            # If proxy_rss_feed_url couldn't be constructed earlier (e.g. no app_base_url)
+            # but direct_rss_blob_url is available, we might decide to not show a proxy URL to the user.
+            # The frontend expects rssFeedUrl to be the proxy.
+            if not proxy_rss_feed_url and direct_rss_blob_url and app_base_url: # Re-check if app_base_url is now available
+                proxy_rss_feed_url = f"{app_base_url.rstrip('/')}/rss/{url_identifier}/feed.xml"
+                log_messages.append(f"User-facing RSS feed proxy URL (re-constructed): {proxy_rss_feed_url}")
+            elif not proxy_rss_feed_url:
+                 log_messages.append("Warning: User-facing proxy RSS URL could not be constructed.")
+
+
+            current_app.logger.info(f"[PublishService] Final proxy_rss_feed_url to be sent to frontend: {proxy_rss_feed_url}")
 
 
             # 4. Platform Processing
