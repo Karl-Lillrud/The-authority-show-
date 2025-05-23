@@ -335,9 +335,22 @@ class RSSService:
 
             pub_date_str = ep.get('publishDate') or ep.get('pubDate')
             if not pub_date_str:
+                logger.warning(f"Episode {ep.get('_id', 'N/A')} missing publishDate/pubDate. Skipping for RSS.")
                 continue
 
-            pub_date_dt = datetime.strptime(pub_date_str, "%Y-%m-%dT%H:%M:%S.%fZ") if '.' in pub_date_str else datetime.strptime(pub_date_str, "%Y-%m-%dT%H:%M:%SZ")
+            try:
+                # Use datetime.fromisoformat for robust ISO 8601 parsing
+                pub_date_dt = datetime.fromisoformat(pub_date_str.replace('Z', '+00:00'))
+            except ValueError as e:
+                logger.error(f"Could not parse date string '{pub_date_str}' for episode {ep.get('_id', 'N/A')}: {e}. Skipping for RSS.")
+                continue
+            
+            # Ensure the datetime is timezone-aware and in UTC for formatting
+            if pub_date_dt.tzinfo is None:
+                pub_date_dt = pub_date_dt.replace(tzinfo=timezone.utc)
+            else:
+                pub_date_dt = pub_date_dt.astimezone(timezone.utc)
+            
             formatted_pub_date = pub_date_dt.strftime("%a, %d %b %Y %H:%M:%S +0000")
 
             episode_guid = ep.get('guid') or ep.get('_id')
@@ -352,7 +365,12 @@ class RSSService:
             googleplay_email = ep.get('googleplay_email')
             googleplay_image = ep.get('googleplay_image') or episode_image_url
             spotify_locked = ep.get('spotify_locked')
-
+            
+            # Ensure episodeType is a string before calling .lower()
+            episode_type_val = ep.get('episodeType')
+            if episode_type_val is None:
+                episode_type_val = 'full' # Default to 'full' if None
+            
             items_xml += f"""
             <item>
                 <title><![CDATA[{ep.get('title', 'No Title')}]]></title>
@@ -369,7 +387,7 @@ class RSSService:
                 <itunes:explicit>{"yes" if ep.get('explicit') else "no"}</itunes:explicit>
                 {f'<itunes:season>{ep.get("season")}</itunes:season>' if ep.get("season") else ''}
                 {f'<itunes:episode>{ep.get("episode")}</itunes:episode>' if ep.get("episode") else ''}
-                <itunes:episodeType>{ep.get('episodeType', 'full').lower()}</itunes:episodeType>
+                <itunes:episodeType>{episode_type_val.lower()}</itunes:episodeType>
                 {f'<itunes:image href="{episode_image_url}" />' if episode_image_url else ''}
                 {f'<itunes:keywords>{xml_escape(",".join(itunes_keywords) if isinstance(itunes_keywords, list) else itunes_keywords)}</itunes:keywords>' if itunes_keywords else ''}
                 {f'<itunes:block>{xml_escape(itunes_block)}</itunes:block>' if itunes_block else ''}
@@ -389,6 +407,12 @@ class RSSService:
         podcast_googleplay_image = podcast_details.get('googleplay_image') or podcast_details.get('logoUrl')
         podcast_spotify_locked = podcast_details.get('spotify_locked')
 
+        # Ensure podcast itunes:type is a string before calling .lower()
+        podcast_itunes_type_val = podcast_details.get('itunes_type')
+        if podcast_itunes_type_val is None:
+            podcast_itunes_type_val = 'episodic' # Default to 'episodic' if None
+
+
         formatted_last_build_date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
         rss_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
         <rss version="2.0"
@@ -407,7 +431,7 @@ class RSSService:
             {f'<atom:link href="{full_feed_url_for_atom_link}" rel="self" type="application/rss+xml" />' if full_feed_url_for_atom_link else ''}
             <itunes:author><![CDATA[{podcast_details.get('author', podcast_details.get('ownerName', ''))}]]></itunes:author>
             <itunes:summary><![CDATA[{podcast_details.get('description', '')}]]></itunes:summary>
-            <itunes:type>{podcast_details.get('itunes_type', 'episodic').lower()}</itunes:type>
+            <itunes:type>{podcast_itunes_type_val.lower()}</itunes:type>
             <itunes:owner>
                 <itunes:name><![CDATA[{podcast_details.get('ownerName', '')}]]></itunes:name>
                 <itunes:email>{xml_escape(podcast_details.get('email', ''))}</itunes:email>
