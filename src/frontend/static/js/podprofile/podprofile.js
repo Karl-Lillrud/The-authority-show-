@@ -846,3 +846,30 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Google Calendar connected successfully!");
   }
 });
+
+document.getElementById("add-podcast-btn").addEventListener("click", async () => {
+  const podName = document.getElementById("podName").value.trim();
+  const description = document.getElementById("description").value.trim();
+  const email = document.getElementById("email").value.trim();
+
+  if (!podName) {
+    alert("Podcast name is required.");
+    return;
+  }
+
+  const podcastData = {
+    podName,
+    description,
+    email,
+    // Add other fields as needed
+  };
+
+  try {
+    const result = await addPodcast(podcastData);
+    alert("Podcast added successfully!");
+    console.log("Podcast added:", result);
+  } catch (error) {
+    console.error("Error adding podcast:", error);
+    alert(`Failed to add podcast: ${error.message}`);
+  }
+});

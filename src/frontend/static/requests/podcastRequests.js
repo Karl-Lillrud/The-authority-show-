@@ -3,16 +3,23 @@
 // Function to add a new podcast
 export async function addPodcast(podcastData) {
   try {
+    // Ensure required fields are present
+    if (!podcastData.podName) {
+      throw new Error("Missing required field: podName");
+    }
+
     const response = await fetch("/api/podcasts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(podcastData),
     });
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: "Failed to add podcast and parse error response" }));
+      const errorData = await response.json().catch(() => ({ error: "Failed to parse error response" }));
       console.error("Server error from addPodcast:", errorData);
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
+
     return await response.json();
   } catch (error) {
     console.error("Error in addPodcast:", error);

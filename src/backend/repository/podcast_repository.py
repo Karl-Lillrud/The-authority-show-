@@ -1,15 +1,17 @@
 import uuid
 from datetime import datetime, timezone
 from backend.database.mongo_connection import collection
-from backend.models.podcasts import Podcast  # Changed from PodcastSchema to Podcast
-import logging
-import urllib.request
-import feedparser
+from backend.models.podcasts import Podcast
+from pydantic import ValidationError
 from backend.services.rss_Service import RSSService  # Import RSSService
 from backend.services.activity_service import ActivityService  # Add this import
 from backend.repository.episode_repository import (
     EpisodeRepository,
 )  # Assuming EpisodeRepository exists
+import logging
+import urllib.request
+import feedparser
+from pydantic.networks import HttpUrl
 
 
 logger = logging.getLogger(__name__)
@@ -37,66 +39,30 @@ class PodcastRepository:
 
             if not user_account:
                 logger.error(f"Account lookup failed for ownerId: {user_id}")
-                account_count = collection.database.Accounts.count_documents(
-                    {"ownerId": user_id}
-                )
-                logger.error(
-                    f"Total accounts found for ownerId {user_id}: {account_count}"
-                )
                 raise ValueError("No account associated with this user (owner)")
-            else:
-                logger.info(
-                    f"Found account for ownerId {user_id}: Account id: {user_account.get('id')}"
-                )
 
             account_id = str(user_account["id"])
-            data["accountId"] = account_id
+            data["accountId"] = account_id  # Add accountId to the data
+            logger.info(f"Account ID {account_id} added to podcast data.")
 
-            # Validate data using Podcast
-            schema = Podcast()
-            errors = schema.validate(data)
-            if errors:
-                raise ValueError("Invalid data", errors)
+            # Validate data using Pydantic's Podcast model
+            try:
+                validated_podcast = Podcast(**data)
+                validated_data = validated_podcast.dict(exclude_none=True)
+            except ValidationError as e:
+                logger.error(f"Pydantic validation error: {e.errors()}")
+                raise ValueError("Invalid podcast data", e.errors())
 
-            validated_data = schema.load(data)
+            # Convert HttpUrl fields to strings
+            for key, value in validated_data.items():
+                if isinstance(value, HttpUrl):
+                    validated_data[key] = str(value)
 
-            # Ensure account exists and belongs to the user (redundant check, but safe)
-            account = collection.database.Accounts.find_one(
-                {"id": account_id, "ownerId": user_id}
-            )  # Check ownerId here too
-            if not account:
-                logger.error(
-                    f"Consistency check failed: Account _id {account_id} not found or doesn't belong to owner {user_id}"
-                )
-                raise ValueError("Invalid account ID or no permission to add podcast.")
-
-            # Generate a unique podcast ID
             podcast_id = str(uuid.uuid4())
             podcast_item = {
                 "id": podcast_id,
-                "teamId": validated_data.get("teamId"),
-                "accountId": account_id,
-                "podName": validated_data.get("podName"),
-                "ownerName": validated_data.get("ownerName"),
-                "hostName": validated_data.get("hostName"),
-                "rssFeed": validated_data.get("rssFeed"),
-                "googleCal": validated_data.get("googleCal"),
-                "podUrl": validated_data.get("podUrl"),
-                "guestUrl": validated_data.get("guestUrl"),
-                "socialMedia": validated_data.get("socialMedia", []),
-                "email": validated_data.get("email"),
-                "description": validated_data.get("description"),
-                "logoUrl": validated_data.get("logoUrl"),
-                "category": validated_data.get("category", ""),
                 "created_at": datetime.now(timezone.utc),
-                "title": validated_data.get("title", ""),
-                "language": validated_data.get("language", ""),
-                "author": validated_data.get("author", ""),
-                "copyright_info": validated_data.get("copyright_info", ""),
-                "bannerUrl": validated_data.get("bannerUrl", ""),
-                "tagline": validated_data.get("tagline", ""),
-                "hostBio": validated_data.get("hostBio", ""),
-                "hostImage": validated_data.get("hostImage", ""),
+                **validated_data,
             }
 
             # Insert into database
@@ -115,7 +81,7 @@ class PodcastRepository:
                     )
                 except Exception as act_err:
                     logger.error(
-                        f"Failed to log podcast_created activity: {act_err}",
+                        f"Failed to log activity: {act_err}",
                         exc_info=True,
                     )
                 # --- End activity log ---
@@ -131,17 +97,16 @@ class PodcastRepository:
         except ValueError as e:
             logger.error(
                 f"ValueError in add_podcast for user {user_id}: {e}"
-            )  # Log the specific error
-            if isinstance(e.args[0], str):
-                return {"error": e.args[0]}, 400
-            else:
-                return {"error": e.args[0], "details": e.args[1]}, 400
+            )
+            error_message = str(e.args[0]) if e.args else "Invalid data"
+            details = e.args[1] if len(e.args) > 1 else None
+            return {"error": error_message, "details": details}, 400
 
         except Exception as e:
             logger.error(
                 f"General Exception in add_podcast for user {user_id}: {e}",
                 exc_info=True,
-            )  # Log general errors
+            )
             return {"error": "Failed to add podcast", "details": str(e)}, 500
 
     def get_podcasts(self, user_id):  # user_id is the owner's ID
@@ -322,23 +287,53 @@ class PodcastRepository:
             )
 
             if result.modified_count == 1:
+                # --- Add activity log for podcast update ---
+                try:
+                    self.activity_service.log_activity(
+                        user_id=user_id,
+                        activity_type="podcast_updated",
+                        description=f"Updated podcast '{podcast.get('podName', podcast_id)}'",
+                        details={
+                            "podcastId": podcast_id,
+                            "updatedFields": list(update_data.keys()),
+                        },
+                    )
+                except Exception as act_err:
+                    logger.error(
+                        f"Failed to log podcast_updated activity: {act_err}",
+                        exc_info=True,
+                    )
+                # --- End activity log ---
                 return {"message": "Podcast updated successfully"}, 200
             else:
                 return {"message": "No changes made to the podcast"}, 200
 
         except ValueError as e:
-            # Specific business logic error
-            if isinstance(e.args[0], str):
-                return {
-                    "error": e.args[0]
-                }, 400  # Return specific error with 400 for bad input
+            logger.error(
+                f"ValueError in edit_podcast for user {user_id}, podcast {podcast_id}: {e}"
+            )
+            error_message = "Invalid data"
+            details = None
+            if e.args:  # Check if args exist
+                error_message = str(e.args[0])
+                if len(e.args) > 1:
+                    if isinstance(e.args[1], dict): # Marshmallow errors
+                        details = e.args[1]
+                    else:
+                        details = str(e.args[1])
+            else: # No args, use string representation of e
+                error_message = str(e)
+            
+            if details:
+                return {"error": error_message, "details": details}, 400
             else:
-                return {
-                    "error": e.args[0],
-                    "details": e.args[1],
-                }, 400  # For validation errors
+                return {"error": error_message}, 400
 
         except Exception as e:
+            logger.error(
+                f"General Exception in edit_podcast for user {user_id}, podcast {podcast_id}: {e}",
+                exc_info=True,
+            )
             return {"error": "Failed to update podcast", "details": str(e)}, 500
 
     def fetch_rss_feed(self, rss_url):
