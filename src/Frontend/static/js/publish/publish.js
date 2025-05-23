@@ -308,6 +308,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const result = await publishEpisode(currentEpisodeId, currentSelectedPlatforms, null);
+      console.log("[publish.js] Publish API result:", JSON.stringify(result, null, 2)); // Added log
       if (result.success) {
         addToLog(`Successfully published episode: ${result.message}`);
         showNotification("Success", `Episode published successfully! ${result.message || ''}`, "success");

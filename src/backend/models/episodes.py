@@ -1,5 +1,5 @@
 from marshmallow import Schema, fields, validates, ValidationError
-from marshmallow.validate import Length, Range
+from marshmallow.validate import Length, Range, OneOf
 from datetime import datetime
 
 class EpisodeSchema(Schema):
@@ -36,6 +36,7 @@ class EpisodeSchema(Schema):
     updatedAt = fields.DateTime(dump_only=True, data_key="updated_at")
     highlights = fields.List(fields.Str(), allow_none=True)
     audioEdits = fields.List(fields.Dict(), allow_none=True)
+    publishedToPlatforms = fields.List(fields.Str(), allow_none=True)  # New field
 
     @validates("duration")
     def validate_duration(self, value):

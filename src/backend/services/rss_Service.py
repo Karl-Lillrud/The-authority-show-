@@ -7,7 +7,7 @@ import re
 from bs4 import BeautifulSoup
 import time
 import os
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, ContentSettings # Import ContentSettings
 from backend.utils.blob_storage import upload_file_to_blob  # For generic blob uploads
 
 logger = logging.getLogger(__name__)
@@ -460,8 +460,11 @@ class RSSService:
             blob_service_client = BlobServiceClient.from_connection_string(self.azure_conn_str)
             blob_client = blob_service_client.get_blob_client(container=self.rss_blob_container, blob=blob_name)
             
+            # Use ContentSettings object
+            content_settings = ContentSettings(content_type='application/rss+xml')
+            
             # Upload the XML content as bytes
-            blob_client.upload_blob(rss_xml.encode('utf-8'), overwrite=True, content_settings={'content_type': 'application/rss+xml'})
+            blob_client.upload_blob(rss_xml.encode('utf-8'), overwrite=True, content_settings=content_settings)
             
             logger.info(f"RSS feed uploaded to Azure Blob Storage: {blob_client.url}")
             return blob_client.url  # This is the public URL of the blob

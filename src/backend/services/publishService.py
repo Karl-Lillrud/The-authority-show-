@@ -78,15 +78,16 @@ class PublishService:
                 rss_feed_public_base_url_template=self.rss_feed_base_url, # This might not be used if RSS service constructs full URL
                 publishing_episode_id=episode_id
             )
+            current_app.logger.info(f"[PublishService] Direct RSS Blob URL from RSSService: {direct_rss_blob_url}") # Added log
             log_messages.append(f"RSS feed generated and uploaded to direct blob URL: {direct_rss_blob_url}")
-            current_app.logger.info(f"RSS feed for {podcast_id} uploaded to {direct_rss_blob_url}")
+            # current_app.logger.info(f"RSS feed for {podcast_id} uploaded to {direct_rss_blob_url}") # This was already there
 
             # Construct the new proxy URL
-            # The proxy route is /rss/<podcast_id_for_proxy>/feed.xml
-            # Here, podcast_id_for_proxy is the actual podcast_id
+            proxy_rss_feed_url = None # Initialize to None
             if direct_rss_blob_url: # Only construct proxy URL if blob upload was successful
                 # Use a more robust way to get the base URL of the application
                 app_base_url = self.base_url or current_app.config.get('SERVER_NAME') or request.host_url.rstrip('/')
+                current_app.logger.info(f"[PublishService] Determined app_base_url: {app_base_url}") # Added log
 
                 if not app_base_url:
                      current_app.logger.warning("Could not determine application base URL for proxy RSS link. Falling back to direct blob URL.")
@@ -96,8 +97,10 @@ class PublishService:
                     proxy_rss_feed_url = f"{app_base_url.rstrip('/')}/rss/{podcast_id}/feed.xml"
                 log_messages.append(f"User-facing RSS feed proxy URL: {proxy_rss_feed_url}")
             else:
-                proxy_rss_feed_url = None # Indicate RSS feed URL is not available
+                # proxy_rss_feed_url remains None if direct_rss_blob_url is None
                 log_messages.append("Warning: Direct RSS blob URL not available, so proxy URL cannot be generated.")
+            
+            current_app.logger.info(f"[PublishService] Final proxy_rss_feed_url to be sent to frontend: {proxy_rss_feed_url}") # Added log
 
 
             # 4. Platform Processing
