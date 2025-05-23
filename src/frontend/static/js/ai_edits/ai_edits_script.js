@@ -1516,15 +1516,15 @@ async function convertIntroOutroToSpeech() {
 // Enhance audio function
 async function enhanceAudio() {
   const containerId = "audioControls"
-  const container = document.getElementById(containerId)
+  let container = document.getElementById(containerId)
   if (!container) {
     // Create a container for results if it doesn't exist
     const resultsContainer = document.getElementById("ai-results-container") || document.querySelector(".container")
     if (resultsContainer) {
-      const newContainer = document.createElement("div")
-      newContainer.id = "audioControls"
-      newContainer.className = "result-field"
-      resultsContainer.appendChild(newContainer)
+      container = document.createElement("div")
+      container.id = "audioControls"
+      container.className = "result-field"
+      resultsContainer.appendChild(container)
     } else {
       alert("Results container not found. Please refresh the page and try again.")
       return
@@ -1544,10 +1544,9 @@ async function enhanceAudio() {
   const file = input.files && input.files[0]
   if (!file) return alert("Upload an audio file first.")
 
-  const episodeId = getSelectedEpisodeId()
-  if (!episodeId) return alert("No episode selected.")
+  const episodeId = getSelectedEpisodeId() || "default_episode"
 
-  showSpinner(containerId)
+  showProcessingStatus(containerId, 1, 3, "Uploading audio file...")
 
   try {
     const formData = new FormData()
@@ -1568,7 +1567,8 @@ async function enhanceAudio() {
       `
       return
     }
-    if (!response.ok || !result.enhanced_audio_url) {
+
+    if (!response.ok) {
       throw new Error(result.error || "Enhancement failed.")
     }
 
@@ -1577,7 +1577,14 @@ async function enhanceAudio() {
       throw new Error("No audio URL returned")
     }
 
+    showProcessingStatus(containerId, 2, 3, "Enhancing audio quality...")
+
+    // Fetch the enhanced audio
     const audioRes = await fetch(`/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`)
+    if (!audioRes.ok) {
+      throw new Error("Failed to fetch enhanced audio")
+    }
+
     const blob = await audioRes.blob()
     const url = URL.createObjectURL(blob)
 
@@ -1585,8 +1592,24 @@ async function enhanceAudio() {
     activeAudioBlob = blob
     activeAudioId = "external"
 
-    container.innerHTML = "<p>Audio enhancement complete!</p>"
-    renderAudioPlayer("audioControls", blob, "enhancedAudioPlayer")
+    showProcessingStatus(containerId, 3, 3, "Finalizing enhancement...")
+
+    // Show comparison if we have the original audio
+    if (rawAudioBlob) {
+      showAudioComparison(rawAudioBlob, blob, "Enhanced")
+    }
+
+    container.innerHTML = `
+  <div style="padding: 15px; background-color: #f0f8ff; border-radius: 8px; margin: 10px 0;">
+    <h4 style="color: #2c5282; margin-bottom: 10px;">✅ Audio Enhancement Complete!</h4>
+    <p style="margin-bottom: 15px;">Your audio has been processed with noise reduction and normalization.</p>
+    <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+      <p style="margin: 0 0 10px 0; font-weight: 600;">Enhanced Audio Preview:</p>
+      <div id="enhancedAudioPlayer"></div>
+    </div>
+  </div>
+`
+    renderAudioPlayer("enhancedAudioPlayer", blob, "enhancedAudioPlayerElement")
 
     const audioAnalysisSection = document.getElementById("audioAnalysisSection")
     if (audioAnalysisSection) audioAnalysisSection.style.display = "block"
@@ -1605,9 +1628,52 @@ async function enhanceAudio() {
 
     // Only consume credits after successful audio enhancement
     await consumeStoreCredits("audio_enhancement")
+    showStatus("Audio enhancement completed successfully!", "info")
   } catch (err) {
-    container.innerHTML = `Error: ${err.message}`
+    container.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`
+    showStatus(`Audio enhancement failed: ${err.message}`, "error")
   }
+}
+
+// Add audio comparison feature
+function showAudioComparison(originalBlob, processedBlob, processType) {
+  const comparisonContainer = document.createElement("div")
+  comparisonContainer.style.cssText = `
+    margin-top: 20px; 
+    padding: 20px; 
+    background-color: #f8fafc; 
+    border-radius: 12px; 
+    border: 1px solid #e2e8f0;
+  `
+
+  comparisonContainer.innerHTML = `
+    <h4 style="margin-bottom: 15px; color: #2d3748;">🔊 Audio Comparison</h4>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+      <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <h5 style="margin-bottom: 10px; color: #4a5568;">Original Audio</h5>
+        <div id="originalComparisonPlayer"></div>
+      </div>
+      <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <h5 style="margin-bottom: 10px; color: #4a5568;">${processType} Audio</h5>
+        <div id="processedComparisonPlayer"></div>
+      </div>
+    </div>
+    <div style="text-align: center; padding: 10px; background-color: #edf2f7; border-radius: 6px;">
+      <p style="margin: 0; font-size: 14px; color: #4a5568;">
+        💡 <strong>Tip:</strong> Play both audio files to hear the difference in quality and clarity.
+      </p>
+    </div>
+  `
+
+  // Find the appropriate container to append to
+  const audioControlsContainer = document.getElementById("audioControls")
+  if (audioControlsContainer) {
+    audioControlsContainer.appendChild(comparisonContainer)
+  }
+
+  // Render both audio players
+  renderAudioPlayer("originalComparisonPlayer", originalBlob, "originalComparisonAudio")
+  renderAudioPlayer("processedComparisonPlayer", processedBlob, "processedComparisonAudio")
 }
 
 // Voice isolation function
@@ -1644,17 +1710,17 @@ async function runVoiceIsolation() {
   const file = input.files && input.files[0]
   if (!file) return alert("Upload an audio file first.")
 
-  const episodeId = getSelectedEpisodeId()
-  if (!episodeId) return alert("No episode selected.")
+  const episodeId = getSelectedEpisodeId() || "default_episode"
 
-  showSpinner(containerId)
+  showProcessingStatus(containerId, 1, 3, "Uploading audio file...")
 
   try {
     const formData = new FormData()
     formData.append("audio", file)
     formData.append("episode_id", episodeId)
 
-    const response = await fetch("/transcription/voice_isolate", {
+    // Use the correct endpoint from your backend
+    const response = await fetch("/voice_isolate", {
       method: "POST",
       body: formData,
     })
@@ -1669,9 +1735,25 @@ async function runVoiceIsolation() {
     }
 
     const data = await response.json()
-    const blobUrl = data.isolated_blob_url
 
-    const audioRes = await fetch(`/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`)
+    if (!response.ok) {
+      throw new Error(data.error || "Voice isolation failed")
+    }
+
+    // Use the correct response field name from your backend
+    const blobUrl = data.isolated_blob_url
+    if (!blobUrl) {
+      throw new Error("No isolated audio URL returned")
+    }
+
+    showProcessingStatus(containerId, 2, 3, "Isolating voice from background...")
+
+    // Use the correct proxy endpoint from your backend
+    const audioRes = await fetch(`/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`)
+    if (!audioRes.ok) {
+      throw new Error("Failed to fetch isolated audio")
+    }
+
     const blob = await audioRes.blob()
     const url = URL.createObjectURL(blob)
 
@@ -1679,7 +1761,29 @@ async function runVoiceIsolation() {
     activeAudioBlob = blob
     activeAudioId = "external"
 
-    renderAudioPlayer(containerId, blob, "isolatedAudioPlayer")
+    showProcessingStatus(containerId, 3, 3, "Finalizing voice isolation...")
+
+    // Show comparison if we have the original audio
+    if (rawAudioBlob) {
+      showAudioComparison(rawAudioBlob, blob, "Voice Isolated")
+    }
+
+    container.innerHTML = `
+  <div style="padding: 15px; background-color: #f0fff4; border-radius: 8px; margin: 10px 0;">
+    <h4 style="color: #22543d; margin-bottom: 10px;">✅ Voice Isolation Complete!</h4>
+    <p style="margin-bottom: 15px;">Background noise and music have been separated from the voice track.</p>
+    <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+      <p style="margin: 0 0 10px 0; font-weight: 600;">Isolated Voice Preview:</p>
+      <div id="isolatedAudioPlayer"></div>
+    </div>
+    <div style="margin-top: 15px; padding: 10px; background-color: #edf2f7; border-radius: 6px;">
+      <p style="margin: 0; font-size: 14px; color: #4a5568;">
+        <strong>Tip:</strong> You can now use this isolated voice for further processing, cutting, or analysis.
+      </p>
+    </div>
+  </div>
+`
+    renderAudioPlayer("isolatedAudioPlayer", blob, "isolatedAudioPlayerElement")
 
     const audioAnalysisSection = document.getElementById("audioAnalysisSection")
     if (audioAnalysisSection) audioAnalysisSection.style.display = "block"
@@ -1698,9 +1802,11 @@ async function runVoiceIsolation() {
 
     // Only consume credits after successful voice isolation
     await consumeStoreCredits("voice_isolation")
+    showStatus("Voice isolation completed successfully!", "info")
   } catch (err) {
     console.error("Voice isolation failed:", err)
-    container.innerText = `Isolation failed: ${err.message}`
+    container.innerHTML = `<p style="color: red;">Isolation failed: ${err.message}</p>`
+    showStatus(`Voice isolation failed: ${err.message}`, "error")
   }
 }
 
@@ -2338,61 +2444,96 @@ async function generateAudioClip() {
 // Render audio player function
 function renderAudioPlayer(containerId, audioBlob, playerId, options = {}) {
   const container = document.getElementById(containerId)
-  container.innerHTML = ""
+  if (!container) {
+    console.error(`Audio player container '${containerId}' not found`)
+    return
+  }
 
   const url = URL.createObjectURL(audioBlob)
 
+  // Create audio element
   const audioEl = document.createElement("audio")
   audioEl.id = playerId
+  audioEl.controls = true
   audioEl.src = url
-  audioEl.style = "display: none;"
+  audioEl.style.width = "100%"
+  audioEl.style.marginBottom = "10px"
   container.appendChild(audioEl)
 
-  const playBtn = document.createElement("button")
-  playBtn.className = "btn ai-edit-button"
-  playBtn.textContent = "Play"
-  container.appendChild(playBtn)
-
+  // Create waveform container
   const waveformDiv = document.createElement("div")
   waveformDiv.id = `${playerId}_waveform`
-  waveformDiv.style = "width: 100%; height: 96px; margin-top: 1rem;"
+  waveformDiv.style.cssText =
+    "width: 100%; height: 80px; margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 4px;"
   container.appendChild(waveformDiv)
 
-  // Check if WaveSurfer is available
+  // Add file info
+  const fileInfo = document.createElement("div")
+  fileInfo.style.cssText = "margin-top: 10px; font-size: 12px; color: #718096;"
+  const fileSizeMB = (audioBlob.size / (1024 * 1024)).toFixed(2)
+  const duration = audioEl.duration || "calculating..."
+  fileInfo.innerHTML = `
+    <div style="display: flex; justify-content: space-between;">
+      <span>Size: ${fileSizeMB} MB</span>
+      <span>Type: ${audioBlob.type || "audio/wav"}</span>
+    </div>
+  `
+  container.appendChild(fileInfo)
+
+  // Initialize WaveSurfer if available
   if (window.WaveSurfer) {
-    const wavesurfer = WaveSurfer.create({
-      container: `#${playerId}_waveform`,
-      waveColor: "#ccc",
-      progressColor: "#f69229",
-      height: 96,
-      barWidth: 2,
-      responsive: true,
-      backend: "MediaElement",
-      media: audioEl,
-    })
+    try {
+      const wavesurfer = WaveSurfer.create({
+        container: `#${playerId}_waveform`,
+        waveColor: "#cbd5e0",
+        progressColor: "#4299e1",
+        height: 60,
+        barWidth: 2,
+        responsive: true,
+        backend: "MediaElement",
+        media: audioEl,
+      })
 
-    wavesurfer.load(url)
+      wavesurfer.load(url)
 
-    if (options.onWaveformClick) {
-      wavesurfer.on("click", options.onWaveformClick)
+      wavesurfer.on("ready", () => {
+        const duration = wavesurfer.getDuration()
+        fileInfo.innerHTML = `
+          <div style="display: flex; justify-content: space-between;">
+            <span>Size: ${fileSizeMB} MB</span>
+            <span>Duration: ${duration.toFixed(1)}s</span>
+            <span>Type: ${audioBlob.type || "audio/wav"}</span>
+          </div>
+        `
+      })
+
+      if (options.onWaveformClick) {
+        wavesurfer.on("click", options.onWaveformClick)
+      }
+    } catch (error) {
+      console.warn("WaveSurfer initialization failed:", error)
+      waveformDiv.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 60px; background-color: #f7fafc; color: #718096; font-size: 14px;">
+          Waveform visualization unavailable
+        </div>
+      `
     }
   } else {
-    waveformDiv.innerHTML = "<p>WaveSurfer not available. Simple audio player shown.</p>"
+    waveformDiv.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: center; height: 60px; background-color: #f7fafc; color: #718096; font-size: 14px;">
+        Waveform visualization requires WaveSurfer.js
+      </div>
+    `
   }
 
-  playBtn.addEventListener("click", () => {
-    if (audioEl.paused) {
-      audioEl.play()
-      playBtn.textContent = "Pause"
-    } else {
-      audioEl.pause()
-      playBtn.textContent = "Play"
-    }
-  })
-
-  audioEl.addEventListener("ended", () => {
-    playBtn.textContent = "Play"
-  })
+  // Add download button
+  const downloadBtn = document.createElement("a")
+  downloadBtn.href = url
+  downloadBtn.download = `processed_audio_${Date.now()}.wav`
+  downloadBtn.className = "btn ai-edit-button"
+  downloadBtn.style.cssText = "display: inline-block; margin-top: 10px; text-decoration: none;"
+  downloadBtn.textContent = "Download Audio"
+  container.appendChild(downloadBtn)
 }
 
 // Helper functions for SFX
@@ -2410,19 +2551,37 @@ function replaceSfx(index, url) {
   }
 }
 
-// Show spinner function
-function showSpinner(containerId) {
+// Enhanced spinner with progress indication
+function showSpinner(containerId, message = "Processing...") {
   const container = document.getElementById(containerId)
   if (container) {
-    container.innerHTML = '<div class="spinner"></div>'
+    container.innerHTML = `
+      <div style="text-align: center; padding: 30px;">
+        <div class="spinner" style="margin: 0 auto 15px auto;"></div>
+        <p style="margin: 0; color: #4a5568; font-weight: 500;">${message}</p>
+        <div style="margin-top: 10px; padding: 8px; background-color: #edf2f7; border-radius: 6px; font-size: 14px; color: #718096;">
+          This may take a few moments depending on file size...
+        </div>
+      </div>
+    `
   }
 }
 
-// Hide spinner function
-function hideSpinner(containerId) {
+// Show processing status with steps
+function showProcessingStatus(containerId, step, totalSteps, message) {
   const container = document.getElementById(containerId)
   if (container) {
-    container.innerHTML = ""
+    const progress = Math.round((step / totalSteps) * 100)
+    container.innerHTML = `
+      <div style="text-align: center; padding: 30px;">
+        <div class="spinner" style="margin: 0 auto 15px auto;"></div>
+        <p style="margin: 0 0 10px 0; color: #4a5568; font-weight: 500;">${message}</p>
+        <div style="background-color: #e2e8f0; border-radius: 10px; height: 8px; margin: 10px 0;">
+          <div style="background-color: #4299e1; height: 100%; border-radius: 10px; width: ${progress}%; transition: width 0.3s ease;"></div>
+        </div>
+        <p style="margin: 0; font-size: 14px; color: #718096;">Step ${step} of ${totalSteps} (${progress}%)</p>
+      </div>
+    `
   }
 }
 
