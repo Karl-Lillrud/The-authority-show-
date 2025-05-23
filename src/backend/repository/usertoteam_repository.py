@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime
 from backend.database.mongo_connection import collection
-from backend.models.users_to_teams import UserToTeamSchema
-from marshmallow import ValidationError
+from backend.models.users_to_teams import UserToTeam
+from pydantic import ValidationError
 from uuid import uuid4
 from backend.services.activity_service import ActivityService  # Add this import
 
@@ -22,18 +22,18 @@ class UserToTeamRepository:
             if not data.get("teamId") or not data.get("userId") or not data.get("role"):
                 return {"error": "Missing teamId, userId, or role"}, 400
 
-            user_to_team_schema = UserToTeamSchema()
-            validated_data = user_to_team_schema.load(data)
+            # Validate data using Pydantic
+            validated_data = UserToTeam(**data)
 
-            user_id = str(validated_data.get("userId"))
-            team_id = str(validated_data.get("teamId"))
-            role = validated_data.get("role")
+            user_id = validated_data.userId
+            team_id = validated_data.teamId
+            role = validated_data.role
 
-            team = self.teams_collection.find_one({"_id": team_id})
+            team = self.teams_collection.find_one({"id": team_id})
             if not team:
                 return {"error": "Team not found"}, 404
 
-            user = self.users_collection.find_one({"_id": user_id})
+            user = self.users_collection.find_one({"id": user_id})
             if not user:
                 return {"error": "User not found"}, 404
 
@@ -45,13 +45,8 @@ class UserToTeamRepository:
 
             user_to_team_id = str(uuid4())
 
-            user_to_team_item = {
-                "_id": user_to_team_id,
-                "userId": user_id,
-                "teamId": team_id,
-                "role": role,
-                "assignedAt": datetime.utcnow(),
-            }
+            user_to_team_item = validated_data.dict()
+            user_to_team_item["id"] = user_to_team_id
 
             result = self.users_to_teams_collection.insert_one(user_to_team_item)
 
@@ -83,20 +78,20 @@ class UserToTeamRepository:
                 return {"error": "Failed to add user to team."}, 500
 
         except ValidationError as err:
-            return {"error": "Invalid data", "details": err.messages}, 400
+            return {"error": "Invalid data", "details": err.errors()}, 400
         except Exception as e:
             logger.error(f"Error adding user to team: {e}", exc_info=True)
             return {"error": f"Failed to add user to team: {str(e)}"}, 500
 
     def remove_user_from_team(self, data):
         try:
-            user_to_team_schema = UserToTeamSchema()
-            validated_data = user_to_team_schema.load(data)
+            # Validate data using Pydantic
+            validated_data = UserToTeam(**data)
 
             user_team_relation = self.users_to_teams_collection.find_one(
                 {
-                    "userId": validated_data["userId"],
-                    "teamId": validated_data["teamId"],
+                    "userId": validated_data.userId,
+                    "teamId": validated_data.teamId,
                 }
             )
 
@@ -105,8 +100,8 @@ class UserToTeamRepository:
 
             result = self.users_to_teams_collection.delete_one(
                 {
-                    "userId": validated_data["userId"],
-                    "teamId": validated_data["teamId"],
+                    "userId": validated_data.userId,
+                    "teamId": validated_data.teamId,
                 }
             )
 
@@ -116,7 +111,7 @@ class UserToTeamRepository:
             # --- Log activity for leaving a team ---
             try:
                 self.activity_service.log_activity(
-                    user_id=validated_data["userId"],
+                    user_id=validated_data.userId,
                     activity_type="team_left",
                     description=f"Left team '{user_team_relation.get('teamId', '')}'.",
                     details={"teamId": user_team_relation.get("teamId", "")},
@@ -129,7 +124,7 @@ class UserToTeamRepository:
             return {"message": "User removed from team successfully"}, 200
 
         except ValidationError as err:
-            return {"error": "Invalid data", "details": err.messages}, 400
+            return {"error": "Invalid data", "details": err.errors()}, 400
         except Exception as e:
             logger.error(f"Error removing user from team: {e}", exc_info=True)
             return {"error": f"Failed to remove user from team: {str(e)}"}, 500
@@ -137,7 +132,7 @@ class UserToTeamRepository:
     def get_team_members(self, team_id):
         try:
             team_members = list(
-                self.users_to_teams_collection.find({"teamId": team_id}, {"_id": 0})
+                self.users_to_teams_collection.find({"teamId": team_id}, {"id": 0})
             )
 
             if not team_members:
@@ -147,7 +142,7 @@ class UserToTeamRepository:
             for member in team_members:
                 user_id = member.get("userId")
                 user_details = self.users_collection.find_one(
-                    {"_id": user_id}, {"_id": 0, "fullName": 1, "email": 1, "phone": 1}
+                    {"id": user_id}, {"id": 0, "fullName": 1, "email": 1, "phone": 1}
                 )
 
                 if user_details:
@@ -168,7 +163,7 @@ class UserToTeamRepository:
         try:
             user_teams = list(
                 self.users_to_teams_collection.find(
-                    {"userId": user_id}, {"teamId": 1, "_id": 0}
+                    {"userId": user_id}, {"teamId": 1, "id": 0}
                 )
             )
 
@@ -179,7 +174,7 @@ class UserToTeamRepository:
 
             teams = list(
                 self.teams_collection.find(
-                    {"_id": {"$in": team_ids}}, {"_id": 1, "name": 1}
+                    {"id": {"$in": team_ids}}, {"id": 1, "name": 1}
                 )
             )
 
@@ -204,14 +199,14 @@ class UserToTeamRepository:
 
     def get_all_team_members(self):
         try:
-            team_members = list(self.users_to_teams_collection.find({}, {"_id": 0}))
+            team_members = list(self.users_to_teams_collection.find({}, {"id": 0}))
             if not team_members:
                 return {"message": "No members found"}, 404
             members_details = []
             for member in team_members:
                 user_id = member.get("userId")
                 user_details = self.users_collection.find_one(
-                    {"_id": user_id}, {"_id": 0}
+                    {"id": user_id}, {"id": 0}
                 )
                 if user_details:
                     user_details["role"] = member.get("role")
@@ -234,7 +229,7 @@ class UserToTeamRepository:
                 update_fields_teams["members.$.phone"] = phone
 
             result_teams = self.teams_collection.update_one(
-                {"_id": team_id, "members.userId": user_id},
+                {"id": team_id, "members.userId": user_id},
                 {"$set": update_fields_teams},
             )
             if result_teams.modified_count == 0:
@@ -258,7 +253,7 @@ class UserToTeamRepository:
 
             if update_fields_users:
                 result_users = self.users_collection.update_one(
-                    {"_id": user_id}, {"$set": update_fields_users}
+                    {"id": user_id}, {"$set": update_fields_users}
                 )
                 if result_users.modified_count == 0:
                     logger.warning("Failed to update user details in Users collection")
@@ -288,14 +283,14 @@ class UserToTeamRepository:
 
                 # Remove member from Teams array using user_id
                 result = self.teams_collection.update_one(
-                    {"_id": team_id}, {"$pull": {"members": {"userId": user_id}}}
+                    {"id": team_id}, {"$pull": {"members": {"userId": user_id}}}
                 )
                 if result.modified_count == 0:
                     logger.error("Failed to delete member from Teams array")
                     return {"error": "Failed to delete member from Teams array"}, 500
 
-                # Delete the user from Users collection by _id
-                delete_user_result = self.users_collection.delete_one({"_id": user_id})
+                # Delete the user from Users collection by id
+                delete_user_result = self.users_collection.delete_one({"id": user_id})
                 if delete_user_result.deleted_count == 0:
                     logger.warning(
                         "User not found in Users collection, skipping deletion"
@@ -308,7 +303,7 @@ class UserToTeamRepository:
             elif email:
                 # Remove unverified member from Teams array via email
                 result = self.teams_collection.update_one(
-                    {"_id": team_id, "members.email": email, "members.verified": False},
+                    {"id": team_id, "members.email": email, "members.verified": False},
                     {"$pull": {"members": {"email": email, "verified": False}}},
                 )
                 if result.modified_count == 0:

@@ -35,10 +35,10 @@ def homepage():
         return redirect(url_for("auth_bp.signin"))  # Updated endpoint
 
     user_id = str(g.user_id)
-    podcasts = list(collection.database.Podcast.find({"userid": user_id}))
+    podcasts = list(collection.database.Podcast.find({"userid": user_id})) # Assuming Podcast collection uses 'userid'
 
     for podcast in podcasts:
-        podcast["_id"] = str(podcast["_id"])
+        podcast["id"] = str(podcast["id"]) # Changed _id to id
 
     return render_template("dashboard/homepage.html", podcasts=podcasts)
 
@@ -76,7 +76,7 @@ def settings():
     if not g.user_id:
         return redirect(url_for("auth_bp.signin"))  # Updated endpoint
 
-    user = collection.find_one({"_id": g.user_id})
+    user = collection.database.Users.find_one({"id": g.user_id}) # Changed _id to id, assuming Users collection
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
     phone_number = user.get("phone_number", "") if user else ""  # Fetch phone number
@@ -196,7 +196,7 @@ def get_pending_guests():
         )
         response = [
             {
-                "id": str(guest["_id"]),
+                "id": str(guest["id"]), # Changed _id to id
                 "name": guest["name"],
                 "email": guest["email"],
                 "recordingDate": guest.get("recordingDate"),

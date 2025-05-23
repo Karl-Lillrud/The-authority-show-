@@ -56,7 +56,7 @@ def save_google_refresh_token():
             return jsonify({"error": "Missing refresh token or user ID"}), 400
 
         result = collection.database.Users.update_one(
-            {"_id": user_id}, {"$set": {"googleRefresh": refresh_token}}, upsert=True
+            {"id": user_id}, {"$set": {"googleRefresh": refresh_token}}, upsert=True
         )
 
         if result.modified_count > 0 or result.upserted_id:
@@ -329,7 +329,7 @@ def send_team_invite_email(
         user = collection.database.Users.find_one({"email": email.lower().strip()})
         if user:
             ActivityService().log_activity(
-                user_id=str(user["_id"]),
+                user_id=str(user["id"]),
                 activity_type="team_invite_email_sent",
                 description=f"Team invite email sent to {email}",
                 details={"email": email, "teamName": team_name, "role": role},
@@ -362,7 +362,7 @@ def send_guest_invitation_email(guest_name, guest_email, guest_form_url, podcast
             )
             if user:
                 ActivityService().log_activity(
-                    user_id=str(user["_id"]),
+                    user_id=str(user["id"]),
                     activity_type="guest_invite_email_sent",
                     description=f"Guest invitation email sent to {guest_email}",
                     details={"guestName": guest_name, "podcastName": podcast_name},
@@ -424,7 +424,7 @@ def send_podcaster_activation_email(email, activation_link):
                     {"email": email.lower().strip()}
                 )
                 user_id_for_log = (
-                    str(user["_id"]) if user else None
+                    str(user["id"]) if user else None
                 )  # Log even if user doesn't exist yet
                 ActivityService().log_activity(
                     user_id=user_id_for_log,  # Can be None if user is new

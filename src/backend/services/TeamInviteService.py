@@ -27,7 +27,7 @@ class TeamInviteService:
             existing_user = self.user_repo.get_user_by_email(email)
             if existing_user:
                 is_member = self.user_to_team_repo.is_user_in_team(
-                    existing_user["_id"], team_id
+                    existing_user["id"], team_id
                 )
                 if is_member:
                     return {"error": "User is already a member of this team"}, 400
@@ -106,7 +106,7 @@ class TeamInviteService:
 
 def accept_invite(self, invite_token, user_id):
     """Accepts a team invitation and deletes it after successful registration."""
-    invite = self.invites_collection.find_one({"_id": invite_token})
+    invite = self.invites_collection.find_one({"id": invite_token})
 
     if not invite:
         logger.warning(f"Invite {invite_token} not found")
@@ -125,7 +125,7 @@ def accept_invite(self, invite_token, user_id):
 
     # ✅ Check if the user is already in the team
     team_member = self.teams_collection.find_one(
-        {"_id": invite["teamId"], "members": {"$elemMatch": {"userId": user_id}}}
+        {"id": invite["teamId"], "members": {"$elemMatch": {"userId": user_id}}}
     )
 
     if team_member:
@@ -134,6 +134,6 @@ def accept_invite(self, invite_token, user_id):
 
     # ✅ Add user to the team
     self.teams_collection.update_one(
-        {"_id": invite["teamId"]},
+        {"id": invite["teamId"]},
         {"$push": {"members": {"userId": user_id, "role": invite["role"]}}},
     )

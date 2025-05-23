@@ -90,7 +90,7 @@ def oauth2callback():
         try:
             # First, try direct MongoDB update to isolate the issue
             update_result = collection.database.Users.update_one(
-                {"_id": user_id},
+                {"id": user_id}, # Changed _id to id
                 {"$set": {
                     "googleCalAccessToken": access_token,
                     "googleCalRefreshToken": refresh_token,
@@ -102,11 +102,11 @@ def oauth2callback():
             
             # Now also try with the repository method
             user_repo = UserRepository()
-            repo_result = user_repo.save_tokens(user_id, access_token, refresh_token)
+            repo_result = user_repo.save_tokens(user_id, access_token, refresh_token) # Assuming save_tokens queries by id
             logger.info(f"Repository save_tokens result: {repo_result}")
             
             # Verify token saving by querying the user document
-            user = collection.database.Users.find_one({"_id": user_id})
+            user = collection.database.Users.find_one({"id": user_id}) # Changed _id to id
             if user:
                 logger.info(f"User document after token update: {user.get('googleCalAccessToken', 'Not found')} / {user.get('googleCalRefreshToken', 'Not found')}")
                 if not user.get('googleCalAccessToken') or not user.get('googleCalRefreshToken'):
@@ -177,7 +177,7 @@ def connect_calendar():
 
         # Save both the shareable link and the tokens
         update_result = collection.database.Users.update_one(
-            {"_id": user_id}, 
+            {"id": user_id},  # Changed _id to id
             {"$set": {
                 "googleCal": shareable_link,
                 "googleCalAccessToken": access_token,
@@ -188,7 +188,7 @@ def connect_calendar():
         logger.info(f"Update result: matched={update_result.matched_count}, modified={update_result.modified_count}")
 
         # Verify the update
-        user = collection.database.Users.find_one({"_id": user_id})
+        user = collection.database.Users.find_one({"id": user_id}) # Changed _id to id
         if user:
             logger.info(f"User document after update: googleCal={user.get('googleCal', 'Not found')}, tokens={bool(user.get('googleCalAccessToken'))}/{bool(user.get('googleCalRefreshToken'))}")
 
@@ -234,7 +234,7 @@ def calendar_callback():
         
         # Save both the code and the tokens
         update_result = collection.database.Users.update_one(
-            {"_id": user_id}, 
+            {"id": user_id},  # Changed _id to id
             {"$set": {
                 "googleCal": code,  # Keep the original behavior
                 "googleCalAccessToken": tokens.get("access_token"),
@@ -245,7 +245,7 @@ def calendar_callback():
         logger.info(f"Update result: matched={update_result.matched_count}, modified={update_result.modified_count}")
         
         # Verify the update
-        user = collection.database.Users.find_one({"_id": user_id})
+        user = collection.database.Users.find_one({"id": user_id}) # Changed _id to id
         if user:
             logger.info(f"User document after update: googleCal={user.get('googleCal', 'Not found')}, tokens={bool(user.get('googleCalAccessToken'))}/{bool(user.get('googleCalRefreshToken'))}")
         

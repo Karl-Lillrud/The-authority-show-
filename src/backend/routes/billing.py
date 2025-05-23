@@ -469,7 +469,7 @@ def stripe_webhook():
             try:
                 # Update account document
                 collection.database.Accounts.update_one(
-                    {"_id": account["_id"]},
+                    {"id": account["id"]},
                     {
                         "$set": {
                             "subscriptionStatus": "cancelled",
@@ -543,7 +543,7 @@ def stripe_webhook():
                             # Update stripeCustomerId for future lookups if we found the account
                             if account:
                                 collection.database.Accounts.update_one(
-                                    {"_id": account["_id"]},
+                                    {"id": account["id"]},
                                     {"$set": {"stripeCustomerId": customer_id}}
                                 )
                                 logger.info(f"Updated stripeCustomerId for user {user_id}")
@@ -558,7 +558,7 @@ def stripe_webhook():
                         # Update stripeCustomerId for future lookups if we found the account
                         if account:
                             collection.database.Accounts.update_one(
-                                {"_id": account["_id"]},
+                                {"id": account["id"]},
                                 {"$set": {"stripeCustomerId": customer_id}}
                             )
                             user_id = account.get("userId") or account.get("ownerId")
@@ -609,7 +609,7 @@ def stripe_webhook():
                 
                 # Mark subscription as past_due in our database
                 collection.database.Accounts.update_one(
-                    {"_id": account["_id"]},
+                    {"id": account["id"]},
                     {
                         "$set": {
                             "subscriptionStatus": "past_due",
@@ -978,7 +978,7 @@ def get_purchase_history():
             collection.database.Purchases.find(
                 {"user_id": user_id},
                 {
-                    "_id": 0,
+                    "id": 0,
                     "date": 1,
                     "amount": 1,
                     "description": 1,

@@ -1,52 +1,47 @@
-from marshmallow import Schema, fields, validates, ValidationError
-from marshmallow.validate import Length, Range
+from pydantic import BaseModel, HttpUrl, Field, validator
+from typing import Optional, List, Dict, Union
 from datetime import datetime
 
-class EpisodeSchema(Schema):
-    id = fields.Str(dump_only=True)
-    podcastId = fields.Str(required=True, data_key="podcastId")
-    accountId = fields.Str(allow_none=True, data_key="accountId")
-    title = fields.Str(required=True, validate=Length(min=1))
-    description = fields.Str(allow_none=True)
-    summary = fields.Str(allow_none=True)
-    subtitle = fields.Str(allow_none=True)
-    publishDate = fields.DateTime(allow_none=True, data_key="publishDate")
-    duration = fields.Int(allow_none=True)
-    audioUrl = fields.Url(allow_none=True, data_key="audioUrl")
-    fileSize = fields.Int(allow_none=True, data_key="fileSize")
-    fileType = fields.Str(allow_none=True, data_key="fileType")
-    guid = fields.Str(allow_none=True)
-    link = fields.Url(allow_none=True)
-    imageUrl = fields.Url(allow_none=True, data_key="imageUrl")
-    season = fields.Int(allow_none=True)
-    episode = fields.Int(allow_none=True)
-    episodeType = fields.Str(allow_none=True, data_key="episodeType")
-    explicit = fields.Bool(allow_none=True)
-    author = fields.Str(allow_none=True)
-    keywords = fields.List(fields.Str(), allow_none=True)
-    chapters = fields.List(fields.Dict(), allow_none=True)
+class Episode(BaseModel):
+    id: Optional[str] = Field(default=None)
+    podcastId: str
+    accountId: Optional[str] = None
+    title: str = Field(..., min_length=1)
+    description: Optional[str] = None
+    summary: Optional[str] = None
+    subtitle: Optional[str] = None
+    publishDate: Optional[datetime] = None
+    duration: Optional[int] = None
+    audioUrl: Optional[HttpUrl] = None
+    fileSize: Optional[int] = None
+    fileType: Optional[str] = None
+    guid: Optional[str] = None
+    link: Optional[HttpUrl] = None
+    imageUrl: Optional[HttpUrl] = None
+    season: Optional[int] = None
+    episode: Optional[int] = None
+    episodeType: Optional[str] = None
+    explicit: Optional[bool] = None
+    author: Optional[str] = None
+    keywords: Optional[List[str]] = None
+    chapters: Optional[List[Dict]] = None
+    status: Optional[str] = None
+    isHidden: Optional[bool] = None
+    recordingAt: Optional[datetime] = None
+    isImported: Optional[bool] = None
+    createdAt: Optional[datetime] = None  # dump_only
+    updatedAt: Optional[datetime] = None  # dump_only
+    highlights: Optional[List[str]] = None
+    audioEdits: Optional[List[Dict]] = None
 
-    # ✅ Updated: allow any string for status
-    status = fields.Str(allow_none=True)
-
-    isHidden = fields.Bool(allow_none=True, data_key="isHidden")
-    recordingAt = fields.DateTime(allow_none=True, data_key="recordingAt")
-    isImported = fields.Bool(allow_none=True, data_key="isImported")
-    createdAt = fields.DateTime(dump_only=True, data_key="created_at")
-    updatedAt = fields.DateTime(dump_only=True, data_key="updated_at")
-    highlights = fields.List(fields.Str(), allow_none=True)
-    audioEdits = fields.List(fields.Dict(), allow_none=True)
-
-    @validates("duration")
-    def validate_duration(self, value):
-        if value is not None:
-            if not isinstance(value, int):
-                raise ValidationError("Duration must be an integer.")
-            if value < 0:
-                raise ValidationError("Duration cannot be negative.")
+    @validator("duration")
+    def validate_duration(cls, value):
+        if value is not None and value < 0:
+            raise ValueError("Duration cannot be negative.")
         return value
 
-    @validates("publishDate")
-    def validate_publish_date(self, value):
-        if not isinstance(value, (datetime, type(None))):
-            raise ValidationError("publishDate must be a datetime object or null.")
+    @validator("publishDate")
+    def validate_publish_date(cls, value):
+        if value is not None and not isinstance(value, datetime):
+            raise ValueError("publishDate must be a datetime object or null.")
+        return value

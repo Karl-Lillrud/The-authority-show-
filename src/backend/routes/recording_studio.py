@@ -138,7 +138,7 @@ def log_recording_metadata():
             "updated_at": datetime.utcnow()
         }
 
-        result = episodes_collection.update_one({"_id": episode_id}, {"$set": update_fields})
+        result = episodes_collection.update_one({"id": episode_id}, {"$set": update_fields})
         if result.matched_count == 0:
             return jsonify({"error": "Episode not found"}), 404
 
@@ -149,15 +149,15 @@ def log_recording_metadata():
 @recording_studio_bp.route('/participants/<episode_id>', methods=['GET'])
 def get_participants(episode_id):
     try:
-        episode = episodes_collection.find_one({"_id": episode_id}, {"userid": 1})
+        episode = episodes_collection.find_one({"id": episode_id}, {"userid": 1})
         if not episode:
             return jsonify({"error": "Episode not found"}), 404
 
-        guests = list(guests_collection.find({"episode_id": episode_id}, {"_id": 1}))
+        guests = list(guests_collection.find({"episode_id": episode_id}, {"id": 1}))
 
         participants = {
             "host": episode["userid"],
-            "guests": [str(guest["_id"]) for guest in guests]
+            "guests": [str(guest["id"]) for guest in guests]
         }
 
         return jsonify(participants), 200

@@ -32,17 +32,17 @@ class AccountRepository:
             existing_account = self.collection.find_one({"ownerId": user_id})
             if existing_account:
                 logger.info(
-                    f"Account already exists for user {user_id}: {existing_account['_id']}"
+                    f"Account already exists for user {user_id}: {existing_account['id']}"
                 )
                 # Optionally update isFirstLogin if provided and changed
                 if "isFirstLogin" in data and existing_account.get("isFirstLogin") != data["isFirstLogin"]:
                     self.collection.update_one(
-                        {"_id": existing_account["_id"]},
+                        {"id": existing_account["id"]},
                         {"$set": {"isFirstLogin": data["isFirstLogin"], "updatedAt": datetime.utcnow().isoformat()}}
                     )
                 return {
                     "message": "Account already exists",
-                    "accountId": existing_account["_id"],
+                    "accountId": existing_account["id"],
                 }, 200
 
             # Create a new account
@@ -56,7 +56,7 @@ class AccountRepository:
             
             # Initialize with 0 extra slots - base slots are handled by the plan
             account_data = {
-                "_id": account_id,
+                "id": account_id,
                 "ownerId": user_id,
                 "createdAt": datetime.utcnow().isoformat(),
                 "updatedAt": datetime.utcnow().isoformat(),
@@ -107,7 +107,7 @@ class AccountRepository:
 
     def get_account(self, account_id):
         try:
-            account = self.collection.find_one({"_id": account_id})
+            account = self.collection.find_one({"id": account_id})
             if not account:
                 return {"error": "Account not found"}, 404
             return {"account": account}, 200
@@ -123,7 +123,7 @@ class AccountRepository:
                 return {"error": "Account not found"}, 404
 
             # Get user data directly from Users collection
-            user = self.user_collection.find_one({"_id": user_id})
+            user = self.user_collection.find_one({"id": user_id})
             if user:
                 # Merge user data with account data
                 account.update({

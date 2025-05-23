@@ -12,7 +12,7 @@ def create_edit_entry(episode_id, user_id, edit_type, clip_url, **kwargs):
         return None
 
     edit = {
-        "_id": str(uuid.uuid4()),
+        "id": str(uuid.uuid4()),
         "episodeId": episode_id,
         "userId": user_id,
         "editType": edit_type,
@@ -33,7 +33,7 @@ def create_edit_entry(episode_id, user_id, edit_type, clip_url, **kwargs):
 
 def save_transcription_edit(user_id, episode_id, transcript_text, raw_transcript, sentiment, emotion, filename):
     edit = {
-        "_id": str(uuid.uuid4()),  # <--- custom string ID
+        "id": str(uuid.uuid4()),  # <--- custom string ID
         "episodeId": episode_id,
         "userId": user_id,
         "editType": "transcription",

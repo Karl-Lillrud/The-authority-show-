@@ -24,7 +24,7 @@ class ActivityService:
         try:
             user_id_str = str(user_id)  # Ensure user_id is a string for consistency
             activity = {
-                "_id": str(uuid.uuid4()),
+                "id": str(uuid.uuid4()),  # Changed _id to id
                 "userId": user_id_str,  # Use the string version of user_id
                 "type": activity_type,
                 "description": description,
@@ -48,11 +48,11 @@ class ActivityService:
                     .limit(num_to_delete)
                 )  # 1 for ascending (oldest first)
 
-                ids_to_delete = [act["_id"] for act in oldest_activities]
+                ids_to_delete = [act["id"] for act in oldest_activities]  # Changed _id to id
 
                 if ids_to_delete:
                     self.activities_collection.delete_many(
-                        {"_id": {"$in": ids_to_delete}}
+                        {"id": {"$in": ids_to_delete}}  # Changed _id to id
                     )
                     logger.info(
                         f"Deleted {len(ids_to_delete)} oldest activities for user {user_id_str} to maintain limit of {MAX_ACTIVITIES_PER_USER}."

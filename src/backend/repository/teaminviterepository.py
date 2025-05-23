@@ -19,7 +19,7 @@ class TeamInviteRepository:
         Raises ValueError for invalid inputs or permissions.
         Returns the invite token on success.
         """
-        team = self.teams_collection.find_one({"_id": team_id})
+        team = self.teams_collection.find_one({"id": team_id})
         if not team:
             logger.error(f"Team with ID {team_id} not found")
             raise ValueError(f"Team with ID {team_id} not found")
@@ -48,14 +48,14 @@ class TeamInviteRepository:
             logger.info(
                 f"Found existing active invite for {normalized_email} to team {team_id}"
             )
-            return existing_invite["_id"]
+            return existing_invite["id"]
 
         # Generate invite token
         invite_token = str(uuid.uuid4())
 
         # Create invite document with a 24-hour expiration
         invite_data = {
-            "_id": invite_token,
+            "id": invite_token,
             "teamId": team_id,
             "teamName": team.get("name", "Team"),  # Include team name for email
             "email": normalized_email,
@@ -79,7 +79,7 @@ class TeamInviteRepository:
         Retrieve an invite by token.
         Returns the invite document or None if not found.
         """
-        invite = self.invites_collection.find_one({"_id": invite_token})
+        invite = self.invites_collection.find_one({"id": invite_token})
         return invite
 
     def get_team_invites(self, team_id):
@@ -131,7 +131,7 @@ class TeamInviteRepository:
             logger.warning(f"Invite {invite_token} has expired")
             # Update status to expired
             self.invites_collection.update_one(
-                {"_id": invite_token}, {"$set": {"status": "expired"}}
+                {"id": invite_token}, {"$set": {"status": "expired"}}
             )
             return {"error": "This invite has expired."}, False
 
@@ -148,12 +148,12 @@ class TeamInviteRepository:
 
         # Update invite status to accepted
         result = self.invites_collection.update_one(
-            {"_id": invite_token},
+            {"id": invite_token},
             {
                 "$set": {
                     "status": "accepted",
                     "acceptedAt": datetime.now(timezone.utc),
-                    "registeredUserId": registered_user["_id"],
+                    "registeredUserId": registered_user["id"],
                 }
             },
         )
@@ -206,7 +206,7 @@ class TeamInviteRepository:
             expires_at and expires_at < datetime.now(timezone.utc)
         ):
             self.invites_collection.update_one(
-                {"_id": invite_token}, {"$set": {"status": "cancelled"}}
+                {"id": invite_token}, {"$set": {"status": "cancelled"}}
             )
             logger.info(f"Invite {invite_token} was expired and is now cancelled")
             return {"message": "Invite was expired and has been cancelled."}, True
@@ -215,7 +215,7 @@ class TeamInviteRepository:
         if invite["inviterId"] != user_id:
             team_member = self.teams_collection.find_one(
                 {
-                    "_id": invite["teamId"],
+                    "id": invite["teamId"],
                     "members": {"$elemMatch": {"userId": user_id, "role": "admin"}},
                 }
             )
@@ -225,7 +225,7 @@ class TeamInviteRepository:
 
         # Manually cancel invite if still pending
         result = self.invites_collection.update_one(
-            {"_id": invite_token, "status": "pending"},
+            {"id": invite_token, "status": "pending"},
             {"$set": {"status": "cancelled"}},
         )
 
@@ -335,7 +335,7 @@ class TeamInviteRepository:
                 date_str = doc["acceptedAt"]
                 parsed_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
                 result = self.invites_collection.update_one(
-                    {"_id": doc["_id"]}, {"$set": {"acceptedAt": parsed_date}}
+                    {"id": doc["id"]}, {"$set": {"acceptedAt": parsed_date}}
                 )
                 if result.modified_count == 1:
                     fixed_count += 1
