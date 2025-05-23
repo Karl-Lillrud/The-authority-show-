@@ -7,6 +7,7 @@ from flask_socketio import SocketIO
 from dotenv import load_dotenv
 
 # Import blueprints
+from backend.routes.publish import publish_bp # Import the publish blueprint
 from backend.routes.auth import auth_bp
 from backend.routes.podcast import podcast_bp
 from backend.routes.dashboard import dashboard_bp
@@ -104,6 +105,7 @@ app.register_blueprint(enterprise_bp, url_prefix="/enterprise")
 app.register_blueprint(lia_bp, url_prefix="/lia")
 app.register_blueprint(index_bp)
 app.register_blueprint(recording_studio_bp)
+app.register_blueprint(publish_bp) # Register the publish blueprint
 
 # Set up environment and logging
 APP_ENV = os.getenv("APP_ENV", "production")
