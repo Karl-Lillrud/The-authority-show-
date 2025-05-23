@@ -79,6 +79,7 @@ def delete_episode(episode_id):
 
 @episode_bp.route("/episodes/<episode_id>", methods=["PUT"])
 def update_episode(episode_id):
+    logger.warning(f"BACKEND: update_episode called with episode_id={episode_id}")
     # --- Debug Logging ---
     logger.debug(f"Update request received for episode {episode_id}")
     logger.debug(f"Request Headers: {dict(request.headers)}")
@@ -97,20 +98,27 @@ def update_episode(episode_id):
         logger.warning(f"Unsupported content type for episode update: {content_type}")
         return jsonify({"error": f"Expected multipart/form-data, received {content_type or 'none'}"}), 415
 
-    # Extract form data and audio file
+    # Extract form data and file (video or audio)
     data = request.form.to_dict()
+    video_file = request.files.get("video")
     audio_file = request.files.get("audioFile")
     logger.debug(f"Form data: {data}")
+    logger.debug(f"Video file: {video_file.filename if video_file else None}")
     logger.debug(f"Audio file: {audio_file.filename if audio_file else None}")
 
     # Validate input
-    if not data and not audio_file:
-        logger.warning("No data or audio file provided for episode update")
-        return jsonify({"error": "No data or audio file provided"}), 400
+    if not data and not video_file and not audio_file:
+        logger.warning("No data or file provided for episode update")
+        return jsonify({"error": "No data or file provided"}), 400
+
+    # If a file is uploaded, set status to 'recorded'
+    if video_file or audio_file:
+        data["status"] = "recorded"
 
     try:
-        # Pass data and audio file to repository
-        response, status = episode_repo.update_episode(episode_id, g.user_id, data, audio_file=audio_file)
+        # Prefer video file if present, otherwise audio
+        file_to_upload = video_file if video_file else audio_file
+        response, status = episode_repo.update_episode(episode_id, g.user_id, data, audio_file=file_to_upload)
         if status == 200:
             logger.info(f"Episode {episode_id} updated successfully by user {g.user_id}")
         return jsonify(response), status

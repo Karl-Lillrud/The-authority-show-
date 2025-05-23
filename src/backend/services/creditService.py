@@ -14,7 +14,7 @@ from backend.repository.credits_repository import (
 )
 from backend.services.activity_service import (
     ActivityService,
-)  # Add this import if not already present
+)
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ def consume_credits(user_id, feature_name):
     return {"remaining": new_available, "used": new_used}
 
 
-def initialize_credits(user_id: str, initial_amount=3000):
+def initialize_credits(user_id: str, initial_amount=3500):
     """Initialize credits for a new user."""
     existing = get_credits_by_user_id(user_id)
     if not existing:
@@ -176,10 +176,6 @@ def update_subscription_credits(user_id, plan_name):
     Returns:
         dict: Updated credit information
     """
-    from backend.utils.subscription_access import PLAN_BENEFITS
-    from backend.services.creditManagement import CreditService
-    from datetime import datetime, timezone
-    import logging
 
     logger = logging.getLogger(__name__)
 
@@ -263,7 +259,6 @@ def reset_monthly_credits(user_id, plan_name):
     Called when a subscription renews.
     """
     try:
-        from backend.utils.subscription_access import PLAN_BENEFITS
 
         # Get the credits amount for this plan
         plan_benefits = PLAN_BENEFITS.get(plan_name.upper(), PLAN_BENEFITS["FREE"])

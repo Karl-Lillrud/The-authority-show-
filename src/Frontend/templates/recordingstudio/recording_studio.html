@@ -11,7 +11,9 @@
     <div class="studio-header">
         <h1>Recording Studio</h1>
         <div class="episode-info">
-            <div id="episode-id-display" class="episode-id"></div>
+            <div id="episode-id-display" style="display:none;">
+                {{ request.args.get('episode_id') or episode_id or request.args.get('episodeId') }}
+            </div>
             <div class="recording-status">
                 <span class="status-indicator"></span>
                 <span class="status-text">Ready to Record</span>

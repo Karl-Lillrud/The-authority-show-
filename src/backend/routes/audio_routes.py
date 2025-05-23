@@ -1,20 +1,17 @@
 # audio_routes.py
 import logging
-import base64
 import requests
 import json
 from flask import Blueprint, request, jsonify, g, Response
+
 from backend.services.audioService import AudioService
 from backend.services.subscriptionService import SubscriptionService
 from backend.services.creditService import consume_credits
 from backend.utils.blob_storage import upload_file_to_blob  
 from backend.utils.subscription_access import get_max_duration_limit
-from backend.utils.transcription_utils import check_audio_duration
+from backend.utils.ai_utils import check_audio_duration,insufficient_credits_response
 from backend.repository.edit_repository import create_edit_entry
 from backend.repository.episode_repository import EpisodeRepository
-from backend.repository.ai_models import get_file_by_id
-
-
 
 episode_repo = EpisodeRepository()
 logger = logging.getLogger(__name__)
@@ -36,12 +33,8 @@ def audio_enhancement():
         try:
             consume_credits(user_id, "audio_enhancement")
         except ValueError as e:
-            logger.warning(f"Insufficient credits for user {user_id}: {e}")
-            return jsonify({
-                "error": str(e),
-                "redirect": "/store"
-            }), 403
-
+            return insufficient_credits_response("audio_enhancement", e)
+        
         subscription_service = SubscriptionService()
         subscription = subscription_service.get_user_subscription(user_id)
         plan = subscription.get("plan", "FREE")
@@ -94,10 +87,7 @@ def audio_analysis():
         return jsonify(analysis_result)
 
     except ValueError as e:
-        return jsonify({
-            "error": str(e),
-            "redirect": "/store"
-        }), 403
+            return insufficient_credits_response("audio_analysis", e)
 
     except Exception as e:
         logger.error(f"Error analyzing audio: {str(e)}")
@@ -139,11 +129,7 @@ def clip_audio():
         try:
             consume_credits(g.user_id, "audio_cutting")
         except ValueError as e:
-            logger.warning(f"User {g.user_id} has insufficient credits for audio_cutting.")
-            return jsonify({
-                "error": str(e),
-                "redirect": "/store"
-            }), 403
+            return insufficient_credits_response("audio_cutting", e)
 
         start_time = clips[0]["start"]
         end_time = clips[0]["end"]
@@ -183,11 +169,7 @@ def ai_cut_audio():
         try:
             consume_credits(g.user_id, "ai_audio_cutting")
         except ValueError as e:
-            logger.warning(f"User {g.user_id} has insufficient credits for ai_audio_cutting.")
-            return jsonify({
-                "error": str(e),
-                "redirect": "/store"
-            }), 403
+            return insufficient_credits_response("ai_audio_cutting", e)
 
         result = audio_service.ai_cut_audio_from_id(file_id, episode_id=episode_id)
         return jsonify(result)
@@ -236,11 +218,7 @@ def cut_audio_from_blob():
         try:
             consume_credits(g.user_id, "audio_cutting")
         except ValueError as e:
-            logger.warning(f"User {g.user_id} has insufficient credits for audio_cutting.")
-            return jsonify({
-                "error": str(e),
-                "redirect": "/store"
-            }), 403
+            return insufficient_credits_response("cut_from_blob", e)
 
         audio_file = request.files["audio"]
         episode_id = request.form["episode_id"]
@@ -280,11 +258,7 @@ def ai_cut_from_blob():
         try:
             consume_credits(g.user_id, "ai_audio_cutting")
         except ValueError as e:
-            logger.warning(f"User {g.user_id} has insufficient credits for ai_audio_cutting.")
-            return jsonify({
-                "error": str(e),
-                "redirect": "/store"
-            }), 403
+            return insufficient_credits_response("ai_audio_cutting", e)
 
         audio_file = request.files["audio"]
         episode_id = request.form["episode_id"]

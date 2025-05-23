@@ -890,9 +890,6 @@ input:focus {
   margin-top: 0.25rem;
 }
 
-
-
-
 /* Subscription Form */
 .subscription-form-container {
   margin-top: 2rem;
@@ -1110,4 +1107,93 @@ input:focus:invalid {
   color: black;
   text-decoration: none;
   cursor: pointer;
+}
+
+/* Delete Account Modal Styles */
+.delete-account-modal {
+  position: fixed;
+  z-index: 2000;
+  left: 0; top: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-account-modal-content {
+  background: var(--account-card, #fff);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 2rem 2rem 1.5rem 2rem;
+  max-width: 420px;
+  width: 100%;
+  position: relative;
+  animation: fadeInScale 0.2s;
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.96);}
+  to { opacity: 1; transform: scale(1);}
+}
+
+.delete-account-modal .close-modal {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  font-size: 1.5rem;
+  color: var(--account-muted-foreground);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.delete-account-modal .close-modal:hover {
+  color: var(--account-destructive);
+}
+
+.delete-account-modal h2 {
+  color: var(--account-destructive);
+  margin-bottom: 0.5rem;
+}
+
+.delete-account-modal p {
+  color: var(--account-muted-foreground);
+  margin-bottom: 1.5rem;
+}
+
+.delete-account-modal .form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.delete-account-modal .danger-button {
+  background-color: var(--account-destructive);
+  color: var(--account-destructive-foreground);
+  border: none;
+  border-radius: var(--account-radius);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.delete-account-modal .danger-button:hover {
+  background-color: #dc2626;
+}
+
+.delete-account-modal .secondary-button {
+  background-color: var(--account-input);
+  color: var(--account-foreground);
+  border: 1px solid var(--account-border);
+  border-radius: var(--account-radius);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.delete-account-modal .secondary-button:hover {
+  background-color: var(--account-border);
 }

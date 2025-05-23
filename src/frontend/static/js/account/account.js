@@ -767,9 +767,61 @@ document.addEventListener("DOMContentLoaded", () => {
   // Delete account form submission
   const deleteForm = document.querySelector(".delete-form");
   if (deleteForm) {
-    deleteForm.addEventListener("submit", async (event) => {
+    // Remove default submit handler
+    deleteForm.addEventListener("submit", function (event) {
       event.preventDefault();
 
+      // Show confirmation popup instead of submitting immediately
+      showDeleteAccountPopup();
+    });
+  }
+
+  // Show the confirmation popup for account deletion
+  function showDeleteAccountPopup() {
+    // Prevent multiple popups
+    if (document.getElementById("delete-account-popup")) return;
+
+    const popupContainer = document.getElementById("delete-account-popup-container");
+    const popup = document.createElement("div");
+    popup.id = "delete-account-popup";
+    popup.className = "modal delete-account-modal";
+    popup.style.display = "flex";
+    popup.style.alignItems = "center";
+    popup.style.justifyContent = "center";
+    popup.style.zIndex = "2000";
+
+    popup.innerHTML = `
+      <div class="modal-content delete-account-modal-content" style="max-width: 420px; padding: 2rem 2rem 1.5rem 2rem; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); background: var(--account-card, #fff);">
+        <span class="close-modal" style="float:right; font-size: 1.5rem; cursor:pointer;">&times;</span>
+        <div style="text-align:center;">
+          <div style="margin-bottom:1rem;">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--account-destructive);">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+          </div>
+          <h2 style="color:var(--account-destructive); margin-bottom:0.5rem;">Are you sure?</h2>
+          <p style="color:var(--account-muted-foreground); margin-bottom:1.5rem;">
+            This will permanently delete your account and all associated data. This action cannot be undone.
+          </p>
+        </div>
+        <div class="form-actions" style="display:flex; gap:1rem; justify-content:center;">
+          <button id="confirm-delete-account-btn" class="danger-button" style="min-width:160px;">Permanently Delete Account</button>
+          <button id="cancel-delete-account-btn" class="secondary-button" style="min-width:120px;">Cancel</button>
+        </div>
+      </div>
+    `;
+
+    popupContainer.appendChild(popup);
+
+    // Close popup on X or Cancel
+    popup.querySelector(".close-modal").onclick = closeDeleteAccountPopup;
+    popup.querySelector("#cancel-delete-account-btn").onclick = closeDeleteAccountPopup;
+
+    // Confirm deletion
+    popup.querySelector("#confirm-delete-account-btn").onclick = async function () {
+      // Get values from the form
       const confirmText = document.getElementById("delete-confirm").value;
       const email = document.getElementById("delete-email").value;
 
@@ -786,6 +838,29 @@ document.addEventListener("DOMContentLoaded", () => {
         showNotification(
           "Error",
           "Email is required to delete your account",
+          "error"
+        );
+        return;
+      }
+
+      // Fetch the current account to verify email ownership
+      let currentAccountEmail = null;
+      try {
+        const accountData = await fetchAccount();
+        currentAccountEmail = accountData.account?.email || null;
+      } catch (err) {
+        showNotification(
+          "Error",
+          "Could not verify your account. Please reload the page and try again.",
+          "error"
+        );
+        return;
+      }
+
+      if (!currentAccountEmail || email.trim().toLowerCase() !== currentAccountEmail.trim().toLowerCase()) {
+        showNotification(
+          "Error",
+          "The email you entered does not match your account email.",
           "error"
         );
         return;
@@ -832,61 +907,18 @@ document.addEventListener("DOMContentLoaded", () => {
           "error"
         );
       }
-    });
+      closeDeleteAccountPopup();
+    };
+
+    // Close popup on outside click
+    popup.onclick = function (e) {
+      if (e.target === popup) closeDeleteAccountPopup();
+    };
   }
 
-  // Function to handle account deletion
-  async function handleDeleteAccount(event) {
-    event.preventDefault();
-    const email = deleteEmailInput ? deleteEmailInput.value : null; // Get email from input
-
-    if (!email) {
-      showNotification(
-        "Error",
-        "Please enter your email to confirm deletion.",
-        "error"
-      );
-      return;
-    }
-
-    // Show loading state on confirm button
-    if (confirmDeleteBtn) {
-      confirmDeleteBtn.disabled = true;
-      confirmDeleteBtn.innerHTML =
-        '<i class="fas fa-spinner fa-spin"></i> Deleting...';
-    }
-
-    try {
-      // Call the imported deleteAccount function
-      const response = await deleteAccount({ email: email });
-      showNotification(
-        "Success",
-        response.message || "Account deleted successfully.",
-        "success"
-      );
-
-      // Redirect to signin page after successful deletion
-      setTimeout(() => {
-        window.location.href = "/signin";
-      }, 2000);
-    } catch (error) {
-      console.error("Error deleting account:", error);
-      showNotification(
-        "Error",
-        `Error deleting account: ${error.message}`,
-        "error"
-      );
-      // Restore button state on error
-      if (confirmDeleteBtn) {
-        confirmDeleteBtn.disabled = false;
-        confirmDeleteBtn.innerHTML = "Confirm Deletion";
-      }
-    } finally {
-      // Ensure popup is hidden even if redirect fails or takes time
-      if (deleteConfirmationPopup)
-        deleteConfirmationPopup.style.display = "none";
-      if (deleteEmailInput) deleteEmailInput.value = ""; // Clear email input
-    }
+  function closeDeleteAccountPopup() {
+    const popup = document.getElementById("delete-account-popup");
+    if (popup) popup.remove();
   }
 
   // Subscribe to newsletter
@@ -1025,6 +1057,12 @@ document.addEventListener("DOMContentLoaded", () => {
         activateSection(targetId);
       });
     });
+
+  // Add an event listener for the manual trigger button
+  const triggerDeletePopupBtn = document.getElementById("trigger-delete-popup-btn");
+  if (triggerDeletePopupBtn) {
+    triggerDeletePopupBtn.addEventListener("click", showDeleteAccountPopup);
+  }
 
   // Add a function to restore profile picture if needed
   function restoreProfilePicture() {

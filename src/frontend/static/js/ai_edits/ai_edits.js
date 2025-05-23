@@ -308,7 +308,6 @@ function showTab(tabName) {
             <select id="audioSourceSelectAnalysis" class="input-field" style="margin-bottom: 1rem;">
                 <option value="enhanced">Enhanced</option>
                 <option value="isolated">Isolated</option>
-                <option value="original">Original</option>
             </select>
 
             <div class="button-with-help">
@@ -615,7 +614,8 @@ let fullTranscript = "";
 async function transcribe() {
     const fileInput = document.getElementById('fileUploader');
     const resultContainer = document.getElementById('transcriptionResult');
-    
+    const wrapper = resultContainer.parentElement;
+
     const file = fileInput.files[0];
     if (!file) {
         alert('Please upload a file.');
@@ -627,8 +627,9 @@ async function transcribe() {
         alert("No episode selected.");
         return;
     }
-
+    wrapper.style.display = "block";
     showSpinner("transcriptionResult");
+    
     const formData = new FormData();
     formData.append('file', file);
     formData.append('episode_id', episodeId);  // Include episode ID
@@ -706,7 +707,9 @@ async function translateTranscript() {
 async function generateCleanTranscript() {
     const containerId = "cleanTranscriptResult";
     const container = document.getElementById(containerId);
+    const wrapper = resultContainer.parentElement;
 
+    wrapper.style.display = "block";
     showSpinner(containerId);
 
     try {
@@ -1423,127 +1426,109 @@ async function cutAudio() {
 }
 
 async function aiCutAudio() {
-    const episodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
-
+    const episodeId = sessionStorage.getItem("selected_episode_id")
+        || localStorage.getItem("selected_episode_id");
     if (!episodeId) {
         alert("No episode selected.");
         return;
     }
 
+    // Pick the blob
     const selectedSource = document.getElementById("audioSourceSelectAICut").value;
-
     let blobToUse;
     if (selectedSource === "enhanced") {
         blobToUse = enhancedAudioBlob;
-        activeAudioId = "external";
     } else if (selectedSource === "isolated") {
         blobToUse = isolatedAudioBlob;
-        activeAudioId = "external";
-    } else if (selectedSource === "original") {
+    } else {
         blobToUse = rawAudioBlob;
-        activeAudioId = "external";
     }
-
     if (!blobToUse) {
         alert("No audio selected or loaded.");
         return;
     }
 
-    activeAudioBlob = blobToUse;
+    // Prepare UI
+    const transcriptContainer = document.getElementById("aiTranscript");
+    const cutsContainer      = document.getElementById("aiSuggestedCuts");
+    transcriptContainer.parentElement.style.display = "block";
+    cutsContainer.parentElement.style.display       = "block";
+    showSpinner("aiTranscript");
 
-    const containerIdTranscript = "aiTranscript";
-    const containerTranscript = document.getElementById(containerIdTranscript);
-    const containerIdCuts = "aiSuggestedCuts";
-    const containerCuts = document.getElementById(containerIdCuts);
+    // Call the backend once (it consumes credits internally)
+    const formData = new FormData();
+    formData.append("audio", new File([blobToUse], "ai_cut.wav", { type: "audio/wav" }));
+    formData.append("episode_id", episodeId);
 
-    showSpinner(containerIdTranscript);
-    containerCuts.innerHTML = "";
-
+    let response, data;
     try {
-        let response;
-        if (!activeAudioId || activeAudioId === "external") {
-            const formData = new FormData();
-            formData.append("audio", new File([blobToUse], "ai_cut.wav", { type: "audio/wav" }));
-            formData.append("episode_id", episodeId);
-
-            response = await fetch("/ai_cut_from_blob", {
-                method: "POST",
-                body: formData
-            });
-        } else {
-            response = await fetch("/ai_cut_audio", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    file_id: activeAudioId,
-                    episode_id: episodeId
-                })
-            });
-        }
-        containerTranscript.parentElement.style.display = "block";
-        containerCuts.parentElement.style.display = "block";
-
-        const data = await response.json();
-
-        if (response.status === 403) {
-            containerTranscript.innerHTML = `
-                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
-                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-            `;
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(data.error || "AI Cut failed");
-        }
-
-        containerTranscript.innerText = data.cleaned_transcript || "No transcript available.";
-
-        const suggestedCuts = data.suggested_cuts || [];
-        if (!suggestedCuts.length) {
-            containerCuts.innerText = "No suggested cuts found.";
-            return;
-        }
-
-        containerCuts.innerHTML = "";
-        window.selectedAiCuts = {};
-
-        suggestedCuts.forEach((cut, index) => {
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.checked = true;
-            checkbox.dataset.index = index;
-            checkbox.onchange = () => {
-                if (checkbox.checked) {
-                    window.selectedAiCuts[index] = cut;
-                } else {
-                    delete window.selectedAiCuts[index];
-                }
-            };
-            window.selectedAiCuts[index] = cut;
-
-            const label = document.createElement("label");
-            label.innerText = ` "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score.toFixed(2)}`;
-
-            const div = document.createElement("div");
-            div.appendChild(checkbox);
-            div.appendChild(label);
-            containerCuts.appendChild(div);
+        response = await fetch("/ai_cut_from_blob", {
+            method: "POST",
+            body: formData
         });
-
-        const applyBtn = document.createElement("button");
-        applyBtn.className = "btn ai-edit-button";
-        applyBtn.innerText = "Apply AI Cuts";
-        applyBtn.onclick = applySelectedCuts;
-        containerCuts.appendChild(applyBtn);
-        
-        // Only consume credits after successful AI audio cutting
-        await consumeStoreCredits("ai_audio_cutting");
+        data = await response.json();
     } catch (err) {
-        containerTranscript.innerText = "Failed to process audio.";
+        hideSpinner("aiTranscript");
+        transcriptContainer.innerText = "Failed to process audio.";
         alert(`AI Cut failed: ${err.message}`);
+        return;
     }
+    hideSpinner("aiTranscript");
+
+    // **Your exact 403 logic**
+    if (response.status === 403) {
+        transcriptContainer.innerHTML = `
+            <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+            ${data.redirect
+                ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>`
+                : ""}
+        `;
+        return;
+    }
+
+    if (!response.ok) {
+        throw new Error(data.error || "AI Cut failed");
+    }
+
+    // Success: render transcript
+    transcriptContainer.innerText = data.cleaned_transcript || "No transcript available.";
+
+    // Render suggested cuts
+    const suggestedCuts = data.suggested_cuts || [];
+    if (!suggestedCuts.length) {
+        cutsContainer.innerText = "No suggested cuts found.";
+        return;
+    }
+    cutsContainer.innerHTML = "";
+    window.selectedAiCuts = {};
+
+    suggestedCuts.forEach((cut, i) => {
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = true;
+        checkbox.dataset.index = i;
+        checkbox.onchange = () => {
+            if (checkbox.checked) window.selectedAiCuts[i] = cut;
+            else delete window.selectedAiCuts[i];
+        };
+        window.selectedAiCuts[i] = cut;
+
+        const label = document.createElement("label");
+        label.innerText = ` "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score.toFixed(2)}`;
+
+        const wrapper = document.createElement("div");
+        wrapper.appendChild(checkbox);
+        wrapper.appendChild(label);
+        cutsContainer.appendChild(wrapper);
+    });
+
+    const applyBtn = document.createElement("button");
+    applyBtn.className = "btn ai-edit-button";
+    applyBtn.innerText = "Apply AI Cuts";
+    applyBtn.onclick = applySelectedCuts;
+    cutsContainer.appendChild(applyBtn);
 }
+
 
 async function applySelectedCuts() {
     const cuts = Object.values(window.selectedAiCuts || {});

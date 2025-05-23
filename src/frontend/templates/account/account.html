@@ -200,12 +200,16 @@
                   <input type="email" id="delete-email" name="delete_email" placeholder="Enter your email" required>
                   <div class="form-hint">Enter your email address to confirm deletion</div>
                 </div>
-                
-                <div class="form-actions">
-                  <button type="submit" class="danger-button">Permanently Delete Account</button>
-                  <button type="button" class="secondary-button">Cancel</button>
-                </div>
+                <!-- The form-actions buttons are now handled in the popup -->
               </form>
+              <!-- Add this button to trigger the popup manually -->
+              <div style="margin-top: 1rem;">
+                <button type="button" id="trigger-delete-popup-btn" class="danger-button">
+                  Delete Account
+                </button>
+              </div>
+              <!-- Popup container for delete confirmation -->
+              <div id="delete-account-popup-container"></div>
             </div>
           </div>
 

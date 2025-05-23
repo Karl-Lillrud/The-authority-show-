@@ -1,5 +1,4 @@
-from flask import Blueprint, render_template, session, g, redirect, url_for
-from flask import request, jsonify, Blueprint, url_for, render_template
+from flask import Blueprint, render_template, session, g, redirect, url_for, request, jsonify
 from flask_socketio import join_room, leave_room, emit, SocketIO
 from datetime import datetime
 
@@ -66,14 +65,44 @@ def register_socketio_events(socketio: SocketIO):
         user = data.get('user')
         emit('recording_stopped', {'room': room, 'user': user}, room=room)
 
+    @socketio.on('join_greenroom')
+    def handle_join_greenroom(data):
+        room = data.get('room')
+        user = data.get('user')
+        join_room(room)
+        users = recording_studio_service.join_greenroom(room, user)
+        emit('greenroom_joined', {'room': room, 'user': user, 'users': users}, room=room)
+
+    @socketio.on('leave_greenroom')
+    def handle_leave_greenroom(data):
+        room = data.get('room')
+        user = data.get('user')
+        leave_room(room)
+        users = recording_studio_service.leave_greenroom(room, user)
+        emit('greenroom_left', {'room': room, 'user': user, 'users': users}, room=room)
+
+    @socketio.on('update_device_settings')
+    def handle_update_device_settings(data):
+        room = data.get('room')
+        user = data.get('user')
+        settings = data.get('settings')
+        emit('device_settings_updated', {'room': room, 'user': user, 'settings': settings}, room=room)
+
+    @socketio.on('host_ready')
+    def handle_host_ready(data):
+        room = data.get('room')
+        user = data.get('user')
+        emit('host_ready', {'room': room, 'user': user}, room=room)
+
+    @socketio.on('move_to_studio')
+    def handle_move_to_studio(data):
+        room = data.get('room')
+        user = data.get('user')
+        emit('move_to_studio', {'room': room, 'user': user}, room=room)
+
 # ---------------------------------------------
 # ROUTES
 # ---------------------------------------------
-@recording_studio_bp.route('/studio')
-def recording_studio():
-    if not g.user_id:
-        return redirect(url_for('auth.login'))
-    return render_template('recordingstudio/recording_studio.html')
 
 @recording_studio_bp.route('/invite', methods=['POST'])
 def create_invitation():
@@ -159,7 +188,7 @@ def verify_invite(invite_token):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@recording_studio_bp.route('/recording_studio', methods=['GET'])
+@recording_studio_bp.route('/studio')
 def recording_studio():
     return render_template('recordingstudio/recording_studio.html')
 
