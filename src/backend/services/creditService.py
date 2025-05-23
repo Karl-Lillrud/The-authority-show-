@@ -77,7 +77,7 @@ def consume_credits(user_id, feature_name):
     return {"remaining": new_available, "used": new_used}
 
 
-def initialize_credits(user_id: str, initial_amount=3000):
+def initialize_credits(user_id: str, initial_amount=3500):
     """Initialize credits for a new user."""
     existing = get_credits_by_user_id(user_id)
     if not existing:
