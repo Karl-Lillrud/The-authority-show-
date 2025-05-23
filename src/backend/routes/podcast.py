@@ -1,12 +1,14 @@
 from flask import request, jsonify, Blueprint, g
 import logging
 from backend.repository.podcast_repository import PodcastRepository
+from backend.services.rss_Service import RSSService
 
 # Define Blueprint
 podcast_bp = Blueprint("podcast_bp", __name__)
 
 # Create repository instance
 podcast_repo = PodcastRepository()
+rss_service = RSSService()
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -133,11 +135,9 @@ def fetch_rss():
 
     try:
         if add_podcast_flag:
-            # Add podcast using RSS data
             response, status_code = podcast_repo.addPodcastWithRss(g.user_id, rss_url)
         else:
-            # Fetch RSS data only
-            response, status_code = podcast_repo.fetch_rss_feed(rss_url)
+            response, status_code = rss_service.fetch_rss_feed(rss_url)
 
         return jsonify(response), status_code
     except Exception as e:

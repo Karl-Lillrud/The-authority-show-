@@ -6,6 +6,9 @@ from datetime import datetime, timezone
 import re
 from bs4 import BeautifulSoup
 import time
+import os
+from azure.storage.blob import BlobServiceClient
+from backend.utils.blob_storage import upload_file_to_blob  # For generic blob uploads
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +16,10 @@ logger = logging.getLogger(__name__)
 ITMS_NS = "http://www.itunes.com/dtds/podcast-1.0.dtd"
 
 class RSSService:
+    def __init__(self):
+        self.azure_conn_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+        self.rss_blob_container = os.getenv("AZURE_STORAGE_CONTAINER_NAME")
+
     def _ensure_utc(self, dt_obj):
         """
         Ensures the datetime object is timezone-aware and in UTC.
@@ -240,3 +247,22 @@ class RSSService:
         except Exception as e:
             logger.error(f"An unexpected error occurred while fetching RSS feed {rss_url}. Type: {type(e).__name__}, Error: {e}", exc_info=True)
             return {"error": f"Failed to process RSS feed: {type(e).__name__} - {str(e)}"}, 500
+
+    def generate_podcast_rss_feed_and_upload(self, podcast_id, user_id, podcast_details, episodes_list, rss_feed_public_base_url_template, publishing_episode_id=None):
+        # ...existing code for constructing full_feed_url_for_atom_link...
+        # Generate RSS XML
+        rss_xml_content = self._generate_rss_feed_xml(
+            podcast_details=podcast_details,
+            episodes_list=episodes_list,
+            full_feed_url_for_atom_link=full_feed_url_for_atom_link,
+            publishing_episode_id=publishing_episode_id
+        )
+        # Upload RSS XML to Azure Blob Storage
+        uploaded_feed_url = self._upload_rss_to_blob_and_get_url(
+            podcast_id=podcast_id,
+            user_id=user_id,
+            rss_xml=rss_xml_content
+        )
+        return uploaded_feed_url
+
+    # ...existing code for _generate_rss_feed_xml and _upload_rss_to_blob_and_get_url...

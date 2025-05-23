@@ -5,7 +5,7 @@ from backend.models.podcasts import PodcastSchema
 import logging
 import urllib.request
 import feedparser
-from backend.services.rss_Service import RSSService  # Import RSSService
+from backend.services.rss_Service import RSSService
 from backend.services.activity_service import ActivityService  # Add this import
 from backend.repository.episode_repository import (
     EpisodeRepository,
@@ -343,7 +343,6 @@ class PodcastRepository:
 
     def fetch_rss_feed(self, rss_url):
         try:
-            # Delegate RSS fetching to RSSService instance
             return self.rss_service.fetch_rss_feed(rss_url)
         except Exception as e:
             logger.error(
