@@ -7,6 +7,7 @@ from backend.services.rss_Service import RSSService
 from backend.utils.blob_storage import upload_file_to_blob  # For any generic blob uploads
 from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions # Modified import
 import time # Add this import
+from backend.utils.slug_utils import slugify # Import slugify
 
 class PublishService:
     def __init__(self):
@@ -80,8 +81,7 @@ class PublishService:
             )
             current_app.logger.info(f"[PublishService] Direct RSS Blob URL from RSSService: {direct_rss_blob_url}") # Added log
             log_messages.append(f"RSS feed generated and uploaded to direct blob URL: {direct_rss_blob_url}")
-            # current_app.logger.info(f"RSS feed for {podcast_id} uploaded to {direct_rss_blob_url}") # This was already there
-
+            
             # Construct the new proxy URL
             proxy_rss_feed_url = None # Initialize to None
             if direct_rss_blob_url: # Only construct proxy URL if blob upload was successful
@@ -93,8 +93,27 @@ class PublishService:
                      current_app.logger.warning("Could not determine application base URL for proxy RSS link. Falling back to direct blob URL.")
                      proxy_rss_feed_url = direct_rss_blob_url # Fallback
                 else:
-                    # Ensure app_base_url does not have a trailing slash if url_for is not used for the full path
-                    proxy_rss_feed_url = f"{app_base_url.rstrip('/')}/rss/{podcast_id}/feed.xml"
+                    podcast_name = podcast.get('podName')
+                    podcast_name_slug = slugify(podcast_name)
+
+                    if not podcast_name_slug: # Fallback if slug is empty
+                        current_app.logger.warning(
+                            f"Generated empty slug for podcast name '{podcast_name}'. "
+                            f"Falling back to podcast_id '{podcast_id}' for proxy URL."
+                        )
+                        # Use podcast_id as fallback slug to ensure URL is valid, though not using podName
+                        # Or, decide if an error should be raised or if publishing should be blocked.
+                        # For now, using podcast_id ensures the URL structure is maintained.
+                        # This part of the URL will be used by the /rss/<slug>/feed.xml route.
+                        # If it's a podcast_id, the route needs to handle that possibility too or we ensure slug is never empty.
+                        # Let's assume slugify always produces something or we handle empty podName earlier.
+                        # If podName is None or empty, slugify returns "", so we must handle this.
+                        # A simple fallback is to use the podcast_id itself if the slug is empty.
+                        url_identifier = podcast_id if not podcast_name_slug else podcast_name_slug
+                    else:
+                        url_identifier = podcast_name_slug
+                        
+                    proxy_rss_feed_url = f"{app_base_url.rstrip('/')}/rss/{url_identifier}/feed.xml"
                 log_messages.append(f"User-facing RSS feed proxy URL: {proxy_rss_feed_url}")
             else:
                 # proxy_rss_feed_url remains None if direct_rss_blob_url is None
