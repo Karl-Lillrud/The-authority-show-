@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, session, g, redirect, url_for, request, jsonify
 from flask_socketio import join_room, leave_room, emit, SocketIO
 from datetime import datetime
+import logging
 
 from backend.database.mongo_connection import database
 from backend.services.invitation_service import InvitationService
@@ -12,6 +13,9 @@ recording_studio_bp = Blueprint("recording_studio_bp", __name__)
 invitations_collection = database.Invitations
 episodes_collection = database.Episodes
 guests_collection = database.Guests
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------
 # 🔌 REGISTER SOCKET.IO EVENTS
@@ -117,6 +121,12 @@ def create_invitation():
 
         # Use the updated InvitationService to handle the invitation logic
         response, status_code = InvitationService.send_session_invitation(email, episode_id, guest_id)
+
+        # Log the invitation details
+        logger.info(f"Generated invite token: {response.get('token')}")
+        logger.info(f"Greenroom URL: {response.get('greenroom_url')}")
+        logger.info(f"Email sent to: {email}")
+
         return jsonify(response), status_code
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -199,4 +209,4 @@ def greenroom():
     """
     guest_id = request.args.get("guestId")
     token = request.args.get("token")
-    return render_template('recordingstudio/greenroom.html', guestId=guest_id, token=token)
+    return render_template('greenroom/greenroom.html', guestId=guest_id, token=token)

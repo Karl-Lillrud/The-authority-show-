@@ -88,13 +88,22 @@ class InvitationService:
             payload = {"episode_id": episode_id, "guest_id": guest_id}
             response = requests.post(invite_url, json=payload)
 
+            logger.info(f"Response from /invite-guest: {response.json()}")
+
             if response.status_code != 201:
                 logger.error(f"Failed to create invite token: {response.json()}")
                 return {"error": "Failed to create invite token"}, 500
 
             # Extract the invite token and construct the greenroom link
             invite_data = response.json()
-            token = invite_data.get("invite_url").split("/")[-1]  # Extract token from the URL
+            invite_url = invite_data.get("invite_url")
+            if not invite_url:
+                logger.error("Invite URL not found in response")
+                return {"error": "Failed to retrieve invite URL"}, 500
+
+            token = invite_url.split("/")[-1]  # Extract token from the URL
+            logger.info(f"Extracted token: {token}")
+
             greenroom_url = url_for(
                 "recording_studio_bp.greenroom",
                 _external=True,
@@ -108,7 +117,11 @@ class InvitationService:
             send_email(email, subject, body)
 
             logger.info(f"Session invitation email sent to {email}")
-            return {"message": "Invitation sent successfully", "greenroom_url": greenroom_url}, 201
+            return {
+                "message": "Invitation sent successfully",
+                "greenroom_url": greenroom_url,
+                "token": token
+            }, 201
 
         except Exception as e:
             logger.error(f"Failed to send session invitation: {e}", exc_info=True)
