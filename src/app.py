@@ -1,7 +1,8 @@
 import os
 import logging
 from colorama import init
-from flask import Flask, request, session, g
+from flask import Flask, request, session, g, render_template, jsonify, redirect, url_for 
+from flask_socketio import SocketIO # Ensure SocketIO is imported from flask_socketio
 from flask_cors import CORS
 from dotenv import load_dotenv
 from backend.routes.auth import auth_bp
@@ -56,10 +57,11 @@ if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
 
 load_dotenv()
 
-template_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "templates")
-static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "static")
+app = Flask(__name__,
+            static_folder='frontend/static',
+            template_folder='frontend/templates')
 
-app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+# Initialize SocketIO after app is created
 socketio = SocketIO(app, cors_allowed_origins="*")  # Create instance
 
 CORS(app, resources={r"/*": {"origins": [
