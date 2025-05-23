@@ -7,6 +7,9 @@ import logging
 from backend.services.activity_service import ActivityService
 from dateutil.parser import parse as parse_date
 from backend.utils.subscription_access import PLAN_BENEFITS
+import os
+from backend.utils.blob_storage import upload_file_to_blob, download_blob_to_tempfile
+from backend.services.audioToEpisodeService import AudioToEpisodeService  # Assuming this is where AudioToEpisodeService is defined
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +20,7 @@ class EpisodeRepository:
         self.accounts_collection = collection.database.Accounts
         self.subscription_service = SubscriptionService()
         self.activity_service = ActivityService()
+        self.audio_service = AudioToEpisodeService()
 
     @staticmethod
     def get_episodes_by_user_id(user_id):
@@ -155,8 +159,9 @@ class EpisodeRepository:
         except Exception as e:
             return {"error": f"Failed to delete episode: {str(e)}"}, 500
 
-    def update_episode(self, episode_id, user_id, data):
-        """Update an episode if it belongs to the user."""
+
+    def update_episode(self, episode_id, user_id, data, audio_file=None):
+        """Update an episode if it belongs to the user, including handling audio file uploads."""
         try:
             ep = self.collection.find_one({"_id": episode_id})
             if not ep:
@@ -177,6 +182,7 @@ class EpisodeRepository:
 
             if result.matched_count == 0:
                 logger.error(f"Failed to find episode {episode_id} during MongoDB update operation.")
+                logger.error(f"Failed to find episode {episode_id} during MongoDB update operation.")
                 return {"error": "Failed to update episode, document not found."}, 404
             if result.modified_count == 0:
                 logger.info(f"Episode {episode_id} found but no fields were modified by the update operation.")
@@ -191,7 +197,10 @@ class EpisodeRepository:
 
         except Exception as e:
             logger.error(f"Failed to update episode {episode_id}: {str(e)}", exc_info=True)
+            logger.error(f"Failed to update episode {episode_id}: {str(e)}", exc_info=True)
             return {"error": f"Failed to update episode: {str(e)}"}, 500
+
+
 
     def get_episodes_by_podcast(self, podcast_id, user_id):
         """Get all episodes under a specific podcast owned by the user."""

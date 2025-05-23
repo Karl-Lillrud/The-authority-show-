@@ -177,13 +177,9 @@ export async function updateEpisode(episodeId, data) {
   const isFormData = data instanceof FormData // Check if data is FormData
 
   try {
-    const response = await fetch(`/update_episodes/${episodeId}`, {
+    const response = await fetch(`/episodes/${episodeId}`, {
       method: "PUT",
       headers: {
-        // Remove any manual 'Content-Type' setting here if 'isFormData' is true
-        // Fetch will automatically set it correctly for FormData
-        // Example: DO NOT include the line below if isFormData is true
-        // 'Content-Type': isFormData ? undefined : 'application/json', // Let browser set for FormData
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         // Add other necessary headers like Accept if needed
         Accept: "application/json", // It's good practice to specify what you accept back
@@ -224,6 +220,7 @@ export async function updateEpisode(episodeId, data) {
     return { error: `Failed to update episode: ${error.message || error}` }
   }
 }
+
 
 export async function deleteEpisode(episodeId) {
   try {

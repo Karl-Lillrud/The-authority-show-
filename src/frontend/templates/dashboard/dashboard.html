@@ -92,7 +92,7 @@ endblock %} {% block content %}
             <div class="section-header">
               <h2>Team Leaderboard</h2>
             </div>
-            <div class="team-leaderboard">
+            <div class="leaderboard-table-container">
               <table class="leaderboard-table">
                 <thead>
                   <tr>
@@ -103,12 +103,19 @@ endblock %} {% block content %}
                     <th>Goal</th>
                   </tr>
                 </thead>
-                <tbody class="leaderboard-body">
-                  <tr>
-                    <td colspan="5">No leaderboard data available.</td>
-                  </tr>
-                </tbody>
               </table>
+            </div>
+            <div class="team-leaderboard">
+              <div class="leaderboard-trophy-container">
+                <span class="svg-placeholder team-leaderboard-trophy"></span>
+              </div>
+              <h3 class="team-leaderboard-title">Coming Soon!</h3>
+              <p class="team-leaderboard-description">
+                The Team Leaderboard will showcase your team's top performers, completed tasks, points, and monthly wins. Compete, collaborate, and celebrate your team's achievements as you climb the ranks together!
+              </p>
+              <div class="team-leaderboard-attention-container">
+                <span class="team-leaderboard-attention">Stay tuned for team stats, reewards, and more!</span>
+              </div>
             </div>
           </section>
 

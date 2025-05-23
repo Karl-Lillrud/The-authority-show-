@@ -137,7 +137,9 @@ function showTab(tabName) {
                 </div>
 
                 <div class="result-group">
-                    <label for="languageSelect">Language:</label>
+                    <label for="languageSelect">
+                      <strong>Language:</strong>
+                    </label>
                     <select id="languageSelect" class="input-field">
                         <option value="English">English</option>
                         <option value="Spanish">Spanish</option>
@@ -218,6 +220,7 @@ function showTab(tabName) {
                 </div>
     
                 <div class="result-group">
+                    <label><strong>Guest Name:</strong></label>
                     <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field">
                     <div class="button-with-help">
                         <button class="btn ai-edit-button" onclick="runOsintSearch()">
@@ -259,11 +262,11 @@ function showTab(tabName) {
                 <p><strong>Original Audio</strong></p>
             </div>
 
-            <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 12px;">
+            <div class="ap-container" style="margin-top: 23px; padding: 1.5rem; padding-bottom: 1rem; border: 1px solid #ddd; border-radius: 12px; width: 100%;">
                 <h3>Choose Audio Processing Method</h3>
-                <p style="margin-bottom: 1rem;">Select one of the following enhancements:</p>
+                <p style="margin-bottom: 20px;">Select one of the following enhancements:</p>
 
-            <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
+            <div id="voiceIsolationSection" style="margin-bottom: 10px;">
                 <h4><strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
                 <div class="button-with-help">
                     <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
@@ -305,7 +308,6 @@ function showTab(tabName) {
             <select id="audioSourceSelectAnalysis" class="input-field" style="margin-bottom: 1rem;">
                 <option value="enhanced">Enhanced</option>
                 <option value="isolated">Isolated</option>
-                <option value="original">Original</option>
             </select>
 
             <div class="button-with-help">
@@ -331,11 +333,11 @@ function showTab(tabName) {
                 <div id="soundEffectTimeline"></div>
             </div>
 
-            <div class="button-with-help" style="margin-top: 1rem;">
+            <div class="button-with-help">
                 <a id="downloadEnhanced"
                 class="btn ai-edit-button"
                 download="processed_audio.wav"
-                style="display: none;">
+                style="display: none; margin-top: 1rem;">
                 Download Processed Audio
                 </a>
                 
@@ -362,13 +364,13 @@ function showTab(tabName) {
             <button id="cut-play-pause" class="btn ai-edit-button" style="display:none; margin-bottom:1rem;">
             Play
             </button>
-            <label>
+            <label style="display: block;">
             Start (s):
-            <input id="cut-start" type="number" step="0.01" class="input-field" style="width:5em;">
+            <input id="cut-start" type="number" step="0.01" class="input-field" style="width:6em; padding: 5px; margin-left: 5px;">
             </label>
-            <label style="margin-left:1em;">
+            <label style="margin-top: 10px; margin-bottom: 5px;">
             End (s):
-            <input id="cut-end" type="number" step="0.01" class="input-field" style="width:5em;">
+            <input id="cut-end" type="number" step="0.01" class="input-field" style="width:6em; padding: 5px; margin-left: 5px;">
             </label>
 
             <div class="button-with-help">
@@ -381,11 +383,11 @@ function showTab(tabName) {
                 <div id="cutResult"></div>
             </div>
 
-            <div class="button-with-help" style="margin-top: 1rem;">
+            <div class="button-with-help">
                 <a id="downloadCut"
                 class="btn ai-edit-button"
                 download="cut_audio.wav"
-                style="display: none;">
+                style="display: none; margin-top: 1rem;">
                 Download Cut
                 </a>
             </div>
@@ -439,6 +441,7 @@ function showTab(tabName) {
                 else if (source === "enhanced") blob = enhancedAudioBlob;
                 else if (source === "isolated") blob = isolatedAudioBlob;
 
+                document.getElementById('waveformCut').style.display = "block";
                 if (blob) {
                     initWaveformCutting(blob);
                 } else {
@@ -457,7 +460,7 @@ function showTab(tabName) {
                 <p><strong>Original Video</strong></p>
                 <video id="originalVideoPlayer" controls style="width: 100%"></video>
             </div>
-            <div class="button-group" style="margin-bottom: 1rem;">
+            <div class="button-group">
                 <div class="button-with-help">
                     <button class="btn ai-edit-button" id="enhanceVideoBtn" onclick="enhanceVideo()">
                         ${labelWithCredits("Enhance Video", "video_enhancement")}
@@ -469,12 +472,13 @@ function showTab(tabName) {
                 </button>
             </div>
             <div id="videoResult"></div>
-            <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none;">
+            <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none; margin-top: 1rem;">
                 Download Enhanced Video
             </a>
           </div>
         `;
-    }}
+    }
+  }
 
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -610,6 +614,8 @@ let fullTranscript = "";
 async function transcribe() {
     const fileInput = document.getElementById('fileUploader');
     const resultContainer = document.getElementById('transcriptionResult');
+    const wrapper = resultContainer.parentElement;
+
     const file = fileInput.files[0];
     if (!file) {
         alert('Please upload a file.');
@@ -621,8 +627,9 @@ async function transcribe() {
         alert("No episode selected.");
         return;
     }
-
+    wrapper.style.display = "block";
     showSpinner("transcriptionResult");
+    
     const formData = new FormData();
     formData.append('file', file);
     formData.append('episode_id', episodeId);  // Include episode ID
@@ -632,6 +639,7 @@ async function transcribe() {
             method: 'POST',
             body: formData,
         });
+        resultContainer.parentElement.style.display = "block";
 
         hideSpinner("transcriptionResult");
 
@@ -680,6 +688,7 @@ async function translateTranscript() {
           language: lang
         })
       });
+      resultContainer.parentElement.style.display = "block";
       hideSpinner("translateResult");
   
       const data = await res.json();
@@ -698,7 +707,9 @@ async function translateTranscript() {
 async function generateCleanTranscript() {
     const containerId = "cleanTranscriptResult";
     const container = document.getElementById(containerId);
+    const wrapper = resultContainer.parentElement;
 
+    wrapper.style.display = "block";
     showSpinner(containerId);
 
     try {
@@ -707,6 +718,7 @@ async function generateCleanTranscript() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: fullTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const errorData = await res.json();
@@ -739,6 +751,7 @@ async function generateAISuggestions() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const data = await res.json();
@@ -773,6 +786,7 @@ async function generateShowNotes() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const data = await res.json();
@@ -805,6 +819,7 @@ async function generateQuotes() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
+        container.parentElement.style.display = "block";
 
         if (res.status === 403) {
             const data = await res.json();
@@ -844,6 +859,7 @@ async function generateQuoteImages() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ quotes, method })  // 👈 använder vald metod
         });
+        container.parentElement.style.display = "block";
 
         const data = await res.json();
         container.innerHTML = "";
@@ -902,6 +918,7 @@ async function runOsintSearch() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ guest_name: guestName })
         });
+        container.parentElement.style.display = "block";
         if (response.status === 403) {
             const data = await response.json();
             container.innerHTML = `
@@ -939,6 +956,7 @@ async function generatePodcastIntroOutro() {
                 transcript: rawTranscript
             })
         });
+        container.parentElement.style.display = "block";
         if (res.status === 403) {
             const data = await res.json();
             container.innerHTML = `
@@ -973,6 +991,7 @@ async function convertIntroOutroToSpeech() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ script })
         });
+        container.style.display = "block";
 
         const data = await res.json();
 
@@ -1024,6 +1043,7 @@ async function enhanceAudio() {
             method: "POST",
             body: formData
         });
+        container.parentElement.style.display = "block";
 
         const result = await response.json();
 
@@ -1091,6 +1111,7 @@ async function runVoiceIsolation() {
             method: "POST",
             body: formData
         });
+        container.parentElement.style.display = "block";
 
         if (response.status === 403) {
             const data = await response.json();
@@ -1148,6 +1169,7 @@ async function analyzeEnhancedAudio() {
 
     const res = await fetch("/audio_analysis", { method: "POST", body: fd })
     const data = await res.json()
+    container.parentElement.style.display = "block";
     if (!res.ok) throw new Error(data.error || res.statusText)
 
     container.innerText = `
@@ -1366,6 +1388,7 @@ async function cutAudio() {
             method: "POST",
             body: formData
         });
+        cutResult.parentElement.style.display = "block";
 
         const result = await response.json();
 
@@ -1403,125 +1426,109 @@ async function cutAudio() {
 }
 
 async function aiCutAudio() {
-    const episodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
-
+    const episodeId = sessionStorage.getItem("selected_episode_id")
+        || localStorage.getItem("selected_episode_id");
     if (!episodeId) {
         alert("No episode selected.");
         return;
     }
 
+    // Pick the blob
     const selectedSource = document.getElementById("audioSourceSelectAICut").value;
-
     let blobToUse;
     if (selectedSource === "enhanced") {
         blobToUse = enhancedAudioBlob;
-        activeAudioId = "external";
     } else if (selectedSource === "isolated") {
         blobToUse = isolatedAudioBlob;
-        activeAudioId = "external";
-    } else if (selectedSource === "original") {
+    } else {
         blobToUse = rawAudioBlob;
-        activeAudioId = "external";
     }
-
     if (!blobToUse) {
         alert("No audio selected or loaded.");
         return;
     }
 
-    activeAudioBlob = blobToUse;
+    // Prepare UI
+    const transcriptContainer = document.getElementById("aiTranscript");
+    const cutsContainer      = document.getElementById("aiSuggestedCuts");
+    transcriptContainer.parentElement.style.display = "block";
+    cutsContainer.parentElement.style.display       = "block";
+    showSpinner("aiTranscript");
 
-    const containerIdTranscript = "aiTranscript";
-    const containerTranscript = document.getElementById(containerIdTranscript);
-    const containerIdCuts = "aiSuggestedCuts";
-    const containerCuts = document.getElementById(containerIdCuts);
+    // Call the backend once (it consumes credits internally)
+    const formData = new FormData();
+    formData.append("audio", new File([blobToUse], "ai_cut.wav", { type: "audio/wav" }));
+    formData.append("episode_id", episodeId);
 
-    showSpinner(containerIdTranscript);
-    containerCuts.innerHTML = "";
-
+    let response, data;
     try {
-        let response;
-        if (!activeAudioId || activeAudioId === "external") {
-            const formData = new FormData();
-            formData.append("audio", new File([blobToUse], "ai_cut.wav", { type: "audio/wav" }));
-            formData.append("episode_id", episodeId);
-
-            response = await fetch("/ai_cut_from_blob", {
-                method: "POST",
-                body: formData
-            });
-        } else {
-            response = await fetch("/ai_cut_audio", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    file_id: activeAudioId,
-                    episode_id: episodeId
-                })
-            });
-        }
-
-        const data = await response.json();
-
-        if (response.status === 403) {
-            containerTranscript.innerHTML = `
-                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
-                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-            `;
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(data.error || "AI Cut failed");
-        }
-
-        containerTranscript.innerText = data.cleaned_transcript || "No transcript available.";
-
-        const suggestedCuts = data.suggested_cuts || [];
-        if (!suggestedCuts.length) {
-            containerCuts.innerText = "No suggested cuts found.";
-            return;
-        }
-
-        containerCuts.innerHTML = "";
-        window.selectedAiCuts = {};
-
-        suggestedCuts.forEach((cut, index) => {
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.checked = true;
-            checkbox.dataset.index = index;
-            checkbox.onchange = () => {
-                if (checkbox.checked) {
-                    window.selectedAiCuts[index] = cut;
-                } else {
-                    delete window.selectedAiCuts[index];
-                }
-            };
-            window.selectedAiCuts[index] = cut;
-
-            const label = document.createElement("label");
-            label.innerText = ` "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score.toFixed(2)}`;
-
-            const div = document.createElement("div");
-            div.appendChild(checkbox);
-            div.appendChild(label);
-            containerCuts.appendChild(div);
+        response = await fetch("/ai_cut_from_blob", {
+            method: "POST",
+            body: formData
         });
-
-        const applyBtn = document.createElement("button");
-        applyBtn.className = "btn ai-edit-button";
-        applyBtn.innerText = "Apply AI Cuts";
-        applyBtn.onclick = applySelectedCuts;
-        containerCuts.appendChild(applyBtn);
-        
-        // Only consume credits after successful AI audio cutting
-        await consumeStoreCredits("ai_audio_cutting");
+        data = await response.json();
     } catch (err) {
-        containerTranscript.innerText = "Failed to process audio.";
+        hideSpinner("aiTranscript");
+        transcriptContainer.innerText = "Failed to process audio.";
         alert(`AI Cut failed: ${err.message}`);
+        return;
     }
+    hideSpinner("aiTranscript");
+
+    // **Your exact 403 logic**
+    if (response.status === 403) {
+        transcriptContainer.innerHTML = `
+            <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+            ${data.redirect
+                ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>`
+                : ""}
+        `;
+        return;
+    }
+
+    if (!response.ok) {
+        throw new Error(data.error || "AI Cut failed");
+    }
+
+    // Success: render transcript
+    transcriptContainer.innerText = data.cleaned_transcript || "No transcript available.";
+
+    // Render suggested cuts
+    const suggestedCuts = data.suggested_cuts || [];
+    if (!suggestedCuts.length) {
+        cutsContainer.innerText = "No suggested cuts found.";
+        return;
+    }
+    cutsContainer.innerHTML = "";
+    window.selectedAiCuts = {};
+
+    suggestedCuts.forEach((cut, i) => {
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = true;
+        checkbox.dataset.index = i;
+        checkbox.onchange = () => {
+            if (checkbox.checked) window.selectedAiCuts[i] = cut;
+            else delete window.selectedAiCuts[i];
+        };
+        window.selectedAiCuts[i] = cut;
+
+        const label = document.createElement("label");
+        label.innerText = ` "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score.toFixed(2)}`;
+
+        const wrapper = document.createElement("div");
+        wrapper.appendChild(checkbox);
+        wrapper.appendChild(label);
+        cutsContainer.appendChild(wrapper);
+    });
+
+    const applyBtn = document.createElement("button");
+    applyBtn.className = "btn ai-edit-button";
+    applyBtn.innerText = "Apply AI Cuts";
+    applyBtn.onclick = applySelectedCuts;
+    cutsContainer.appendChild(applyBtn);
 }
+
 
 async function applySelectedCuts() {
     const cuts = Object.values(window.selectedAiCuts || {});
@@ -1703,6 +1710,7 @@ async function enhanceVideo() {
             method: "POST",
             body: formData,
         });
+        container.style.display = "block";
 
         if (!uploadResponse.ok) {
             throw new Error(`Video upload failed: ${uploadResponse.statusText}`);
@@ -1861,6 +1869,7 @@ async function generateAudioClip() {
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ translated_transcription: translated })
     });
+    container.style.display = "block";
     hideSpinner("audioClipResult");
 
     if (!res.ok) throw new Error(`Server svarade ${res.status}`);
