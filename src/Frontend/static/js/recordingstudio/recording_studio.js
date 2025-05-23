@@ -1,3 +1,4 @@
+import { updateEpisode } from "../../requests/episodeRequest.js";
 class RecordingStudio {
     constructor() {
         this.mediaRecorder = null;
@@ -148,11 +149,12 @@ class RecordingStudio {
                 }
             });
 
-            // Combine audio and video streams
-            const combinedStream = new MediaStream([
-                ...this.audioStream.getTracks(),
-                ...this.videoStream.getTracks()
-            ]);
+            // Kombinera audio och video om video finns, annars bara audio
+            let combinedTracks = [...this.audioStream.getTracks()];
+            if (this.videoStream) {
+                combinedTracks = combinedTracks.concat(this.videoStream.getTracks());
+            }
+            const combinedStream = new MediaStream(combinedTracks);
 
             // Set up audio visualization
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -293,20 +295,26 @@ class RecordingStudio {
 
         const videoBlob = new Blob(this.videoChunks, { type: 'video/webm' });
         const formData = new FormData();
-        formData.append('video', videoBlob);
-        const episodeId = document.getElementById('episode-id-display').textContent;
+        formData.append('audioFile', videoBlob);
+        const episodeId = document.getElementById('episode-id-display').textContent.trim();
+
+        if (!episodeId) {
+            this.showNotification('Episode ID saknas – kan inte spara!', 'error');
+            console.error('Episode ID saknas!');
+            return;
+        }
+
+        // Log what is being sent to backend
+        console.log("Frontend: Will send PUT to /episodes/" + episodeId);
+        console.log("Frontend: Episode ID from DOM:", episodeId);
 
         try {
-            const response = await fetch(`/api/episodes/${episodeId}`, {
-                method: 'PUT',
-                body: formData
-            });
-
-            if (response.ok) {
+            const result = await updateEpisode(episodeId, formData);
+            if (!result.error) {
                 this.showNotification('Recording saved successfully', 'success');
                 this.resetRecording();
             } else {
-                throw new Error('Failed to save recording');
+                throw new Error(result.error || 'Failed to save recording');
             }
         } catch (error) {
             console.error('Error saving recording:', error);

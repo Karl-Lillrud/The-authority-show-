@@ -189,7 +189,8 @@ def verify_invite(invite_token):
 def recording_studio():
     if not g.user_id:
         return redirect(url_for('auth.login'))
-    return render_template('recordingstudio/recording_studio.html')
+    episode_id = request.args.get('episode_id')
+    return render_template('recordingstudio/recording_studio.html', episode_id=episode_id)
 
 @recording_studio_bp.route('/greenroom')
 def greenroom():

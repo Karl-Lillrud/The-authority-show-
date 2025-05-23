@@ -43,7 +43,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Update episode template
     const episodeTemplate = episode => {
-      const episodeId = episode.id || episode._id || "unknown";
+      // Hantera olika format på _id (t.ex. MongoDB ObjectId)
+      let episodeId = "unknown";
+      if (episode._id && typeof episode._id === "object" && episode._id.$oid) {
+        episodeId = episode._id.$oid;
+      } else if (typeof episode._id === "string") {
+        episodeId = episode._id;
+      } else if (episode.id) {
+        episodeId = episode.id;
+      }
+      console.log("EPISODE DATA:", episode);
+      console.log("EpisodeId for studio link:", episodeId);
       const audioUrl = episode.audioUrl || '';
       
       return `
@@ -62,6 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </audio>
               ` : ''}
               <button class="ai-edit-btn" data-episode-id="${episodeId}">Edit</button>
+              <a href="/studio?episode_id=${episodeId}" class="btn btn-success" style="margin-left:8px;">🎙️ Studio</a>
             </div>
           </div>
         </div>
