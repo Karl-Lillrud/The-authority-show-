@@ -79,6 +79,7 @@ def delete_episode(episode_id):
 
 @episode_bp.route("/episodes/<episode_id>", methods=["PUT"])
 def update_episode(episode_id):
+    logger.warning(f"BACKEND: update_episode called with episode_id={episode_id}")
     # --- Debug Logging ---
     logger.debug(f"Update request received for episode {episode_id}")
     logger.debug(f"Request Headers: {dict(request.headers)}")
