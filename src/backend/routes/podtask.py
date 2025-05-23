@@ -151,7 +151,7 @@ def save_workflow():
         # Create workflow
         workflow_id = str(uuid.uuid4())
         workflow_data = {
-            "_id": workflow_id,
+            "id": workflow_id,  # Changed _id to id
             "user_id": g.user_id,
             "episode_id": episode_id,
             "tasks": tasks,
@@ -197,12 +197,12 @@ def delete_workflow(workflow_id):
 
     try:
         # Check if the workflow exists
-        workflow = collection.database.Workflows.find_one({"_id": workflow_id, "user_id": g.user_id})
+        workflow = collection.database.Workflows.find_one({"id": workflow_id, "user_id": g.user_id})  # Changed _id to id
         if not workflow:
             return jsonify({"error": "Workflow not found or you do not have permission to delete it"}), 404
 
         # Delete the workflow
-        result = collection.database.Workflows.delete_one({"_id": workflow_id, "user_id": g.user_id})
+        result = collection.database.Workflows.delete_one({"id": workflow_id, "user_id": g.user_id})  # Changed _id to id
 
         if result.deleted_count > 0:
             return jsonify({"message": "Workflow deleted successfully"}), 200
@@ -228,7 +228,7 @@ def update_workflow(workflow_id):
         description = data.get("description")
         
         # Check if the workflow exists and belongs to the user
-        existing_workflow = collection.database.Workflows.find_one({"_id": workflow_id, "user_id": g.user_id})
+        existing_workflow = collection.database.Workflows.find_one({"id": workflow_id, "user_id": g.user_id})  # Changed _id to id
         if not existing_workflow:
             return jsonify({"error": "Workflow not found or you do not have permission to update it"}), 404
         
@@ -246,7 +246,7 @@ def update_workflow(workflow_id):
         
         # Update the workflow
         result = collection.database.Workflows.update_one(
-            {"_id": workflow_id, "user_id": g.user_id},
+            {"id": workflow_id, "user_id": g.user_id},  # Changed _id to id
             {"$set": update_data}
         )
         

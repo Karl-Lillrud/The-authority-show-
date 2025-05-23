@@ -13,8 +13,8 @@ def increment_credits(user_id, field, amount):
 
 def log_credit_transaction(user_id, entry):
   
-    if "_id" not in entry:
-        entry["_id"] = str(uuid.uuid4())
+    if "id" not in entry:
+        entry["id"] = str(uuid.uuid4())
     
     # Ensure timestamp is a datetime
     if "timestamp" not in entry:

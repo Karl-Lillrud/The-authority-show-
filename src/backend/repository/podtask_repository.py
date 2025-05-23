@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Tuple, Any, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from backend.database.mongo_connection import collection
 from backend.services.taskService import extract_highlights, process_default_tasks
@@ -11,17 +11,36 @@ from backend.services.taskService import extract_highlights, process_default_tas
 logger = logging.getLogger(__name__)
 
 # Define Pydantic model for PodTask
-class PodTask(BaseModel):
-    id: Optional[str] = Field(default=None, alias="_id")
-    title: str
+class PodTask(BaseModel): # Renamed from Podtask to PodTask for convention
+    id: Optional[str] = Field(default=None) # Removed alias="id"
+    title: str # Assuming title was 'name' or similar, adjust if Podtask model is different
     description: Optional[str] = None
-    status: str
-    assignedTo: Optional[List[str]] = None
+    status: str # Assuming status was part of the model
+    assignedTo: Optional[List[str]] = None # Assuming assignedTo was 'members'
     dueDate: Optional[datetime] = None
-    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    createdAt: datetime = Field(default_factory=datetime.utcnow) # Was 'created_at'
     updatedAt: Optional[datetime] = None
-    tags: Optional[List[str]] = None
-    metadata: Optional[Dict] = None
+    tags: Optional[List[str]] = None # Assuming tags was 'highlights' or similar
+    metadata: Optional[Dict] = None # For other fields like podcastId, episodeId etc.
+
+    # Add other fields from the original _create_podtask_document method
+    podcastId: Optional[str] = None
+    episodeId: Optional[str] = None
+    teamId: Optional[str] = None
+    members: Optional[List[str]] = Field(default_factory=list) # from assignedTo or members
+    guestId: Optional[str] = None
+    action: Optional[List[str]] = Field(default_factory=list)
+    dayCount: Optional[int] = None
+    actionUrl: Optional[str] = None
+    urlDescribe: Optional[str] = None
+    submissionReq: Optional[bool] = False
+    priority: Optional[str] = "medium"
+    userid: Optional[str] = None # from validated_data["userid"]
+    highlights: Optional[List[str]] = Field(default_factory=list) # from validated_data["highlights"]
+    dependencies: Optional[List[str]] = Field(default_factory=list)
+    aiTool: Optional[str] = None
+    completed_at: Optional[datetime] = None
+
 
 class PodtaskRepository:
     
@@ -35,70 +54,80 @@ class PodtaskRepository:
     
     def register_podtask(self, user_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         try:
-            # Validate data using Pydantic
-            validated_data = PodTask(**data)
-
             # Assign podcast ID if missing
-            if not validated_data.get("podcastId"):
+            if not data.get("podcastId"):
                 podcast_result = self._get_default_podcast_id(user_id)
                 if isinstance(podcast_result, tuple):  # Error occurred
                     return podcast_result
-                validated_data["podcastId"] = podcast_result
+                data["podcastId"] = podcast_result
 
-            # Add required fields
-            validated_data["userid"] = str(user_id)
-            validated_data["created_at"] = datetime.now(timezone.utc)
+            data["userid"] = str(user_id) # Ensure userid is set before Pydantic validation
+            data["title"] = data.get("name", data.get("title", "Untitled Task")) # Map name to title
+
+            # Validate data through Pydantic model
+            validated_task = PodTask(**data)
             
             # Process optional data
-            validated_data = process_default_tasks(validated_data)
+            task_data_dict = validated_task.dict(exclude_none=True) # Use exclude_none=True
+            
+            # Ensure 'name' is not in the final dict if 'title' is used by the model
+            if "name" in task_data_dict and "title" in task_data_dict and task_data_dict["name"] == task_data_dict["title"]:
+                del task_data_dict["name"]
+
+            task_data_dict = process_default_tasks(task_data_dict) # process_default_tasks might need adjustment
             
             # Extract highlights if description exists
-            if description := validated_data.get("description"):
-                validated_data["highlights"] = extract_highlights(description)
+            if description := task_data_dict.get("description"):
+                task_data_dict["highlights"] = extract_highlights(description)
             
-            # Generate unique ID for the podtask
-            podtask_id = str(uuid.uuid4())
-            
-            # Create podtask document
-            podtask_document = self._create_podtask_document(podtask_id, validated_data)
+            # Generate unique ID for the podtask if not provided
+            if "id" not in task_data_dict or not task_data_dict["id"]:
+                task_data_dict["id"] = str(uuid.uuid4())
             
             # Insert into database
-            result = self.podtasks_collection.insert_one(podtask_document)
+            result = self.podtasks_collection.insert_one(task_data_dict)
             
             if result.inserted_id:
-                logger.info(f"Successfully registered podtask with ID: {podtask_id}")
-                return {"message": "Podtask registered successfully", "podtask_id": podtask_id}, 201
+                # Use the id from task_data_dict as it's the one inserted
+                podtask_id_inserted = task_data_dict["id"]
+                logger.info(f"Successfully registered podtask with ID: {podtask_id_inserted}")
+                return {"message": "Podtask registered successfully", "podtask_id": podtask_id_inserted}, 201
             else:
                 logger.error("Database insert returned without error but no ID was created")
                 return {"error": "Failed to register podtask"}, 500
                 
+        except ValidationError as err:
+            logger.warning(f"Validation error during podtask registration: {err.errors()}")
+            return {"error": "Invalid data", "details": err.errors()}, 400
         except Exception as e:
             logger.error(f"Error registering podtask: {e}", exc_info=True)
             return {"error": f"Failed to register podtask: {str(e)}"}, 500
     
     def _get_default_podcast_id(self, user_id: str) -> Union[str, Tuple[Dict[str, Any], int]]:
-        user_accounts = list(self.accounts_collection.find({"ownerId": str(user_id)}, {"_id": 1}))
+        user_accounts = list(self.accounts_collection.find({"ownerId": str(user_id)}, {"id": 1}))
         if not user_accounts:
             logger.warning(f"No accounts found for user {user_id}")
             return {"error": "No accounts found for user"}, 403
 
-        user_account_ids = [str(account["_id"]) for account in user_accounts]
+        user_account_ids = [str(account["id"]) for account in user_accounts]
         podcasts = list(self.podcasts_collection.find({"accountId": {"$in": user_account_ids}}))
         if not podcasts:
             logger.warning(f"No podcasts found for user accounts: {user_account_ids}")
             return {"error": "No podcasts found for user"}, 404
 
-        return str(podcasts[0]["_id"])
+        return str(podcasts[0]["id"])
     
     def _create_podtask_document(self, podtask_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        return {
-            "_id": podtask_id,
+        # This method might become obsolete if Pydantic model is comprehensive
+        # For now, ensure it uses "id"
+        doc = {
+            "id": podtask_id,
             "podcastId": data.get("podcastId"),
             "episodeId": data.get("episodeId"),
             "teamId": data.get("teamId"),
-            "members": data.get("members", []),
+            "members": data.get("members", data.get("assignedTo", [])), # map members or assignedTo
             "guestId": data.get("guestId"),
-            "name": data.get("name", ""),
+            "title": data.get("name", data.get("title", "")), # map name to title
             "action": data.get("action", []),
             "dayCount": data.get("dayCount"),
             "description": data.get("description", ""),
@@ -109,29 +138,37 @@ class PodtaskRepository:
             "assignedAt": data.get("assignedAt"),
             "dueDate": data.get("dueDate"),
             "priority": data.get("priority", "medium"),
-            "userid": data["userid"],
-            "created_at": data["created_at"],
+            "userid": data.get("userid"), # Ensure userid is present
+            "createdAt": data.get("createdAt", data.get("created_at")), # map created_at
             "highlights": data.get("highlights", []),
             "dependencies": data.get("dependencies", []),
             "aiTool": data.get("aiTool", ""),
         }
+        if "name" in doc and "title" in doc and doc["name"] == doc["title"]:
+             del doc["name"] # Avoid duplicate field if name was mapped to title
+        return doc
+
 
     def get_podtasks(self, user_id: str, filters: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], int]:
         try:
-            # Create base query
             query = {"userid": str(user_id)}
             
-            # Add any additional filters
             if filters:
                 for key, value in filters.items():
                     if key in ["status", "priority", "teamId", "episodeId", "podcastId"]:
                         query[key] = value
             
-            # Execute query
-            podtasks = list(self.podtasks_collection.find(query))
+            podtasks_cursor = list(self.podtasks_collection.find(query))
+            # Convert MongoDB _id to id for Pydantic compatibility if needed, or ensure DB stores as id
+            for task in podtasks_cursor:
+                if "id" in task and "id" not in task: # If DB still has _id
+                    task["id"] = str(task.pop("id"))
+                elif "id" in task:
+                    task["id"] = str(task["id"])
 
-            logger.info(f"Retrieved {len(podtasks)} podtasks for user {user_id}")
-            return {"podtasks": podtasks}, 200
+
+            logger.info(f"Retrieved {len(podtasks_cursor)} podtasks for user {user_id}")
+            return {"podtasks": podtasks_cursor}, 200
 
         except Exception as e:
             logger.error(f"Error fetching podtasks: {e}", exc_info=True)
@@ -139,16 +176,20 @@ class PodtaskRepository:
 
     def get_podtask_by_id(self, user_id: str, task_id: str) -> Tuple[Dict[str, Any], int]:
         try:
-            # Find task
-            task = self.podtasks_collection.find_one({"_id": task_id})
+            task = self.podtasks_collection.find_one({"id": task_id}) # Query by id
             if not task:
                 logger.warning(f"Task not found: {task_id}")
                 return {"error": "Task not found"}, 404
 
-            # Verify ownership
-            if task["userid"] != str(user_id):
+            if task.get("userid") != str(user_id): # Use .get for safety
                 logger.warning(f"Permission denied for user {user_id} to access task {task_id}")
                 return {"error": "Permission denied"}, 403
+            
+            if "id" in task and "id" not in task: # If DB still has _id
+                task["id"] = str(task.pop("id"))
+            elif "id" in task:
+                task["id"] = str(task["id"])
+
 
             return {"podtask": task}, 200
 
@@ -159,18 +200,16 @@ class PodtaskRepository:
 
     def delete_podtask(self, user_id: str, task_id: str) -> Tuple[Dict[str, Any], int]:
         try:
-            # Find and verify ownership
-            task = self.podtasks_collection.find_one({"_id": task_id})
+            task = self.podtasks_collection.find_one({"id": task_id}) # Query by id
             if not task:
                 logger.warning(f"Task not found for deletion: {task_id}")
                 return {"error": "Task not found"}, 404
 
-            if task["userid"] != str(user_id):
+            if task.get("userid") != str(user_id): # Use .get for safety
                 logger.warning(f"Permission denied for user {user_id} to delete task {task_id}")
                 return {"error": "Permission denied"}, 403
 
-            # Delete the task
-            result = self.podtasks_collection.delete_one({"_id": task_id})
+            result = self.podtasks_collection.delete_one({"id": task_id}) # Delete by id
             if result.deleted_count == 1:
                 logger.info(f"Successfully deleted task {task_id}")
                 return {"message": "Task deleted successfully"}, 200
@@ -187,58 +226,96 @@ class PodtaskRepository:
             logger.info(f"Request to update task {task_id} by user {user_id}")
             logger.debug(f"Incoming data: {data}")
 
-            task = self.podtasks_collection.find_one({"_id": task_id})
+            task = self.podtasks_collection.find_one({"id": task_id}) # Query by id
             if not task:
                 logger.warning(f"Task not found: {task_id}")
                 return {"error": "Task not found"}, 404
 
-            if task["userid"] != str(user_id):
+            if task.get("userid") != str(user_id): # Use .get for safety
                 logger.warning(f"Permission denied for user {user_id} on task {task_id}")
                 return {"error": "Permission denied"}, 403
 
-            # Validate data using Pydantic
-            validated_data = PodTask(**data)
+            # Map 'name' to 'title' if present in incoming data for Pydantic model
+            if "name" in data and "title" not in data:
+                data["title"] = data.pop("name")
 
-            # Prepare update fields
-            update_data = validated_data.dict(exclude_unset=True, by_alias=True)
-            update_data["updatedAt"] = datetime.utcnow()
+            # Create a Pydantic model instance with existing task data, then update with new data
+            # This ensures validation and proper field handling
+            updated_values = {**task, **data}
+            # Pydantic needs string id, ensure it is if coming from DB as ObjectId initially
+            if "id" in updated_values: # if task from DB had _id
+                 updated_values["id"] = str(updated_values.pop("id"))
+            elif "id" in updated_values and not isinstance(updated_values["id"], str):
+                 updated_values["id"] = str(updated_values["id"])
 
-            result = self.podtasks_collection.update_one(
-                {"_id": task_id}, {"$set": update_data}
-            )
+
+            validated_update = PodTask(**updated_values)
+            update_fields = validated_update.dict(exclude_unset=True, exclude_none=True)
+            
+            # Specific logic from _prepare_update_fields
+            description = update_fields.get("description", task.get("description", ""))
+            if description and description != task.get("description"):
+                 update_fields["highlights"] = extract_highlights(description)
+
+            if update_fields.get("status") == "completed" and task.get("status") != "completed":
+                update_fields["completed_at"] = datetime.now(timezone.utc)
+            
+            update_fields["updatedAt"] = datetime.now(timezone.utc) # Was updated_at
+
+            # Remove id from update_fields as it's used in query, not for $set
+            if "id" in update_fields:
+                del update_fields["id"]
+            if "userid" in update_fields and update_fields["userid"] == task.get("userid"): # Don't update userid if same
+                del update_fields["userid"]
+
+
+            logger.debug(f"Update fields: {update_fields}")
+
+            if not update_fields:
+                 return {"message": "No changes made to the task"}, 200
+
+            result = self.podtasks_collection.update_one({"id": task_id}, {"$set": update_fields}) # Update by id
             logger.debug(f"Matched: {result.matched_count}, Modified: {result.modified_count}")
 
             message = "Task updated successfully" if result.modified_count else "No changes made to the task"
             return {"message": message}, 200
-
+        
+        except ValidationError as err:
+            logger.warning(f"Validation error during podtask update: {err.errors()}")
+            return {"error": "Invalid data", "details": err.errors()}, 400
         except Exception as e:
             logger.error(f"Error updating task {task_id}: {e}", exc_info=True)
             return {"error": f"Failed to update task: {str(e)}"}, 500
 
+    def _prepare_update_fields(self, existing_task: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+        # This method logic is now integrated into update_podtask using Pydantic
+        pass
+
+
     def bulk_update_status(self, user_id: str, task_ids: List[str], new_status: str) -> Tuple[Dict[str, Any], int]:
         try:
-            # Verify all tasks exist and belong to the user
-            tasks = list(self.podtasks_collection.find({"_id": {"$in": task_ids}}))
+            tasks = list(self.podtasks_collection.find({"id": {"$in": task_ids}})) # Query by id
             if len(tasks) != len(task_ids):
-                return {"error": "One or more tasks not found"}, 404
+                # Find which tasks were not found
+                found_ids = {str(task.get("id", task.get("id"))) for task in tasks}
+                missing_ids = [tid for tid in task_ids if tid not in found_ids]
+                logger.warning(f"One or more tasks not found: {missing_ids}")
+                return {"error": f"One or more tasks not found: {', '.join(missing_ids)}"}, 404
                     
             for task in tasks:
-                if task["userid"] != str(user_id):
+                if task.get("userid") != str(user_id): # Use .get for safety
                     return {"error": "Permission denied for one or more tasks"}, 403
                 
-            # Prepare update data
             update_data = {
                 "status": new_status,
-                "updated_at": datetime.now(timezone.utc)
+                "updatedAt": datetime.now(timezone.utc) # Was updated_at
             }
                 
-            # Add completion timestamp if status is "completed"
             if new_status == "completed":
                 update_data["completed_at"] = datetime.now(timezone.utc)
                 
-            # Perform bulk update
             result = self.podtasks_collection.update_many(
-                {"_id": {"$in": task_ids}},
+                {"id": {"$in": task_ids}}, # Update by id
                 {"$set": update_data}
             )
                 
@@ -253,8 +330,7 @@ class PodtaskRepository:
 
     def add_tasks_to_episode(self, user_id: str, episode_id: str, guest_id: str, tasks: list) -> Tuple[Dict[str, Any], int]:
         try:
-            # Lookup the episode to retrieve its podcastId
-            episode = self.episodes_collection.find_one({"_id": episode_id})
+            episode = self.episodes_collection.find_one({"id": episode_id}) # Query by id
             if not episode:
                 return {"error": "Episode not found"}, 404
             podcastId = episode.get("podcastId")
@@ -263,84 +339,92 @@ class PodtaskRepository:
 
             inserted_count = 0
             inserted_ids = []
-            for task in tasks:
-                # Set keys to ensure correct associations
-                task["podcastId"] = podcastId
-                task["episodeId"] = episode_id
-                task["guestId"] = guest_id
-                task["userid"] = str(user_id)
-                task["created_at"] = datetime.now(timezone.utc)
-                # Convert 'title' to 'name' if provided
-                if "title" in task:
-                    task["name"] = task.pop("title")
-                # Optionally process defaults if needed
-                task = process_default_tasks(task)
-                # Generate a unique id for each task
-                podtask_id = str(uuid.uuid4())
-                task_document = self._create_podtask_document(podtask_id, task)
-                result = self.podtasks_collection.insert_one(task_document)
-                if result.inserted_id:
-                    inserted_count += 1
-                    inserted_ids.append(podtask_id)
+            for task_data in tasks: # Renamed task to task_data
+                task_data["podcastId"] = podcastId
+                task_data["episodeId"] = episode_id
+                task_data["guestId"] = guest_id
+                task_data["userid"] = str(user_id)
+                task_data["createdAt"] = datetime.now(timezone.utc) # Was created_at
+                
+                if "title" not in task_data and "name" in task_data: # Map name to title for Pydantic
+                    task_data["title"] = task_data.pop("name")
+                elif "title" not in task_data:
+                    task_data["title"] = "Untitled Task"
+
+
+                try:
+                    validated_task = PodTask(**task_data)
+                    task_document_to_insert = validated_task.dict(exclude_none=True)
+                    if "id" not in task_document_to_insert or not task_document_to_insert["id"]:
+                        task_document_to_insert["id"] = str(uuid.uuid4())
+
+                    # process_default_tasks might need to be called on task_document_to_insert
+                    task_document_to_insert = process_default_tasks(task_document_to_insert)
+
+
+                    result = self.podtasks_collection.insert_one(task_document_to_insert)
+                    if result.inserted_id:
+                        inserted_count += 1
+                        inserted_ids.append(task_document_to_insert["id"])
+                except ValidationError as err:
+                    logger.error(f"Validation error for task data {task_data}: {err.errors()}")
+                    # Optionally skip this task or return an error for the whole batch
+                    return {"error": f"Invalid task data: {err.errors()}"}, 400
+
             if inserted_count > 0:
                 return {"message": f"Added {inserted_count} tasks", "task_ids": inserted_ids}, 201
             else:
                 return {"error": "No tasks were added"}, 500
         except Exception as e:
+            logger.error(f"Error adding tasks to episode: {e}", exc_info=True)
             return {"error": str(e)}, 500
             
             
     def add_default_tasks_to_episode(self, user_id: str, episode_id: str, default_tasks: list) -> Tuple[Dict[str, Any], int]:
         try:
-            episode = self.episodes_collection.find_one({"_id": episode_id})
+            episode = self.episodes_collection.find_one({"id": episode_id}) # Query by id
             if not episode:
                 return {"error": "Episode not found"}, 404
 
-            # Try both keys: podcastId and podcast_id
-            podcastId = episode.get("podcastId") or episode.get("podcast_id")
+            podcastId = episode.get("podcastId") or episode.get("podcast_id") # Keep podcast_id for backward compatibility
             if not podcastId:
                 return {"error": "Episode missing podcastId"}, 400
 
             inserted_count = 0
             inserted_ids = []
 
-            for task_name in default_tasks:
-                task = {
-                    "name": task_name,
+            for task_name_str in default_tasks: # Renamed task_name to task_name_str
+                task_data_item = { # Renamed task to task_data_item
+                    "title": task_name_str, # Use title for Pydantic model
                     "podcastId": podcastId,
                     "episodeId": episode_id,
                     "userid": str(user_id),
-                    "created_at": datetime.now(timezone.utc),
+                    "createdAt": datetime.now(timezone.utc), # Was created_at
                     "status": "pending",
                 }
-                task = process_default_tasks(task)
-                podtask_id = str(uuid.uuid4())
-                task_document = self._create_podtask_document(podtask_id, task)
-                result = self.podtasks_collection.insert_one(task_document)
-                if result.inserted_id:
-                    inserted_count += 1
-                    inserted_ids.append(podtask_id)
+                try:
+                    validated_task = PodTask(**task_data_item)
+                    task_document_to_insert = validated_task.dict(exclude_none=True)
+                    if "id" not in task_document_to_insert or not task_document_to_insert["id"]:
+                         task_document_to_insert["id"] = str(uuid.uuid4())
+                    
+                    # process_default_tasks might need to be called on task_document_to_insert
+                    task_document_to_insert = process_default_tasks(task_document_to_insert)
+
+                    result = self.podtasks_collection.insert_one(task_document_to_insert)
+                    if result.inserted_id:
+                        inserted_count += 1
+                        inserted_ids.append(task_document_to_insert["id"])
+                except ValidationError as err:
+                    logger.error(f"Validation error for default task {task_name_str}: {err.errors()}")
+                    # Optionally skip or handle error
+                    continue
+
 
             if inserted_count > 0:
                 return {"message": f"Added {inserted_count} default tasks", "task_ids": inserted_ids}, 201
             else:
                 return {"error": "No default tasks were added"}, 500
         except Exception as e:
+            logger.error(f"Error adding default tasks to episode: {e}", exc_info=True)
             return {"error": str(e)}, 500
-
-    def delete_by_user(self, user_id: str) -> int:
-        """
-        Delete all podtasks associated with a user.
-        Args:
-            user_id (str): The ID of the user whose podtasks should be deleted
-        Returns:
-            int: Number of podtasks deleted
-        """
-        try:
-            result = self.podtasks_collection.delete_many({"userid": str(user_id)})
-            deleted_count = result.deleted_count
-            logger.info(f"Deleted {deleted_count} podtasks for user {user_id}")
-            return deleted_count
-        except Exception as e:
-            logger.error(f"Error deleting podtasks for user {user_id}: {e}", exc_info=True)
-            return 0

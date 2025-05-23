@@ -159,10 +159,10 @@ def get_initial_podprofile_data():
     initial_podcast_title = None
 
     if user_id:
-        # Always use str(account["_id"]) for account IDs
-        user_accounts = list(db["Accounts"].find({"ownerId": str(user_id)}, {"_id": 1}))
+        # Always use str(account["id"]) for account IDs
+        user_accounts = list(db["Accounts"].find({"ownerId": str(user_id)}, {"id": 1})) # Changed _id to id
         if user_accounts:
-            account_ids = [str(acc["_id"]) for acc in user_accounts]
+            account_ids = [str(acc["id"]) for acc in user_accounts] # Changed _id to id
             logger.info(f"Found account IDs for owner {user_id}: {account_ids}")
             
             query_criteria = {
@@ -179,7 +179,7 @@ def get_initial_podprofile_data():
             if podcast:
                 logger.info(f"Found podcast for prefill: {podcast}")
                 initial_rss_url = podcast.get("rssFeed")
-                initial_podcast_id = str(podcast.get("_id"))
+                initial_podcast_id = str(podcast.get("id")) # Changed _id to id
                 # Prefer 'title', fallback to 'podName'
                 initial_podcast_title = podcast.get("title") or podcast.get("podName") 
                 if not initial_rss_url:

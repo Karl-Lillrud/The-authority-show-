@@ -19,7 +19,7 @@ class AuthRepository:
             logger.debug(f"Searching for user with email: {email}")
             user = self.user_collection.find_one({"email": email.lower().strip()})
             if user:
-                logger.debug(f"User found: {user['_id']}")
+                logger.debug(f"User found: {user['id']}")
             else:
                 logger.debug("User not found.")
             return user
@@ -31,8 +31,8 @@ class AuthRepository:
         """Creates a new user document and ensures an account exists."""
         try:
             # Ensure required fields are present, add defaults if needed
-            if "_id" not in user_data:
-                user_data["_id"] = str(uuid.uuid4())
+            if "id" not in user_data:
+                user_data["id"] = str(uuid.uuid4())
             if "email" not in user_data:
                 logger.error("Cannot create user without email.")
                 return None
@@ -42,24 +42,24 @@ class AuthRepository:
             # Add other default fields as per your User schema
 
             logger.info(
-                f"Creating new user with ID: {user_data['_id']} for email: {user_data['email']}"
+                f"Creating new user with ID: {user_data['id']} for email: {user_data['email']}"
             )
             result = self.user_collection.insert_one(user_data)
             if result.inserted_id:
                 # Ensure account exists using AccountRepository
                 account_data_for_creation = {
-                    "ownerId": user_data["_id"],
+                    "ownerId": user_data["id"],
                     "isFirstLogin": True,
                 }
                 account_result, status_code = self.account_repository.create_account(account_data_for_creation)
                 if status_code not in [200, 201]:
                     logger.error(
-                        f"Failed to create or retrieve account for user {user_data['_id']}: {account_result.get('error')}"
+                        f"Failed to create or retrieve account for user {user_data['id']}: {account_result.get('error')}"
                     )
-                    self.user_collection.delete_one({"_id": result.inserted_id})
+                    self.user_collection.delete_one({"id": result.inserted_id})
                     return None
-                logger.info(f"Account ensured for user {user_data['_id']}. Account ID: {account_result.get('accountId')}")
-                return self.user_collection.find_one({"_id": result.inserted_id})
+                logger.info(f"Account ensured for user {user_data['id']}. Account ID: {account_result.get('accountId')}")
+                return self.user_collection.find_one({"id": result.inserted_id})
             else:
                 logger.error("User creation failed (insert operation).")
                 return None

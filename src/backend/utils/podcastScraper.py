@@ -581,12 +581,12 @@ def get_existing_user_podcast_rss_urls() -> Set[str]:
         pipeline = [
             {"$unwind": "$podcasts"},
             {"$match": {"podcasts.rss_url": {"$exists": True, "$ne": None, "$ne": ""}}},
-            {"$group": {"_id": "$podcasts.rss_url"}},
+            {"$group": {"id": "$podcasts.rss_url"}},
         ]
         results = users_collection.aggregate(pipeline)
 
         for doc in results:
-            existing_rss_urls.add(doc["_id"])
+            existing_rss_urls.add(doc["id"])
 
         logger.info(
             f"Found {len(existing_rss_urls)} unique RSS URLs associated with existing users."

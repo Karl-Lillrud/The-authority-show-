@@ -12,7 +12,7 @@ def get_edits_for_episode(episode_id):
         edits = list(db.Edits.find({"episodeId": episode_id}))
         
         for edit in edits:
-            edit["_id"] = str(edit["_id"])
+            edit["id"] = str(edit["id"])
             edit["episodeId"] = str(edit["episodeId"])
             edit["createdAt"] = edit.get("createdAt").isoformat() if edit.get("createdAt") else None
 

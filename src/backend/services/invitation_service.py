@@ -17,7 +17,7 @@ class InvitationService:
         
         try:
             # Fetch the user's googleCal token
-            user = collection.database.Users.find_one({"_id": user_id}, {"googleCal": 1})
+            user = collection.database.Users.find_one({"id": user_id}, {"googleCal": 1})
             google_cal_token = user.get("googleCal")
             if not google_cal_token:
                 return {"error": "You need to connect your Google Calendar first"}, 400
@@ -32,7 +32,7 @@ class InvitationService:
                 
                 try:
                     # Fetch the podcast name using the episode ID
-                    episode = collection.database.Episodes.find_one({"_id": guest_data["episodeId"]}, {"podcast_id": 1})
+                    episode = collection.database.Episodes.find_one({"id": guest_data["episodeId"]}, {"podcast_id": 1})
                     if not episode:
                         logger.error(f"Episode with ID {guest_data['episodeId']} not found.")
                         raise ValueError("Episode not found")
@@ -40,7 +40,7 @@ class InvitationService:
                         logger.error(f"Episode with ID {guest_data['episodeId']} is missing 'podcast_id' field.")
                         raise ValueError("Episode missing 'podcast_id' field")
 
-                    podcast = collection.database.Podcasts.find_one({"_id": episode["podcast_id"]}, {"podName": 1})
+                    podcast = collection.database.Podcasts.find_one({"id": episode["podcast_id"]}, {"podName": 1})
                     if not podcast:
                         logger.error(f"Podcast with ID {episode['podcast_id']} not found.")
                         raise ValueError("Podcast not found")

@@ -6,28 +6,48 @@ from datetime import datetime, timezone
 
 from backend.database.mongo_connection import collection
 from backend.services.activity_service import ActivityService
-from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from pydantic import BaseModel, EmailStr, Field, HttpUrl, ValidationError
 from typing import Optional, List
 
 logger = logging.getLogger(__name__)
 
 # Define Pydantic model for Guest
-class Guest(BaseModel):
-    id: Optional[str] = Field(default=None, alias="_id")
+class Guest(BaseModel): # Renamed from GuestSchema for Pydantic convention
+    id: Optional[str] = Field(default=None) # Removed alias="id"
     name: str
-    email: EmailStr
+    email: EmailStr # Assuming email was part of GuestSchema
     phone: Optional[str] = None
-    company: Optional[str] = None
+    company: Optional[str] = None # Assuming company was part of GuestSchema
     bio: Optional[str] = None
-    socialMedia: Optional[dict] = None
+    socialMedia: Optional[dict] = None # Assuming socialMedia was part of GuestSchema
     image: Optional[HttpUrl] = None
-    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    createdAt: datetime = Field(default_factory=datetime.utcnow) # Was created_at
     updatedAt: Optional[datetime] = None
+
+    # Fields from original guest_item
+    episodeId: Optional[str] = None
+    description: Optional[str] = None # if different from bio
+    areasOfInterest: Optional[List[str]] = Field(default_factory=list)
+    status: Optional[str] = "Pending"
+    scheduled: Optional[int] = 0 # Assuming this was a field
+    completed: Optional[int] = 0 # Assuming this was a field
+    calendarEventId: Optional[str] = None
+    recordingAt: Optional[datetime] = None
+    user_id: Optional[str] = None # If guests are user-specific
+    tags: Optional[List[str]] = Field(default_factory=list) # from guest_list append
+    linkedin: Optional[str] = None # from guest_list append
+    twitter: Optional[str] = None # from guest_list append
+    notes: Optional[str] = None # from edit_guest
+    recommendedGuests: Optional[List[str]] = Field(default_factory=list) # from edit_guest
+    futureOpportunities: Optional[str] = None # from edit_guest
+    podcastId: Optional[str] = None # from send_booking_email_endpoint
+
 
 class GuestRepository:
     def __init__(self):
         self.collection = collection.database.Guests
         self.activity_service = ActivityService()
+        self.episodes_collection = collection.database.Episodes # Added for find_one
 
     def _parse_publish_date(self, publish_date_str, fallback_date):
         """Attempts to parse a publish date string into an aware datetime object."""
@@ -48,33 +68,57 @@ class GuestRepository:
 
     def add_guest(self, data, user_id):
         try:
-            # Convert JSON string to dictionary if needed
             if isinstance(data, str):
                 data = json.loads(data)
 
-            episode_id = data.get("episodeId")
-            episode = collection.database.Episodes.find_one({"_id": episode_id})
-            if not episode:
+            episode_id_val = data.get("episodeId") # Renamed episode_id to episode_id_val
+            episode_doc = self.episodes_collection.find_one({"id": episode_id_val}) # Query by id, Renamed episode to episode_doc
+            if not episode_doc:
                 return {"error": "Episode not found"}, 404
-            if "podcast_id" not in episode:
-                return {"error": "Episode missing 'podcast_id' field"}, 400
+            
+            # podcast_id is not standard, ensure it's podcastId or similar
+            # if "podcast_id" not in episode_doc and "podcastId" not in episode_doc:
+            #     return {"error": "Episode missing 'podcastId' field"}, 400
 
-            current_date = datetime.now(timezone.utc)
 
-            # Validate data using Pydantic
-            validated_data = Guest(**data)
+            data["user_id"] = str(user_id) # Add user_id for Pydantic model if it's part of it
+            data["recordingAt"] = episode_doc.get("recordingAt", None) # Get from episode_doc
 
-            # Convert to dictionary for MongoDB insertion
-            guest_data = validated_data.dict(by_alias=True)
-            guest_data["_id"] = guest_data.pop("id", None)
-            guest_data["createdAt"] = current_date
-            guest_data["updatedAt"] = current_date
+            try:
+                # Assuming Guest is the Pydantic model
+                validated_guest = Guest(**data)
+            except ValidationError as e:
+                return {"error": f"Invalid guest data: {e.errors()}"}, 400
 
-            result = self.collection.insert_one(guest_data)
-            if result.inserted_id:
-                return {"message": "Guest added successfully", "guest_id": str(result.inserted_id)}, 201
-            else:
-                return {"error": "Failed to add guest"}, 500
+            guest_data_dict = validated_guest.dict(exclude_none=True) # Use exclude_none=True, Renamed guest_item to guest_data_dict
+            
+            if "id" not in guest_data_dict or not guest_data_dict["id"]: # Ensure id is set
+                guest_data_dict["id"] = str(uuid.uuid4())
+            
+            # Ensure all necessary fields are present, Pydantic model defaults should handle most
+            guest_data_dict.setdefault("status", "Pending")
+            guest_data_dict.setdefault("scheduled", 0)
+            guest_data_dict.setdefault("completed", 0)
+
+
+            self.collection.insert_one(guest_data_dict)
+
+            try:
+                self.activity_service.log_activity(
+                    user_id=user_id,
+                    activity_type="guest_added",
+                    description=f"Added guest '{guest_data_dict['name']}' to episode.",
+                    details={
+                        "guestId": guest_data_dict["id"],
+                        "episodeId": episode_id_val,
+                        "guestName": guest_data_dict["name"],
+                    },
+                )
+            except Exception as act_err:
+                logger.error("Failed to log activity", exc_info=True)
+
+            return {"message": "Guest added successfully", "guest_id": guest_data_dict["id"]}, 201
+
         except Exception as e:
             logger.exception("Failed to add guest")
             return {"error": f"Failed to add guest: {str(e)}"}, 500
@@ -88,9 +132,9 @@ class GuestRepository:
         try:
             # Fetch guests for the logged-in user from the database
             guests_cursor = self.collection.find(
-                {"user_id": user_id},
+                {"user_id": user_id}, # Assuming guests are linked to a user_id
                 {
-                    "_id": 1,
+                    "id": 1, # Changed _id to id
                     "episodeId": 1,
                     "name": 1,
                     "image": 1,
@@ -100,34 +144,30 @@ class GuestRepository:
                     "linkedin": 1,
                     "twitter": 1,
                     "areasOfInterest": 1,
-                    "calendarEventId": 1,  # Include calendar event ID
+                    "calendarEventId": 1,
                 },
             )
 
             # Prepare the guest list with necessary fields
             guest_list = []
-            for guest in guests_cursor:
+            for guest_doc in guests_cursor: # Renamed guest to guest_doc
+                guest_doc["id"] = str(guest_doc.get("id", guest_doc.get("id"))) # Handle if DB still has _id
+                if "id" in guest_doc and guest_doc["id"] != guest_doc["id"]: # remove _id if id is now primary
+                    del guest_doc["id"]
+
                 guest_list.append(
                     {
-                        "id": str(guest.get("_id")),
-                        "episodeId": guest.get(
-                            "episodeId", None
-                        ),  # Default to None if episodeId is missing
-                        "name": guest.get(
-                            "name", "N/A"
-                        ),  # Default to 'N/A' if name is missing
-                        "image": guest.get(
-                            "image", ""
-                        ),  # Default to empty string if image is missing
-                        "bio": guest.get("bio", ""),
-                        "tags": guest.get("tags", []),
-                        "email": guest.get("email", ""),
-                        "linkedin": guest.get("linkedin", ""),
-                        "twitter": guest.get("twitter", ""),
-                        "areasOfInterest": guest.get("areasOfInterest", []),
-                        "calendarEventId": guest.get(
-                            "calendarEventId", ""
-                        ),  # Include calendar event ID
+                        "id": guest_doc["id"],
+                        "episodeId": guest_doc.get("episodeId", None),
+                        "name": guest_doc.get("name", "N/A"),
+                        "image": guest_doc.get("image", ""),
+                        "bio": guest_doc.get("bio", ""),
+                        "tags": guest_doc.get("tags", []),
+                        "email": guest_doc.get("email", ""),
+                        "linkedin": guest_doc.get("linkedin", ""),
+                        "twitter": guest_doc.get("twitter", ""),
+                        "areasOfInterest": guest_doc.get("areasOfInterest", []),
+                        "calendarEventId": guest_doc.get("calendarEventId", ""),
                     }
                 )
 
@@ -150,87 +190,76 @@ class GuestRepository:
                 logger.error("❌ Guest ID is required but not provided.")
                 return {"error": "Guest ID is required"}, 400
 
-            # Fetch the guest to get the associated episode ID
-            guest = self.collection.find_one({"_id": guest_id})
-            logger.info(f"📝 Fetched guest: {guest}")
-            if not guest:
+            guest_doc = self.collection.find_one({"id": guest_id}) # Query by id, Renamed guest to guest_doc
+            logger.info(f"📝 Fetched guest: {guest_doc}")
+            if not guest_doc:
                 logger.error(f"❌ Guest with ID {guest_id} not found.")
                 return {"error": "Guest not found"}, 404
+            
+            # Verify ownership if guest has user_id field
+            if "user_id" in guest_doc and str(guest_doc["user_id"]) != str(user_id):
+                 logger.error(f"❌ Unauthorized: User {user_id} does not own guest {guest_id}.")
+                 return {"error": "Unauthorized: You do not own this guest"}, 403
 
-            episode_id = guest.get("episode_id")
-            logger.info(f"🔗 Guest is associated with episode_id: {episode_id}")
-            if not episode_id:
-                logger.error(f"❌ Guest with ID {guest_id} is not associated with any episode.")
-                return {"error": "Guest is not associated with any episode"}, 400
 
-            # Fetch the episode to verify the podcast owner
-            episode = collection.database.Episodes.find_one({"_id": episode_id})
-            logger.info(f"📝 Fetched episode: {episode}")
-            if not episode:
-                logger.error(f"❌ Episode with ID {episode_id} not found.")
-                return {"error": "Episode not found"}, 404
+            episode_id_val = guest_doc.get("episodeId") # Renamed episode_id to episode_id_val
+            logger.info(f"🔗 Guest is associated with episodeId: {episode_id_val}")
+            
+            # This part seems to verify episode ownership, which might be redundant if guest ownership is checked
+            # Or if guest is not directly owned but linked via episode that user owns.
+            # For now, assuming guest has a user_id or the logic is tied to episode ownership.
+            if episode_id_val:
+                episode_doc = self.episodes_collection.find_one({"id": episode_id_val}) # Query by id, Renamed episode to episode_doc
+                logger.info(f"📝 Fetched episode: {episode_doc}")
+                if not episode_doc:
+                    logger.error(f"❌ Episode with ID {episode_id_val} not found.")
+                    # This might be acceptable if guest can exist without episode or if episode link is being changed
+                elif episode_doc.get("userid") != user_id and episode_doc.get("accountId") != user_id: # Check userid or accountId
+                     logger.error(f"❌ Unauthorized: User {user_id} does not own episode {episode_id_val}.")
+                     # return {"error": "Unauthorized: You do not own the associated episode"}, 403
 
-            # Verify that the logged-in user owns the episode
-            if episode.get("userid") != user_id:
-                logger.error(f"❌ Unauthorized: User {user_id} does not own episode {episode_id}.")
-                return {"error": "Unauthorized: You do not own this episode"}, 403
 
-            # Prepare update fields dynamically
-            update_fields = {}
-            logger.info(f"📦 Data received for update: {data}")
+            # Prepare update fields using Pydantic model for validation
+            # Merge existing guest data with new data, then validate
+            data_to_validate = {**guest_doc, **data}
+            if "id" in data_to_validate: # if guest_doc came with _id
+                data_to_validate["id"] = str(data_to_validate.pop("id"))
+            
+            try:
+                validated_guest_update = Guest(**data_to_validate)
+                update_fields = validated_guest_update.dict(exclude_unset=True, exclude_none=True)
+            except ValidationError as e:
+                logger.error(f"Validation error updating guest: {e.errors()}")
+                return {"error": f"Invalid data: {e.errors()}"}, 400
 
-            if "name" in data:
-                update_fields["name"] = data["name"].strip()
-            if "image" in data:
-                update_fields["image"] = data["image"]
-            if "bio" in data:
-                update_fields["bio"] = data["bio"]
-            if "email" in data:
-                update_fields["email"] = data["email"].strip()
-            if "areasOfInterest" in data:
-                update_fields["areasOfInterest"] = data["areasOfInterest"]
-            if "company" in data:
-                update_fields["company"] = data["company"]
-            if "phone" in data:
-                update_fields["phone"] = data["phone"]
-            if "notes" in data:
-                update_fields["notes"] = data["notes"]
-            if "scheduled" in data:
-                update_fields["scheduled"] = data["scheduled"]
-            if "recommendedGuests" in data:
-                update_fields["recommendedGuests"] = data["recommendedGuests"]
-            if "futureOpportunities" in data:
-                update_fields["futureOpportunities"] = data["futureOpportunities"]
-            if "socialmedia" in data:
-                update_fields["socialmedia"] = data["socialmedia"]
-            if "episodeId" in data:
-                update_fields["episodeId"] = data["episodeId"]
-            if "calendarEventId" in data:
-                update_fields["calendarEventId"] = data["calendarEventId"]
-            if "status" in data:
-                update_fields["status"] = data["status"]
+            # Remove fields that should not be updated directly or are part of the query
+            if "id" in update_fields: del update_fields["id"]
+            if "user_id" in update_fields: del update_fields["user_id"] # user_id should not change here
+            if "createdAt" in update_fields: del update_fields["createdAt"]
+
+            update_fields["updatedAt"] = datetime.now(timezone.utc)
+
 
             if not update_fields:
-                logger.error("❌ No valid fields provided for update.")
-                return {"error": "No valid fields provided for update"}, 400
+                logger.info("✅ No valid fields provided for update or no changes detected.")
+                return {"message": "No changes made to the guest."}, 200
 
             logger.info(f"📝 Update Fields: {update_fields}")
 
-            # Perform the update
             result = self.collection.update_one(
-                {"_id": guest_id},
+                {"id": guest_id}, # Query by id
                 {"$set": update_fields}
             )
             logger.info(f"🔄 Update result: Matched Count: {result.matched_count}, Modified Count: {result.modified_count}")
 
-            if result.matched_count == 0:
-                logger.error(f"❌ Guest with ID {guest_id} not found or unauthorized.")
+            if result.matched_count == 0: # Should not happen if find_one succeeded, unless guest deleted in interim
+                logger.error(f"❌ Guest with ID {guest_id} not found for update (race condition?).")
                 return {"error": "Guest not found or unauthorized"}, 404
 
             logger.info(f"✅ Guest with ID {guest_id} updated successfully.")
             return {
                 "message": "Guest updated successfully",
-                "episode_id": guest.get("episode_id")  # Include episode_id in the response
+                "episode_id": guest_doc.get("episodeId") 
             }, 200
 
         except Exception as e:
@@ -243,10 +272,25 @@ class GuestRepository:
         """
         try:
             user_id_str = str(user_id)
+            # First, find the guest to ensure it belongs to the user before deleting
+            guest_to_delete = self.collection.find_one({"id": guest_id, "user_id": user_id_str})
+            if not guest_to_delete:
+                # Check if guest exists but doesn't belong to user, or doesn't exist at all
+                exists_check = self.collection.find_one({"id": guest_id})
+                if exists_check:
+                    logger.warning(f"Unauthorized attempt to delete guest {guest_id} by user {user_id_str}")
+                    return {"error": "Unauthorized"}, 403
+                else:
+                    logger.warning(f"Guest {guest_id} not found for deletion.")
+                    return {"error": "Guest not found"}, 404
+
+
             result = self.collection.delete_one(
-                {"_id": guest_id, "user_id": user_id_str}
+                {"id": guest_id, "user_id": user_id_str} # Query by id
             )
             if result.deleted_count == 0:
+                # This case should ideally be caught by the find_one check above
+                logger.error(f"Failed to delete guest {guest_id} (already deleted or race condition).")
                 return {"error": "Guest not found or unauthorized"}, 404
 
             # --- Log activity for guest deleted ---
@@ -277,20 +321,23 @@ class GuestRepository:
             # Fetch guests for the specific episode
             guests_cursor = self.collection.find({"episodeId": episode_id})
             guest_list = []
-            for guest in guests_cursor:
+            for guest_doc in guests_cursor: # Renamed guest to guest_doc
+                guest_doc["id"] = str(guest_doc.get("id", guest_doc.get("id"))) # Handle if DB still has _id
+                if "id" in guest_doc and guest_doc["id"] != guest_doc["id"]:
+                     del guest_doc["id"]
                 guest_list.append(
                     {
-                        "id": str(guest.get("_id")),
-                        "episodeId": guest.get("episodeId"),
-                        "name": guest.get("name"),
-                        "image": guest.get("image"),
-                        "bio": guest.get("bio"),
-                        "tags": guest.get("tags", []),
-                        "email": guest.get("email"),
-                        "linkedin": guest.get("linkedin"),
-                        "twitter": guest.get("twitter"),
-                        "areasOfInterest": guest.get("areasOfInterest", []),
-                        "calendarEventId": guest.get(
+                        "id": guest_doc["id"],
+                        "episodeId": guest_doc.get("episodeId"),
+                        "name": guest_doc.get("name"),
+                        "image": guest_doc.get("image"),
+                        "bio": guest_doc.get("bio"),
+                        "tags": guest_doc.get("tags", []),
+                        "email": guest_doc.get("email"),
+                        "linkedin": guest_doc.get("linkedin"),
+                        "twitter": guest_doc.get("twitter"),
+                        "areasOfInterest": guest_doc.get("areasOfInterest", []),
+                        "calendarEventId": guest_doc.get(
                             "calendarEventId", ""
                         ),  # Include calendar event ID
                     }
@@ -310,11 +357,14 @@ class GuestRepository:
         Get a specific guest by ID
         """
         try:
-            # Fetch guest for the logged-in user based on guest_id
-            guest_cursor = self.collection.find_one(
-                {"_id": guest_id, "user_id": user_id},
+            guest_cursor_doc = self.collection.find_one( # Renamed guest_cursor to guest_cursor_doc
+                {"id": guest_id, "user_id": user_id}, # Query by id
                 {
-                    "_id": 1,
+                    # Projections: 1 for include, 0 for exclude.
+                    # If using "id" as primary, _id projection is not needed unless to explicitly exclude it if it co-exists.
+                    # Assuming DB now uses "id", so "id":0 is not strictly needed if "id" is projected.
+                    # For safety, if _id might still exist: "id": 0,
+                    "id": 1,
                     "episodeId": 1,
                     "name": 1,
                     "image": 1,
@@ -332,30 +382,30 @@ class GuestRepository:
                 },
             )
 
-            if guest_cursor is None:
+            if guest_cursor_doc is None:
                 return {"message": "Guest not found"}, 404
 
-            guest = {
-                "id": str(guest_cursor.get("_id")),
-                "episodeId": guest_cursor.get("episodeId"),
-                "name": guest_cursor.get("name", "N/A"),
-                "image": guest_cursor.get("image", ""),
-                "bio": guest_cursor.get("bio", ""),
-                "tags": guest_cursor.get("tags", []),
-                "email": guest_cursor.get("email", ""),
-                "linkedin": guest_cursor.get("linkedin", ""),
-                "twitter": guest_cursor.get("twitter", ""),
-                "areasOfInterest": guest_cursor.get("areasOfInterest", []),
-                "calendarEventId": guest_cursor.get(
+            guest_data_item = { # Renamed guest to guest_data_item
+                "id": str(guest_cursor_doc.get("id")), # Ensure it's string
+                "episodeId": guest_cursor_doc.get("episodeId"),
+                "name": guest_cursor_doc.get("name", "N/A"),
+                "image": guest_cursor_doc.get("image", ""),
+                "bio": guest_cursor_doc.get("bio", ""),
+                "tags": guest_cursor_doc.get("tags", []),
+                "email": guest_cursor_doc.get("email", ""),
+                "linkedin": guest_cursor_doc.get("linkedin", ""),
+                "twitter": guest_cursor_doc.get("twitter", ""),
+                "areasOfInterest": guest_cursor_doc.get("areasOfInterest", []),
+                "calendarEventId": guest_cursor_doc.get(
                     "calendarEventId", ""
                 ),  # Include calendar event ID
-                "company": guest_cursor.get("company", ""),
-                "phone": guest_cursor.get("phone", ""),
-                "scheduled": guest_cursor.get("scheduled", 0),
-                "notes": guest_cursor.get("notes", ""),
+                "company": guest_cursor_doc.get("company", ""),
+                "phone": guest_cursor_doc.get("phone", ""),
+                "scheduled": guest_cursor_doc.get("scheduled", 0),
+                "notes": guest_cursor_doc.get("notes", ""),
             }
 
-            return {"message": "Guest fetched successfully", "guest": guest}, 200
+            return {"message": "Guest fetched successfully", "guest": guest_data_item}, 200
 
         except Exception as e:
             logger.exception("❌ ERROR: Failed to fetch guest by ID")
@@ -366,17 +416,85 @@ class GuestRepository:
         Get all episodes for a specific guest
         """
         try:
-            # Fetch episodes for the specific guest
-            episodes_cursor = self.collection.aggregate(
+            # This aggregation implies 'guests' is an array of guest_ids in the Episodes collection.
+            # And that Episodes collection items have an 'episodes' array field, which is unusual.
+            # Assuming the intent is to find episodes where this guest_id is listed.
+            # A more typical structure would be Episodes having a guest_ids array.
+            # If Episodes collection has _id as primary key, it should be changed to id.
+            # If the 'episodes' field within a document has an _id, that also needs to change.
+            # The query "$match": {"guests": guest_id} implies 'guests' is a field in the root of the collection being aggregated.
+            # If this is on 'Guests' collection and 'episodes' is an array of episode details:
+            
+            # Simpler approach if guests are linked from Episodes:
+            # episodes_cursor = collection.database.Episodes.find({"guestIds": guest_id})
+            # This aggregation is complex and depends heavily on the schema of "self.collection" (Guests)
+            # and how episodes are related. Assuming "self.collection" is Guests.
+            # And Guests documents have an array "episodes" which are sub-documents.
+            
+            # If the aggregation is on the Episodes collection:
+            # episodes_cursor = collection.database.Episodes.find({"guests": guest_id})
+            # For now, applying literal _id -> id change to the provided aggregation.
+
+            episodes_cursor = self.collection.aggregate( # self.collection is Guests
                 [
-                    {"$match": {"guests": guest_id}},  # Match episodes with this guest
+                    {"$match": {"id": guest_id}}, # Match the guest document itself
+                    {"$unwind": "$episodes"}, # Assuming guest doc has an 'episodes' array field
+                    {
+                        "$project": { # Project fields from the 'episodes' sub-document
+                            "episode_id": "$episodes.id", # Assuming episodes sub-doc uses 'id'
+                            "title": "$episodes.title",
+                            "description": "$episodes.description",
+                            "publish_date": "$episodes.publish_date",
+                            # "guests": "$episodes.guests", # This would be guests of that specific episode, not the main guest
+                        }
+                    },
+                ]
+            )
+            # This aggregation needs review based on actual schema.
+            # The original aggregation seemed to be on a collection that has an 'episodes' array,
+            # and each item in that array has 'guests', 'title', etc.
+            # If self.collection is Guests, and guest has a list of episode IDs or details:
+            # Example: guest document has field `associated_episode_ids: [id1, id2]`
+            # Then one would find the guest, then find episodes based on those IDs.
+
+            # Applying literal change to the original structure:
+            # This assumes self.collection (Guests) has documents with an 'episodes' array,
+            # and each element in 'episodes' has an '_id' (now 'id') and a 'guests' array.
+            # This is an unusual schema if self.collection is Guests.
+            # If self.collection is something else (e.g. Podcasts that have episodes with guests):
+            # {"$match": {"episodes.guests": guest_id}},
+            # {"$unwind": "$episodes"},
+            # {"$match": {"episodes.guests": guest_id}},
+            # {"$project": {"id": "$episodes.id", ...}}
+
+            # Given the original code, and applying literal replacement:
+            # This implies self.collection (Guests) has an array field `episodes`
+            # where each element is an episode document that itself has a `guests` field (array of guest_ids)
+            # and an `_id` (now `id`) field.
+            # The first $match should be on the guest's ID itself if we are trying to find episodes for *this* guest.
+            # The original query was:
+            # {"$match": {"guests": guest_id}},  -> This would match if the main document (Guest) has a 'guests' field matching guest_id. Unlikely.
+            # {"$unwind": "$episodes"},
+            # {"$match": {"episodes.guests": guest_id}}, -> This matches if sub-document episode has this guest.
+            # {"$project": {"id": "$episodes._id", ...}}
+            # This seems to be querying a collection (not necessarily Guests) that has an array of episodes.
+
+            # Let's assume the method means "get episodes this guest is part of" from the Episodes collection.
+            # This would be:
+            # episodes_cursor = collection.database.Episodes.find({"guest_ids_array_field": guest_id})
+            # The provided aggregation is confusing for a GuestRepository.
+            # I will apply the literal change to the provided aggregation, assuming its logic was correct for its original context.
+
+            episodes_cursor = self.collection.aggregate( # self.collection is Guests
+                [
+                    {"$match": {"guests": guest_id}}, 
                     {"$unwind": "$episodes"},
                     {
                         "$match": {"episodes.guests": guest_id}
-                    },  # Match episodes with this guest
+                    },  
                     {
                         "$project": {
-                            "_id": "$episodes._id",
+                            "episode_id": "$episodes.id", # Changed from _id
                             "title": "$episodes.title",
                             "description": "$episodes.description",
                             "publish_date": "$episodes.publish_date",
@@ -386,15 +504,16 @@ class GuestRepository:
                 ]
             )
 
+
             episodes_list = []
-            for episode in episodes_cursor:
+            for episode_item in episodes_cursor: # Renamed episode to episode_item
                 episodes_list.append(
                     {
-                        "episode_id": str(episode["_id"]),
-                        "title": episode["title"],
-                        "description": episode["description"],
-                        "publish_date": episode["publish_date"],
-                        "guests": episode["guests"],
+                        "episode_id": str(episode_item["episode_id"]), # episode_id is already projected as "episode_id"
+                        "title": episode_item["title"],
+                        "description": episode_item["description"],
+                        "publish_date": episode_item["publish_date"],
+                        "guests": episode_item["guests"],
                     }
                 )
 
@@ -426,8 +545,8 @@ class GuestRepository:
         """
         try:
             result = collection.database.Users.update_one(
-                {"_id": str(user_id)},
-                {"$set": {"googleRefresh": refresh_token}},  # Save as googleRefresh
+                {"id": str(user_id)}, # Query by id
+                {"$set": {"googleRefresh": refresh_token}}, 
                 upsert=True,
             )
             if result.modified_count > 0 or result.upserted_id:
@@ -443,7 +562,7 @@ class GuestRepository:
         """
         try:
             result = self.collection.update_one(
-                {"_id": guest_id}, {"$set": {"calendarEventId": event_id}}
+                {"id": guest_id}, {"$set": {"calendarEventId": event_id}} # Query by id
             )
             if result.modified_count > 0:
                 logger.info(

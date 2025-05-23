@@ -70,7 +70,7 @@ def send_booking_email_endpoint(guest_id):
         recording_at = data.get("recordingAt")
 
         # Fetch the guest details
-        guest = collection.database.Guests.find_one({"_id": guest_id})
+        guest = collection.database.Guests.find_one({"id": guest_id})
         if not guest:
             return jsonify({"error": "Guest not found"}), 404
 
@@ -80,7 +80,7 @@ def send_booking_email_endpoint(guest_id):
             return jsonify({"error": "Unauthorized"}), 403
 
         # Fetch the podcast details dynamically from the Podcasts collection
-        podcast = collection.database.Podcasts.find_one({"_id": guest.get("podcastId")})
+        podcast = collection.database.Podcasts.find_one({"id": guest.get("podcastId")})
         if not podcast:
             return jsonify({"error": "Podcast not found"}), 404
 

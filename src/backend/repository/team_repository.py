@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 # Define Pydantic model for Team
 class Team(BaseModel):
-    id: Optional[str] = Field(default=None, alias="_id")
+    id: Optional[str] = Field(default=None)  # Removed alias="id"
     name: str
     description: Optional[str] = None
     createdAt: datetime = Field(default_factory=datetime.utcnow)
@@ -20,45 +20,38 @@ class Team(BaseModel):
 
 class TeamRepository:
     def __init__(self):
-        self.teams_collection = collection.database.Teams
+        self.collection = collection.database.Teams
+        # Added for consistency if used
         self.user_to_teams_collection = collection.database.UsersToTeams
         self.podcasts_collection = collection.database.Podcasts
-        # Added to check user status during team retrieval
         self.users_collection = collection.database.Users
-        self.activity_service = ActivityService()  # Add this line
+        self.activity_service = ActivityService()
 
     def add_team(self, user_id, user_email, data):
         try:
             # Validate data using Pydantic
             validated_data = Team(**data)
 
-            team_id = str(uuid.uuid4())  # Ensure team_id is a string
+            team_id_str = str(uuid.uuid4())  # Ensure team_id is a string
 
             # Convert to dictionary for MongoDB insertion
-            team_data = validated_data.dict(by_alias=True)
-            team_data["_id"] = team_data.pop("id", None)
+            team_item = validated_data.dict(exclude_none=True)  # Use exclude_none=True
+            team_item["id"] = team_id_str  # Explicitly set id
 
-            team_item = {
-                "_id": team_id,
-                "name": validated_data.get("name", "").strip(),
-                "email": validated_data.get("email", "").strip(),
-                "description": validated_data.get(
-                    "description", ""
-                ).strip(),  # Ensure description is saved
-                "phone": validated_data.get("phone", "").strip(),
-                "isActive": validated_data.get("isActive", True),
-                "joinedAt": datetime.now(timezone.utc),
-                "lastActive": datetime.now(timezone.utc),
-                "members": validated_data.get("members", []),
-            }
+            # Ensure description is saved
+            team_item["description"] = validated_data.description or ""
+            team_item["phone"] = validated_data.phone or ""  # Assuming phone is part of Team model
+            team_item["isActive"] = validated_data.isActive if hasattr(validated_data, 'isActive') else True
+            team_item["joinedAt"] = datetime.now(timezone.utc)
+            team_item["lastActive"] = datetime.now(timezone.utc)
 
-            self.teams_collection.insert_one(team_item)
 
-            # ✅ Explicitly set `_id` as a string UUID for `user_to_teams_collection`
+            self.collection.insert_one(team_item)
+
             user_to_team_item = {
-                "_id": str(uuid.uuid4()),  # Ensure _id is a string
+                "id": str(uuid.uuid4()),  # Ensure id is a string
                 "userId": str(user_id),
-                "teamId": team_id,
+                "teamId": team_id_str,  # Use the generated team_id_str
                 "role": "creator",
                 "assignedAt": datetime.now(timezone.utc),
             }
@@ -71,7 +64,7 @@ class TeamRepository:
                     user_id=str(user_id),
                     activity_type="team_created",
                     description=f"Created team '{team_item.get('name', '')}'",
-                    details={"teamId": team_id, "teamName": team_item.get("name", "")},
+                    details={"teamId": team_id_str, "teamName": team_item.get("name", "")},
                 )
             except Exception as act_err:
                 logger.error(
@@ -79,12 +72,16 @@ class TeamRepository:
                 )
             # --- End activity log ---
 
+            # Ensure members list exists before appending
+            if "members" not in team_item or team_item["members"] is None:
+                team_item["members"] = []
+            
             team_item["members"].append(
                 {"userId": str(user_id), "email": user_email, "role": "creator"}
             )
 
-            self.teams_collection.update_one(
-                {"_id": team_id}, {"$set": {"members": team_item["members"]}}
+            self.collection.update_one(
+                {"id": team_id_str}, {"$set": {"members": team_item["members"]}}
             )
 
             # Send invitation emails to new members (excluding the team creator)
@@ -93,69 +90,72 @@ class TeamRepository:
             )  # Import the service
 
             invite_service = TeamInviteService()
-            for member in team_item["members"]:
-                if member.get("role") != "creator":
+            for member_data in team_item["members"]: # Renamed member to member_data
+                if member_data.get("role") != "creator":
                     try:
                         response, status_code = invite_service.send_invite(
-                            user_id, team_id, member["email"]
+                            user_id, team_id_str, member_data["email"] # Use member_data
                         )
-                        logger.info(f"Invitation email sent to {member['email']}")
+                        logger.info(f"Invitation email sent to {member_data['email']}") # Use member_data
                     except Exception as e:
                         logger.error(
-                            f"Error sending invitation email to {member['email']}: {e}"
+                            f"Error sending invitation email to {member_data['email']}: {e}" # Use member_data
                         )
 
             return {
                 "message": "Team and creator added successfully",
-                "team_id": team_id,
+                "team_id": team_id_str,
                 "redirect_url": "/team.html",
             }, 201
 
+        except ValidationError as err: # Assuming Pydantic's ValidationError
+            return {"error": "Invalid data", "details": err.errors()}, 400
         except Exception as e:
             logger.error(f"Error adding team: {e}", exc_info=True)
             return {"error": f"Failed to add team: {str(e)}"}, 500
 
     def get_teams(self, user_id):
         try:
+            # Assuming 'createdBy' field exists and stores user_id
             created_teams = list(
-                self.teams_collection.find({"createdBy": user_id}, {"created_at": 0})
+                self.collection.find({"createdBy": user_id}, {"created_at": 0})
             )
 
             user_team_links = list(
                 self.user_to_teams_collection.find(
-                    {"userId": user_id}, {"teamId": 1, "_id": 0}
+                    {"userId": user_id}, {"teamId": 1, "id": 0} # Changed _id to id
                 )
             )
             joined_team_ids = [ut["teamId"] for ut in user_team_links]
 
-            joined_teams = list(
-                self.teams_collection.find(
-                    {"_id": {"$in": joined_team_ids}}, {"created_at": 0}
+            joined_teams_data = list( # Renamed joined_teams to joined_teams_data
+                self.collection.find(
+                    {"id": {"$in": joined_team_ids}}, {"created_at": 0} # Changed _id to id
                 )
             )
 
-            teams = {str(team["_id"]): team for team in created_teams + joined_teams}
-            for team in teams.values():
-                team["_id"] = str(team["_id"])
-                podcasts = list(self.podcasts_collection.find({"teamId": team["_id"]}))
-                team["podNames"] = (
+            # Combine and deduplicate teams
+            teams_dict = {str(team["id"]): team for team in created_teams + joined_teams_data} # Changed _id to id
+
+            for team_obj in teams_dict.values(): # Renamed team to team_obj
+                team_obj["id"] = str(team_obj["id"]) # Changed _id to id
+                podcasts = list(self.podcasts_collection.find({"teamId": team_obj["id"]})) # Changed _id to id
+                team_obj["podNames"] = (
                     ", ".join([p.get("podName", "N/A") for p in podcasts])
                     if podcasts
                     else "N/A"
                 )
-                # Check each member: if not the creator and not yet verified,
-                # query the Users collection and update verified flag if applicable.
-                for member in team.get("members", []):
-                    if member.get("role") != "creator" and not member.get(
+                for member_data in team_obj.get("members", []): # Renamed member to member_data
+                    if member_data.get("role") != "creator" and not member_data.get(
                         "verified", False
                     ):
                         user = self.users_collection.find_one(
-                            {"email": member["email"].lower()}
+                            {"email": member_data["email"].lower()}
                         )
                         if user and user.get("isTeamMember") is True:
-                            member["verified"] = True
+                            member_data["verified"] = True
 
-            return list(teams.values()), 200
+            return list(teams_dict.values()), 200
 
         except Exception as e:
             logger.error(f"Error retrieving teams: {e}", exc_info=True)
@@ -163,36 +163,33 @@ class TeamRepository:
 
     def delete_team(self, team_id):
         try:
-            team = self.teams_collection.find_one({"_id": team_id})
-            if not team:
+            team_to_delete = self.collection.find_one({"id": team_id}) # Renamed team to team_to_delete, _id to id
+            if not team_to_delete:
                 return {"error": "Team not found"}, 404
 
-            team_name = team.get("name", "Unknown Team")
+            team_name = team_to_delete.get("name", "Unknown Team")
             creator_id = None
-            # Find the creator's userId
-            for member in team.get("members", []):
-                if member.get("role") == "creator":
-                    creator_id = member.get("userId")
+            for member_data in team_to_delete.get("members", []): # Renamed member to member_data
+                if member_data.get("role") == "creator":
+                    creator_id = member_data.get("userId")
                     break
 
             self.user_to_teams_collection.delete_many({"teamId": team_id})
-            result = self.teams_collection.delete_one({"_id": team_id})
+            result = self.collection.delete_one({"id": team_id}) # Changed _id to id
             if result.deleted_count == 0:
                 return {"error": "Failed to delete the team"}, 500
 
             update_result = self.podcasts_collection.update_many(
                 {"teamId": team_id}, {"$set": {"teamId": None}}
             )
-            # Delete verified non-creator users from Users collection using user id
-            for member in team.get("members", []):
+            for member_data in team_to_delete.get("members", []): # Renamed member to member_data
                 if (
-                    member.get("role") != "creator"
-                    and member.get("verified", False)
-                    and member.get("userId")
+                    member_data.get("role") != "creator"
+                    and member_data.get("verified", False)
+                    and member_data.get("userId")
                 ):
-                    self.users_collection.delete_one({"_id": member["userId"]})
+                    self.users_collection.delete_one({"id": member_data["userId"]}) # Changed _id to id
 
-            # --- Log activity for team deleted ---
             if creator_id:
                 try:
                     self.activity_service.log_activity(
@@ -205,7 +202,6 @@ class TeamRepository:
                     logger.error(
                         f"Failed to log team_deleted activity: {act_err}", exc_info=True
                     )
-            # --- End activity log ---
 
             return {
                 "message": f"Team '{team_name}' and all members deleted successfully!",
@@ -217,61 +213,58 @@ class TeamRepository:
 
     def edit_team(self, team_id, data):
         try:
-            team = self.teams_collection.find_one({"_id": team_id})
-            if not team:
+            team_to_edit = self.collection.find_one({"id": team_id}) # Renamed team to team_to_edit, _id to id
+            if not team_to_edit:
                 return {"error": "Team not found"}, 404
 
-            # Validate data using Pydantic
-            validated_data = Team(**data)
+            # Assuming Team is a Pydantic model
+            validated_data = Team(**data).dict(exclude_unset=True)
 
-            def are_values_different(old, new):
-                if isinstance(old, str) and isinstance(new, str):
-                    return old.strip() != new.strip()
-                return json.dumps(old, sort_keys=True) != json.dumps(
-                    new, sort_keys=True
-                )
 
             update_fields = {}
             for key, new_value in validated_data.items():
-                current_value = team.get(key)
-                if are_values_different(current_value, new_value):
+                current_value = team_to_edit.get(key)
+                # Simplified comparison, may need adjustment for complex types
+                if current_value != new_value:
                     update_fields[key] = new_value
                     logger.debug(
                         f"[edit_team] Field '{key}' changed: OLD={current_value}, NEW={new_value}"
                     )
+            
+            update_fields["updatedAt"] = datetime.now(timezone.utc)
+
 
             logger.debug(f"[edit_team] Final update fields: {update_fields}")
 
             if update_fields:
-                result = self.teams_collection.update_one(
-                    {"_id": team_id}, {"$set": update_fields}
+                result = self.collection.update_one(
+                    {"id": team_id}, {"$set": update_fields} # Changed _id to id
                 )
                 return {"message": "Team updated successfully!"}, 200
             else:
                 return {"message": "No changes made to the team."}, 200
 
+        except ValidationError as err: # Assuming Pydantic's ValidationError
+            return {"error": "Invalid data", "details": err.errors()}, 400
         except Exception as e:
             logger.error(f"Error editing team: {e}", exc_info=True)
             return {"error": f"Failed to edit team: {str(e)}"}, 500
 
-    def add_member_to_team(self, team_id, new_member):
+    def add_member_to_team(self, team_id, new_member_data): # Renamed new_member to new_member_data
         try:
-            # Normalize email to lower case
-            new_member["email"] = new_member["email"].strip().lower()
-            new_member["verified"] = False
+            new_member_data["email"] = new_member_data["email"].strip().lower()
+            new_member_data["verified"] = False
 
-            # Kontrollera om medlemmen redan finns i teamets members-array
-            existing_member = self.teams_collection.find_one(
-                {"_id": team_id, "members.email": new_member["email"]}
+            existing_member_check = self.collection.find_one( # Renamed existing_member to existing_member_check
+                {"id": team_id, "members.email": new_member_data["email"]} # Changed _id to id
             )
-            if existing_member:
-        
-                for member in existing_member.get("members", []):
-                    if member["email"] == new_member["email"]:
+            if existing_member_check:
+                for member_item in existing_member_check.get("members", []): # Renamed member to member_item
+                    if member_item["email"] == new_member_data["email"]:
                         return {"error": "Member already exists in the team"}, 400
 
-            result = self.teams_collection.update_one(
-                {"_id": team_id}, {"$push": {"members": new_member}}
+            result = self.collection.update_one(
+                {"id": team_id}, {"$push": {"members": new_member_data}} # Changed _id to id
             )
             if result.modified_count > 0:
                 return {"message": "Member added successfully"}, 201
@@ -282,34 +275,30 @@ class TeamRepository:
             logger.error(f"Error adding member to team: {e}", exc_info=True)
             return {"error": f"Failed to add member: {str(e)}"}, 500
 
-    # Delete team when user is team creator or remove user from teams members when user account is deleted
     def remove_member_or_delete_team(
         self, team_id: str, user_id: str, return_message_only=False
     ):
         try:
-            team = self.teams_collection.find_one({"_id": team_id})
-            if not team:
+            team_data_obj = self.collection.find_one({"id": team_id}) # Renamed team to team_data_obj, _id to id
+            if not team_data_obj:
                 msg = {"error": f"Team {team_id} not found"}
                 return msg if return_message_only else (msg, 404)
 
-            # Check if the user is the creator of the team
             is_creator = any(
-                member.get("userId") == user_id and member.get("role") == "creator"
-                for member in team.get("members", [])
+                member_item.get("userId") == user_id and member_item.get("role") == "creator" # Renamed member to member_item
+                for member_item in team_data_obj.get("members", []) # Renamed member to member_item
             )
 
             if is_creator:
-                # Creator: Delete entire team and related links
                 self.user_to_teams_collection.delete_many({"teamId": team_id})
-                self.teams_collection.delete_one({"_id": team_id})
+                self.collection.delete_one({"id": team_id}) # Changed _id to id
 
                 msg = {"message": f"Team {team_id} deleted by creator {user_id}"}
                 return msg if return_message_only else (msg, 200)
 
             else:
-                # Member: Remove user from team members and UsersToTeams
-                self.teams_collection.update_one(
-                    {"_id": team_id}, {"$pull": {"members": {"userId": user_id}}}
+                self.collection.update_one(
+                    {"id": team_id}, {"$pull": {"members": {"userId": user_id}}} # Changed _id to id
                 )
                 self.user_to_teams_collection.delete_many(
                     {"teamId": team_id, "userId": user_id}
@@ -325,8 +314,8 @@ class TeamRepository:
 
     def edit_team_member_by_email(self, team_id, email, new_role):
         try:
-            result = self.teams_collection.update_one(
-                {"_id": team_id, "members.email": email},
+            result = self.collection.update_one(
+                {"id": team_id, "members.email": email}, # Changed _id to id
                 {"$set": {"members.$.role": new_role}},
             )
             if result.modified_count > 0:

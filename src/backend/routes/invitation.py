@@ -41,7 +41,7 @@ def send_invitation():
 
         user_email = user_account.get("email")
         if not user_email:
-            logger.error(f"User account {user_account.get('_id')} found but has no email address.")
+            logger.error(f"User account {user_account.get('id')} found but has no email address.") # Changed _id to id
             return jsonify({"error": "User account has no email address"}), 400
         
         # Assuming send_email is a generic email sending utility
@@ -107,11 +107,11 @@ def send_team_invite():
             logger.error("Failed to generate invite token")  # Debug log
             return jsonify({"error": "Failed to generate invite token"}), 500
 
-        team = collection.database.Teams.find_one({"_id": team_id})
+        team = collection.database.Teams.find_one({"id": team_id}) # Changed _id to id
         logger.info("Fetched team details: %s", team)  # Debug log
-        team_name = team.get("teamName", "Unnamed Team")
+        team_name = team.get("teamName", team.get("name", "Unnamed Team")) # Added fallback to 'name'
 
-        user = collection.database.Users.find_one({"_id": g.user_id})
+        user = collection.database.Users.find_one({"id": g.user_id}) # Changed _id to id
         inviter_name = user.get("fullName") if user else None
         logger.info("Inviter name: %s", inviter_name)  # Debug log
 
@@ -248,7 +248,7 @@ def get_user_invites():
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        user = collection.database.Users.find_one({"_id": g.user_id})
+        user = collection.database.Users.find_one({"id": g.user_id}) # Changed _id to id
         if not user or not user.get("email"):
             return jsonify({"error": "User email not found"}), 400
 

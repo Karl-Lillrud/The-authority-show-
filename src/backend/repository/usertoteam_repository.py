@@ -18,6 +18,10 @@ class UserToTeamRepository:
 
     def add_user_to_team(self, data):
         try:
+            # Validate required fields
+            if not data.get("teamId") or not data.get("userId") or not data.get("role"):
+                return {"error": "Missing teamId, userId, or role"}, 400
+
             # Validate data using Pydantic
             validated_data = UserToTeam(**data)
 
@@ -25,11 +29,11 @@ class UserToTeamRepository:
             team_id = validated_data.teamId
             role = validated_data.role
 
-            team = self.teams_collection.find_one({"_id": team_id})
+            team = self.teams_collection.find_one({"id": team_id})
             if not team:
                 return {"error": "Team not found"}, 404
 
-            user = self.users_collection.find_one({"_id": user_id})
+            user = self.users_collection.find_one({"id": user_id})
             if not user:
                 return {"error": "User not found"}, 404
 
@@ -42,7 +46,7 @@ class UserToTeamRepository:
             user_to_team_id = str(uuid4())
 
             user_to_team_item = validated_data.dict()
-            user_to_team_item["_id"] = user_to_team_id
+            user_to_team_item["id"] = user_to_team_id
 
             result = self.users_to_teams_collection.insert_one(user_to_team_item)
 
@@ -128,7 +132,7 @@ class UserToTeamRepository:
     def get_team_members(self, team_id):
         try:
             team_members = list(
-                self.users_to_teams_collection.find({"teamId": team_id}, {"_id": 0})
+                self.users_to_teams_collection.find({"teamId": team_id}, {"id": 0})
             )
 
             if not team_members:
@@ -138,7 +142,7 @@ class UserToTeamRepository:
             for member in team_members:
                 user_id = member.get("userId")
                 user_details = self.users_collection.find_one(
-                    {"_id": user_id}, {"_id": 0, "fullName": 1, "email": 1, "phone": 1}
+                    {"id": user_id}, {"id": 0, "fullName": 1, "email": 1, "phone": 1}
                 )
 
                 if user_details:
@@ -159,7 +163,7 @@ class UserToTeamRepository:
         try:
             user_teams = list(
                 self.users_to_teams_collection.find(
-                    {"userId": user_id}, {"teamId": 1, "_id": 0}
+                    {"userId": user_id}, {"teamId": 1, "id": 0}
                 )
             )
 
@@ -170,7 +174,7 @@ class UserToTeamRepository:
 
             teams = list(
                 self.teams_collection.find(
-                    {"_id": {"$in": team_ids}}, {"_id": 1, "name": 1}
+                    {"id": {"$in": team_ids}}, {"id": 1, "name": 1}
                 )
             )
 
@@ -195,14 +199,14 @@ class UserToTeamRepository:
 
     def get_all_team_members(self):
         try:
-            team_members = list(self.users_to_teams_collection.find({}, {"_id": 0}))
+            team_members = list(self.users_to_teams_collection.find({}, {"id": 0}))
             if not team_members:
                 return {"message": "No members found"}, 404
             members_details = []
             for member in team_members:
                 user_id = member.get("userId")
                 user_details = self.users_collection.find_one(
-                    {"_id": user_id}, {"_id": 0}
+                    {"id": user_id}, {"id": 0}
                 )
                 if user_details:
                     user_details["role"] = member.get("role")
@@ -225,7 +229,7 @@ class UserToTeamRepository:
                 update_fields_teams["members.$.phone"] = phone
 
             result_teams = self.teams_collection.update_one(
-                {"_id": team_id, "members.userId": user_id},
+                {"id": team_id, "members.userId": user_id},
                 {"$set": update_fields_teams},
             )
             if result_teams.modified_count == 0:
@@ -249,7 +253,7 @@ class UserToTeamRepository:
 
             if update_fields_users:
                 result_users = self.users_collection.update_one(
-                    {"_id": user_id}, {"$set": update_fields_users}
+                    {"id": user_id}, {"$set": update_fields_users}
                 )
                 if result_users.modified_count == 0:
                     logger.warning("Failed to update user details in Users collection")
@@ -279,14 +283,14 @@ class UserToTeamRepository:
 
                 # Remove member from Teams array using user_id
                 result = self.teams_collection.update_one(
-                    {"_id": team_id}, {"$pull": {"members": {"userId": user_id}}}
+                    {"id": team_id}, {"$pull": {"members": {"userId": user_id}}}
                 )
                 if result.modified_count == 0:
                     logger.error("Failed to delete member from Teams array")
                     return {"error": "Failed to delete member from Teams array"}, 500
 
-                # Delete the user from Users collection by _id
-                delete_user_result = self.users_collection.delete_one({"_id": user_id})
+                # Delete the user from Users collection by id
+                delete_user_result = self.users_collection.delete_one({"id": user_id})
                 if delete_user_result.deleted_count == 0:
                     logger.warning(
                         "User not found in Users collection, skipping deletion"
@@ -299,7 +303,7 @@ class UserToTeamRepository:
             elif email:
                 # Remove unverified member from Teams array via email
                 result = self.teams_collection.update_one(
-                    {"_id": team_id, "members.email": email, "members.verified": False},
+                    {"id": team_id, "members.email": email, "members.verified": False},
                     {"$pull": {"members": {"email": email, "verified": False}}},
                 )
                 if result.modified_count == 0:

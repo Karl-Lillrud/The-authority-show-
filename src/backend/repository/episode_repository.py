@@ -39,7 +39,7 @@ class EpisodeRepository:
                 if not can_create:
                     return {"error": "Episode limit reached", "reason": reason}, 403
 
-            account_id = user_account.get("id", str(user_account["_id"]))
+            account_id = user_account.get("id", str(user_account["id"]))
             if 'accountId' not in data:
                 data['accountId'] = account_id
 
@@ -47,7 +47,7 @@ class EpisodeRepository:
 
             episode_id = str(uuid.uuid4())
             episode_doc = {
-                "_id": episode_id,
+                "id": episode_id,
                 "podcast_id": validated.get("podcastId"),
                 "title": validated.get("title"),
                 "description": validated.get("description"),
@@ -106,7 +106,7 @@ class EpisodeRepository:
         """Get a single episode by its ID and user."""
         try:
             result = self.collection.find_one(
-                {"_id": episode_id, "userid": str(user_id)}
+                {"id": episode_id, "userid": str(user_id)}
             )
             if not result:
                 return {"error": "Episode not found"}, 404
@@ -119,7 +119,7 @@ class EpisodeRepository:
         try:
             results = list(self.collection.find({"userid": str(user_id)}))
             for ep in results:
-                ep["_id"] = str(ep["_id"])
+                ep["id"] = str(ep["id"])
             return {"episodes": results}, 200
         except Exception as e:
             return {"error": f"Failed to fetch episodes: {str(e)}"}, 500
@@ -127,7 +127,7 @@ class EpisodeRepository:
     def delete_episode(self, episode_id, user_id):
         """Delete an episode if it belongs to the user."""
         try:
-            ep = self.collection.find_one({"_id": episode_id})
+            ep = self.collection.find_one({"id": episode_id})
             if not ep:
                 return {"error": "Episode not found"}, 404
             if ep["userid"] != str(user_id):
@@ -137,7 +137,7 @@ class EpisodeRepository:
                 "title", "Unknown Title"
             )  # Get title before deleting
 
-            result = self.collection.delete_one({"_id": episode_id})
+            result = self.collection.delete_one({"id": episode_id})
             if result.deleted_count == 1:
                 try:
                     self.activity_service.log_activity(
@@ -163,7 +163,7 @@ class EpisodeRepository:
     def update_episode(self, episode_id, user_id, data, audio_file=None):
         """Update an episode if it belongs to the user, including handling audio file uploads."""
         try:
-            ep = self.collection.find_one({"_id": episode_id})
+            ep = self.collection.find_one({"id": episode_id})
             if not ep:
                 return {"error": "Episode not found"}, 404
             if ep["userid"] != str(user_id):
@@ -274,7 +274,7 @@ class EpisodeRepository:
                 logger.info(f"No valid fields to update for episode {episode_id} besides timestamp.")
                 return {"message": "No valid changes detected"}, 200
 
-            result = self.collection.update_one({"_id": episode_id}, {"$set": update_fields})
+            result = self.collection.update_one({"id": episode_id}, {"$set": update_fields})
 
             if result.matched_count == 0:
                 logger.error(f"Failed to find episode {episode_id} during MongoDB update operation.")
@@ -282,9 +282,9 @@ class EpisodeRepository:
             if result.modified_count == 0 and result.matched_count == 1:
                 logger.info(f"Episode {episode_id} found but no fields were modified by the update operation.")
 
-            updated_ep = self.collection.find_one({"_id": episode_id})
-            if updated_ep and "_id" in updated_ep:
-                updated_ep["_id"] = str(updated_ep["_id"])
+            updated_ep = self.collection.find_one({"id": episode_id})
+            if updated_ep and "id" in updated_ep:
+                updated_ep["id"] = str(updated_ep["id"])
 
             log_title = updated_ep.get("title", ep.get("title", "Unknown Title"))
 
@@ -317,7 +317,7 @@ class EpisodeRepository:
                 self.collection.find({"podcast_id": podcast_id, "userid": str(user_id)})
             )
             for ep in episodes:
-                ep["_id"] = str(ep["_id"])
+                ep["id"] = str(ep["id"])
             return {"episodes": episodes}, 200
         except Exception as e:
             logger.error("❌ ERROR: %s", e)
@@ -338,12 +338,12 @@ class EpisodeRepository:
     def get_episode_detail_with_podcast(self, episode_id):
         """Fetch an episode along with its associated podcast."""
         try:
-            episode = self.collection.find_one({"_id": episode_id})
+            episode = self.collection.find_one({"id": episode_id})
             if not episode:
                 return None, None
             podcast = (
                 collection.database.Podcasts.find_one(
-                    {"_id": episode.get("podcast_id")}
+                    {"id": episode.get("podcast_id")}
                 )
                 or {}
             )
@@ -358,7 +358,7 @@ class EpisodeRepository:
         Raises ValueError if not found.
         """
         doc = collection.database.Episodes.find_one(
-            {"_id": episode_id}, {"podcast_id": 1}
+            {"id": episode_id}, {"podcast_id": 1}
         )
         if doc and "podcast_id" in doc:
             return doc["podcast_id"]

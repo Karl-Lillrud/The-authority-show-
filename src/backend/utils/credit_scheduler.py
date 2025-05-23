@@ -24,7 +24,7 @@ def get_all_user_ids_with_credits() -> list[str]:
     try:
         db = get_db()
         # Find users who actually have a credit document to reset
-        credit_docs = db.Credits.find({}, {"user_id": 1, "_id": 0})
+        credit_docs = db.Credits.find({}, {"user_id": 1, "id": 0})
         user_ids = [doc["user_id"] for doc in credit_docs if "user_id" in doc]
         logger.info(f"Found {len(user_ids)} users with credit documents to potentially reset.")
     except Exception as e:
@@ -45,7 +45,7 @@ def get_sub_allowance_for_user(user_id: str) -> int:
         db = get_db()
         # Example: Fetch subscription or account info
         # account = db.Accounts.find_one({"ownerId": user_id})
-        # subscription = db.Subscriptions.find_one({"_id": account.get("subscriptionId")}) if account else None
+        # subscription = db.Subscriptions.find_one({"id": account.get("subscriptionId")}) if account else None
         # if subscription and subscription.get("plan") == "premium":
         #     return 5000 # Example premium allowance
         # elif subscription and subscription.get("plan") == "pro":

@@ -46,10 +46,10 @@ class PodcastRepository:
                 raise ValueError("No account associated with this user (owner)")
             else:
                 logger.info(
-                    f"Found account for ownerId {user_id}: Account _id: {user_account.get('_id')}"
+                    f"Found account for ownerId {user_id}: Account id: {user_account.get('id')}"
                 )
 
-            account_id = str(user_account["_id"])
+            account_id = str(user_account["id"])
             data["accountId"] = account_id
 
             # Validate data using Podcast
@@ -62,7 +62,7 @@ class PodcastRepository:
 
             # Ensure account exists and belongs to the user (redundant check, but safe)
             account = collection.database.Accounts.find_one(
-                {"_id": account_id, "ownerId": user_id}
+                {"id": account_id, "ownerId": user_id}
             )  # Check ownerId here too
             if not account:
                 logger.error(
@@ -73,7 +73,7 @@ class PodcastRepository:
             # Generate a unique podcast ID
             podcast_id = str(uuid.uuid4())
             podcast_item = {
-                "_id": podcast_id,
+                "id": podcast_id,
                 "teamId": validated_data.get("teamId"),
                 "accountId": account_id,
                 "podName": validated_data.get("podName"),
@@ -148,9 +148,9 @@ class PodcastRepository:
         try:
             # Find accounts owned by the user
             user_accounts = list(
-                collection.database.Accounts.find({"ownerId": user_id}, {"_id": 1})
+                collection.database.Accounts.find({"ownerId": user_id}, {"id": 1})
             )  # Query by ownerId
-            user_account_ids = [str(account["_id"]) for account in user_accounts]
+            user_account_ids = [str(account["id"]) for account in user_accounts]
 
             if not user_account_ids:
                 return {"podcast": []}, 200  # No podcasts if no accounts
@@ -159,7 +159,7 @@ class PodcastRepository:
                 self.collection.find({"accountId": {"$in": user_account_ids}})
             )
             for podcast in podcasts:
-                podcast["_id"] = str(podcast["_id"])
+                podcast["id"] = str(podcast["id"])
                 # Set image URL from RSS feed if available
                 if podcast.get("rssFeed"):
                     try:
@@ -167,7 +167,7 @@ class PodcastRepository:
                         if status_code == 200 and rss_data and rss_data.get("imageUrl"):
                             # Update the podcast in the database with the RSS image URL
                             self.collection.update_one(
-                                {"_id": podcast["_id"]},
+                                {"id": podcast["id"]},
                                 {"$set": {"rssImage": rss_data["imageUrl"]}}
                             )
                             podcast["rssImage"] = rss_data["imageUrl"]
@@ -187,23 +187,23 @@ class PodcastRepository:
         try:
             user_accounts = list(
                 collection.database.Accounts.find(
-                    {"ownerId": user_id}, {"id": 1, "_id": 1}
+                    {"ownerId": user_id}, {"id": 1, "id": 1}
                 )
             )
             user_account_ids = [
-                account.get("id", str(account["_id"])) for account in user_accounts
+                account.get("id", str(account["id"])) for account in user_accounts
             ]
 
             if not user_account_ids:
                 return {"error": "No accounts found for user"}, 403
 
             podcast = self.collection.find_one(
-                {"_id": podcast_id, "accountId": {"$in": user_account_ids}}
+                {"id": podcast_id, "accountId": {"$in": user_account_ids}}
             )
             if not podcast:
                 return {"error": "Podcast not found or unauthorized"}, 404
 
-            podcast["_id"] = str(podcast["_id"])
+            podcast["id"] = str(podcast["id"])
             
             # Set image URL from RSS feed if available
             if podcast.get("rssFeed"):
@@ -229,11 +229,11 @@ class PodcastRepository:
             # Fetch user account IDs
             user_accounts = list(
                 collection.database.Accounts.find(
-                    {"ownerId": user_id}, {"id": 1, "_id": 1}
+                    {"ownerId": user_id}, {"id": 1, "id": 1}
                 )
             )
             user_account_ids = [
-                account.get("id", str(account["_id"])) for account in user_accounts
+                account.get("id", str(account["id"])) for account in user_accounts
             ]
 
             if not user_account_ids:
@@ -241,13 +241,13 @@ class PodcastRepository:
 
             # Find podcast by podcast_id and accountId
             podcast = self.collection.find_one(
-                {"_id": podcast_id, "accountId": {"$in": user_account_ids}}
+                {"id": podcast_id, "accountId": {"$in": user_account_ids}}
             )
             if not podcast:
                 raise ValueError("Podcast not found or unauthorized")
 
             # Perform delete operation
-            result = self.collection.delete_one({"_id": podcast_id})
+            result = self.collection.delete_one({"id": podcast_id})
             if result.deleted_count == 1:
                 # --- Add activity log for podcast deletion ---
                 try:
@@ -284,11 +284,11 @@ class PodcastRepository:
             # Fetch user account IDs
             user_accounts = list(
                 collection.database.Accounts.find(
-                    {"ownerId": user_id}, {"id": 1, "_id": 1}
+                    {"ownerId": user_id}, {"id": 1, "id": 1}
                 )
             )
             user_account_ids = [
-                account.get("id", str(account["_id"])) for account in user_accounts
+                account.get("id", str(account["id"])) for account in user_accounts
             ]
 
             if not user_account_ids:
@@ -296,7 +296,7 @@ class PodcastRepository:
 
             # Find podcast by podcast_id and accountId
             podcast = self.collection.find_one(
-                {"_id": podcast_id, "accountId": {"$in": user_account_ids}}
+                {"id": podcast_id, "accountId": {"$in": user_account_ids}}
             )
             if not podcast:
                 raise ValueError("Podcast not found or unauthorized")
@@ -318,7 +318,7 @@ class PodcastRepository:
 
             # Perform update operation
             result = self.collection.update_one(
-                {"_id": podcast_id}, {"$set": update_data}
+                {"id": podcast_id}, {"$set": update_data}
             )
 
             if result.modified_count == 1:
@@ -355,7 +355,7 @@ class PodcastRepository:
     def delete_by_user(self, user_id):
         try:
             accounts = list(collection.database.Accounts.find({"ownerId": user_id}))
-            account_ids = [str(a.get("id", a["_id"])) for a in accounts]
+            account_ids = [str(a.get("id", a["id"])) for a in accounts]
             result = self.collection.delete_many({"accountId": {"$in": account_ids}})
             logger.info(
                 f"🧹 Deleted {result.deleted_count} podcasts for user {user_id}"

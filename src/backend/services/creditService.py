@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def get_store_credits(user_id):
     credits = get_credits_by_user_id(user_id)
     if credits:
-        credits["_id"] = str(credits["_id"])
+        credits["id"] = str(credits["id"])
     return credits
 
 
@@ -83,7 +83,7 @@ def initialize_credits(user_id: str, initial_amount=3000):
     if not existing:
 
         credit_doc = {
-            "_id": str(uuid.uuid4()),
+            "id": str(uuid.uuid4()),
             "user_id": user_id,
             "availableCredits": initial_amount,
             "usedCredits": 0,
@@ -91,7 +91,7 @@ def initialize_credits(user_id: str, initial_amount=3000):
             "lastUpdated": datetime.utcnow(),
             "creditsHistory": [
                 {
-                    "_id": str(uuid.uuid4()),
+                    "id": str(uuid.uuid4()),
                     "timestamp": datetime.utcnow(),
                     "amount": initial_amount,
                     "type": "initial",
@@ -279,7 +279,7 @@ def reset_monthly_credits(user_id, plan_name):
 
         # Update the subCredits field to reset monthly credits
         result = collection.database.Accounts.update_one(
-            {"_id": account["_id"]}, {"$set": {"subCredits": credits_amount}}
+            {"id": account["id"]}, {"$set": {"subCredits": credits_amount}}
         )
 
         if result.modified_count > 0:

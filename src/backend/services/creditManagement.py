@@ -59,8 +59,8 @@ class CreditService:
             "subCredits", 0
         ) + credits_doc.get("storeCredits", 0)
 
-        if "_id" in credits_doc:
-            credits_doc["_id"] = str(credits_doc["_id"])
+        if "id" in credits_doc:
+            credits_doc["id"] = str(credits_doc["id"])
 
         # Remove internal tracking fields before returning if desired
         credits_doc.pop("lastSubResetMonth", None)

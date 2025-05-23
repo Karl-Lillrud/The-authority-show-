@@ -33,7 +33,7 @@ class UserRepository:
         try:
             # Always use string ID
             string_user_id = str(user_id)
-            return self.user_collection.find_one({"_id": string_user_id})
+            return self.user_collection.find_one({"id": string_user_id})
         except Exception as e:
             logger.error(f"Error in get_user_by_id: {e}", exc_info=True)
             return None
@@ -46,7 +46,7 @@ class UserRepository:
             # Always use string ID
             string_user_id = str(user_id)
             user = self.user_collection.find_one(
-                {"_id": string_user_id}, {"email": 1, "full_name": 1, "phone": 1, "profile_pic_url": 1}
+                {"id": string_user_id}, {"email": 1, "full_name": 1, "phone": 1, "profile_pic_url": 1}
             )
 
             if not user:
@@ -75,7 +75,7 @@ class UserRepository:
             if not updates:
                 return {"error": "No valid fields provided for update"}, 400
 
-            self.user_collection.update_one({"_id": string_user_id}, {"$set": updates})
+            self.user_collection.update_one({"id": string_user_id}, {"$set": updates})
 
             return {"message": "Profile updated successfully!"}, 200
 
@@ -96,7 +96,7 @@ class UserRepository:
             # Always use string ID
             string_user_id = str(user_id)
             result = self.user_collection.update_one(
-                {"_id": string_user_id},
+                {"id": string_user_id},
                 {"$set": {"profile_pic_url": profile_pic_url}}
             )
 
@@ -202,7 +202,7 @@ class UserRepository:
             if not user:
                 return {"error": "User does not exist in the database."}, 404
 
-            user_id = user.get("_id")
+            user_id = user.get("id")
             # Always use string ID
             user_id_str = str(user_id)
 
@@ -213,7 +213,7 @@ class UserRepository:
                 return {"error": "Failed to clean up user data"}, 500
 
             # Finally delete the user document
-            user_result = self.user_collection.delete_one({"_id": user_id_str})
+            user_result = self.user_collection.delete_one({"id": user_id_str})
 
             if user_result.deleted_count == 0:
                 return {"error": "User deletion failed."}, 500
@@ -248,7 +248,7 @@ class UserRepository:
             
             # Update using string ID
             result = self.user_collection.update_one(
-                {"_id": string_user_id},
+                {"id": string_user_id},
                 {"$set": user_data}
             )
             
@@ -259,7 +259,7 @@ class UserRepository:
                 logger.info(f"Successfully updated user {string_user_id} with tokens")
                 
                 # Verify the update
-                user = self.user_collection.find_one({"_id": string_user_id})
+                user = self.user_collection.find_one({"id": string_user_id})
                 if user and user.get("googleCalRefreshToken") == refresh_token:
                     logger.info(f"Verified tokens saved for user {string_user_id}")
                     return {"message": "Tokens saved successfully"}, 200

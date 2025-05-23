@@ -24,7 +24,7 @@ def get_activities():
             .limit(30)  # Increase from 10 to 30
         )
         for activity in activities:
-            activity["_id"] = str(activity["_id"])
+            activity["id"] = str(activity["id"])  # Changed _id to id
             activity["createdAt"] = activity["createdAt"].isoformat()
         return jsonify(activities), 200
     except Exception as e:

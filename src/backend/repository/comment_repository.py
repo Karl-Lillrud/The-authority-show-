@@ -2,7 +2,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Tuple, Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from backend.database.mongo_connection import collection
 
@@ -10,103 +10,115 @@ logger = logging.getLogger(__name__)
 
 # Define Pydantic model for Comment
 class Comment(BaseModel):
-    id: Optional[str] = Field(default=None, alias="_id")
+    id: Optional[str] = Field(default=None) # Removed alias="id"
     userId: str
-    podtaskId: str
-    text: str
+    podtaskId: str # Assuming this is the correct linking field based on add_comment
+    content: str # Assuming 'text' field from original is 'content' here, or vice-versa
+    userName: Optional[str] = None # Added from add_comment logic
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: Optional[datetime] = None
+    text: Optional[str] = None # From original add_comment, if different from content
+
 
 class CommentRepository:
     
     def __init__(self):
         """Initialize collections from database."""
         self.comments_collection = collection.database.Comments
-        self.podtasks_collection = collection.database.Podtasks
+        self.podtasks_collection = collection.database.Podtasks # Assuming this is used for podtaskId validation
         self.users_collection = collection.database.Users
     
     def add_comment(self, user_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         try:
+            data["userId"] = str(user_id) # Ensure userId is part of data for Pydantic model
+            if "text" in data and "content" not in data: # Map text to content if that's the model field
+                data["content"] = data["text"]
+            
             # Validate data using Pydantic model
             validated_comment = Comment(**data)
-            validated_data = validated_comment.dict()
             
             # Verify the podtask exists
-            podtask_id = validated_data.get("podtaskId")
-            podtask = self.podtasks_collection.find_one({"_id": podtask_id})
+            podtask_id_val = validated_comment.podtaskId # Renamed podtask_id to podtask_id_val
+            podtask = self.podtasks_collection.find_one({"id": podtask_id_val}) # Query by id
             if not podtask:
-                logger.warning(f"Podtask not found: {podtask_id}")
+                logger.warning(f"Podtask not found: {podtask_id_val}")
                 return {"error": "Podtask not found"}, 404
             
-            # Add required fields
-            validated_data["userId"] = str(user_id)
-            validated_data["createdAt"] = datetime.now(timezone.utc)
-            
             # Try to get user name from users collection
-            user = self.users_collection.find_one({"_id": str(user_id)})
+            user = self.users_collection.find_one({"id": str(user_id)}) # Query by id
             if user:
-                # Handle different user name field formats
-                validated_data["userName"] = user.get("fullName") or user.get("full_name") or user.get("name") or "Unknown User"
+                validated_comment.userName = user.get("fullName") or user.get("full_name") or user.get("name") or "Unknown User"
             
-            # Generate unique ID for the comment
-            comment_id = str(uuid.uuid4())
+            comment_document = validated_comment.dict(exclude_none=True) # Use exclude_none=True
             
-            # Create comment document
-            comment_document = {
-                "_id": comment_id,
-                "podtaskId": validated_data.get("podtaskId"),
-                "userId": validated_data.get("userId"),
-                "userName": validated_data.get("userName", "Unknown User"),
-                "text": validated_data.get("text", ""),
-                "createdAt": validated_data.get("createdAt"),
-            }
+            # Ensure 'id' is set if not provided by model default (e.g. if it's not optional or no factory)
+            if "id" not in comment_document or not comment_document["id"]:
+                 comment_document["id"] = str(uuid.uuid4())
             
             # Insert into database
             result = self.comments_collection.insert_one(comment_document)
             
-            if result.inserted_id:
-                logger.info(f"Successfully added comment with ID: {comment_id}")
+            if result.inserted_id: # inserted_id will be the value of the 'id' field
+                comment_id_inserted = comment_document["id"]
+                logger.info(f"Successfully added comment with ID: {comment_id_inserted}")
                 
-                # Update the podtask to include this comment reference
                 self.podtasks_collection.update_one(
-                    {"_id": podtask_id},
-                    {"$push": {"comments": comment_id}}
+                    {"id": podtask_id_val}, # Query by id
+                    {"$push": {"comments": comment_id_inserted}}
                 )
                 
+                # Prepare comment_document for response, ensuring 'id' is string
+                comment_document_response = {**comment_document}
+                comment_document_response["id"] = str(comment_document_response["id"])
+                if isinstance(comment_document_response.get("createdAt"), datetime):
+                    comment_document_response["createdAt"] = comment_document_response["createdAt"].isoformat()
+                if isinstance(comment_document_response.get("updatedAt"), datetime):
+                    comment_document_response["updatedAt"] = comment_document_response["updatedAt"].isoformat()
+
+
                 return {
                     "message": "Comment added successfully", 
-                    "comment_id": comment_id,
-                    "comment": comment_document
+                    "comment_id": comment_id_inserted,
+                    "comment": comment_document_response
                 }, 201
             else:
                 logger.error("Database insert returned without error but no ID was created")
                 return {"error": "Failed to add comment"}, 500
                 
+        except ValidationError as err: # Pydantic's ValidationError
+            logger.warning(f"Validation error during comment creation: {err.errors()}")
+            return {"error": "Invalid data", "details": err.errors()}, 400
         except Exception as e:
             logger.error(f"Error adding comment: {e}", exc_info=True)
             return {"error": f"Failed to add comment: {str(e)}"}, 500
     
     def get_comments_by_podtask(self, user_id: str, podtask_id: str) -> Tuple[Dict[str, Any], int]:
         try:
-            # Verify the podtask exists and user has access
-            podtask = self.podtasks_collection.find_one({"_id": podtask_id})
+            podtask = self.podtasks_collection.find_one({"id": podtask_id}) # Query by id
             if not podtask:
                 logger.warning(f"Podtask not found: {podtask_id}")
                 return {"error": "Podtask not found"}, 404
             
-            # Find all comments for this podtask
-            comments = list(self.comments_collection.find({"podtaskId": podtask_id}).sort("createdAt", 1))
+            # Add user access check if podtask is user-specific
+            # if podtask.get("userid") != str(user_id):
+            #     logger.warning(f"User {user_id} does not have access to podtask {podtask_id}")
+            #     return {"error": "Permission denied"}, 403
+
+            comments_cursor = list(self.comments_collection.find({"podtaskId": podtask_id}).sort("createdAt", 1))
             
-            for comment in comments:
-                comment["_id"] = str(comment["_id"])
-                # Format dates for frontend
-                if "createdAt" in comment:
-                    comment["createdAt"] = comment["createdAt"].isoformat()
-                if "updatedAt" in comment and comment["updatedAt"]:
-                    comment["updatedAt"] = comment["updatedAt"].isoformat()
+            for comment_item in comments_cursor: # Renamed comment to comment_item
+                if "id" in comment_item and "id" not in comment_item: # Handle if DB still has _id
+                    comment_item["id"] = str(comment_item.pop("id"))
+                elif "id" in comment_item:
+                    comment_item["id"] = str(comment_item["id"])
+                
+                if "createdAt" in comment_item and isinstance(comment_item["createdAt"], datetime):
+                    comment_item["createdAt"] = comment_item["createdAt"].isoformat()
+                if "updatedAt" in comment_item and isinstance(comment_item["updatedAt"], datetime):
+                    comment_item["updatedAt"] = comment_item["updatedAt"].isoformat()
             
-            logger.info(f"Retrieved {len(comments)} comments for podtask {podtask_id}")
-            return {"comments": comments}, 200
+            logger.info(f"Retrieved {len(comments_cursor)} comments for podtask {podtask_id}")
+            return {"comments": comments_cursor}, 200
             
         except Exception as e:
             logger.error(f"Error fetching comments: {e}", exc_info=True)
@@ -114,30 +126,25 @@ class CommentRepository:
     
     def delete_comment(self, user_id: str, comment_id: str) -> Tuple[Dict[str, Any], int]:
         try:
-            # Find comment
-            comment = self.comments_collection.find_one({"_id": comment_id})
-            if not comment:
+            comment_doc = self.comments_collection.find_one({"id": comment_id}) # Query by id, Renamed comment to comment_doc
+            if not comment_doc:
                 logger.warning(f"Comment not found: {comment_id}")
                 return {"error": "Comment not found"}, 404
             
-            # Verify ownership
-            if comment["userId"] != str(user_id):
+            if comment_doc.get("userId") != str(user_id): # Use .get for safety
                 logger.warning(f"Permission denied for user {user_id} to delete comment {comment_id}")
                 return {"error": "Permission denied"}, 403
             
-            # Get the podtask ID before deleting the comment
-            podtask_id = comment.get("podtaskId")
+            podtask_id_val = comment_doc.get("podtaskId") # Renamed podtask_id to podtask_id_val
             
-            # Delete the comment
-            result = self.comments_collection.delete_one({"_id": comment_id})
+            result = self.comments_collection.delete_one({"id": comment_id}) # Delete by id
             
             if result.deleted_count == 1:
                 logger.info(f"Successfully deleted comment {comment_id}")
                 
-                # Remove the comment reference from the podtask
-                if podtask_id:
+                if podtask_id_val:
                     self.podtasks_collection.update_one(
-                        {"_id": podtask_id},
+                        {"id": podtask_id_val}, # Query by id
                         {"$pull": {"comments": comment_id}}
                     )
                 
@@ -152,30 +159,29 @@ class CommentRepository:
     
     def update_comment(self, user_id: str, comment_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         try:
-            # Find comment
-            comment = self.comments_collection.find_one({"_id": comment_id})
-            if not comment:
+            comment_doc = self.comments_collection.find_one({"id": comment_id}) # Query by id, Renamed comment to comment_doc
+            if not comment_doc:
                 logger.warning(f"Comment not found: {comment_id}")
                 return {"error": "Comment not found"}, 404
             
-            # Verify ownership
-            if comment["userId"] != str(user_id):
+            if comment_doc.get("userId") != str(user_id): # Use .get for safety
                 logger.warning(f"Permission denied for user {user_id} to update comment {comment_id}")
                 return {"error": "Permission denied"}, 403
             
-            # Only allow updating the text field
-            if "text" not in data:
-                return {"error": "No text provided for update"}, 400
+            # Assuming 'text' or 'content' is the field to update
+            update_payload = {}
+            if "text" in data:
+                update_payload["text"] = data["text"]
+            elif "content" in data: # If model uses 'content'
+                update_payload["content"] = data["content"]
+            else:
+                return {"error": "No text/content provided for update"}, 400
             
-            # Update the comment
-            update_data = {
-                "text": data["text"],
-                "updatedAt": datetime.now(timezone.utc)
-            }
+            update_payload["updatedAt"] = datetime.now(timezone.utc)
             
             result = self.comments_collection.update_one(
-                {"_id": comment_id},
-                {"$set": update_data}
+                {"id": comment_id}, # Query by id
+                {"$set": update_payload}
             )
             
             if result.modified_count == 1:

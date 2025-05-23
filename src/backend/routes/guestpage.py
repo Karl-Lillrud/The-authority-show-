@@ -52,18 +52,18 @@ def guestpage(guest_id):
         social_media = map_social_links_from_fields(guest)
 
         # Fetch episodes for the guest
-        episode_id = guest.get("episodeId")
-        episode = {}
-        if episode_id:
-            episode_data, status = episode_repo.get_episode(episode_id, user_id)
+        episode_id_val = guest.get("episodeId") # Renamed episode_id to episode_id_val
+        episode_doc = {} # Renamed episode to episode_doc
+        if episode_id_val:
+            episode_data, status = episode_repo.get_episode(episode_id_val, user_id)
             if status == 200:
-                episode = {
-                    "_id": episode_data.get("_id"),
+                episode_doc = {
+                    "id": episode_data.get("id"), # Changed _id to id
                     "title": episode_data.get("title"),
                     "description": episode_data.get("description"),
                     "banner": episode_data.get("imageUrl", "") or url_for('static', filename='images/default_banner.png'),
                 }
-        episodes_list = [episode] if episode else []
+        episodes_list = [episode_doc] if episode_doc else []
 
         return render_template(
             "guestpage/guestpage.html",
@@ -78,7 +78,7 @@ def guestpage(guest_id):
             guest_status=guest.get("status", ""),
             scheduled=guest.get("scheduled", 0),
             completed=guest.get("completed", 0),
-            created_at=guest.get("created_at", ""),
+            created_at=guest.get("created_at", ""), # Assuming created_at is the field name
             episodes=episodes_list,
             social_media=social_media
         )
