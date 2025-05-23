@@ -5,7 +5,7 @@ from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.podcast_repository import PodcastRepository
 from backend.services.rss_Service import RSSService
 from backend.utils.blob_storage import upload_file_to_blob  # For any generic blob uploads
-from azure.storage.blob import BlobServiceClient # Add this import
+from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions # Modified import
 
 class PublishService:
     def __init__(self):
@@ -188,20 +188,24 @@ class PublishService:
 
         blob_name = f"uploads/{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{safe_filename_segment}"
         
+        account_name = blob_service_client.account_name
         account_key = blob_service_client.credential.account_key
+        
         if not account_key:
             current_app.logger.error("Failed to retrieve account key from BlobServiceClient. Check connection string.")
             raise ValueError("Could not retrieve storage account key for SAS token generation.")
 
-        sas_token = blob_service_client.generate_blob_sas(
-            account_name=blob_service_client.account_name,
-            container_name=self.azure_storage_container_name, # Use initialized container name
+        # Ensure generate_blob_sas is called as a standalone function
+        # and BlobSasPermissions is used for the permission argument.
+        sas_token = generate_blob_sas(
+            account_name=account_name,
+            container_name=self.azure_storage_container_name,
             blob_name=blob_name,
             account_key=account_key,
-            permission="w", # Write permission
-            expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1), # Increased expiry to 1 hour
+            permission=BlobSasPermissions(write=True), # Correct usage
+            expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1),
             content_type=content_type,
         )
-        upload_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{self.azure_storage_container_name}/{blob_name}?{sas_token}"
-        blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{self.azure_storage_container_name}/{blob_name}"
+        upload_url = f"https://{account_name}.blob.core.windows.net/{self.azure_storage_container_name}/{blob_name}?{sas_token}"
+        blob_url = f"https://{account_name}.blob.core.windows.net/{self.azure_storage_container_name}/{blob_name}"
         return upload_url, blob_url

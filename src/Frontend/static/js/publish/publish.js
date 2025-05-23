@@ -410,6 +410,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const headers = {
                   'x-ms-blob-type': 'BlockBlob',
                   'Content-Type': imageFile.type
+                  // Note: If you encounter CORS issues here, ensure your Azure Blob Storage account
+                  // has CORS rules configured to allow PUT requests from this origin (e.g., http://127.0.0.1:8000)
+                  // and allows the 'x-ms-blob-type' and 'Content-Type' headers.
                 };
 
                 await fetch(uploadUrl, {
