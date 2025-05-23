@@ -1,13 +1,14 @@
 import os
 import logging
 from colorama import init
-from flask import Flask, request, session, g
+from flask import Flask, request, session, g, Response, abort, current_app
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from dotenv import load_dotenv
+import requests
 
 # Import blueprints
-from backend.routes.publish import publish_bp # Import the publish blueprint
+from backend.routes.publish import publish_bp
 from backend.routes.auth import auth_bp
 from backend.routes.podcast import podcast_bp
 from backend.routes.dashboard import dashboard_bp
@@ -47,6 +48,7 @@ from backend.routes.recording_studio import recording_studio_bp
 from backend.utils.scheduler import start_scheduler
 from backend.utils.credit_scheduler import init_credit_scheduler
 from backend.utils import venvupdate
+from backend.database.mongo_connection import collection # For direct DB access in helper
 
 # Start environment setup
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -105,7 +107,7 @@ app.register_blueprint(enterprise_bp, url_prefix="/enterprise")
 app.register_blueprint(lia_bp, url_prefix="/lia")
 app.register_blueprint(index_bp)
 app.register_blueprint(recording_studio_bp)
-app.register_blueprint(publish_bp) # Register the publish blueprint
+app.register_blueprint(publish_bp, url_prefix='/publish') # Register the publish blueprint
 
 # Set up environment and logging
 APP_ENV = os.getenv("APP_ENV", "production")
@@ -145,6 +147,84 @@ init_credit_scheduler(app)
 
 # 🔌 Register socket events
 register_socketio_events(socketio)
+
+def get_actual_rss_blob_url(podcast_id_for_proxy: str):
+    """
+    Constructs the direct Azure Blob Storage URL for a podcast's RSS feed.
+    """
+    try:
+        podcast_doc = collection.database.Podcasts.find_one({"_id": podcast_id_for_proxy})
+        if not podcast_doc:
+            current_app.logger.warning(f"Proxy: Podcast with ID {podcast_id_for_proxy} not found.")
+            return None
+
+        account_id = podcast_doc.get("accountId")
+        if not account_id:
+            current_app.logger.warning(f"Proxy: AccountId not found for podcast {podcast_id_for_proxy}.")
+            return None
+
+        account_doc = collection.database.Accounts.find_one({"_id": account_id})
+        if not account_doc:
+            current_app.logger.warning(f"Proxy: Account with ID {account_id} not found.")
+            return None
+        
+        owner_id = account_doc.get("ownerId")
+        if not owner_id:
+            current_app.logger.warning(f"Proxy: OwnerId not found for account {account_id}.")
+            return None
+
+        azure_account_name = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
+        azure_container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME")
+
+        if not azure_account_name or not azure_container_name:
+            current_app.logger.error("Proxy: Azure Storage Account Name or Container Name not configured in .env.")
+            return None
+
+        # This path structure must match exactly how RSSService uploads it.
+        blob_path = f"users/{owner_id}/podcasts/{podcast_id_for_proxy}/rss/feed.xml"
+        blob_url = f"https://{azure_account_name}.blob.core.windows.net/{azure_container_name}/{blob_path}"
+        current_app.logger.info(f"Proxy: Constructed blob URL for podcast {podcast_id_for_proxy}: {blob_url}")
+        return blob_url
+    except Exception as e:
+        current_app.logger.error(f"Proxy: Error constructing blob URL for podcast {podcast_id_for_proxy}: {e}", exc_info=True)
+        return None
+
+@app.route('/rss/<podcast_id_for_proxy>/feed.xml')
+def proxy_rss_feed(podcast_id_for_proxy):
+    """
+    Serves as a proxy to the actual RSS feed stored in Azure Blob Storage,
+    providing a cleaner URL.
+    """
+    current_app.logger.info(f"Proxy: Request received for RSS feed for podcast ID: {podcast_id_for_proxy}")
+    actual_blob_url = get_actual_rss_blob_url(podcast_id_for_proxy)
+
+    if not actual_blob_url:
+        current_app.logger.warning(f"Proxy: Could not determine actual blob URL for podcast {podcast_id_for_proxy}. Aborting with 404.")
+        abort(404, description="RSS feed not found or configuration error.")
+
+    try:
+        current_app.logger.info(f"Proxy: Fetching content from actual blob URL: {actual_blob_url}")
+        # Use a session for potential connection pooling and better header management
+        with requests.Session() as s:
+            s.headers.update({'User-Agent': 'PodManagerRSSProxy/1.0'})
+            resp = s.get(actual_blob_url, timeout=10) # Added timeout
+
+        current_app.logger.info(f"Proxy: Response status from blob storage: {resp.status_code} for {actual_blob_url}")
+        
+        if resp.status_code != 200:
+            # Log more details if the fetch from blob storage fails
+            current_app.logger.error(f"Proxy: Failed to fetch RSS feed from blob storage. Status: {resp.status_code}. URL: {actual_blob_url}. Response text (first 200 chars): {resp.text[:200] if resp.text else 'No response text'}")
+            abort(resp.status_code if resp.status_code in [403, 404] else 502, description="Error fetching underlying RSS feed.") # 502 Bad Gateway if blob storage error
+
+        # Forward relevant headers if necessary, for now just content and mimetype
+        return Response(resp.content, mimetype='application/rss+xml')
+    except requests.exceptions.RequestException as e:
+        current_app.logger.error(f"Proxy: RequestException while fetching from blob URL {actual_blob_url}: {e}", exc_info=True)
+        abort(503, description="Service unavailable while trying to fetch RSS feed.") # 503 Service Unavailable
+    except Exception as e:
+        current_app.logger.error(f"Proxy: Unexpected error for podcast {podcast_id_for_proxy} at URL {actual_blob_url}: {e}", exc_info=True)
+        abort(500, description="Internal server error processing RSS feed proxy.")
+
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=8000, debug=True)

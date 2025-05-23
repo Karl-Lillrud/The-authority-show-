@@ -249,20 +249,77 @@ class RSSService:
             return {"error": f"Failed to process RSS feed: {type(e).__name__} - {str(e)}"}, 500
 
     def generate_podcast_rss_feed_and_upload(self, podcast_id, user_id, podcast_details, episodes_list, rss_feed_public_base_url_template, publishing_episode_id=None):
-        # ...existing code for constructing full_feed_url_for_atom_link...
+        # Construct the full_feed_url_for_atom_link
+        # This should be the final public URL of the RSS feed.
+        # Example: "https://yourdomain.com/rss/user_id/podcast_id/feed.xml"
+        # The exact structure depends on how you serve/store the RSS feed.
+        # For Azure Blob, it would be the public URL of the blob.
+        
+        # Determine the blob name/path
+        # This path should match what _upload_rss_to_blob_and_get_url uses.
+        blob_name = f"users/{user_id}/podcasts/{podcast_id}/rss/feed.xml"
+        
+        if not self.azure_conn_str or not self.rss_blob_container:
+            logger.error("Azure Storage connection string or container name is not configured for RSS feed URL generation.")
+            # Fallback or raise error, depending on desired behavior
+            full_feed_url_for_atom_link = "" # Or some default/placeholder
+        else:
+            # Assuming azure_storage_account_name is accessible or part of connection string parsing
+            # For simplicity, let's assume the base URL is correctly configured in .env
+            # and rss_feed_public_base_url_template is the account's blob endpoint.
+            
+            # A simplified approach if rss_feed_public_base_url_template is like "https://<account>.blob.core.windows.net/<container>"
+            # For now, let's assume the blob_name is appended to a base URL.
+            # This needs to be the *actual* public URL of the feed.
+            # The _upload_rss_to_blob_and_get_url method returns this.
+            # So, we might need to generate XML first, upload, get URL, then re-gen with atom link, or pass it.
+            # For now, let's construct it based on known patterns.
+            # This is a common chicken-and-egg problem with atom:link self.
+            # One solution is to have a fixed, predictable URL structure.
+            
+            # Let's assume rss_feed_public_base_url_template is something like:
+            # "https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/"
+            # And the path is "users/<user_id>/podcasts/<podcast_id>/rss/feed.xml"
+            
+            # A more direct way: the URL is known once uploaded.
+            # For now, let's construct it predictively.
+            # This should ideally be the URL returned by _upload_rss_to_blob_and_get_url
+            # For simplicity in this step, we'll construct it.
+            # This might require a two-pass generation or a fixed URL scheme.
+            
+            # The URL that _upload_rss_to_blob_and_get_url will produce:
+            account_name_from_env = os.getenv("AZURE_STORAGE_ACCOUNT_NAME", "podmanagerstorage") # Fallback to .env
+            container_name_from_env = self.rss_blob_container
+            
+            full_feed_url_for_atom_link = f"https://{account_name_from_env}.blob.core.windows.net/{container_name_from_env}/{blob_name}"
+            logger.info(f"Constructed atom:link self URL: {full_feed_url_for_atom_link}")
+
+
         # Generate RSS XML
         rss_xml_content = self._generate_rss_feed_xml(
             podcast_details=podcast_details,
             episodes_list=episodes_list,
-            full_feed_url_for_atom_link=full_feed_url_for_atom_link,
+            full_feed_url_for_atom_link=full_feed_url_for_atom_link, # Pass the constructed URL
             publishing_episode_id=publishing_episode_id
         )
         # Upload RSS XML to Azure Blob Storage
+        # The _upload_rss_to_blob_and_get_url should use the same blob_name logic
         uploaded_feed_url = self._upload_rss_to_blob_and_get_url(
             podcast_id=podcast_id,
             user_id=user_id,
             rss_xml=rss_xml_content
         )
+        
+        # If the uploaded_feed_url is different from the predicted full_feed_url_for_atom_link
+        # and atom:link self is critical, you might need to re-generate the XML
+        # with the correct URL from upload and re-upload.
+        # For now, we assume the prediction is accurate enough or the discrepancy is acceptable.
+        if uploaded_feed_url != full_feed_url_for_atom_link:
+            logger.warning(f"Atom link URL mismatch. Predicted: {full_feed_url_for_atom_link}, Actual Uploaded: {uploaded_feed_url}. Consider re-generating if exact match is needed.")
+            # Optionally, re-generate and re-upload if a perfect match is required:
+            # rss_xml_content = self._generate_rss_feed_xml(...) using uploaded_feed_url
+            # self._upload_rss_to_blob_and_get_url(...) with new content, ensuring same blob_name
+
         return uploaded_feed_url
 
     def _generate_rss_feed_xml(self, podcast_details, episodes_list, full_feed_url_for_atom_link, publishing_episode_id=None):
@@ -323,6 +380,7 @@ class RSSService:
             </item>
             """
 
+
         # Optional podcast-level tags
         podcast_keywords = podcast_details.get('itunes_keywords') or podcast_details.get('keywords')
         podcast_block = podcast_details.get('itunes_block')
@@ -367,3 +425,36 @@ class RSSService:
         </rss>
         """
         return rss_xml.strip()
+
+    def _upload_rss_to_blob_and_get_url(self, podcast_id, user_id, rss_xml):
+        if not self.azure_conn_str or not self.rss_blob_container:
+            logger.error("Azure Storage connection string or container name is not configured.")
+            return None
+        try:
+            blob_name = f"users/{user_id}/podcasts/{podcast_id}/rss/feed.xml"
+            
+            blob_service_client = BlobServiceClient.from_connection_string(self.azure_conn_str)
+            blob_client = blob_service_client.get_blob_client(container=self.rss_blob_container, blob=blob_name)
+            
+            # Upload the XML content as bytes
+            blob_client.upload_blob(rss_xml.encode('utf-8'), overwrite=True, content_settings={'content_type': 'application/rss+xml'})
+            
+            logger.info(f"RSS feed uploaded to Azure Blob Storage: {blob_client.url}")
+            return blob_client.url  # This is the public URL of the blob
+        except Exception as e:
+            logger.error(f"Failed to upload RSS feed to Azure Blob Storage: {e}", exc_info=True)
+            return None
+
+
+def format_duration_for_rss(duration_seconds):
+    """Formats the duration from seconds to HH:MM:SS for RSS feed."""
+    if duration_seconds is None:
+        return "00:00:00"
+    try:
+        hours = duration_seconds // 3600
+        minutes = (duration_seconds % 3600) // 60
+        seconds = duration_seconds % 60
+        return f"{hours:02}:{minutes:02}:{seconds:02}"
+    except Exception as e:
+        logger.warning(f"Error formatting duration for RSS: {e}")
+        return "00:00:00"

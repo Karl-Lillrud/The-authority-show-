@@ -1,8 +1,9 @@
-import { publishEpisode, getSasUrl } from "/static/requests/publishRequests.js"; // Import getSasUrl
+import { publishEpisode, getSasUrl } from "/static/requests/publishRequests.js";
 import { fetchEpisode } from "/static/requests/episodeRequest.js"; // For episode preview
 import { showNotification } from "/static/js/components/notifications.js";
 import { fetchPodcasts } from "/static/requests/podcastRequests.js"; // For podcast dropdown
 import { fetchEpisodesByPodcast } from "/static/requests/episodeRequest.js"; // For episode dropdown
+import { updatePodcast } from "/static/requests/podcastRequests.js"; // Import updatePodcast
 
 console.log("[publish.js] Script loaded and running!");
 
@@ -20,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const publishStatusDiv = document.getElementById("publish-status");
   const publishLogPre = document.getElementById("publish-log");
   const platformToggles = document.querySelectorAll('.platform-toggle input[type="checkbox"]');
-  // const publishNotes = document.getElementById("publish-notes"); // Removed
 
   // Load podcasts into the dropdown
   async function loadPodcasts() {
@@ -299,6 +299,41 @@ document.addEventListener("DOMContentLoaded", () => {
     return { missing, recommended };
   }
 
+  // Define doPublish in a scope accessible by both publishNowBtn listener and modal's onSave
+  async function doPublish(currentEpisodeId, currentSelectedPlatforms) {
+    publishNowBtn.disabled = true;
+    publishNowBtn.textContent = "Publishing...";
+    addToLog(`Starting publishing process for episode ID: ${currentEpisodeId}`);
+    addToLog(`Selected platforms: ${currentSelectedPlatforms.join(", ")}`);
+
+    try {
+      const result = await publishEpisode(currentEpisodeId, currentSelectedPlatforms, null);
+      if (result.success) {
+        addToLog(`Successfully published episode: ${result.message}`);
+        showNotification("Success", `Episode published successfully! ${result.message || ''}`, "success");
+        episodeDetailsPreview.classList.add("hidden");
+        const currentPodcastId = podcastSelect.value;
+        episodeSelect.value = "";
+        if (currentPodcastId) {
+          loadEpisodesForPodcast(currentPodcastId);
+        }
+        if (result.rssFeedUrl) {
+          showRssFeedPopup(result.rssFeedUrl);
+        }
+      } else {
+        addToLog(`Publishing failed: ${result.error || "Unknown error"}`);
+        showNotification("Error", `Failed to publish episode. ${result.error || "Unknown error"}`, "error");
+      }
+    } catch (error) {
+      console.error("[publish.js] Error publishing episode:", error);
+      addToLog(`Critical error during publishing: ${error.message}`);
+      showNotification("Error", `An error occurred during publishing: ${error.message}`, "error");
+    } finally {
+      publishNowBtn.disabled = false;
+      publishNowBtn.textContent = "Publish Now";
+    }
+  }
+
   // Helper: Show modal to fill missing fields (required and recommended)
   function showMissingFieldsModal(missingFieldsObj, podcast, episode, onSave) {
     const { missing, recommended } = missingFieldsObj;
@@ -376,7 +411,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `}).join("")}
         </div>
         <div style="margin-top:1rem;display:flex;gap:1rem;">
-          <button type="submit" class="save-btn">Save & Continue</button>
+          <button type="submit" class="save-btn">Publish Now</button>
           <button type="button" id="cancel-missing-fields" class="cancel-btn">Cancel</button>
         </div>
       </form>
@@ -386,16 +421,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("cancel-missing-fields").onclick = () => {
       document.body.removeChild(modal);
+      publishNowBtn.disabled = false; // Re-enable if modal is cancelled
+      publishNowBtn.textContent = "Publish Now";
     };
 
-    formBox.querySelector("#missing-fields-form").onsubmit = async (e) => { // Make async
+    formBox.querySelector("#missing-fields-form").onsubmit = async (e) => {
       e.preventDefault();
       const submitButton = formBox.querySelector('button[type="submit"]');
       submitButton.disabled = true;
-      submitButton.textContent = "Saving...";
+      submitButton.textContent = "Publishing..."; // Update text during processing
+
+      let artworkJustUploadedAndSaved = false;
 
       try {
-        for (const f of [...missing, ...recommended]) { // Use for...of for async/await
+        for (const f of [...missing, ...recommended]) {
           const inputElement = formBox.querySelector(`[name='${f.type}_${f.key}']:checked`) ||
                                formBox.querySelector(`[name='${f.type}_${f.key}']`);
           if (!inputElement) continue;
@@ -406,31 +445,28 @@ document.addEventListener("DOMContentLoaded", () => {
               try {
                 addToLog(`Uploading podcast artwork: ${imageFile.name}`);
                 const { uploadUrl, blobUrl } = await getSasUrl(imageFile.name, imageFile.type);
+                const headers = { 'x-ms-blob-type': 'BlockBlob', 'Content-Type': imageFile.type };
+                await fetch(uploadUrl, { method: 'PUT', body: imageFile, headers: headers });
                 
-                const headers = {
-                  'x-ms-blob-type': 'BlockBlob',
-                  'Content-Type': imageFile.type
-                  // Note: If you encounter CORS issues here, ensure your Azure Blob Storage account
-                  // has CORS rules configured to allow PUT requests from this origin (e.g., http://127.0.0.1:8000)
-                  // and allows the 'x-ms-blob-type' and 'Content-Type' headers.
-                };
+                podcast.logoUrl = blobUrl; // Update local podcast object
+                addToLog(`Podcast artwork uploaded to temp URL: ${blobUrl}. Saving to podcast...`);
 
-                await fetch(uploadUrl, {
-                  method: 'PUT',
-                  body: imageFile,
-                  headers: headers
-                });
-                podcast.logoUrl = blobUrl; // Update the podcast object
-                addToLog(`Podcast artwork uploaded: ${blobUrl}`);
-                showNotification("Success", "Podcast artwork uploaded successfully.", "success");
+                // Save the updated logoUrl to the backend podcast document
+                const podcastUpdateResult = await updatePodcast(podcast._id, { logoUrl: podcast.logoUrl });
+                if (podcastUpdateResult.error) {
+                  throw new Error(`Failed to save podcast artwork URL: ${podcastUpdateResult.error}`);
+                }
+                artworkJustUploadedAndSaved = true;
+                addToLog("Podcast artwork URL saved successfully.");
+                showNotification("Success", "Podcast artwork uploaded and saved.", "success");
+
               } catch (uploadError) {
-                console.error("Error uploading podcast artwork:", uploadError);
-                addToLog(`Error uploading podcast artwork: ${uploadError.message}`);
-                showNotification("Error", `Failed to upload podcast artwork: ${uploadError.message}`, "error");
-                // Optionally, re-enable button and return if upload is critical
-                // submitButton.disabled = false;
-                // submitButton.textContent = "Save & Continue";
-                // return; 
+                console.error("Error uploading/saving podcast artwork:", uploadError);
+                addToLog(`Error uploading/saving podcast artwork: ${uploadError.message}`);
+                showNotification("Error", `Failed to upload/save podcast artwork: ${uploadError.message}`, "error");
+                submitButton.disabled = false;
+                submitButton.textContent = "Publish Now";
+                return; // Stop processing if critical upload/save fails
               }
             }
           } else {
@@ -440,19 +476,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (f.type === "podcast") podcast[f.key] = val;
             else if (f.type === "episode") {
-              if (f.key === "pubDate") episode.publishDate = val;
+              if (f.key === "pubDate") episode.publishDate = val; // This will be used by local preview
               else episode[f.key] = val;
             }
           }
         }
         document.body.removeChild(modal);
-        onSave(); // Call the original onSave callback
+        onSave(); // Call the original onSave callback (which now triggers doPublish)
       } catch (error) {
         console.error("Error processing missing fields form:", error);
         addToLog(`Error saving missing fields: ${error.message}`);
         showNotification("Error", "An error occurred while saving details.", "error");
-        submitButton.disabled = false; // Re-enable button on error
-        submitButton.textContent = "Save & Continue";
+        submitButton.disabled = false;
+        submitButton.textContent = "Publish Now"; // Reset text on error
       }
     };
   }
@@ -555,91 +591,39 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Fetch selected podcast and episode objects for validation
-    // Ensure _publishPodcastsCache is populated before this.
     const podcast = (window._publishPodcastsCache || []).find(p => p._id === podcastSelect.value);
     let episode = null;
-    if (episodeId) { // Only fetch if an episode is selected
-        try {
-          // Use the globally available episode object if it matches, otherwise fetch
-          if (window._currentEpisodePreview && window._currentEpisodePreview._id === episodeId) {
-            episode = window._currentEpisodePreview;
-          } else {
-            episode = await fetchEpisode(episodeId);
-            window._currentEpisodePreview = episode; // Cache it
-          }
-        } catch (e) {
-            addToLog(`Error fetching episode details for validation: ${e.message}`);
-            showNotification("Error", "Could not retrieve episode details for validation.", "error");
-            return;
+    if (episodeId) {
+      try {
+        if (window._currentEpisodePreview && window._currentEpisodePreview._id === episodeId) {
+          episode = window._currentEpisodePreview;
+        } else {
+          episode = await fetchEpisode(episodeId);
+          window._currentEpisodePreview = episode;
         }
+      } catch (e) {
+        addToLog(`Error fetching episode details for validation: ${e.message}`);
+        showNotification("Error", "Could not retrieve episode details for validation.", "error");
+        return;
+      }
     }
 
-
-    // Check for missing required and recommended fields
     const missingFieldsObj = getMissingRequiredFields(podcast, episode, selectedPlatforms);
     
     if (missingFieldsObj.missing.length > 0 || missingFieldsObj.recommended.length > 0) {
-      showMissingFieldsModal(missingFieldsObj, podcast, episode, () => {
-        // This callback is executed after the modal saves and closes.
-        // The 'podcast' and 'episode' objects are updated by the modal itself.
-        // We do NOT call doPublish() here.
-        // The user must click "Publish Now" again.
-        
-        // Re-enable the publish button if it was disabled during modal interaction.
-        publishNowBtn.disabled = false; 
-        publishNowBtn.textContent = "Publish Now";
-        addToLog("Missing fields have been updated. Please click 'Publish Now' again to proceed.");
-        showNotification("Info", "Details updated. Click 'Publish Now' again to publish.", "info");
-        
-        // If the episode was updated (e.g., publishDate), refresh its preview
-        if (episodeId && episode) { // episode object should be updated by reference
-            loadEpisodePreview(episodeId); // Reload preview with potentially new data
+      publishNowBtn.disabled = true; // Disable button while modal is open
+      publishNowBtn.textContent = "Addressing Details..."; // Keep this or change to "Publishing..."
+      showMissingFieldsModal(missingFieldsObj, podcast, episode, async () => {
+        // This is the onSave callback from the modal
+        if (episodeId && episode) { 
+            loadEpisodePreview(episodeId); // Refresh preview with any changes from modal
         }
+        // Directly call doPublish with the current episodeId and selectedPlatforms
+        await doPublish(episodeId, selectedPlatforms);
       });
-      return; // Stop further execution for this click, user needs to click "Publish Now" again
-    }
-
-    // If we reach here, it means either:
-    // 1. There were no missing fields initially.
-    // 2. The modal was shown, user saved, and this is a *new* click on "Publish Now" 
-    //    and the missing fields check passed this time.
-    await doPublish();
-
-    async function doPublish() {
-      publishNowBtn.disabled = true;
-      publishNowBtn.textContent = "Publishing...";
-      addToLog(`Starting publishing process for episode ID: ${episodeId}`);
-      addToLog(`Selected platforms: ${selectedPlatforms.join(", ")}`);
-
-      try {
-        const result = await publishEpisode(episodeId, selectedPlatforms, null); // Notes field removed
-        if (result.success) {
-          addToLog(`Successfully published episode: ${result.message}`);
-          showNotification("Success", `Episode published successfully! ${result.message || ''}`, "success");
-          episodeDetailsPreview.classList.add("hidden");
-          // Reset episode selection and reload episodes for the current podcast
-          const currentPodcastId = podcastSelect.value;
-          episodeSelect.value = ""; 
-          if (currentPodcastId) {
-              loadEpisodesForPodcast(currentPodcastId); // Reload to remove published episode
-          }
-          
-          if (result.rssFeedUrl) {
-            showRssFeedPopup(result.rssFeedUrl);
-          }
-        } else {
-          addToLog(`Publishing failed: ${result.error || "Unknown error"}`);
-          showNotification("Error", `Failed to publish episode. ${result.error || "Unknown error"}`, "error");
-        }
-      } catch (error) {
-        console.error("[publish.js] Error publishing episode:", error);
-        addToLog(`Critical error during publishing: ${error.message}`);
-        showNotification("Error", `An error occurred during publishing: ${error.message}`, "error");
-      } finally {
-        publishNowBtn.disabled = false;
-        publishNowBtn.textContent = "Publish Now";
-      }
+    } else {
+      // No missing fields, publish directly
+      await doPublish(episodeId, selectedPlatforms);
     }
   });
 

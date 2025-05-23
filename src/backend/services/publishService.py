@@ -1,6 +1,6 @@
 import os
 import datetime
-from flask import current_app
+from flask import current_app, url_for # Add url_for
 from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.podcast_repository import PodcastRepository
 from backend.services.rss_Service import RSSService
@@ -16,6 +16,8 @@ class PublishService:
         # Initialize Azure configuration for PublishService
         self.azure_storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
         self.azure_storage_container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME")
+        self.base_url = os.getenv("LOCAL_BASE_URL") if os.getenv("ENVIRONMENT") == "local" else os.getenv("PROD_BASE_URL")
+
 
     def publish_episode(self, episode_id, user_id, platforms):
         log_messages = []
@@ -66,16 +68,36 @@ class PublishService:
                 return {"success": False, "error": "Could not fetch episodes for podcast.", "details": log_messages}
             all_episodes_list = all_episodes_data.get("episodes", [])
 
-            rss_feed_url = self.rss_service.generate_podcast_rss_feed_and_upload(
+            # RSSService returns the direct blob URL
+            direct_rss_blob_url = self.rss_service.generate_podcast_rss_feed_and_upload(
                 podcast_id=podcast_id,
-                user_id=user_id,
+                user_id=user_id, # This user_id is the ownerId
                 podcast_details=podcast,
                 episodes_list=all_episodes_list,
-                rss_feed_public_base_url_template=self.rss_feed_base_url,
+                rss_feed_public_base_url_template=self.rss_feed_base_url, # This might not be used if RSS service constructs full URL
                 publishing_episode_id=episode_id
             )
-            log_messages.append(f"RSS feed generated and uploaded to {rss_feed_url}")
-            current_app.logger.info(f"RSS feed for {podcast_id} uploaded to {rss_feed_url}")
+            log_messages.append(f"RSS feed generated and uploaded to direct blob URL: {direct_rss_blob_url}")
+            current_app.logger.info(f"RSS feed for {podcast_id} uploaded to {direct_rss_blob_url}")
+
+            # Construct the new proxy URL
+            # The proxy route is /rss/<podcast_id_for_proxy>/feed.xml
+            # Here, podcast_id_for_proxy is the actual podcast_id
+            if direct_rss_blob_url: # Only construct proxy URL if blob upload was successful
+                # Use a more robust way to get the base URL of the application
+                app_base_url = self.base_url or current_app.config.get('SERVER_NAME') or request.host_url.rstrip('/')
+
+                if not app_base_url:
+                     current_app.logger.warning("Could not determine application base URL for proxy RSS link. Falling back to direct blob URL.")
+                     proxy_rss_feed_url = direct_rss_blob_url # Fallback
+                else:
+                    # Ensure app_base_url does not have a trailing slash if url_for is not used for the full path
+                    proxy_rss_feed_url = f"{app_base_url.rstrip('/')}/rss/{podcast_id}/feed.xml"
+                log_messages.append(f"User-facing RSS feed proxy URL: {proxy_rss_feed_url}")
+            else:
+                proxy_rss_feed_url = None # Indicate RSS feed URL is not available
+                log_messages.append("Warning: Direct RSS blob URL not available, so proxy URL cannot be generated.")
+
 
             # 4. Platform Processing
             published_to = []
@@ -102,7 +124,7 @@ class PublishService:
                 "success": True,
                 "message": f"Episode '{episode.get('title', episode_id)}' processed for publishing.",
                 "details": log_messages,
-                "rssFeedUrl": rss_feed_url
+                "rssFeedUrl": proxy_rss_feed_url # Return the new proxy URL
             }
         except Exception as e:
             current_app.logger.error(f"Unexpected error in publish_episode for {episode_id} by user {user_id}: {str(e)}", exc_info=True)
