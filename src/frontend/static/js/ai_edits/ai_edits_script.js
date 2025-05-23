@@ -31,6 +31,60 @@ const CREDIT_COSTS = {
   ai_intro_outro_audio: 500,
 }
 
+// Define dependencies for each function
+const FUNCTION_DEPENDENCIES = {
+  transcribe: {}, // No dependencies
+  enhanceAudio: {}, // No dependencies
+  isolateVoice: {}, // No dependencies
+  cleanTranscript: {
+    fullTranscript: "Requires transcript from transcribe()",
+  },
+  generateShowNotes: {
+    rawTranscript: "Requires transcript from transcribe()",
+  },
+  aiSuggestions: {
+    rawTranscript: "Requires transcript from transcribe()",
+  },
+  generateQuotes: {
+    rawTranscript: "Requires transcript from transcribe()",
+  },
+  generateQuoteImages: {
+    quotesResult: "Requires quotes to be generated first",
+  },
+  translateTranscript: {
+    rawTranscript: "Requires transcript from transcribe()",
+  },
+  generateAudioClip: {
+    translateResult: "Requires translation to be generated first",
+  },
+  osintLookup: {
+    guestNameInput: "Requires guest name to be entered",
+  },
+  generatePodcastIntroOutro: {
+    rawTranscript: "Requires transcript from transcribe()",
+    guestNameInput: "Requires guest name to be entered",
+  },
+  convertIntroOutroToSpeech: {
+    introOutroScriptResult: "Requires intro/outro script to be generated",
+  },
+  analyzeEnhancedAudio: {
+    activeAudioBlob: "Requires enhanced or isolated audio",
+  },
+  displayBackgroundAndMix: {
+    analysisData: "Requires audio analysis",
+  },
+  cutAudio: {
+    audioBlob: "Requires loaded audio file",
+    cutStartEnd: "Requires valid cut start and end times",
+  },
+  aiCutAudio: {
+    activeAudioBlob: "Requires active audio",
+  },
+  applySelectedCuts: {
+    selectedAiCuts: "Requires AI cuts to be selected",
+  },
+}
+
 // Lista över AI-funktioner och deras info
 const aiOptions = [
   {
@@ -64,6 +118,7 @@ const aiOptions = [
     icon: "C",
     cost: CREDIT_COSTS.clean_transcript,
     handler: generateCleanTranscript,
+    dependencies: FUNCTION_DEPENDENCIES.cleanTranscript,
   },
   {
     id: "generateShowNotes",
@@ -72,6 +127,7 @@ const aiOptions = [
     icon: "N",
     cost: CREDIT_COSTS.show_notes,
     handler: generateShowNotes,
+    dependencies: FUNCTION_DEPENDENCIES.generateShowNotes,
   },
   {
     id: "aiSuggestions",
@@ -80,6 +136,7 @@ const aiOptions = [
     icon: "S",
     cost: CREDIT_COSTS.ai_suggestions,
     handler: generateAISuggestions,
+    dependencies: FUNCTION_DEPENDENCIES.aiSuggestions,
   },
   {
     id: "generateQuotes",
@@ -88,6 +145,34 @@ const aiOptions = [
     icon: "Q",
     cost: CREDIT_COSTS.ai_quotes,
     handler: generateQuotes,
+    dependencies: FUNCTION_DEPENDENCIES.generateQuotes,
+  },
+  {
+    id: "generateQuoteImages",
+    title: "Generate Quote Images",
+    description: "Create shareable images from quotes",
+    icon: "I",
+    cost: CREDIT_COSTS.ai_quote_images,
+    handler: generateQuoteImages,
+    dependencies: FUNCTION_DEPENDENCIES.generateQuoteImages,
+  },
+  {
+    id: "translateTranscript",
+    title: "Translate Transcript",
+    description: "Translate transcript to another language",
+    icon: "L",
+    cost: CREDIT_COSTS.translation,
+    handler: translateTranscript,
+    dependencies: FUNCTION_DEPENDENCIES.translateTranscript,
+  },
+  {
+    id: "generateAudioClip",
+    title: "Generate Audio Clip",
+    description: "Create audio from translated text",
+    icon: "A",
+    cost: CREDIT_COSTS.audio_clip,
+    handler: generateAudioClip,
+    dependencies: FUNCTION_DEPENDENCIES.generateAudioClip,
   },
   {
     id: "osintLookup",
@@ -96,8 +181,103 @@ const aiOptions = [
     icon: "O",
     cost: CREDIT_COSTS.ai_osint,
     handler: runOsintSearch,
+    dependencies: FUNCTION_DEPENDENCIES.osintLookup,
+  },
+  {
+    id: "generatePodcastIntroOutro",
+    title: "Generate Intro/Outro",
+    description: "Create podcast intro and outro scripts",
+    icon: "P",
+    cost: CREDIT_COSTS.ai_intro_outro,
+    handler: generatePodcastIntroOutro,
+    dependencies: FUNCTION_DEPENDENCIES.generatePodcastIntroOutro,
+  },
+  {
+    id: "convertIntroOutroToSpeech",
+    title: "Convert Intro/Outro to Speech",
+    description: "Generate audio from intro/outro script",
+    icon: "S",
+    cost: CREDIT_COSTS.ai_intro_outro_audio,
+    handler: convertIntroOutroToSpeech,
+    dependencies: FUNCTION_DEPENDENCIES.convertIntroOutroToSpeech,
+  },
+  {
+    id: "analyzeEnhancedAudio",
+    title: "Analyze Audio",
+    description: "Analyze audio content with AI",
+    icon: "Z",
+    cost: CREDIT_COSTS.ai_audio_analysis,
+    handler: analyzeEnhancedAudio,
+    dependencies: FUNCTION_DEPENDENCIES.analyzeEnhancedAudio,
+  },
+  {
+    id: "displayBackgroundAndMix",
+    title: "Background & Mix",
+    description: "Add background music and mix audio",
+    icon: "M",
+    cost: CREDIT_COSTS.ai_audio_analysis,
+    handler: displayBackgroundAndMix,
+    dependencies: FUNCTION_DEPENDENCIES.displayBackgroundAndMix,
+  },
+  {
+    id: "cutAudio",
+    title: "Cut Audio",
+    description: "Trim audio to specific timestamps",
+    icon: "X",
+    cost: CREDIT_COSTS.audio_cutting,
+    handler: cutAudio,
+    dependencies: FUNCTION_DEPENDENCIES.cutAudio,
+  },
+  {
+    id: "aiCutAudio",
+    title: "AI Cut Audio",
+    description: "Automatically cut audio using AI",
+    icon: "C",
+    cost: CREDIT_COSTS.ai_audio_cutting,
+    handler: aiCutAudio,
+    dependencies: FUNCTION_DEPENDENCIES.aiCutAudio,
+  },
+  {
+    id: "applySelectedCuts",
+    title: "Apply Selected Cuts",
+    description: "Apply selected AI cuts to audio",
+    icon: "A",
+    cost: 0, // No additional cost as it's part of aiCutAudio
+    handler: applySelectedCuts,
+    dependencies: FUNCTION_DEPENDENCIES.applySelectedCuts,
   },
 ]
+
+// Add this function to display execution order indicators when functions are selected
+function updateExecutionOrder() {
+  // Get all checked checkboxes
+  const checkedBoxes = Array.from(document.querySelectorAll(".option-checkbox:checked"))
+
+  // Remove existing execution order indicators
+  document.querySelectorAll(".execution-order").forEach((el) => el.remove())
+
+  if (checkedBoxes.length === 0) return
+
+  // Get the function IDs
+  const functionIds = checkedBoxes.map((cb) => cb.dataset.function)
+
+  // Sort them based on dependencies
+  const sortedFunctions = sortFunctionsByDependencies(functionIds)
+
+  // Add execution order indicators
+  sortedFunctions.forEach((funcId, index) => {
+    const checkbox = document.querySelector(`.option-checkbox[data-function="${funcId}"]`)
+    if (checkbox) {
+      const optionItem = checkbox.closest(".option-item")
+      if (optionItem) {
+        const orderIndicator = document.createElement("div")
+        orderIndicator.className = "execution-order"
+        orderIndicator.textContent = index + 1
+        optionItem.querySelector(".option-content").appendChild(orderIndicator)
+      }
+    }
+  })
+}
 
 // Initialize the application when the DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
@@ -172,7 +352,9 @@ document.addEventListener("DOMContentLoaded", () => {
         return
       }
 
-      runSelectedFunctions(selected)
+      // Sort functions based on dependencies before running
+      const sortedFunctions = sortFunctionsByDependencies(selected)
+      runSelectedFunctions(sortedFunctions)
     })
   }
 
@@ -189,19 +371,396 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // Store the file in rawAudioBlob for use in functions
           rawAudioBlob = file
+
+          // Check dependencies after file is loaded
+          checkDependenciesAndToggleButtons()
+          updateCheckboxStates()
         } else {
           fileInfo.textContent = ""
         }
       }
     })
   }
+
+  // Run initial dependency check
+  checkDependenciesAndToggleButtons()
+  updateCheckboxStates()
+
+  // Add input event listeners for dependency checking
+  setupDependencyListeners()
+
+  // Add dependency details toggle
+  const showDetailsBtn = document.getElementById("show-dependency-details")
+  const detailsContainer = document.getElementById("dependency-details")
+
+  if (showDetailsBtn && detailsContainer) {
+    showDetailsBtn.addEventListener("click", () => {
+      if (detailsContainer.style.display === "none") {
+        // Generate dependency visualization
+        generateDependencyVisualization()
+        detailsContainer.style.display = "block"
+        showDetailsBtn.textContent = "Hide Dependency Details"
+      } else {
+        detailsContainer.style.display = "none"
+        showDetailsBtn.textContent = "Show Dependency Details"
+      }
+    })
+  }
 })
 
-// Render the AI options with checkboxes
+// Setup listeners for inputs that affect dependencies
+function setupDependencyListeners() {
+  // Listen for guest name input changes
+  const guestNameInput = document.getElementById("guestNameInput")
+  if (guestNameInput) {
+    guestNameInput.addEventListener("input", () => {
+      checkDependenciesAndToggleButtons()
+      updateCheckboxStates()
+    })
+  }
+
+  // Listen for cut start/end input changes
+  const cutStart = document.getElementById("cut-start")
+  const cutEnd = document.getElementById("cut-end")
+  if (cutStart && cutEnd) {
+    cutStart.addEventListener("input", () => {
+      checkDependenciesAndToggleButtons()
+      updateCheckboxStates()
+    })
+    cutEnd.addEventListener("input", () => {
+      checkDependenciesAndToggleButtons()
+      updateCheckboxStates()
+    })
+  }
+}
+
+// Sort functions based on their dependencies
+function sortFunctionsByDependencies(functionIds) {
+  // Create a dependency graph
+  const graph = {}
+  const functionMap = {}
+
+  // Initialize the graph
+  functionIds.forEach((id) => {
+    graph[id] = []
+    functionMap[id] = aiOptions.find((opt) => opt.id === id)
+  })
+
+  // Build the dependency graph
+  functionIds.forEach((id) => {
+    const func = functionMap[id]
+    if (!func || !func.dependencies) return
+
+    // Check which other functions this function depends on
+    functionIds.forEach((otherId) => {
+      if (id === otherId) return
+
+      const otherFunc = functionMap[otherId]
+      if (!otherFunc) return
+
+      // Check if this function provides something the current function needs
+      const dependencies = Object.keys(func.dependencies)
+      let isDependency = false
+
+      // Special dependency checks
+      if (
+        otherId === "transcribe" &&
+        (dependencies.includes("rawTranscript") || dependencies.includes("fullTranscript"))
+      ) {
+        isDependency = true
+      } else if (otherId === "generateQuotes" && dependencies.includes("quotesResult")) {
+        isDependency = true
+      } else if (otherId === "translateTranscript" && dependencies.includes("translateResult")) {
+        isDependency = true
+      } else if (otherId === "generatePodcastIntroOutro" && dependencies.includes("introOutroScriptResult")) {
+        isDependency = true
+      } else if (otherId === "analyzeEnhancedAudio" && dependencies.includes("analysisData")) {
+        isDependency = true
+      } else if (
+        (otherId === "enhanceAudio" || otherId === "isolateVoice") &&
+        dependencies.includes("activeAudioBlob")
+      ) {
+        isDependency = true
+      } else if (otherId === "aiCutAudio" && dependencies.includes("selectedAiCuts")) {
+        isDependency = true
+      }
+
+      if (isDependency) {
+        graph[id].push(otherId)
+      }
+    })
+  })
+
+  // Topological sort
+  const visited = {}
+  const temp = {}
+  const result = []
+
+  function visit(node) {
+    if (temp[node]) {
+      // Circular dependency detected
+      console.warn(`Circular dependency detected with function: ${node}`)
+      return
+    }
+    if (!visited[node]) {
+      temp[node] = true
+
+      // Visit dependencies first
+      graph[node].forEach((dependency) => {
+        visit(dependency)
+      })
+
+      visited[node] = true
+      temp[node] = false
+      result.push(node)
+    }
+  }
+
+  // Visit all nodes
+  functionIds.forEach((id) => {
+    if (!visited[id]) {
+      visit(id)
+    }
+  })
+
+  return result
+}
+
+// Function to check dependencies and toggle button states
+function checkDependenciesAndToggleButtons() {
+  // Check for transcript-dependent buttons
+  toggleButton("cleanTranscriptBtn", !!fullTranscript, "Requires transcript")
+  toggleButton("showNotesBtn", !!rawTranscript, "Requires transcript")
+  toggleButton("aiSuggestionsBtn", !!rawTranscript, "Requires transcript")
+  toggleButton("quotesBtn", !!rawTranscript, "Requires transcript")
+  toggleButton("translateBtn", !!rawTranscript, "Requires transcript")
+
+  // Check for quotes-dependent buttons
+  const hasQuotes = !!document.getElementById("quotesResult")?.innerText.trim()
+  toggleButton("quoteImagesBtn", hasQuotes, "Requires quotes")
+
+  // Check for translation-dependent buttons
+  const hasTranslation = !!document.getElementById("translateResult")?.innerText.trim()
+  toggleButton("generateAudioClipBtn", hasTranslation, "Requires translation")
+
+  // Check for guest name input
+  const hasGuestName = !!document.getElementById("guestNameInput")?.value.trim()
+  toggleButton("osintBtn", hasGuestName, "Requires guest name")
+  toggleButton("introOutroBtn", hasGuestName && !!rawTranscript, "Requires guest name and transcript")
+
+  // Check for intro/outro script
+  const hasIntroOutroScript = !!document.getElementById("introOutroScriptResult")?.innerText.trim()
+  toggleButton("convertToSpeechBtn", hasIntroOutroScript, "Requires intro/outro script")
+
+  // Check for audio analysis
+  const hasActiveAudio = !!activeAudioBlob
+  toggleButton("analyzeAudioBtn", hasActiveAudio, "Requires enhanced or isolated audio")
+
+  // Check for analysis data
+  const hasAnalysisData = !!window.analysisData
+  toggleButton("backgroundMixBtn", hasAnalysisData, "Requires audio analysis")
+
+  // Check for audio cutting
+  const hasCutStartEnd = document.getElementById("cut-start") && document.getElementById("cut-end")
+  const validCutTimes =
+    hasCutStartEnd &&
+    !isNaN(Number.parseFloat(document.getElementById("cut-start").value)) &&
+    !isNaN(Number.parseFloat(document.getElementById("cut-end").value)) &&
+    Number.parseFloat(document.getElementById("cut-start").value) <
+      Number.parseFloat(document.getElementById("cut-end").value)
+
+  toggleButton("cutBtn", hasActiveAudio && validCutTimes, "Requires loaded audio and valid cut times")
+
+  // Check for AI cutting
+  toggleButton("aiCutBtn", hasActiveAudio, "Requires active audio")
+
+  // Check for selected AI cuts
+  const hasSelectedCuts = window.selectedAiCuts && Object.keys(window.selectedAiCuts).length > 0
+  toggleButton("applySelectedCutsBtn", hasSelectedCuts, "Requires AI cuts to be selected")
+}
+
+// Enhance the checkDependenciesForFunction to provide more detailed feedback
+function checkDependenciesForFunction(option) {
+  if (!option || !option.dependencies) return { met: true, messages: [] }
+
+  const dependencies = option.dependencies
+  const unmetDependencies = []
+
+  // Check each dependency
+  for (const [dep, message] of Object.entries(dependencies)) {
+    if (dep === "rawTranscript" && !rawTranscript) {
+      unmetDependencies.push(message)
+    }
+    if (dep === "fullTranscript" && !fullTranscript) {
+      unmetDependencies.push(message)
+    }
+    if (dep === "quotesResult" && !document.getElementById("quotesResult")?.innerText.trim()) {
+      unmetDependencies.push(message)
+    }
+    if (dep === "translateResult" && !document.getElementById("translateResult")?.innerText.trim()) {
+      unmetDependencies.push(message)
+    }
+    if (dep === "guestNameInput" && !document.getElementById("guestNameInput")?.value.trim()) {
+      unmetDependencies.push(message)
+    }
+    if (dep === "introOutroScriptResult" && !document.getElementById("introOutroScriptResult")?.innerText.trim()) {
+      unmetDependencies.push(message)
+    }
+    if (dep === "activeAudioBlob" && !activeAudioBlob) {
+      unmetDependencies.push(message)
+    }
+    if (dep === "analysisData" && !window.analysisData) {
+      unmetDependencies.push(message)
+    }
+    if (dep === "audioBlob" && !rawAudioBlob && !enhancedAudioBlob && !isolatedAudioBlob) {
+      unmetDependencies.push(message)
+    }
+    if (dep === "cutStartEnd") {
+      const start = document.getElementById("cut-start")
+      const end = document.getElementById("cut-end")
+      if (
+        !start ||
+        !end ||
+        isNaN(Number.parseFloat(start.value)) ||
+        isNaN(Number.parseFloat(end.value)) ||
+        Number.parseFloat(start.value) >= Number.parseFloat(end.value)
+      ) {
+        unmetDependencies.push(message)
+      }
+    }
+    if (dep === "selectedAiCuts" && (!window.selectedAiCuts || Object.keys(window.selectedAiCuts).length === 0)) {
+      unmetDependencies.push(message)
+    }
+  }
+
+  return {
+    met: unmetDependencies.length === 0,
+    messages: unmetDependencies,
+  }
+}
+
+// Update the updateCheckboxStates function to use the enhanced dependency checker
+function updateCheckboxStates() {
+  const checkboxes = document.querySelectorAll(".option-checkbox")
+  checkboxes.forEach((checkbox) => {
+    const functionId = checkbox.dataset.function
+    const option = aiOptions.find((opt) => opt.id === functionId)
+
+    if (!option || !option.dependencies) return
+
+    const dependencyCheck = checkDependenciesForFunction(option)
+    const dependenciesMet = dependencyCheck.met
+
+    // Update checkbox state
+    checkbox.disabled = !dependenciesMet
+
+    // Update parent container to show dependency status
+    const optionItem = checkbox.closest(".option-item")
+    if (optionItem) {
+      if (!dependenciesMet) {
+        optionItem.classList.add("disabled-option")
+
+        // Add tooltip if not already present
+        if (!optionItem.querySelector(".dependency-tooltip")) {
+          const tooltip = document.createElement("div")
+          tooltip.className = "dependency-tooltip"
+          tooltip.textContent = dependencyCheck.messages.join(", ")
+          optionItem.appendChild(tooltip)
+        }
+      } else {
+        optionItem.classList.remove("disabled-option")
+
+        // Remove tooltip if present
+        const tooltip = optionItem.querySelector(".dependency-tooltip")
+        if (tooltip) {
+          tooltip.remove()
+        }
+      }
+    }
+  })
+
+  // Update execution order indicators
+  updateExecutionOrder()
+}
+
+// Get dependency message for a function
+function getDependencyMessage(option) {
+  if (!option || !option.dependencies) return ""
+
+  const messages = []
+  for (const [dep, message] of Object.entries(option.dependencies)) {
+    if (dep === "rawTranscript" && !rawTranscript) {
+      messages.push(message)
+    }
+    if (dep === "fullTranscript" && !fullTranscript) {
+      messages.push(message)
+    }
+    if (dep === "quotesResult" && !document.getElementById("quotesResult")?.innerText.trim()) {
+      messages.push(message)
+    }
+    if (dep === "translateResult" && !document.getElementById("translateResult")?.innerText.trim()) {
+      messages.push(message)
+    }
+    if (dep === "guestNameInput" && !document.getElementById("guestNameInput")?.value.trim()) {
+      messages.push(message)
+    }
+    if (dep === "introOutroScriptResult" && !document.getElementById("introOutroScriptResult")?.innerText.trim()) {
+      messages.push(message)
+    }
+    if (dep === "activeAudioBlob" && !activeAudioBlob) {
+      messages.push(message)
+    }
+    if (dep === "analysisData" && !window.analysisData) {
+      messages.push(message)
+    }
+    if (dep === "audioBlob" && !rawAudioBlob && !enhancedAudioBlob && !isolatedAudioBlob) {
+      messages.push(message)
+    }
+    if (dep === "cutStartEnd") {
+      const start = document.getElementById("cut-start")
+      const end = document.getElementById("cut-end")
+      if (
+        !start ||
+        !end ||
+        isNaN(Number.parseFloat(start.value)) ||
+        isNaN(Number.parseFloat(end.value)) ||
+        Number.parseFloat(start.value) >= Number.parseFloat(end.value)
+      ) {
+        messages.push(message)
+      }
+    }
+    if (dep === "selectedAiCuts" && (!window.selectedAiCuts || Object.keys(window.selectedAiCuts).length === 0)) {
+      messages.push(message)
+    }
+  }
+
+  return messages.join(", ")
+}
+
+// Helper function to toggle button state
+function toggleButton(buttonId, enabled, disabledMessage) {
+  const button = document.getElementById(buttonId)
+  if (button) {
+    button.disabled = !enabled
+    if (enabled) {
+      button.title = ""
+      button.classList.remove("disabled-button")
+    } else {
+      button.title = disabledMessage || "This feature is currently locked"
+      button.classList.add("disabled-button")
+    }
+  }
+}
+
+// Modify the renderAIOptions function to add event listeners for execution order updates
 function renderAIOptions(optionList) {
   aiOptions.forEach((option) => {
     const item = document.createElement("div")
     item.className = "option-item"
+
+    // Check if this option has dependencies
+    const hasDependencies = option.dependencies && Object.keys(option.dependencies).length > 0
+
     item.innerHTML = `
       <div class="option-icon">${option.icon}</div>
       <div class="option-content">
@@ -216,10 +775,63 @@ function renderAIOptions(optionList) {
     item.addEventListener("click", (e) => {
       if (e.target.type !== "checkbox") {
         const checkbox = item.querySelector(".option-checkbox")
-        checkbox.checked = !checkbox.checked
+        if (!checkbox.disabled) {
+          checkbox.checked = !checkbox.checked
+          // Update execution order after checkbox state changes
+          updateExecutionOrder()
+        } else {
+          // Show tooltip when clicking on disabled option
+          showTooltip(item, getDependencyMessage(option))
+        }
       }
     })
+
+    // Add event listener to update execution order when checkbox state changes
+    const checkbox = item.querySelector(".option-checkbox")
+    checkbox.addEventListener("change", updateExecutionOrder)
+
+    // Add tooltip on hover for options with dependencies
+    if (hasDependencies) {
+      checkbox.addEventListener("mouseenter", function () {
+        if (this.disabled) {
+          showTooltip(item, getDependencyMessage(option))
+        }
+      })
+
+      checkbox.addEventListener("mouseleave", () => {
+        hideTooltip(item)
+      })
+    }
   })
+
+  // Initial update of checkbox states
+  updateCheckboxStates()
+}
+
+// Show tooltip for disabled options
+function showTooltip(element, message) {
+  // Remove any existing tooltips
+  hideTooltip(element)
+
+  // Create tooltip
+  const tooltip = document.createElement("div")
+  tooltip.className = "dependency-tooltip"
+  tooltip.textContent = message
+  element.appendChild(tooltip)
+
+  // Position tooltip
+  const rect = element.getBoundingClientRect()
+  tooltip.style.top = `${rect.height}px`
+  tooltip.style.left = "50%"
+  tooltip.style.transform = "translateX(-50%)"
+}
+
+// Hide tooltip
+function hideTooltip(element) {
+  const tooltip = element.querySelector(".dependency-tooltip")
+  if (tooltip) {
+    tooltip.remove()
+  }
 }
 
 // Run the selected AI functions
@@ -286,6 +898,12 @@ async function runSelectedFunctions(functionNames) {
         continue
       }
 
+      // Check if dependencies are met
+      if (option.dependencies && !checkDependenciesForFunction(option).met) {
+        showStatus(`Skipping ${option.title}: Dependencies not met`, "warning")
+        continue
+      }
+
       // Execute the function
       showStatus(`Running: ${option.title}...`, "info")
 
@@ -301,6 +919,10 @@ async function runSelectedFunctions(functionNames) {
         }
 
         showStatus(`Completed: ${option.title}`, "info")
+
+        // Check dependencies after each function completes
+        checkDependenciesAndToggleButtons()
+        updateCheckboxStates()
       } catch (error) {
         // If there's an error, still show the section but with error message
         const resultSection = document.getElementById(`${funcName}-result`)
@@ -356,20 +978,39 @@ async function executeFunction(func, resultContainerId) {
       resultContainer.style.display = "block"
       setTimeout(() => resultContainer.classList.add("visible"), 10)
     }
+
+    // Check dependencies after function execution
+    checkDependenciesAndToggleButtons()
+    updateCheckboxStates()
   } finally {
     // Restore original console.log
     console.log = originalConsoleLog
   }
 }
 
-// Show status message
+// Enhance the showStatus function to support warning type
 function showStatus(msg, type = "info") {
   const el = document.getElementById("status-message")
   if (el) {
     el.textContent = msg
     el.style.display = "block"
-    el.style.backgroundColor = type === "error" ? "#fff5f5" : "#f0f7ff"
-    el.style.color = type === "error" ? "#c53030" : "#2c5282"
+
+    // Remove any existing status classes
+    el.classList.remove("status-warning")
+
+    // Set background and text color based on type
+    if (type === "error") {
+      el.style.backgroundColor = "#fff5f5"
+      el.style.color = "#c53030"
+    } else if (type === "warning") {
+      el.style.backgroundColor = "#fffbeb"
+      el.style.color = "#b45309"
+      el.classList.add("status-warning")
+    } else {
+      el.style.backgroundColor = "#f0f7ff"
+      el.style.color = "#2c5282"
+    }
+
     setTimeout(() => {
       el.style.display = "none"
     }, 5000)
@@ -417,7 +1058,7 @@ function showTab(tabName) {
 
         <div class="result-group">
           <div class="button-with-help">
-            <button class="btn ai-edit-button" onclick="generateCleanTranscript()">
+            <button id="cleanTranscriptBtn" class="btn ai-edit-button" onclick="generateCleanTranscript()" disabled title="Requires transcript">
               Clean Transcript <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.clean_transcript} credits)</span>
             </button>
             <span class="help-icon" data-tooltip="Removes filler words, repeated phrases, and fixes typos in the raw transcription">?</span>
@@ -438,7 +1079,7 @@ function showTab(tabName) {
           </select>
 
           <div class="button-with-help">
-            <button class="btn ai-edit-button" onclick="translateTranscript()">
+            <button id="translateBtn" class="btn ai-edit-button" onclick="translateTranscript()" disabled title="Requires transcript">
               Translate <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.translation} credits)</span>
             </button>
             <span class="help-icon" data-tooltip="Translates the transcript into the selected language">?</span>
@@ -451,7 +1092,7 @@ function showTab(tabName) {
 
         <div class="result-group">
           <div class="button-with-help">
-            <button class="btn ai-edit-button" onclick="generateAudioClip()">
+            <button id="generateAudioClipBtn" class="btn ai-edit-button" onclick="generateAudioClip()" disabled title="Requires translation">
               Generate Translated Podcast <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.audio_clip} credits)</span>
             </button>
             <span class="help-icon" data-tooltip="Produces an audio file of the translated text, ready to play as a podcast">?</span>
@@ -461,7 +1102,7 @@ function showTab(tabName) {
 
         <div class="result-group">
           <div class="button-with-help">
-            <button class="btn ai-edit-button" onclick="generateAISuggestions()">
+            <button id="aiSuggestionsBtn" class="btn ai-edit-button" onclick="generateAISuggestions()" disabled title="Requires transcript">
               AI Suggestions <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_suggestions} credits)</span>
             </button>
             <span class="help-icon" data-tooltip="Provides AI-generated tips on how to improve your transcript">?</span>
@@ -473,7 +1114,7 @@ function showTab(tabName) {
 
         <div class="result-group">
           <div class="button-with-help">
-            <button class="btn ai-edit-button" onclick="generateShowNotes()">
+            <button id="showNotesBtn" class="btn ai-edit-button" onclick="generateShowNotes()" disabled title="Requires transcript">
               Show Notes <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.show_notes} credits)</span>
             </button>
             <span class="help-icon" data-tooltip="Creates a concise bullet-point summary of the main topics covered">?</span>
@@ -485,7 +1126,7 @@ function showTab(tabName) {
 
         <div class="result-group">
           <div class="button-with-help">
-            <button class="btn ai-edit-button" onclick="generateQuotes()">
+            <button id="quotesBtn" class="btn ai-edit-button" onclick="generateQuotes()" disabled title="Requires transcript">
               Generate Quotes <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_quotes} credits)</span>
             </button>
             <span class="help-icon" data-tooltip="Extracts memorable quotes from the transcript">?</span>
@@ -501,7 +1142,7 @@ function showTab(tabName) {
             <option value="local">Local Template</option>
             <option value="dalle">DALL·E AI Image</option>
           </select>
-          <button class="btn ai-edit-button" onclick="generateQuoteImages()">
+          <button id="quoteImagesBtn" class="btn ai-edit-button" onclick="generateQuoteImages()" disabled title="Requires quotes">
             Generate Quote Images <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_quote_images} credits)</span>
           </button>
           <div class="result-field">
@@ -510,9 +1151,9 @@ function showTab(tabName) {
         </div>
 
         <div class="result-group">
-          <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field">
+          <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field" onchange="checkDependenciesAndToggleButtons()">
           <div class="button-with-help">
-            <button class="btn ai-edit-button" onclick="runOsintSearch()">
+            <button id="osintBtn" class="btn ai-edit-button" onclick="runOsintSearch()" disabled title="Requires guest name">
               OSINT Search <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_osint} credits)</span>
             </button>
             <span class="help-icon" data-tooltip="Performs an open-source intelligence search on the entered guest name">?</span>
@@ -523,7 +1164,7 @@ function showTab(tabName) {
         </div>
 
         <div class="button-with-help">
-          <button class="btn ai-edit-button" onclick="generatePodcastIntroOutro()">
+          <button id="introOutroBtn" class="btn ai-edit-button" onclick="generatePodcastIntroOutro()" disabled title="Requires guest name">
             Generate Intro/Outro <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_intro_outro} credits)</span>
           </button>
           <span class="help-icon" data-tooltip="Writes a suggested introduction and closing script for your episode">?</span>
@@ -532,7 +1173,7 @@ function showTab(tabName) {
           <pre id="introOutroScriptResult"></pre>
         </div>
         <div class="button-with-help" style="margin-top: 1rem;">
-          <button class="btn ai-edit-button" onclick="convertIntroOutroToSpeech()">
+          <button id="convertToSpeechBtn" class="btn ai-edit-button" onclick="convertIntroOutroToSpeech()" disabled title="Requires intro/outro script">
             Convert to Speech <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_intro_outro_audio} credits)</span>
           </button>
           <span class="help-icon" data-tooltip="Turns that script into a spoken audio file using AI voice">?</span>
@@ -598,7 +1239,7 @@ function showTab(tabName) {
         </select>
 
         <div class="button-with-help">
-          <button class="btn ai-edit-button" onclick="analyzeEnhancedAudio()">
+          <button id="analyzeAudioBtn" class="btn ai-edit-button" onclick="analyzeEnhancedAudio()" disabled title="Requires enhanced or isolated audio">
             Analyze <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_audio_analysis} credits)</span>
           </button>
           <span class="help-icon" data-tooltip="Lets the AI analyze the selected audio source and provide content insights">?</span>
@@ -607,10 +1248,12 @@ function showTab(tabName) {
           <pre id="analysisResults"></pre>
         </div>
 
-        <button id="mixBackgroundBtn"
+        <button id="backgroundMixBtn"
           class="btn ai-edit-button"
           style="display: none; margin-top: 1rem;"
-          onclick="displayBackgroundAndMix()">
+          onclick="displayBackgroundAndMix()" 
+          disabled 
+          title="Requires audio analysis">
           Mix Background & Preview
         </button>
         <div class="result-field">
@@ -650,15 +1293,15 @@ function showTab(tabName) {
         </button>
         <label>
           Start (s):
-          <input id="cut-start" type="number" step="0.01" class="input-field" style="width:5em;">
+          <input id="cut-start" type="number" step="0.01" class="input-field" style="width:5em;" onchange="checkDependenciesAndToggleButtons()">
         </label>
         <label style="margin-left:1em;">
           End (s):
-          <input id="cut-end" type="number" step="0.01" class="input-field" style="width:5em;">
+          <input id="cut-end" type="number" step="0.01" class="input-field" style="width:5em;" onchange="checkDependenciesAndToggleButtons()">
         </label>
 
         <div class="button-with-help">
-          <button class="btn ai-edit-button" onclick="cutAudio()">
+          <button id="cutBtn" class="btn ai-edit-button" onclick="cutAudio()" disabled title="Requires loaded audio file and valid cut times">
             Cut <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.audio_cutting} credits)</span>
           </button>
           <span class="help-icon" data-tooltip="Trim the audio between the specified start and end">?</span>
@@ -688,7 +1331,7 @@ function showTab(tabName) {
         </select>
         
         <div class="button-with-help">
-          <button class="btn ai-edit-button" onclick="aiCutAudio()">
+          <button id="aiCutBtn" class="btn ai-edit-button" onclick="aiCutAudio()" disabled title="Requires active audio">
             Run AI Cut <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_audio_cutting} credits)</span>
           </button>
           <span class="help-icon" data-tooltip="Automatically removes silent or filler sections and provides a transcript">?</span>
@@ -751,6 +1394,9 @@ function showTab(tabName) {
       </div>
     `
   }
+
+  // Run dependency check after tab content is loaded
+  checkDependenciesAndToggleButtons()
 }
 
 // Function to initialize waveform for audio cutting
@@ -825,13 +1471,18 @@ function initWaveformCutting(blob) {
       if (!isNaN(v) && v < selectedRegion.end) {
         selectedRegion.update({ start: v })
       }
+      checkDependenciesAndToggleButtons()
     }
     endInput.oninput = () => {
       const v = Number.parseFloat(endInput.value)
       if (!isNaN(v) && v > selectedRegion.start) {
         selectedRegion.update({ end: v })
       }
+      checkDependenciesAndToggleButtons()
     }
+
+    // Check dependencies after waveform is ready
+    checkDependenciesAndToggleButtons()
   })
 
   // Keep inputs in sync whenever the user drags/resizes the region
@@ -839,6 +1490,7 @@ function initWaveformCutting(blob) {
     selectedRegion = region
     document.getElementById("cut-start").value = region.start.toFixed(2)
     document.getElementById("cut-end").value = region.end.toFixed(2)
+    checkDependenciesAndToggleButtons()
   })
 }
 
@@ -960,6 +1612,9 @@ async function transcribe() {
     await consumeStoreCredits("transcription")
 
     showStatus("Transcription completed successfully!", "info")
+
+    // Check dependencies after transcription
+    checkDependenciesAndToggleButtons()
   } catch (error) {
     console.error("Transcription error:", error)
     transcriptionResult.innerHTML = `<p style="color: red;">Transcription failed: ${error.message}</p>`
@@ -992,6 +1647,9 @@ async function translateTranscript() {
 
     // Only consume credits after successful translation
     await consumeStoreCredits("translation")
+
+    // Check dependencies after translation
+    checkDependenciesAndToggleButtons()
   } catch (err) {
     hideSpinner("translateResult")
     resultContainer.innerText = `Error: ${err.message}`
@@ -1325,6 +1983,9 @@ async function generateQuotes() {
     // Only consume credits after successful quotes generation
     await consumeStoreCredits("ai_quotes")
     showStatus("Quotes generated successfully!", "info")
+
+    // Check dependencies after quotes generation
+    checkDependenciesAndToggleButtons()
   } catch (err) {
     container.innerHTML = `<p style="color: red;">Failed to generate quotes: ${err.message}</p>`
     showStatus(`Failed to generate quotes: ${err.message}`, "error")
@@ -1462,6 +2123,9 @@ async function generatePodcastIntroOutro() {
 
     // Only consume credits after successful intro/outro generation
     await consumeStoreCredits("ai_intro_outro")
+
+    // Check dependencies after intro/outro generation
+    checkDependenciesAndToggleButtons()
   } catch (err) {
     container.innerText = `Failed: ${err.message}`
   }
@@ -1629,6 +2293,9 @@ async function enhanceAudio() {
     // Only consume credits after successful audio enhancement
     await consumeStoreCredits("audio_enhancement")
     showStatus("Audio enhancement completed successfully!", "info")
+
+    // Check dependencies after audio enhancement
+    checkDependenciesAndToggleButtons()
   } catch (err) {
     container.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`
     showStatus(`Audio enhancement failed: ${err.message}`, "error")
@@ -1803,6 +2470,9 @@ async function runVoiceIsolation() {
     // Only consume credits after successful voice isolation
     await consumeStoreCredits("voice_isolation")
     showStatus("Voice isolation completed successfully!", "info")
+
+    // Check dependencies after voice isolation
+    checkDependenciesAndToggleButtons()
   } catch (err) {
     console.error("Voice isolation failed:", err)
     container.innerHTML = `<p style="color: red;">Isolation failed: ${err.message}</p>`
@@ -1851,6 +2521,9 @@ async function analyzeEnhancedAudio() {
 
     // Only consume credits after successful audio analysis
     await consumeStoreCredits("ai_audio_analysis")
+
+    // Check dependencies after audio analysis
+    checkDependenciesAndToggleButtons()
   } catch (err) {
     container.innerText = `Analysis failed: ${err.message}`
   }
@@ -2180,6 +2853,7 @@ async function aiCutAudio() {
         } else {
           delete window.selectedAiCuts[index]
         }
+        checkDependenciesAndToggleButtons()
       }
       window.selectedAiCuts[index] = cut
 
@@ -2193,6 +2867,7 @@ async function aiCutAudio() {
     })
 
     const applyBtn = document.createElement("button")
+    applyBtn.id = "applySelectedCutsBtn"
     applyBtn.className = "btn ai-edit-button"
     applyBtn.innerText = "Apply AI Cuts"
     applyBtn.onclick = applySelectedCuts
@@ -2200,6 +2875,9 @@ async function aiCutAudio() {
 
     // Only consume credits after successful AI audio cutting
     await consumeStoreCredits("ai_audio_cutting")
+
+    // Check dependencies after AI cuts are generated
+    checkDependenciesAndToggleButtons()
   } catch (err) {
     containerTranscript.innerText = "Failed to process audio."
     alert(`AI Cut failed: ${err.message}`)
@@ -2624,4 +3302,128 @@ async function consumeStoreCredits(featureKey) {
   } catch (err) {
     console.error("Error consuming credits:", err)
   }
+}
+
+// Run initial dependency check when script loads
+document.addEventListener("DOMContentLoaded", checkDependenciesAndToggleButtons)
+
+// Export the updated script
+console.log("AI Edits Script updated with dependency management system")
+
+// Helper function to hide spinner
+function hideSpinner(containerId) {
+  const container = document.getElementById(containerId)
+  if (container) {
+    container.innerHTML = "" // Clear the container content
+  }
+}
+
+// Add this function to generate a dependency visualization
+function generateDependencyVisualization() {
+  const container = document.getElementById("dependency-details")
+  if (!container) return
+
+  let html = "<h4>Function Dependencies:</h4>"
+
+  // Create a graph representation
+  const graph = {}
+
+  // Initialize the graph with all functions
+  aiOptions.forEach((option) => {
+    graph[option.id] = {
+      title: option.title,
+      dependsOn: [],
+      requiredBy: [],
+    }
+  })
+
+  // Fill in the dependencies
+  aiOptions.forEach((option) => {
+    if (option.dependencies && Object.keys(option.dependencies).length > 0) {
+      // Find which functions this depends on
+      aiOptions.forEach((dep) => {
+        if (option.id === dep.id) return
+
+        // Check if this function provides something the current function needs
+        const dependencies = Object.keys(option.dependencies)
+        let isDependency = false
+
+        // Special dependency checks
+        if (
+          dep.id === "transcribe" &&
+          (dependencies.includes("rawTranscript") || dependencies.includes("fullTranscript"))
+        ) {
+          isDependency = true
+          graph[option.id].dependsOn.push(dep.id)
+          graph[dep.id].requiredBy.push(option.id)
+        } else if (dep.id === "generateQuotes" && dependencies.includes("quotesResult")) {
+          isDependency = true
+          graph[option.id].dependsOn.push(dep.id)
+          graph[dep.id].requiredBy.push(option.id)
+        } else if (dep.id === "translateTranscript" && dependencies.includes("translateResult")) {
+          isDependency = true
+          graph[option.id].dependsOn.push(dep.id)
+          graph[dep.id].requiredBy.push(option.id)
+        } else if (dep.id === "generatePodcastIntroOutro" && dependencies.includes("introOutroScriptResult")) {
+          isDependency = true
+          graph[option.id].dependsOn.push(dep.id)
+          graph[dep.id].requiredBy.push(option.id)
+        } else if (dep.id === "analyzeEnhancedAudio" && dependencies.includes("analysisData")) {
+          isDependency = true
+          graph[option.id].dependsOn.push(dep.id)
+          graph[dep.id].requiredBy.push(option.id)
+        } else if (
+          (dep.id === "enhanceAudio" || dep.id === "isolateVoice") &&
+          dependencies.includes("activeAudioBlob")
+        ) {
+          isDependency = true
+          graph[option.id].dependsOn.push(dep.id)
+          graph[dep.id].requiredBy.push(option.id)
+        } else if (dep.id === "aiCutAudio" && dependencies.includes("selectedAiCuts")) {
+          isDependency = true
+          graph[option.id].dependsOn.push(dep.id)
+          graph[dep.id].requiredBy.push(option.id)
+        }
+      })
+    }
+  })
+
+  // Generate HTML for the visualization
+  html += '<div class="dependency-visualization">'
+
+  // Functions with no dependencies
+  html += '<div class="dependency-group">'
+  html += "<h5>Base Functions (No Dependencies):</h5>"
+  html += "<ul>"
+  Object.entries(graph).forEach(([id, info]) => {
+    if (info.dependsOn.length === 0) {
+      html += `<li><strong>${info.title}</strong>`
+      if (info.requiredBy.length > 0) {
+        html += ` - Required by: ${info.requiredBy.map((depId) => graph[depId].title).join(", ")}`
+      }
+      html += "</li>"
+    }
+  })
+  html += "</ul>"
+  html += "</div>"
+
+  // Functions with dependencies
+  html += '<div class="dependency-group">'
+  html += "<h5>Functions With Dependencies:</h5>"
+  html += "<ul>"
+  Object.entries(graph).forEach(([id, info]) => {
+    if (info.dependsOn.length > 0) {
+      html += `<li><strong>${info.title}</strong> - Depends on: ${info.dependsOn.map((depId) => graph[depId].title).join(", ")}`
+      if (info.requiredBy.length > 0) {
+        html += `<br>Required by: ${info.requiredBy.map((depId) => graph[depId].title).join(", ")}`
+      }
+      html += "</li>"
+    }
+  })
+  html += "</ul>"
+  html += "</div>"
+
+  html += "</div>"
+
+  container.innerHTML = html
 }
