@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template, url_for, g
+from flask import Blueprint, request, jsonify, render_template, url_for, g, current_app
 from backend.utils.email_utils import send_email, send_team_invite_email
 from backend.database.mongo_connection import collection
 from backend.models.podcasts import PodcastSchema
@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import uuid
 import logging
 import os  # Ensure os is imported to use getenv
+from bson import ObjectId # Import ObjectId
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -31,19 +32,20 @@ def send_invitation():
             logger.warning("User ID not found in g context for send_invitation.")
             return jsonify({"error": "User not authenticated"}), 401
 
-        # Fetch the account document from MongoDB for the logged-in user
-        # Query Accounts collection using ownerId which corresponds to Users._id
-        user_account = collection.database.Accounts.find_one({"ownerId": g.user_id})
+        # Fetch the sender's email from Users collection
+        sender_user = collection.database.Users.find_one({"_id": ObjectId(g.user_id)}) # Convert g.user_id to ObjectId
 
-        if not user_account:
-            logger.error(f"No account associated with this user ID (ownerId): {g.user_id}")
-            return jsonify({"error": "No account associated with this user"}), 403
-
-        user_email = user_account.get("email")
-        if not user_email:
-            logger.error(f"User account {user_account.get('_id')} found but has no email address.")
-            return jsonify({"error": "User account has no email address"}), 400
+        if not sender_user:
+            logger.error(f"Sender user {g.user_id} not found in Users collection.")
+            return jsonify({"error": "Sender user not found"}), 404
         
+        sender_email = sender_user.get("email")
+        if not sender_email:
+            logger.error(f"Sender user {g.user_id} found but has no email address in Users collection.")
+            return jsonify({"error": "Sender email not found"}), 400 # Should not happen if email is required in Users
+
+        logger.info(f"Sender email resolved to: {sender_email} from Users collection for user_id: {g.user_id}")
+
         # Assuming send_email is a generic email sending utility
         # You might want a more specific template or subject for this beta invitation
         subject = "Your PodManager Beta Access"
@@ -52,13 +54,13 @@ def send_invitation():
         # For now, using a simple text body
         body = "Thank you for your interest! Here's your access to the PodManager beta." # Replace with actual content or template
 
-        email_sent = send_email(user_email, subject, body) # Assuming send_email returns a boolean or throws an exception
+        email_sent = send_email(sender_email, subject, body) # Assuming send_email returns a boolean or throws an exception
 
         if email_sent: # Adjust based on what send_email returns
-            logger.info(f"Beta invitation email successfully sent to {user_email}")
+            logger.info(f"Beta invitation email successfully sent to {sender_email}")
             return jsonify({"message": "Invitation email sent successfully!"}), 200
         else:
-            logger.error(f"Failed to send beta invitation email to {user_email}")
+            logger.error(f"Failed to send beta invitation email to {sender_email}")
             return jsonify({"error": "Failed to send invitation email"}), 500
 
     except Exception as e:

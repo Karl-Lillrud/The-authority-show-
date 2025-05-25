@@ -2,7 +2,7 @@ import os
 import logging
 import requests
 from colorama import init
-from flask import Flask, jsonify, request, send_from_directory, g, Response, current_app
+from flask import Flask, jsonify, request, session, g, Response, current_app
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from dotenv import load_dotenv
