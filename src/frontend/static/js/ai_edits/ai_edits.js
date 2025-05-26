@@ -107,6 +107,18 @@ async function createFileFromUrl(url, filename) {
     }
 }
 
+// Function to get episode details
+async function getEpisodeDetails(episodeId) {
+    try {
+        const response = await fetch(`/get_episodes/${episodeId}`);
+        if (!response.ok) throw new Error('Failed to fetch episode details');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching episode details:', error);
+        return null;
+    }
+}
+
 function showTab(tabName) {
     // Get all workspace tab buttons
     const workspaceButtons = document.querySelectorAll('.workspace-tab-btn');
@@ -176,21 +188,19 @@ function showTab(tabName) {
         // Load episode's audio file if available
         const episodeId = getSelectedEpisodeId();
         if (episodeId) {
-            // First fetch episode details
-            fetch(`/get_episodes/${episodeId}`)
-                .then(async response => {
-                    if (!response.ok) throw new Error('Failed to fetch episode details');
-                    const episode = await response.json();
-                    
-                    // Set episode title
-                    const titleEl = document.getElementById('episode-title');
-                    if (titleEl && episode.title) {
-                        titleEl.textContent = episode.title;
-                    }
-                    
-                    // If episode has audioUrl, use it
-                    if (episode.audioUrl) {
-                        const file = await createFileFromUrl(episode.audioUrl, 'episode-audio.mp3');
+            getEpisodeDetails(episodeId).then(async episode => {
+                if (!episode) return;
+                
+                // Set episode title
+                const titleEl = document.getElementById('episode-title');
+                if (titleEl && episode.title) {
+                    titleEl.textContent = episode.title;
+                }
+                
+                // If episode has audioUrl, use it
+                if (episode.audioUrl) {
+                    try {
+                        const file = await createFileFromUrl(episode.audioUrl, `${episode.title || 'episode'}.mp3`);
                         if (file) {
                             // Store the file in a hidden input
                             const fileUploader = document.getElementById('fileUploader');
@@ -207,11 +217,14 @@ function showTab(tabName) {
                             // Hide the file uploader since we have the episode audio
                             fileUploader.style.display = 'none';
                         }
+                    } catch (error) {
+                        console.error('Error loading episode audio:', error);
+                        // Show the file uploader if we fail to load the episode audio
+                        const fileUploader = document.getElementById('fileUploader');
+                        fileUploader.style.display = 'block';
                     }
-                })
-                .catch(error => {
-                    console.error('Error loading episode details:', error);
-                });
+                }
+            });
         }
     } else if (tabName === 'audio') {
         content.innerHTML = `
@@ -587,6 +600,7 @@ async function transcribe() {
         alert("No episode selected.");
         return;
     }
+
     wrapper.style.display = "block";
     showSpinner("transcriptionResult");
     
@@ -595,6 +609,12 @@ async function transcribe() {
     formData.append('episode_id', episodeId);  // Include episode ID
 
     try {
+        // First get episode details to include title
+        const episode = await getEpisodeDetails(episodeId);
+        if (episode && episode.title) {
+            formData.append('episode_title', episode.title);
+        }
+
         const response = await fetch('/transcription/transcribe', {
             method: 'POST',
             body: formData,
