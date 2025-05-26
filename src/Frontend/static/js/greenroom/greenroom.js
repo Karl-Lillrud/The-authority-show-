@@ -1,3 +1,6 @@
+import { fetchGuestsByEpisode } from "../../../static/requests/guestRequests.js";
+// Add other imports here as needed for greenroom logic
+
 // Initialize Socket.IO connection
 const socket = io();
 
@@ -49,6 +52,42 @@ async function initializeDevices() {
         console.error('Error initializing devices:', error);
     }
 }
+
+async function loadGuestsForEpisode(episodeId) {
+  try {
+    const guests = await fetchGuestsByEpisode(episodeId);
+    const guestId = new URLSearchParams(window.location.search).get("guestId");
+    const container = document.getElementById("participantsContainer");
+    container.innerHTML = "";
+
+    if (!guests.length) {
+      container.innerHTML = "<p>No guests found for this episode.</p>";
+      return;
+    }
+
+    guests.forEach(guest => {
+      const card = document.createElement("div");
+      card.className = "guest-card p-3 border rounded m-2";
+
+      if (guest.id === guestId) {
+        card.classList.add("bg-light", "border-success");
+      }
+
+      card.innerHTML = `
+        <h5>${guest.name}</h5>
+        <p><strong>Email:</strong> ${guest.email || "N/A"}</p>
+        <p><strong>Bio:</strong> ${guest.bio || "No bio available."}</p>
+      `;
+
+      container.appendChild(card);
+    });
+  } catch (err) {
+    console.error("Failed to load guests:", err);
+    document.getElementById("participantsContainer").innerHTML = "<p>Error loading guests.</p>";
+  }
+}
+
+
 
 // Start camera preview
 async function startCamera(deviceId) {
@@ -219,3 +258,12 @@ function updateParticipantStatus(user) {
 
 // Initialize
 initializeDevices();
+
+// Load guests for this episode
+const urlParams = new URLSearchParams(window.location.search);
+const episodeId = urlParams.get("episodeId");
+
+if (episodeId) {
+    loadGuestsForEpisode(episodeId); // <--- this fixes the "never read" warning
+}
+
