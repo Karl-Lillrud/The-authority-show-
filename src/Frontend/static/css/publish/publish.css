@@ -8,6 +8,7 @@ body {
 .publish-container {
   max-width: 900px;
   margin: 2rem auto;
+  margin-top: 84px;
   padding: 2rem;
   background-color: #fff;
   border-radius: var(--radius-large, 12px);

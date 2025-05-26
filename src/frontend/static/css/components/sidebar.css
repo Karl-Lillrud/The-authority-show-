@@ -256,6 +256,7 @@
   padding: var(--spacing-lg);
   transition: margin-left var(--transition-normal);
   margin-left: 0; /* reduce or remove the sidebar offset */
+  padding-top: 84px;
 }
 
 .sidebar.collapsed + .main-content {

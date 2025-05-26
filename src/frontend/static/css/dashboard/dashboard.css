@@ -5,7 +5,7 @@
   color: var(--text-color-light);
   line-height: 1.5;
   max-width: 1200px;
-  margin: 20px auto 0; /* Add margin-top here */
+  margin: 68px auto 0; /* Add margin-top here */
   position: relative;
   z-index: 2;
   padding: 0 var(--spacing-lg);

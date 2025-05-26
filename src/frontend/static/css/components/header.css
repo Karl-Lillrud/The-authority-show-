@@ -383,6 +383,58 @@ header {
 .custom-dropdown.active .dropdown-lp-options {
   display: block;
 }
+ /* Main Menu (Bellow Header) */
+ #main-menu {
+  position:absolute;
+  width: 100%;
+  top: 116px;
+  z-index: 99;
+ }
+
+ #main-menu nav {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+ }
+
+ #main-menu nav ul {
+  display: flex;
+  gap: 30px;
+ }
+
+ #main-menu nav ul li {
+  list-style-type: none;
+  display: flex;
+ }
+
+ #main-menu nav ul li a {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-weight: 600;
+  font-size: 14px;
+  color: #797979;
+  background-color: white;
+  border: 1px solid white;
+  border-top: 0;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  text-decoration: none;
+ }
+
+ #main-menu nav ul li a:hover {
+  text-decoration: none;
+  color: var(--highlight-color);
+  box-shadow: 0px 0px 6px rgba(255, 100, 0, 0.8);
+ }
+
+ #main-menu nav ul li a.active {
+  color: var(--highlight-color);
+  box-shadow: 0px 0px 6px rgba(255, 100, 0, 0.8);
+  border-color: var(--highlight-color);
+ }
+
 
 @media (max-width: 768px) {
   header {
