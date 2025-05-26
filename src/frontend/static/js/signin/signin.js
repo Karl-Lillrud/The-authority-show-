@@ -51,6 +51,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+
+  /* Länkens kod som gör samma sak som login button*/
+document.getElementById("send-login-link-anchor").addEventListener("click", function(e) {
+  e.preventDefault(); // Hindra vanlig länk
+  document.getElementById("send-login-link-button").click(); // Trigga knappens funktion
+});
+
+
   // Handle "Get Log-In Link" button click
   if (sendLoginLinkButton) {
     sendLoginLinkButton.addEventListener("click", async function () {
