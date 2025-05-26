@@ -797,7 +797,9 @@
   font-weight: 600;
   font-size: 0.7rem;
   transition: all var(--transition-normal);
+  margin-right: 8px; /* Add this line for spacing */
 }
+
 
 .view-profile-btn:hover {
   background-color: var(--highlight-hover);

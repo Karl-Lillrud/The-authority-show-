@@ -204,9 +204,20 @@ def recording_studio():
 
 @recording_studio_bp.route('/greenroom', methods=['GET'])
 def greenroom():
-    """
-    Render the greenroom page with guestId and token.
-    """
     guest_id = request.args.get("guestId")
     token = request.args.get("token")
-    return render_template('greenroom/greenroom.html', guestId=guest_id, token=token)
+    episode_id = request.args.get("episodeId")  # fallback usage
+
+    # Optional: look up token from episode_id and guest_id if token missing
+    if not token and episode_id and guest_id:
+        invitation = invitations_collection.find_one({
+            "episode_id": episode_id,
+            "guest_id": guest_id
+        })
+        if not invitation:
+            return "Invitation not found", 404
+        token = invitation.get("invite_token")
+
+    return render_template("greenroom/greenroom.html", guestId=guest_id, token=token)
+
+
