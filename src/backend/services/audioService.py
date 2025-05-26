@@ -9,7 +9,7 @@ from backend.utils.ai_utils import (
     convert_to_pcm_wav, transcribe_with_whisper, detect_filler_words,
     analyze_certainty_levels, detect_long_pauses,
     generate_ai_show_notes, translate_text, mix_background,
-    pick_dominant_emotion, fetch_sfx_for_emotion, 
+    pick_dominant_emotion, fetch_sfx_for_emotion, convert_audio_to_wav
 )
 from backend.repository.ai_models import save_file, get_file_data, get_file_by_id
 from elevenlabs.client import ElevenLabs
@@ -18,7 +18,7 @@ from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.edit_repository import create_edit_entry
 from flask import g
 from openai import OpenAI
-
+import tempfile
 logger = logging.getLogger(__name__)
 
 fs = get_fs()
@@ -880,65 +880,54 @@ class AudioService:
         Returns the mixed audio as bytes.
         """
         logger.info(f"Mixing {len(sfx_clips)} SFX clips with original audio ({len(original_audio_bytes)} bytes)")
-        
-        # Load original audio
+
         try:
-            original = AudioSegment.from_file(BytesIO(original_audio_bytes), format="wav")
-            logger.info(f"Original audio length (ms): {len(original)}")
-            logger.info(f"Loaded original audio: {len(original)}ms duration, {original.channels} channels, {original.frame_rate}Hz")
-        
-            # Create a copy to mix into
+            # ✅ Convert to safe WAV path using your helper
+            wav_path = convert_audio_to_wav(original_audio_bytes, original_ext=".mp3")  # fallback ext in case unknown
+            with open(wav_path, "rb") as f:
+                safe_wav_bytes = f.read()
+            os.remove(wav_path)
+
+            # Load the properly converted WAV
+            original = AudioSegment.from_file(BytesIO(safe_wav_bytes), format="wav")
+            logger.info(f"Loaded original audio: {len(original)}ms, {original.channels}ch")
+
+            # Prepare output mix
             mixed = original.overlay(AudioSegment.silent(duration=0))
-            logger.info("Created base mixed audio track")
-        
-            # Mix in each SFX clip at the specified position
+
             for i, clip in enumerate(sfx_clips):
                 try:
                     start_ms = int(clip["start"] * 1000)
                     if start_ms >= len(original):
-                        logger.warning(f"SFX start time ({start_ms}ms) is after the end of the audio ({len(original)}ms)!")
+                        logger.warning(f"Skipping SFX {i+1}: start time {start_ms}ms exceeds audio length {len(original)}ms")
                         continue
-                    logger.info(f"Processing clip {i+1}/{len(sfx_clips)}: '{clip['description']}' at {start_ms}ms")
-                    
+
                     if not clip.get("audio_bytes"):
-                        logger.warning(f"Clip {i+1} has no audio_bytes, skipping")
+                        logger.warning(f"Skipping SFX {i+1}: missing audio_bytes")
                         continue
-                    
+
                     sfx = AudioSegment.from_file(BytesIO(clip["audio_bytes"]), format="wav")
-                    logger.info(f"Loaded SFX audio: {len(sfx)}ms duration")
-                
-                    # Apply a slight fade in/out
                     sfx = sfx.fade_in(300).fade_out(300)
-                    logger.info("Applied fade in/out")
-                
-                    # Adjust volume (make SFX quieter than speech)
-                    sfx = sfx - 3  # Reduce by only 3 dB for testing (was -10)
-                    logger.info(f"Adjusted volume (-3dB instead of -10dB for testing)")
-                
-                    # Overlay at the correct position
+                    sfx = sfx - 3  # Slightly lower volume
                     mixed = mixed.overlay(sfx, position=start_ms)
-                    logger.info(f"Overlaid SFX at position {start_ms}ms")
-                
+
+                    logger.info(f"✔️ Mixed SFX {i+1}/{len(sfx_clips)} at {start_ms}ms")
+
                 except Exception as e:
-                    logger.error(f"Error mixing SFX '{clip['description']}': {e}", exc_info=True)
-        
-            # Export the final mix
-            logger.info("Exporting final mixed audio")
+                    logger.error(f"Error mixing SFX {i+1}: {e}", exc_info=True)
+
+            # Export result
             output = BytesIO()
             mixed.export(output, format="wav")
             result_bytes = output.getvalue()
-            logger.info(f"Exported mixed audio: {len(result_bytes)} bytes")
-            
-            # Check if the mixed audio is different from the original
-            if len(result_bytes) == len(original_audio_bytes):
-                logger.warning("WARNING: Mixed audio has same size as original, they might be identical")
-                if result_bytes == original_audio_bytes:
-                    logger.error("ERROR: Mixed audio is identical to original! No SFX were mixed in.")
-            
+
+            # Optional: compare with original
+            if result_bytes == original_audio_bytes:
+                logger.warning("⚠️ Final mix is identical to original. No SFX may have been applied.")
+
             return result_bytes
-            
+
         except Exception as e:
-            logger.error(f"Error in mix_sfx_audio_bytes: {e}", exc_info=True)
-            # Return original audio as fallback
-            logger.warning("Returning original audio due to mixing error")
+            logger.error(f"❌ Error in mix_sfx_audio_bytes: {e}", exc_info=True)
+            logger.warning("Returning original audio as fallback")
             return original_audio_bytes

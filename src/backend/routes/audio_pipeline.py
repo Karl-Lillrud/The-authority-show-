@@ -42,6 +42,8 @@ def process_audio_pipeline():
         ...
     }
     """
+    # --- Initialize variables ---
+    word_timestamps = None
     # --- Request validation ---
     steps_raw = request.form.get("steps")
     episode_id = request.form.get("episode_id")
@@ -174,6 +176,7 @@ def process_audio_pipeline():
                         metadata["steps_applied"].append(step)
                         metadata["transcript"] = result.get("full_transcript", "")
                         metadata["raw_transcription"] = result.get("raw_transcription", "")
+                        metadata["word_timestamps"] = result.get("word_timestamps", []) 
                         if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "cut_audio":
@@ -186,13 +189,12 @@ def process_audio_pipeline():
                         metadata["steps_applied"].append(step)
                         metadata["transcript"] = result.get("transcript", "")
                         metadata["analysis"] = result
-                        metadata["word_timestamps"] = result.get("words")  # ✅ NYCKELRADEN
+                        word_timestamps = result.get("word_timestamps", None)
                         if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "plan_and_mix_sfx":
-                        word_timestamps = metadata.get("word_timestamps")
                         current_audio, temp_path, result = process_plan_and_mix_sfx_step(
-                            current_audio, temp_path, temp_dir, word_timestamps=word_timestamps
+                            current_audio, temp_path, temp_dir, word_timestamps
                         )
                         metadata["steps_applied"].append(step)
                         metadata["sfx_plan"] = result.get("sfx_plan", [])
@@ -452,20 +454,8 @@ def process_cut_audio_step(audio_bytes: bytes, input_path: str, temp_dir: str, c
 
 
 def process_analyze_audio_step(audio_bytes: bytes) -> Dict[str, Any]:
-    """
-    Process the analyze audio step: analyze audio using AI.
-    
-    Args:
-        audio_bytes: Current audio bytes
-        
-    Returns:
-        Analysis result dictionary
-    """
     logger.info("Processing analyze audio step")
-    
-    # Call the audio service to analyze the audio
     analysis_result = audio_service.analyze_audio(audio_bytes)
-    
     return analysis_result
 
 
