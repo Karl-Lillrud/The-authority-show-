@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timezone
 from marshmallow import ValidationError
 from backend.database.mongo_connection import collection
-from backend.models.teams import TeamSchema
+from backend.models.teams import Team  # Changed from TeamSchema to Team
 from backend.services.activity_service import ActivityService  # Add this import
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class TeamRepository:
 
     def add_team(self, user_id, user_email, data):
         try:
-            team_schema = TeamSchema()
+            team_schema = Team()
             validated_data = team_schema.load(data)
 
             team_id = str(uuid.uuid4())  # Ensure team_id is a string
@@ -211,7 +211,7 @@ class TeamRepository:
             if not team:
                 return {"error": "Team not found"}, 404
 
-            team_schema = TeamSchema()
+            team_schema = Team()
             validated_data = team_schema.load(data, partial=True)
 
             def are_values_different(old, new):

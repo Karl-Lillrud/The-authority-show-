@@ -30,14 +30,13 @@ def get_blob_service_client():
         logger.error(f"Unexpected error during BlobServiceClient initialization: {e}", exc_info=True)
         return None
 
-def upload_file_to_blob(container_name, blob_path, file_data, content_type="application/octet-stream"):
+def upload_file_to_blob(container_name, blob_path, file):
     """
     Uploads a file to Azure Blob Storage.
     Args:
         container_name (str): The name of the Azure Blob Storage container.
         blob_path (str): The path within the container where the file will be stored.
-        file_data: The file object, path, or data to upload.
-        content_type (str): The content type of the file (optional).
+        file: The file object or path to upload.
     Returns:
         str: The URL of the uploaded file or None on failure.
     """
@@ -48,17 +47,14 @@ def upload_file_to_blob(container_name, blob_path, file_data, content_type="appl
 
     try:
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
-        
-        # Best Practice: Check if file_data is a path, stream, or raw data
-        if isinstance(file_data, str) and os.path.exists(file_data):
-             with open(file_data, "rb") as data:
-                  blob_client.upload_blob(data, overwrite=True, content_type=content_type)
-        elif hasattr(file_data, 'read'): # Check if file_data is a file-like object (stream)
-             file_data.seek(0) # Ensure stream is at the beginning
-             blob_client.upload_blob(file_data, overwrite=True, content_type=content_type)
+        # Best Practice: Check if file is a path or stream
+        if isinstance(file, str) and os.path.exists(file):
+             with open(file, "rb") as data:
+                  blob_client.upload_blob(data, overwrite=True)
         else:
-             # Assume file_data is raw data (bytes)
-             blob_client.upload_blob(file_data, overwrite=True, content_type=content_type)
+             # Assume it's a file-like object (stream)
+             file.seek(0) # Ensure stream is at the beginning
+             blob_client.upload_blob(file, overwrite=True)
 
         # Best Practice: Construct URL reliably
         account_name = blob_service_client.account_name

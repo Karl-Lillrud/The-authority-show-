@@ -1,67 +1,23 @@
 import os
 import datetime
-from flask import current_app, url_for, request # Added request
+import requests
+import time
+from flask import current_app
 from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.podcast_repository import PodcastRepository
-from backend.services.rss_Service import RSSService
-from backend.utils.blob_storage import upload_file_to_blob  # For any generic blob uploads
-from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions # Modified import
-import time # Add this import
-from backend.database.mongo_connection import mongo # Import mongo
+from azure.storage.blob import BlobServiceClient
 
 class PublishService:
     def __init__(self):
         self.episode_repo = EpisodeRepository()
         self.podcast_repo = PodcastRepository()
-        self.rss_service = RSSService()
-        self.rss_feed_base_url = os.getenv("RSS_FEED_BASE_URL")
-        # Initialize Azure configuration for PublishService
-        self.azure_storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-        self.azure_storage_container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME")
-        self.base_url = os.getenv("LOCAL_BASE_URL") if os.getenv("ENVIRONMENT") == "local" else os.getenv("PROD_BASE_URL")
-
-
-    def _find_podcast_details_by_identifier(self, identifier_to_find):
-        podcasts_collection = mongo.db.Podcasts 
-        accounts_collection = mongo.db.Accounts
-    
-        matched_podcasts = []
-        # Iterate through all podcasts, compare their names directly with the identifier.
-        for p_data in podcasts_collection.find({}, {"_id": 1, "podName": 1, "accountId": 1}):
-            current_pod_name = p_data.get("podName")
-            # Direct comparison for podName
-            if current_pod_name == identifier_to_find:
-                account = accounts_collection.find_one({"_id": p_data.get("accountId")}, {"ownerId": 1})
-                if account and account.get("ownerId"):
-                    matched_podcasts.append({
-                        "podcast_id": str(p_data["_id"]),
-                        "user_id": str(account["ownerId"]) 
-                    })
-                else:
-                    current_app.logger.warning(f"Found podcast with name '{identifier_to_find}' (ID: {p_data['_id']}) but could not find its account or ownerId.")
-        
-        if not matched_podcasts:
-            try:
-                if len(identifier_to_find) == 36: 
-                    potential_podcast_by_id = podcasts_collection.find_one({"_id": identifier_to_find}, {"_id": 1, "accountId": 1})
-                    if potential_podcast_by_id:
-                        account = accounts_collection.find_one({"_id": potential_podcast_by_id.get("accountId")}, {"ownerId": 1})
-                        if account and account.get("ownerId"):
-                            current_app.logger.info(f"Interpreting '{identifier_to_find}' as a direct podcast_id for RSS proxy.")
-                            return str(potential_podcast_by_id["_id"]), str(account["ownerId"])
-            except Exception as e:
-                current_app.logger.info(f"Could not interpret '{identifier_to_find}' as podcast_id during fallback: {e}")
-            return None, None 
-    
-        if len(matched_podcasts) > 1:
-            current_app.logger.warning(
-                f"Multiple podcasts found for identifier (podName) '{identifier_to_find}'. Using the first one: {matched_podcasts[0]['podcast_id']}"
-            )
-        
-        if not matched_podcasts: # Ensure we return None, None if still no matches after all checks
-            return None, None
-
-        return matched_podcasts[0]["podcast_id"], matched_podcasts[0]["user_id"]
+        # Load credentials from environment
+        self.spotify_client_id = os.getenv("SPOTIFY_CLIENT_ID")
+        self.spotify_client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
+        self.spotify_refresh_token = os.getenv("SPOTIFY_REFRESH_TOKEN")
+        self.rss_feed_base_url = os.getenv("RSS_FEED_BASE_URL")  
+        self.azure_conn_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+        self.rss_blob_container = os.getenv("AZURE_STORAGE_CONTAINER_NAME") # Changed from AZURE_STORAGE_ACCOUNT_NAME
 
     def publish_episode(self, episode_id, user_id, platforms):
         log_messages = []
@@ -69,125 +25,30 @@ class PublishService:
             # 1. Data Retrieval
             episode_data_tuple = self.episode_repo.get_episode(episode_id, user_id)
             if not episode_data_tuple or episode_data_tuple[1] != 200:
-                log_messages.append(f"Error: Episode {episode_id} not found or access denied for user {user_id}.")
                 return {"success": False, "error": "Episode not found or access denied.", "details": log_messages}
             episode = episode_data_tuple[0]
             log_messages.append(f"Fetched episode: {episode.get('title', episode_id)}")
 
             podcast_id = episode.get('podcast_id')
             if not podcast_id:
-                log_messages.append(f"Error: Episode {episode_id} is not linked to a podcast.")
                 return {"success": False, "error": "Episode not linked to a podcast.", "details": log_messages}
-            
             podcast_data_tuple = self.podcast_repo.get_podcast_by_id(user_id, podcast_id)
             if not podcast_data_tuple or podcast_data_tuple[1] != 200:
-                log_messages.append(f"Error: Podcast {podcast_id} not found or access denied for user {user_id}.")
                 return {"success": False, "error": "Podcast not found or access denied.", "details": log_messages}
             podcast = podcast_data_tuple[0].get('podcast')
             log_messages.append(f"Fetched podcast: {podcast.get('podName', podcast_id)}")
 
-            # 2. Status Update: Mark as published and set publishDate BEFORE generating RSS
-            now_utc = datetime.datetime.now(datetime.timezone.utc)
-            update_payload = {
-                "status": "published",
-                "publishDate": now_utc.isoformat()  # Convert to ISO string
-                # Remove 'lastPublishedAt' unless you add it to your schema
-            }
-            
-            current_app.logger.info(f"Attempting to update episode {episode_id} with payload: {update_payload}")
-            update_result, update_status = self.episode_repo.update_episode(episode_id, user_id, update_payload)
-            
-            if update_status == 200:
-                log_messages.append(f"Episode status set to 'published' and publishDate to {now_utc.isoformat()} before RSS generation.")
-                current_app.logger.info(f"Episode {episode_id} status and publishDate updated successfully.")
-            else:
-                log_messages.append(f"Warning: Failed to update episode status/publishDate. Status: {update_status}, Result: {update_result}")
-                current_app.logger.warning(f"Failed to update episode {episode_id} status/publishDate. Status: {update_status}, Result: {update_result}")
-                return {"success": False, "error": "Failed to update episode status for publishing.", "details": log_messages}
+            # 2. Generate and upload RSS feed to Azure Blob Storage
+            rss_xml = self._generate_rss_feed_xml(podcast_id, podcast, user_id)
+            rss_blob_url = self._upload_rss_to_blob(podcast_id, rss_xml, user_id)
+            log_messages.append(f"RSS feed uploaded to {rss_blob_url}")
 
-            # --- Refactored: Generate and upload RSS feed using RSSService ---
-            all_episodes_data, episodes_status_code = self.episode_repo.get_episodes_by_podcast(podcast_id, user_id)
-            if episodes_status_code != 200:
-                log_messages.append(f"Error: Could not fetch episodes for podcast {podcast_id}.")
-                return {"success": False, "error": "Could not fetch episodes for podcast.", "details": log_messages}
-            all_episodes_list = all_episodes_data.get("episodes", [])
-
-            # Construct the new proxy URL
-            proxy_rss_feed_url = None # Initialize to None
-            if direct_rss_blob_url: # Only construct proxy URL if blob upload was successful
-                # Use a more robust way to get the base URL of the application
-                app_base_url = self.base_url or current_app.config.get('SERVER_NAME') or request.host_url.rstrip('/')
-                current_app.logger.info(f"[PublishService] Determined app_base_url: {app_base_url}") # Added log
-
-                if not app_base_url:
-                     current_app.logger.warning("Could not determine application base URL for proxy RSS link. Falling back to direct blob URL.")
-                     proxy_rss_feed_url = direct_rss_blob_url # Fallback
-                else:
-                    podcast_name = podcast.get('podName')
-                    
-                    # Use raw podcast_name as the identifier.
-                    # Browsers/clients will URL-encode this if it contains spaces/special chars.
-                    # Flask's <path:...> converter will decode it on the server side.
-                    if not podcast_name or not podcast_name.strip(): 
-                        current_app.logger.warning(
-                            f"Podcast name is empty or whitespace for podcast_id '{podcast_id}'. "
-                            f"Falling back to podcast_id for proxy URL identifier."
-                        )
-                        url_identifier = podcast_id 
-                    else:
-                        url_identifier = podcast_name # Use raw podName
-                        
-                    proxy_rss_feed_url = f"{app_base_url.rstrip('/')}/rss/{url_identifier}/feed.xml"
-                log_messages.append(f"User-facing RSS feed proxy URL: {proxy_rss_feed_url}")
-            else:
-                # proxy_rss_feed_url remains None if direct_rss_blob_url is None
-                log_messages.append("Warning: Direct RSS blob URL not available, so proxy URL cannot be generated for atom:link or frontend.")
-
-            # RSSService generates and uploads the feed.
-            # Pass the determined proxy_rss_feed_url to be used as the atom:link self.
-            # If proxy_rss_feed_url is None, RSSService might use its own default or the direct blob URL.
-            direct_rss_blob_url_from_service = self.rss_service.generate_podcast_rss_feed_and_upload(
-                podcast_id=podcast_id,
-                user_id=user_id, 
-                podcast_details=podcast,
-                episodes_list=all_episodes_list,
-                atom_link_url=proxy_rss_feed_url, # Pass the generated proxy URL for atom:link
-                publishing_episode_id=episode_id
-            )
-
-            # Ensure direct_rss_blob_url is updated if it was initially None or if the service returned a new one
-            # (though typically it should be the same if already generated, this handles if it was deferred)
-            if not direct_rss_blob_url:
-                direct_rss_blob_url = direct_rss_blob_url_from_service
-            
-            if not direct_rss_blob_url:
-                 log_messages.append("Critical Error: RSS feed could not be generated or uploaded. Direct blob URL is still None.")
-                 # Handle critical failure if direct_rss_blob_url is still None after service call
-                 return {"success": False, "error": "RSS feed generation/upload failed critically.", "details": log_messages}
-
-
-            current_app.logger.info(f"[PublishService] Direct RSS Blob URL from RSSService: {direct_rss_blob_url}") 
-            log_messages.append(f"RSS feed generated and uploaded to direct blob URL: {direct_rss_blob_url}")
-            
-            # If proxy_rss_feed_url couldn't be constructed earlier (e.g. no app_base_url)
-            # but direct_rss_blob_url is available, we might decide to not show a proxy URL to the user.
-            # The frontend expects rssFeedUrl to be the proxy.
-            if not proxy_rss_feed_url and direct_rss_blob_url and app_base_url: # Re-check if app_base_url is now available
-                proxy_rss_feed_url = f"{app_base_url.rstrip('/')}/rss/{url_identifier}/feed.xml"
-                log_messages.append(f"User-facing RSS feed proxy URL (re-constructed): {proxy_rss_feed_url}")
-            elif not proxy_rss_feed_url:
-                 log_messages.append("Warning: User-facing proxy RSS URL could not be constructed.")
-
-
-            current_app.logger.info(f"[PublishService] Final proxy_rss_feed_url to be sent to frontend: {proxy_rss_feed_url}")
-
-
-            # 4. Platform Processing
             published_to = []
             for platform in platforms:
                 platform_lower = platform.lower()
                 log_messages.append(f"Processing platform: {platform}")
                 if platform_lower == "spotify":
+                    # No direct API for upload; Spotify polls RSS feed
                     log_messages.append("Spotify: RSS feed updated, Spotify will poll automatically.")
                 elif platform_lower in ["apple", "google", "amazon", "stitcher", "pocketcasts"]:
                     log_messages.append(f"{platform.capitalize()}: RSS feed updated, platform will poll.")
@@ -196,27 +57,198 @@ class PublishService:
                 published_to.append(platform)
                 time.sleep(0.2)
 
-            # Final update: add platforms
-            final_update_payload = {
-                "publishedToPlatforms": published_to
+            # 4. Status Updates
+            update_payload = {
+                "status": "Published",
+                "publishedToPlatforms": published_to,
+                "lastPublishedAt": datetime.datetime.utcnow()
             }
-            self.episode_repo.update_episode(episode_id, user_id, final_update_payload)
-            log_messages.append("Episode platform metadata updated.")
+            update_result, update_status = self.episode_repo.update_episode(episode_id, user_id, update_payload)
+            if update_status == 200:
+                log_messages.append("Episode status updated to 'Published'.")
+            else:
+                log_messages.append("Warning: Failed to update episode status after publishing.")
 
             return {
                 "success": True,
                 "message": f"Episode '{episode.get('title', episode_id)}' processed for publishing.",
                 "details": log_messages,
-                "rssFeedUrl": proxy_rss_feed_url # Return the new proxy URL
+                "rssFeedUrl": rss_blob_url  # Add this line if it's not already there
             }
         except Exception as e:
-            current_app.logger.error(f"Unexpected error in publish_episode for {episode_id} by user {user_id}: {str(e)}", exc_info=True)
             log_messages.append(f"Exception: {str(e)}")
             return {
                 "success": False,
                 "error": f"An unexpected error occurred during publishing: {str(e)}",
                 "details": log_messages
             }
+
+    def _generate_rss_feed_xml(self, podcast_id, podcast, user_id):
+        # Fetch all published episodes for this podcast
+        episodes_data, _ = self.episode_repo.get_episodes_by_podcast(podcast_id, user_id)
+        episodes = episodes_data.get("episodes", [])
+
+        from email.utils import format_datetime
+        import datetime
+
+        def format_duration(seconds):
+            if not seconds or not isinstance(seconds, (int, float)) or seconds < 0:
+                return "00:00:00"
+            try:
+                seconds = int(seconds)
+                hours = seconds // 3600
+                minutes = (seconds % 3600) // 60
+                secs = seconds % 60
+                return f"{hours:02}:{minutes:02}:{secs:02}"
+            except:
+                return "00:00:00"
+
+        items_xml = ""
+        for ep in episodes:
+            if ep.get("status", "").lower() == "published":
+                pub_date_str = ""
+                try:
+                    pub_date_obj = ep.get('publishDate')
+                    if isinstance(pub_date_obj, str):
+                        pub_date_obj = datetime.datetime.fromisoformat(pub_date_obj.replace('Z', '+00:00'))
+                    if isinstance(pub_date_obj, datetime.datetime):
+                        if pub_date_obj.tzinfo is None:
+                            pub_date_obj = pub_date_obj.replace(tzinfo=datetime.timezone.utc)
+                        pub_date_str = format_datetime(pub_date_obj)
+                except Exception as e:
+                    current_app.logger.error(f"Error formatting pubDate for episode {ep.get('_id')}: {e}")
+
+                episode_image = ep.get('imageUrl', podcast.get('logoUrl', ''))
+                episode_keywords = ", ".join(ep.get('keywords', [])) if ep.get('keywords') else ""
+
+                items_xml += f"""
+                <item>
+                    <title><![CDATA[{ep.get('title', 'No Title')}]]></title>
+                    <description><![CDATA[{ep.get('description', '')}]]></description>
+                    <itunes:summary><![CDATA[{ep.get('summary', ep.get('description', ''))}]]></itunes:summary>
+                    <itunes:subtitle><![CDATA[{ep.get('subtitle', '')}]]></itunes:subtitle>
+                    <enclosure url="{ep.get('audioUrl', '')}" length="{ep.get('fileSize', 0) or 0}" type="{ep.get('fileType', 'audio/mpeg')}" />
+                    <guid isPermaLink="false">{ep.get('_id', '')}</guid>
+                    <pubDate>{pub_date_str}</pubDate>
+                    <itunes:duration>{format_duration(ep.get('duration'))}</itunes:duration>
+                    <itunes:explicit>{"yes" if ep.get('explicit') else "no"}</itunes:explicit>
+                    <itunes:episode>{ep.get('episode', '')}</itunes:episode>
+                    <itunes:season>{ep.get('season', '')}</itunes:season>
+                    <itunes:episodeType>{ep.get('episodeType', 'full')}</itunes:episodeType>
+                    {f'<itunes:image href="{episode_image}" />' if episode_image else ''}
+                    {f'<link>{ep.get("link", "")}</link>' if ep.get("link") else ''}
+                    {f'<itunes:keywords>{episode_keywords}</itunes:keywords>' if episode_keywords else ''}
+                    <itunes:author><![CDATA[{ep.get('author', podcast.get('author', podcast.get('ownerName', '')))}]]></itunes:author>
+                </item>
+                """
+
+        # Podcast categories
+        categories_xml = ""
+        podcast_categories = podcast.get('category')
+        if isinstance(podcast_categories, str) and podcast_categories:
+            categories_xml += f'<itunes:category text="{podcast_categories.strip()}" />\n'
+        elif isinstance(podcast_categories, list):
+            for cat_obj in podcast_categories:
+                if isinstance(cat_obj, dict) and cat_obj.get('text'):
+                    main_cat_text = cat_obj['text'].strip()
+                    sub_cat_xml = ""
+                    if cat_obj.get('subcategory') and isinstance(cat_obj['subcategory'], dict) and cat_obj['subcategory'].get('text'):
+                        sub_cat_text = cat_obj['subcategory']['text'].strip()
+                        sub_cat_xml = f'<itunes:category text="{sub_cat_text}" />'
+                    categories_xml += f'<itunes:category text="{main_cat_text}">{sub_cat_xml}</itunes:category>\n'
+
+        # Construct the full RSS feed URL for atom:link
+        full_feed_url = ""
+        if self.rss_feed_base_url:
+            full_feed_url = self.rss_feed_base_url.replace("<g.user_id>", str(user_id)).replace("<podcast_id>", str(podcast_id)) + "feed.xml"
+
+        rss_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+        <rss version="2.0"
+             xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+             xmlns:content="http://purl.org/rss/1.0/modules/content/"
+             xmlns:atom="http://www.w3.org/2005/Atom">
+        <channel>
+            <title><![CDATA[{podcast.get('podName', 'No Podcast Title')}]]></title>
+            <link>{podcast.get('podUrl', '')}</link>
+            <description><![CDATA[{podcast.get('description', '')}]]></description>
+            <language>{podcast.get('language', 'en-us')}</language>
+            <copyright><![CDATA[{podcast.get('copyright_info', f'© {datetime.datetime.now().year} {podcast.get("ownerName", "")}')}]]></copyright>
+            <lastBuildDate>{format_datetime(datetime.datetime.now(datetime.timezone.utc))}</lastBuildDate>
+            {f'<atom:link href="{full_feed_url}" rel="self" type="application/rss+xml" />' if full_feed_url else ''}
+            <itunes:author><![CDATA[{podcast.get('author', podcast.get('ownerName', ''))}]]></itunes:author>
+            <itunes:summary><![CDATA[{podcast.get('description', '')}]]></itunes:summary>
+            <itunes:type>{podcast.get('itunes_type', 'episodic')}</itunes:type>
+            <itunes:owner>
+                <itunes:name><![CDATA[{podcast.get('ownerName', '')}]]></itunes:name>
+                <itunes:email>{podcast.get('email', '')}</itunes:email>
+            </itunes:owner>
+            {f'<itunes:image href="{podcast.get("logoUrl", "")}" />' if podcast.get("logoUrl") else ''}
+            <itunes:explicit>{"yes" if podcast.get('explicit') else "no"}</itunes:explicit>
+            {categories_xml}
+            {items_xml}
+        </channel>
+        </rss>
+        """
+        return rss_xml.strip()
+
+    def _upload_rss_to_blob(self, podcast_id, rss_xml, user_id=None):
+        """
+        Uploads the RSS XML to Azure Blob Storage at the path matching RSS_FEED_BASE_URL.
+        """
+        blob_service_client = BlobServiceClient.from_connection_string(self.azure_conn_str)
+        if not user_id:
+            raise Exception("user_id is required to build the RSS blob path.")
+        
+        # The blob_path should be relative to the container.
+        # Example: "users/{user_id}/podcasts/{podcast_id}/rss/feed.xml"
+        # The container name itself is 'podmanagerfiles'.
+        blob_path = f"users/{user_id}/podcasts/{podcast_id}/rss/feed.xml" # Path within the container
+        
+        container_name = self.rss_blob_container # This should now correctly be "podmanagerfiles"
+
+        current_app.logger.info(f"Attempting to upload RSS to container: '{container_name}', blob path: '{blob_path}'")
+
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
+        blob_client.upload_blob(rss_xml, overwrite=True, content_type="application/rss+xml")
+        
+        # Dynamically construct the public URL by replacing placeholders in RSS_FEED_BASE_URL
+        # Ensure RSS_FEED_BASE_URL is correctly defined, e.g.,
+        # https://<ACCOUNT_NAME>.blob.core.windows.net/<CONTAINER_NAME>/users/<g.user_id>/podcasts/<podcast_id>/
+        # The feed_url should then append "feed.xml" to this base.
+        
+        # The existing logic for feed_url construction seems to assume RSS_FEED_BASE_URL
+        # already includes the account and container, and ends just before the user/podcast part.
+        # Example: RSS_FEED_BASE_URL="https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/"
+        # Then the path part would be "users/<g.user_id>/podcasts/<podcast_id>/feed.xml"
+        # Let's adjust the feed_url construction to be more robust if RSS_FEED_BASE_URL might vary.
+
+        # Assuming RSS_FEED_BASE_URL is like: "https://<ACCOUNT_NAME>.blob.core.windows.net/<CONTAINER_NAME>/"
+        # And the blob_path is "users/.../feed.xml"
+        # A more direct construction of the public URL:
+        account_name = blob_service_client.account_name
+        public_url_base = f"https://{account_name}.blob.core.windows.net/{container_name}/"
+        
+        feed_url = public_url_base + blob_path # blob_path already includes "users/.../feed.xml"
+
+        # If your RSS_FEED_BASE_URL is already structured to include the dynamic parts,
+        # the original replacement logic is fine, but ensure it's correct.
+        # For now, using the direct construction above for clarity.
+        # If you revert, ensure RSS_FEED_BASE_URL is like:
+        # "https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/users/<g.user_id>/podcasts/<podcast_id>/"
+        # and then:
+        # feed_url = self.rss_feed_base_url.replace("<g.user_id>", str(user_id)).replace("<podcast_id>", str(podcast_id)) + "feed.xml"
+        # This original logic is likely correct if RSS_FEED_BASE_URL is set up as expected.
+        # Let's stick to the original logic for feed_url if RSS_FEED_BASE_URL is correctly defined.
+        
+        # Reverting to original feed_url logic, assuming RSS_FEED_BASE_URL is correctly set up.
+        # Ensure RSS_FEED_BASE_URL = "https://podmanagerstorage.blob.core.windows.net/podmanagerfiles/users/<g.user_id>/podcasts/<podcast_id>/"
+        if not self.rss_feed_base_url:
+            current_app.logger.error("RSS_FEED_BASE_URL is not set in environment variables.")
+            raise Exception("RSS_FEED_BASE_URL is not configured.")
+            
+        feed_url = self.rss_feed_base_url.replace("<g.user_id>", str(user_id)).replace("<podcast_id>", str(podcast_id)) + "feed.xml"
+        current_app.logger.info(f"RSS feed URL generated: {feed_url}")
+        return feed_url
 
     def _get_spotify_access_token(self):
         # Example: Client Credentials Flow
@@ -280,37 +312,17 @@ class PublishService:
     # Upload index_html to your public /rss/ folder if you want a directory listing.
 
     def create_sas_upload_url(self, filename, content_type):
-        if not self.azure_storage_connection_string or not self.azure_storage_container_name:
-            current_app.logger.error("Azure Storage connection string or container name is not configured.")
-            raise ValueError("Azure Storage not configured for SAS URL generation.")
-
-        blob_service_client = BlobServiceClient.from_connection_string(self.azure_storage_connection_string)
-        # Sanitize filename to prevent path traversal or invalid characters for a blob name segment
-        safe_filename_segment = "".join(c if c.isalnum() or c in ['.', '-', '_'] else '_' for c in filename)
-        if len(safe_filename_segment) > 100: # Limit length of filename part
-            name, ext = os.path.splitext(safe_filename_segment)
-            safe_filename_segment = name[:90] + ext
-
-        blob_name = f"uploads/{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{safe_filename_segment}"
-        
-        account_name = blob_service_client.account_name
-        account_key = blob_service_client.credential.account_key
-        
-        if not account_key:
-            current_app.logger.error("Failed to retrieve account key from BlobServiceClient. Check connection string.")
-            raise ValueError("Could not retrieve storage account key for SAS token generation.")
-
-        # Ensure generate_blob_sas is called as a standalone function
-        # and BlobSasPermissions is used for the permission argument.
-        sas_token = generate_blob_sas(
-            account_name=account_name,
-            container_name=self.azure_storage_container_name,
+        blob_service_client = BlobServiceClient.from_connection_string(self.azure_conn_str)
+        blob_name = f"uploads/{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{filename}"
+        sas_token = blob_service_client.generate_blob_sas(
+            account_name=blob_service_client.account_name,
+            container_name=self.rss_blob_container,
             blob_name=blob_name,
-            account_key=account_key,
-            permission=BlobSasPermissions(write=True), # Correct usage
-            expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+            account_key=blob_service_client.credential.account_key,
+            permission="w",
+            expiry=datetime.datetime.utcnow() + datetime.timedelta(minutes=15),
             content_type=content_type,
         )
-        upload_url = f"https://{account_name}.blob.core.windows.net/{self.azure_storage_container_name}/{blob_name}?{sas_token}"
-        blob_url = f"https://{account_name}.blob.core.windows.net/{self.azure_storage_container_name}/{blob_name}"
+        upload_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{self.rss_blob_container}/{blob_name}?{sas_token}"
+        blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{self.rss_blob_container}/{blob_name}"
         return upload_url, blob_url

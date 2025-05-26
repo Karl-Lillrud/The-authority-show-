@@ -1,9 +1,8 @@
-import { publishEpisode, getSasUrl } from "/static/requests/publishRequests.js";
+import { publishEpisode } from "/static/requests/publishRequests.js";
 import { fetchEpisode } from "/static/requests/episodeRequest.js"; // For episode preview
 import { showNotification } from "/static/js/components/notifications.js";
 import { fetchPodcasts } from "/static/requests/podcastRequests.js"; // For podcast dropdown
 import { fetchEpisodesByPodcast } from "/static/requests/episodeRequest.js"; // For episode dropdown
-import { updatePodcast } from "/static/requests/podcastRequests.js"; // Import updatePodcast
 
 console.log("[publish.js] Script loaded and running!");
 
@@ -21,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const publishStatusDiv = document.getElementById("publish-status");
   const publishLogPre = document.getElementById("publish-log");
   const platformToggles = document.querySelectorAll('.platform-toggle input[type="checkbox"]');
+  // const publishNotes = document.getElementById("publish-notes"); // Removed
 
   // Load podcasts into the dropdown
   async function loadPodcasts() {
@@ -87,14 +87,6 @@ document.addEventListener("DOMContentLoaded", () => {
           );
         }
       });
-
-      // Preselect the podcast if only one is available
-      if (podcasts.length === 1) {
-        podcastSelect.value = podcasts[0]._id;
-        console.log(`[publish.js] Only one podcast found. Preselecting podcast ID: ${podcasts[0]._id}`);
-        loadEpisodesForPodcast(podcasts[0]._id); // Automatically load episodes for the preselected podcast
-      }
-
       console.log("[publish.js] Finished populating podcast dropdown.");
     } catch (error) {
       podcastSelect.innerHTML = '<option value="">Error loading podcasts</option>';
@@ -109,8 +101,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Load episodes for the selected podcast
   async function loadEpisodesForPodcast(podcastId) {
     console.log(`[publish.js] loadEpisodesForPodcast called with podcastId: ${podcastId}`);
-    const episodeSelectElement = document.getElementById("episode-select");
-
+    // Use the correct ID for the episode select element from publish.html
+    const episodeSelectElement = document.getElementById("episode-select"); 
+    
     episodeSelectElement.innerHTML = '<option value="">Loading episodes...</option>';
     episodeSelectElement.disabled = true;
     episodeDetailsPreview.classList.add("hidden");
@@ -122,36 +115,55 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       console.log(`[publish.js] Fetching episodes for podcast ID ${podcastId} via fetchEpisodesByPodcast()...`);
-      const episodesData = await fetchEpisodesByPodcast(podcastId);
+      const episodesData = await fetchEpisodesByPodcast(podcastId); // Uses /episodes/by_podcast/<podcast_id>
+      // Note: fetchEpisodesByPodcast in episodeRequest.js already returns data.episodes if successful
+      // So, episodesData should be the array of episodes directly.
+      // If it returns { episodes: [...] }, then const episodes = episodesData.episodes;
       const episodes = Array.isArray(episodesData) ? episodesData : (episodesData && Array.isArray(episodesData.episodes) ? episodesData.episodes : []);
 
       console.log(`[publish.js] fetchEpisodesByPodcast() raw response for podcast ${podcastId}:`, JSON.stringify(episodes, null, 2));
-
+      
       episodeSelectElement.innerHTML = ''; // Clear previous options
       episodeSelectElement.disabled = false;
 
       if (episodes && episodes.length > 0) {
-        // Filter out episodes with status "published"
-        const unpublishedEpisodes = episodes.filter(episode => episode.status?.toLowerCase() !== "published");
+        // Sort episodes by created_at or createdAt in descending order (newest first)
+        episodes.sort((a, b) => {
+          const dateA = new Date(a.created_at || a.createdAt || 0); // Fallback to epoch if undefined
+          const dateB = new Date(b.created_at || b.createdAt || 0); // Fallback to epoch if undefined
+          return dateB - dateA; 
+        });
 
-        if (unpublishedEpisodes.length > 0) {
-          episodeSelectElement.innerHTML = '<option value="">-- Select an Episode --</option>';
-          unpublishedEpisodes.forEach(episode => {
-            if (episode && episode._id && episode.title) {
-              console.log(`[publish.js] Adding episode option: ID=${episode._id}, Title=${episode.title}, Status=${episode.status}`);
-              const option = document.createElement("option");
-              option.value = episode._id;
-              option.textContent = `${episode.title} (${episode.status || "Unpublished"})`;
-              episodeSelectElement.appendChild(option);
-            } else {
-              console.warn("[publish.js] Skipping invalid episode object:", JSON.stringify(episode, null, 2));
+        episodeSelectElement.innerHTML = '<option value="">-- Select an Episode --</option>';
+        episodes.forEach(episode => {
+          if (episode && episode._id && episode.title) {
+            console.log(`[publish.js] Adding episode option: ID=${episode._id}, Title=${episode.title}, Status=${episode.status}`);
+            const option = document.createElement("option");
+            option.value = episode._id;
+            
+            // Display status like [Published] or (Status)
+            let statusText = '';
+            if (episode.status) {
+              if (episode.status.toLowerCase() === "published") {
+                statusText = " [Published]";
+              } else {
+                statusText = ` (${episode.status})`;
+              }
             }
-          });
-        } else {
-          episodeSelectElement.innerHTML = '<option value="">No unpublished episodes found for this podcast</option>';
-          episodeSelectElement.disabled = true;
-          console.log(`[publish.js] No unpublished episodes found for podcast ${podcastId}.`);
-        }
+            option.textContent = `${episode.title}${statusText}`;
+            
+            // Apply class based on status
+            if (episode.status && episode.status.toLowerCase() === "published") {
+              option.className = "published";
+            } else {
+              option.className = "non-published"; // Or a more generic class
+            }
+
+            episodeSelectElement.appendChild(option);
+          } else {
+            console.warn("[publish.js] Skipping invalid episode object:", JSON.stringify(episode, null, 2));
+          }
+        });
       } else {
         episodeSelectElement.innerHTML = '<option value="">No episodes found for this podcast</option>';
         episodeSelectElement.disabled = true;
@@ -249,95 +261,27 @@ document.addEventListener("DOMContentLoaded", () => {
       { key: "explicit", label: "Explicit (yes/no)" }
     ];
 
-    // Optional but recommended tags for best compatibility
-    const recommendedPodcastFields = [
-      { key: "itunes_keywords", label: "Podcast Keywords (itunes:keywords)" },
-      { key: "itunes_block", label: "Podcast Block (itunes:block)" },
-      { key: "googleplay_author", label: "Google Play Author" },
-      { key: "googleplay_email", label: "Google Play Email" },
-      { key: "googleplay_image", label: "Google Play Image" },
-      { key: "spotify_locked", label: "Spotify Locked" }
-    ];
-    const recommendedEpisodeFields = [
-      { key: "itunes_keywords", label: "Episode Keywords (itunes:keywords)" },
-      { key: "itunes_title", label: "Episode iTunes Title" },
-      { key: "itunes_block", label: "Episode Block (itunes:block)" },
-      { key: "googleplay_author", label: "Google Play Author" },
-      { key: "googleplay_email", label: "Google Play Email" },
-      { key: "googleplay_image", label: "Google Play Image" },
-      { key: "spotify_locked", label: "Spotify Locked" }
-    ];
+    // Add more strict requirements for Apple/Spotify if needed
+    // e.g., Apple requires itunes:category, etc.
 
     let missing = [];
-    let recommended = [];
-
     requiredPodcastFields.forEach(f => {
       if (!podcast || !podcast[f.key] || podcast[f.key].toString().trim() === "") {
         missing.push({ type: "podcast", ...f });
       }
     });
     requiredEpisodeFields.forEach(f => {
+      // pubDate may be publishDate in your model
       let val = episode ? (f.key === "pubDate" ? (episode.publishDate || episode.pubDate) : episode[f.key]) : null;
       if (!val || val.toString().trim() === "") {
         missing.push({ type: "episode", ...f });
       }
     });
-
-    // Check recommended fields (not required)
-    recommendedPodcastFields.forEach(f => {
-      if (!podcast || !podcast[f.key] || podcast[f.key].toString().trim() === "") {
-        recommended.push({ type: "podcast", ...f });
-      }
-    });
-    recommendedEpisodeFields.forEach(f => {
-      if (!episode || !episode[f.key] || episode[f.key].toString().trim() === "") {
-        recommended.push({ type: "episode", ...f });
-      }
-    });
-
-    // Return both lists
-    return { missing, recommended };
+    return missing;
   }
 
-  // Define doPublish in a scope accessible by both publishNowBtn listener and modal's onSave
-  async function doPublish(currentEpisodeId, currentSelectedPlatforms) {
-    publishNowBtn.disabled = true;
-    publishNowBtn.textContent = "Publishing...";
-    addToLog(`Starting publishing process for episode ID: ${currentEpisodeId}`);
-    addToLog(`Selected platforms: ${currentSelectedPlatforms.join(", ")}`);
-
-    try {
-      const result = await publishEpisode(currentEpisodeId, currentSelectedPlatforms, null);
-      console.log("[publish.js] Publish API result:", JSON.stringify(result, null, 2)); // Added log
-      if (result.success) {
-        addToLog(`Successfully published episode: ${result.message}`);
-        showNotification("Success", `Episode published successfully! ${result.message || ''}`, "success");
-        episodeDetailsPreview.classList.add("hidden");
-        const currentPodcastId = podcastSelect.value;
-        episodeSelect.value = "";
-        if (currentPodcastId) {
-          loadEpisodesForPodcast(currentPodcastId);
-        }
-        if (result.rssFeedUrl) {
-          showRssFeedPopup(result.rssFeedUrl);
-        }
-      } else {
-        addToLog(`Publishing failed: ${result.error || "Unknown error"}`);
-        showNotification("Error", `Failed to publish episode. ${result.error || "Unknown error"}`, "error");
-      }
-    } catch (error) {
-      console.error("[publish.js] Error publishing episode:", error);
-      addToLog(`Critical error during publishing: ${error.message}`);
-      showNotification("Error", `An error occurred during publishing: ${error.message}`, "error");
-    } finally {
-      publishNowBtn.disabled = false;
-      publishNowBtn.textContent = "Publish Now";
-    }
-  }
-
-  // Helper: Show modal to fill missing fields (required and recommended)
-  function showMissingFieldsModal(missingFieldsObj, podcast, episode, onSave) {
-    const { missing, recommended } = missingFieldsObj;
+  // Helper: Show modal to fill missing fields
+  function showMissingFieldsModal(missingFields, podcast, episode, onSave) {
     // Remove any existing modal
     let existingModal = document.getElementById("missing-fields-modal");
     if (existingModal) existingModal.remove();
@@ -361,58 +305,28 @@ document.addEventListener("DOMContentLoaded", () => {
     formBox.style.borderRadius = "8px";
     formBox.style.maxWidth = "400px";
     formBox.style.width = "100%";
-    // Make the list scrollable and smaller
-    formBox.style.maxHeight = "70vh";
-    formBox.style.overflowY = "auto";
-
-    // Helper to clean label text (remove (podcast), (episode), and (itunes:block) etc.)
-    function cleanLabel(label) {
-      // Remove anything in parentheses, including the parentheses and any whitespace before them
-      return label.replace(/\s*\([^)]+\)/g, "").trim();
-    }
-
-    formBox.innerHTML = `<h2>Required Details</h2>
+    formBox.innerHTML = `<h2>Fill Required Details</h2>
       <form id="missing-fields-form">
-        <div style="max-height: 45vh; overflow-y: auto;">
-        ${missing.map(f => {
-          let inputField = "";
+        ${missingFields.map(f => {
+          let inputValue = "";
+          let inputType = "text";
           if (f.type === "episode" && f.key === "pubDate") {
+            // Pre-fill with current date-time if publishDate is missing
             const now = new Date();
-            const timezoneOffset = now.getTimezoneOffset() * 60000;
+            // Adjust for local timezone offset to get correct ISO string for datetime-local
+            const timezoneOffset = now.getTimezoneOffset() * 60000; //offset in milliseconds
             const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 16);
-            inputField = `<input type="datetime-local" name="${f.type}_${f.key}" value="${localISOTime}" required />`;
-          } else if (f.key === "explicit") {
-            inputField = `
-              <div style="display: flex; gap: 1rem;">
-                <label><input type="radio" name="${f.type}_${f.key}" value="yes" required /> Yes</label>
-                <label><input type="radio" name="${f.type}_${f.key}" value="no" required /> No</label>
-              </div>
-            `;
-          } else if (f.key === "logoUrl" && f.type === "podcast") { // Handle podcast artwork
-            inputField = `<input type="file" name="${f.type}_${f.key}" accept="image/*" required />`;
-          } else {
-            inputField = `<input type="text" name="${f.type}_${f.key}" required />`;
+            inputValue = localISOTime;
+            inputType = "datetime-local";
           }
           return `
           <div class="field-group">
-            <label>${cleanLabel(f.label)} <span style="color:orange;font-size:0.9em;">(Required)</span></label>
-            ${inputField}
+            <label>${f.label} (${f.type})</label>
+            <input type="${inputType}" name="${f.type}_${f.key}" value="${inputValue}" required />
           </div>
         `}).join("")}
-        ${recommended.length > 0 ? `<h3 style="margin-top:2rem;">Recommended (Optional)</h3>` : ""}
-        ${recommended.map(f => {
-          let inputField = `<input type="text" name="${f.type}_${f.key}" />`;
-          // Note: If logoUrl could be recommended, this would need similar file input logic.
-          // Currently, logoUrl is only in the 'required' list.
-          return `
-          <div class="field-group">
-            <label>${cleanLabel(f.label)} <span style="color:#888;font-size:0.9em;">(Optional)</span></label>
-            ${inputField}
-          </div>
-        `}).join("")}
-        </div>
         <div style="margin-top:1rem;display:flex;gap:1rem;">
-          <button type="submit" class="save-btn">Publish Now</button>
+          <button type="submit" class="save-btn">Save & Continue</button>
           <button type="button" id="cancel-missing-fields" class="cancel-btn">Cancel</button>
         </div>
       </form>
@@ -422,75 +336,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("cancel-missing-fields").onclick = () => {
       document.body.removeChild(modal);
-      publishNowBtn.disabled = false; // Re-enable if modal is cancelled
-      publishNowBtn.textContent = "Publish Now";
     };
 
-    formBox.querySelector("#missing-fields-form").onsubmit = async (e) => {
+    formBox.querySelector("#missing-fields-form").onsubmit = (e) => {
       e.preventDefault();
-      const submitButton = formBox.querySelector('button[type="submit"]');
-      submitButton.disabled = true;
-      submitButton.textContent = "Publishing..."; // Update text during processing
-
-      let artworkJustUploadedAndSaved = false;
-
-      try {
-        for (const f of [...missing, ...recommended]) {
-          const inputElement = formBox.querySelector(`[name='${f.type}_${f.key}']:checked`) ||
-                               formBox.querySelector(`[name='${f.type}_${f.key}']`);
-          if (!inputElement) continue;
-
-          if (f.key === "logoUrl" && f.type === "podcast" && inputElement.type === "file") {
-            if (inputElement.files && inputElement.files[0]) {
-              const imageFile = inputElement.files[0];
-              try {
-                addToLog(`Uploading podcast artwork: ${imageFile.name}`);
-                const { uploadUrl, blobUrl } = await getSasUrl(imageFile.name, imageFile.type);
-                const headers = { 'x-ms-blob-type': 'BlockBlob', 'Content-Type': imageFile.type };
-                await fetch(uploadUrl, { method: 'PUT', body: imageFile, headers: headers });
-                
-                podcast.logoUrl = blobUrl; // Update local podcast object
-                addToLog(`Podcast artwork uploaded to temp URL: ${blobUrl}. Saving to podcast...`);
-
-                // Save the updated logoUrl to the backend podcast document
-                const podcastUpdateResult = await updatePodcast(podcast._id, { logoUrl: podcast.logoUrl });
-                if (podcastUpdateResult.error) {
-                  throw new Error(`Failed to save podcast artwork URL: ${podcastUpdateResult.error}`);
-                }
-                artworkJustUploadedAndSaved = true;
-                addToLog("Podcast artwork URL saved successfully.");
-                showNotification("Success", "Podcast artwork uploaded and saved.", "success");
-
-              } catch (uploadError) {
-                console.error("Error uploading/saving podcast artwork:", uploadError);
-                addToLog(`Error uploading/saving podcast artwork: ${uploadError.message}`);
-                showNotification("Error", `Failed to upload/save podcast artwork: ${uploadError.message}`, "error");
-                submitButton.disabled = false;
-                submitButton.textContent = "Publish Now";
-                return; // Stop processing if critical upload/save fails
-              }
-            }
-          } else {
-            let val = inputElement.value.trim();
-            if (f.type === "episode" && f.key === "pubDate" && inputElement.type === "datetime-local") {
-              val = new Date(val).toISOString();
-            }
-            if (f.type === "podcast") podcast[f.key] = val;
-            else if (f.type === "episode") {
-              if (f.key === "pubDate") episode.publishDate = val; // This will be used by local preview
-              else episode[f.key] = val;
-            }
-          }
+      // Update podcast/episode objects with new values
+      missingFields.forEach(f => {
+        const inputElement = formBox.querySelector(`[name='${f.type}_${f.key}']`);
+        let val = inputElement.value.trim();
+        if (f.type === "episode" && f.key === "pubDate" && inputElement.type === "datetime-local") {
+          // Ensure the datetime-local value is converted to ISO string UTC for backend
+          val = new Date(val).toISOString();
         }
-        document.body.removeChild(modal);
-        onSave(); // Call the original onSave callback (which now triggers doPublish)
-      } catch (error) {
-        console.error("Error processing missing fields form:", error);
-        addToLog(`Error saving missing fields: ${error.message}`);
-        showNotification("Error", "An error occurred while saving details.", "error");
-        submitButton.disabled = false;
-        submitButton.textContent = "Publish Now"; // Reset text on error
-      }
+        
+        if (f.type === "podcast") podcast[f.key] = val;
+        else if (f.type === "episode") {
+          if (f.key === "pubDate") episode.publishDate = val; // Ensure your episode model uses publishDate
+          else episode[f.key] = val;
+        }
+      });
+      document.body.removeChild(modal);
+      onSave();
     };
   }
 
@@ -592,39 +458,58 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Fetch selected podcast and episode objects for validation
     const podcast = (window._publishPodcastsCache || []).find(p => p._id === podcastSelect.value);
     let episode = null;
-    if (episodeId) {
-      try {
-        if (window._currentEpisodePreview && window._currentEpisodePreview._id === episodeId) {
-          episode = window._currentEpisodePreview;
-        } else {
-          episode = await fetchEpisode(episodeId);
-          window._currentEpisodePreview = episode;
-        }
-      } catch (e) {
-        addToLog(`Error fetching episode details for validation: ${e.message}`);
-        showNotification("Error", "Could not retrieve episode details for validation.", "error");
-        return;
-      }
+    try {
+      episode = await fetchEpisode(episodeId);
+    } catch (e) {}
+
+    // Check for missing required fields
+    const missingFields = getMissingRequiredFields(podcast, episode, selectedPlatforms);
+    if (missingFields.length > 0) {
+      showMissingFieldsModal(missingFields, podcast, episode, async () => {
+        // After user fills missing fields, proceed to publish
+        await doPublish();
+      });
+      return;
     }
 
-    const missingFieldsObj = getMissingRequiredFields(podcast, episode, selectedPlatforms);
-    
-    if (missingFieldsObj.missing.length > 0 || missingFieldsObj.recommended.length > 0) {
-      publishNowBtn.disabled = true; // Disable button while modal is open
-      publishNowBtn.textContent = "Addressing Details..."; // Keep this or change to "Publishing..."
-      showMissingFieldsModal(missingFieldsObj, podcast, episode, async () => {
-        // This is the onSave callback from the modal
-        if (episodeId && episode) { 
-            loadEpisodePreview(episodeId); // Refresh preview with any changes from modal
+    // Proceed to publish if nothing missing
+    await doPublish();
+
+    async function doPublish() {
+      publishNowBtn.disabled = true;
+      publishNowBtn.textContent = "Publishing...";
+      addToLog(`Starting publishing process for episode ID: ${episodeId}`);
+      addToLog(`Selected platforms: ${selectedPlatforms.join(", ")}`);
+
+      try {
+        const result = await publishEpisode(episodeId, selectedPlatforms, null);
+        if (result.success) {
+          addToLog(`Successfully published episode: ${result.message}`);
+          showNotification("Success", `Episode published successfully! ${result.message || ''}`, "success");
+          episodeDetailsPreview.classList.add("hidden");
+          episodeSelect.value = "";
+          if (podcastSelect.value) {
+              loadEpisodesForPodcast(podcastSelect.value);
+          }
+          // Show RSS feed popup after successful publish
+          if (result.rssFeedUrl) {
+            showRssFeedPopup(result.rssFeedUrl);
+          }
+        } else {
+          addToLog(`Publishing failed: ${result.error || "Unknown error"}`);
+          showNotification("Error", `Failed to publish episode. ${result.error || "Unknown error"}`, "error");
         }
-        // Directly call doPublish with the current episodeId and selectedPlatforms
-        await doPublish(episodeId, selectedPlatforms);
-      });
-    } else {
-      // No missing fields, publish directly
-      await doPublish(episodeId, selectedPlatforms);
+      } catch (error) {
+        console.error("[publish.js] Error publishing episode:", error);
+        addToLog(`Critical error during publishing: ${error.message}`);
+        showNotification("Error", `An error occurred during publishing: ${error.message}`, "error");
+      } finally {
+        publishNowBtn.disabled = false;
+        publishNowBtn.textContent = "Publish Now";
+      }
     }
   });
 
@@ -633,19 +518,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Cache podcasts for validation
   async function cachePodcasts() {
-    try {
-        const podcastData = await fetchPodcasts();
-        // Ensure the structure is { podcast: [...] } or { podcasts: [...] }
-        window._publishPodcastsCache = Array.isArray(podcastData.podcast)
-          ? podcastData.podcast
-          : (podcastData.podcasts && Array.isArray(podcastData.podcasts) ? podcastData.podcasts : []);
-        if (!window._publishPodcastsCache || window._publishPodcastsCache.length === 0) {
-            console.warn("[publish.js] Podcast cache is empty after fetching.");
-        }
-    } catch (error) {
-        console.error("[publish.js] Failed to cache podcasts:", error);
-        window._publishPodcastsCache = [];
-    }
+    const podcastData = await fetchPodcasts();
+    window._publishPodcastsCache = Array.isArray(podcastData.podcast)
+      ? podcastData.podcast
+      : (Array.isArray(podcastData.podcasts) ? podcastData.podcasts : []);
   }
-  cachePodcasts(); // Call it to ensure cache is populated on page load
+  cachePodcasts();
 });

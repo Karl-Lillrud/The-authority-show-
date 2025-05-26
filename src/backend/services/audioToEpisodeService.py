@@ -13,19 +13,20 @@ class AudioToEpisodeService:
     def __init__(self):
         self.audio_container_name = os.getenv("AZURE_BLOB_AUDIO_CONTAINER", "podmanagerfiles")
     
-    def upload_episode_audio(self, account_id, podcast_id, episode_id, audio_file):
+    def upload_episode_audio(self, account_id, episode_id, audio_file, podcast_id):
         try:
             if not audio_file:
                 logger.warning("No audio file provided for upload")
                 return None
 
-            valid_mimes = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/webm", "video/webm"]
-            mime_type = getattr(audio_file, "content_type", "audio/mpeg")
-            logger.debug(
-                f"Uploading episode audio: account_id={account_id}, podcast_id={podcast_id}, episode_id={episode_id}, "
-                f"filename={getattr(audio_file, 'filename', None)}, content_type={mime_type}, "
-                f"stream_has_read={'read' in dir(audio_file.stream)}"
-            )
+            valid_mimes = ["audio/mpeg", "audio/mp3", "audio/wav"]
+            mime_type = getattr(audio_file, "mimetype", None)
+            if mime_type not in valid_mimes:
+                logger.warning(f"Invalid file type: {mime_type}")
+                return None
+
+            logger.debug(f"Audio file: filename={getattr(audio_file, 'filename', 'unknown')}, "
+                         f"content_type={mime_type}, readable={audio_file.stream.readable()}")
 
             buffer = BytesIO()
             audio_file.seek(0)
@@ -75,8 +76,7 @@ class AudioToEpisodeService:
             blob_url = upload_file_to_blob(
                 container_name=self.audio_container_name,
                 blob_path=blob_path,
-                file_data=buffer,  # <-- use file_data, not file
-                content_type=mime_type
+                file=buffer
             )
 
             if not blob_url or not blob_url.startswith("https://"):

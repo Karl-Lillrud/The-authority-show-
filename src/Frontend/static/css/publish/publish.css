@@ -278,16 +278,6 @@ body {
   /* Add other button styles if needed */
 }
 
-/* Style for platform links in the RSS feed popup */
-#rss-feed-popup a {
-    color: orange;
-    text-decoration: none;
-}
-
-#rss-feed-popup a:hover {
-    text-decoration: underline;
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .publish-container {

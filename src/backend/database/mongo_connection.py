@@ -1,9 +1,8 @@
-from flask_pymongo import PyMongo
-import logging
 from pymongo import MongoClient
 from flask import Blueprint
 import os
 from dotenv import load_dotenv
+import logging
 from gridfs import GridFS
 
 mongo_bp = Blueprint("mongo_bp", __name__)
@@ -44,8 +43,6 @@ except Exception as ez:
     logger.error("Failed to connect to MongoDB or initialize GridFS: {e}")
     raise
 
-# Instantiate PyMongo. This 'mongo' object will be imported by other modules.
-mongo = PyMongo()
 
 #Functions to access MongoDB and GridFS
 def get_db():
@@ -54,15 +51,3 @@ def get_db():
 
 def get_fs():
     return fs
-
-
-def init_db(app):
-    """Initializes the MongoDB connection using the Flask app context."""
-    try:
-        mongo.init_app(app)
-        # The ismaster command is cheap and does not require auth.
-        # It's a good way to verify the connection.
-        mongo.cx.admin.command('ismaster')
-        logger.info("MongoDB connected successfully!")
-    except Exception as e:
-        logger.error(f"MongoDB connection failed: {e}", exc_info=True)

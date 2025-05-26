@@ -1,17 +1,12 @@
 import os
 import logging
-import requests
 from colorama import init
-from flask import Flask, jsonify, request, session, g, Response, current_app
+from flask import Flask, request, session, g
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from dotenv import load_dotenv
-from azure.storage.blob import BlobServiceClient
-from backend.database.mongo_connection import mongo 
-from backend.services.publishService import PublishService # Import PublishService
 
 # Import blueprints
-from backend.routes.publish import publish_bp
 from backend.routes.auth import auth_bp
 from backend.routes.podcast import podcast_bp
 from backend.routes.dashboard import dashboard_bp
@@ -47,7 +42,6 @@ from backend.routes.lia import lia_bp
 from backend.routes.index import index_bp
 from backend.routes.recording_studio import register_socketio_events  # <- updated import
 from backend.routes.recording_studio import recording_studio_bp
-
 # Utils
 from backend.utils.scheduler import start_scheduler
 from backend.utils.credit_scheduler import init_credit_scheduler
@@ -110,7 +104,6 @@ app.register_blueprint(enterprise_bp, url_prefix="/enterprise")
 app.register_blueprint(lia_bp, url_prefix="/lia")
 app.register_blueprint(index_bp)
 app.register_blueprint(recording_studio_bp)
-app.register_blueprint(publish_bp, url_prefix='/publish') # Register the publish blueprint
 
 # Set up environment and logging
 APP_ENV = os.getenv("APP_ENV", "production")
@@ -150,57 +143,6 @@ init_credit_scheduler(app)
 
 # 🔌 Register socket events
 register_socketio_events(socketio)
-
-@app.route('/rss/<path:podcast_identifier>/feed.xml') # Changed from <slug> to <path:podcast_identifier>
-def rss_feed_proxy(podcast_identifier):
-    # podcast_identifier here will be URL-decoded by Flask's path converter.
-    current_app.logger.info(f"RSS proxy request for identifier: '{podcast_identifier}'")
-    
-    publish_service_instance = PublishService() # Instantiate PublishService
-    podcast_id, user_id = publish_service_instance._find_podcast_details_by_identifier(podcast_identifier)
-
-    if not podcast_id or not user_id:
-        current_app.logger.error(f"Could not find podcast or user for identifier: '{podcast_identifier}'")
-        return jsonify({"error": "Podcast not found or identifier invalid"}), 404
-
-    # Construct the direct blob URL for the RSS feed
-    account_name = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
-    container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME") # This should be the container for RSS files
-    
-    if not account_name or not container_name:
-        current_app.logger.error("Azure Storage account name or container name not configured for RSS proxy.")
-        return jsonify({"error": "Server configuration error for RSS feed"}), 500
-
-    # Path structure for RSS feed in blob storage
-    blob_name = f"users/{user_id}/podcasts/{podcast_id}/rss/feed.xml"
-    direct_rss_blob_url = f"https://{account_name}.blob.core.windows.net/{container_name}/{blob_name}"
-    current_app.logger.info(f"Proxying RSS feed. Identifier: '{podcast_identifier}', Mapped to PodcastID: {podcast_id}, UserID: {user_id}, Blob URL: {direct_rss_blob_url}")
-
-    try:
-        # Fetch the RSS feed from Azure Blob Storage
-        # Using a new BlobServiceClient instance for this request.
-        # Consider if a shared client or connection pool is better for high traffic.
-        connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-        if not connection_string:
-            current_app.logger.error("Azure Storage connection string not configured.")
-            return jsonify({"error": "Server configuration error for RSS feed access"}), 500
-
-        blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
-        
-        if not blob_client.exists():
-            current_app.logger.error(f"RSS feed blob not found at {direct_rss_blob_url}")
-            return jsonify({"error": "RSS feed not found"}), 404
-
-        downloader = blob_client.download_blob()
-        rss_content = downloader.readall()
-        
-        # Serve the content with the correct MIME type
-        return Response(rss_content, mimetype='application/rss+xml')
-
-    except Exception as e:
-        current_app.logger.error(f"Error proxying RSS feed for identifier '{podcast_identifier}': {str(e)}", exc_info=True)
-        return jsonify({"error": "Failed to retrieve RSS feed"}), 500
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=8000, debug=True)

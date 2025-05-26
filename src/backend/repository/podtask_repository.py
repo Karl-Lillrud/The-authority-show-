@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple, Any, Optional, Union
 from marshmallow import ValidationError
 
 from backend.database.mongo_connection import collection
-from backend.models.podtasks import PodtaskSchema
+from backend.models.podtasks import Podtask  # Changed from PodtaskSchema to Podtask
 from backend.services.taskService import extract_highlights, process_default_tasks
 
 logger = logging.getLogger(__name__)
