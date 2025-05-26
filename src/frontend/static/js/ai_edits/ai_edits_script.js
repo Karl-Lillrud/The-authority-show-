@@ -86,6 +86,14 @@ const aiOptions = [
     resultContainer: "generateQuotes-result"
   },
   {
+  id: "analyzeAudio",
+  title: "Analyze Audio",
+  description: "Analyze audio to extract timestamps and metadata",
+  icon: "🔍",
+  dependencies: {},
+  resultContainer: "analyzeAudio-result"
+  },
+  {
     id: "planAndMixSfx",
     title: "Plan & Mix Sound Effects",
     description: "Add sound effects to your podcast",

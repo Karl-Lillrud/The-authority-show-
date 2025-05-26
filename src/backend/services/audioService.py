@@ -591,122 +591,120 @@ class AudioService:
                 if os.path.exists(path):
                     os.remove(path)
         
-    def plan_and_mix_sfx(self, audio_bytes: bytes) -> dict:
+    def plan_and_mix_sfx(self, audio_bytes: bytes, word_timestamps: Optional[list] = None) -> dict:
         """
-        New GPT-based SFX planning and mixing flow:
-        1. Transcribe audio with timestamps
-        2. Generate SFX plan using GPT
-        3. Create SFX clips based on plan
-        4. Mix SFX with original audio
+        GPT-based SFX planning and mixing flow:
+        - Accepts optional word_timestamps to avoid redundant transcription.
+        - If not provided, falls back to ElevenLabs.
         """
-        logger.info("Starting plan_and_mix_sfx process")
-        
-        # Step 1: Transcribe audio with timestamps
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-            tmp.write(audio_bytes)
-            temp_path = tmp.name
-            logger.info(f"Saved input audio to temporary file: {temp_path}")
-        
-        try:
-            # Get transcript with timestamps
-            logger.info("Transcribing audio with ElevenLabs API")
-            client = ElevenLabs()
-            with open(temp_path, "rb") as f:
-                audio_bytes_for_api = f.read()
-                logger.info(f"Read {len(audio_bytes_for_api)} bytes from temp file")
-        
-            result = client.speech_to_text.convert(
-                file=audio_bytes_for_api,
-                model_id="scribe_v1",
-                timestamps_granularity="word"
-            )
-            
-            logger.info(f"Transcription complete. Got {len(result.words) if hasattr(result, 'words') else 0} words with timestamps")
-        
-            # Group words into sentences and calculate sentence timestamps
-            transcript_segments = []
-            current_sentence = []
-            sentence_start = None
-            sentence_end = None
+        logger.info("🎧 Starting plan_and_mix_sfx process")
 
-            for word in result.words:
-                if hasattr(word, "start") and hasattr(word, "end"):
-                    if sentence_start is None:
-                        sentence_start = word.start
-                    sentence_end = word.end
-                    current_sentence.append(word.text)
-                
-                    # Simple sentence boundary detection (period followed by space or end)
-                    if word.text.endswith('.') or word.text.endswith('?') or word.text.endswith('!'):
-                        if current_sentence:
+        transcript_segments = []
+        sentence_start = None
+        sentence_end = None
+        current_sentence = []
+
+        try:
+            if word_timestamps:
+                logger.info(f"🧠 Using provided {len(word_timestamps)} word timestamps")
+                for word in word_timestamps:
+                    if "start" in word and "end" in word and "text" in word:
+                        if sentence_start is None:
+                            sentence_start = word["start"]
+                        sentence_end = word["end"]
+                        current_sentence.append(word["text"])
+
+                        if word["text"].strip().endswith((".", "!", "?")):
                             transcript_segments.append({
                                 "start": sentence_start,
                                 "end": sentence_end,
                                 "text": " ".join(current_sentence)
                             })
                             current_sentence = []
-                            sentence_start = None
-                            sentence_end = None
+                            sentence_start = sentence_end = None
 
-            # Add any remaining words as a segment
-            if current_sentence:
-                transcript_segments.append({
-                    "start": sentence_start,
-                    "end": sentence_end,
-                    "text": " ".join(current_sentence)
-                })
-            
-            logger.info(f"Created {len(transcript_segments)} sentence segments from transcript")
-            for i, segment in enumerate(transcript_segments[:3]):  # Log first 3 segments
-                logger.info(f"Segment {i}: [{segment['start']:.2f}s - {segment['end']:.2f}s] {segment['text'][:50]}...")
-            
-            # Step 2: Generate SFX plan using GPT
-            logger.info("Generating SFX plan using GPT")
+                if current_sentence:
+                    transcript_segments.append({
+                        "start": sentence_start,
+                        "end": sentence_end,
+                        "text": " ".join(current_sentence)
+                    })
+
+            else:
+                logger.info("🔁 No word_timestamps provided, using ElevenLabs for transcription")
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                    tmp.write(audio_bytes)
+                    temp_path = tmp.name
+                    logger.info(f"📝 Temp audio file saved: {temp_path}")
+
+                try:
+                    client = ElevenLabs()
+                    with open(temp_path, "rb") as f:
+                        audio_bytes_for_api = f.read()
+
+                    result = client.speech_to_text.convert(
+                        file=audio_bytes_for_api,
+                        model_id="scribe_v1",
+                        timestamps_granularity="word"
+                    )
+
+                    logger.info(f"📋 Received {len(result.words)} words with timestamps")
+                    for word in result.words:
+                        if hasattr(word, "start") and hasattr(word, "end"):
+                            if sentence_start is None:
+                                sentence_start = word.start
+                            sentence_end = word.end
+                            current_sentence.append(word.text)
+
+                            if word.text.strip().endswith((".", "!", "?")):
+                                transcript_segments.append({
+                                    "start": sentence_start,
+                                    "end": sentence_end,
+                                    "text": " ".join(current_sentence)
+                                })
+                                current_sentence = []
+                                sentence_start = sentence_end = None
+
+                    if current_sentence:
+                        transcript_segments.append({
+                            "start": sentence_start,
+                            "end": sentence_end,
+                            "text": " ".join(current_sentence)
+                        })
+
+                finally:
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
+                        logger.info(f"🧹 Deleted temp file: {temp_path}")
+
+            if not transcript_segments:
+                raise ValueError("Transcript segmentation failed")
+
+            logger.info(f"🧾 Segmented transcript into {len(transcript_segments)} parts")
+
+            # --- SFX PLAN ---
             sfx_plan = self.generate_sfx_plan_from_analysis(transcript_segments)
-            logger.info(f"Generated SFX plan with {len(sfx_plan)} sound effects")
-            
-            for i, effect in enumerate(sfx_plan):
-                logger.info(f"SFX {i}: {effect['description']} [{effect['start']:.2f}s - {effect['end']:.2f}s]")
-            
-            if not sfx_plan:
-                logger.warning("No sound effects were planned by GPT! Returning original audio.")
-        
-            # Step 3: Create SFX clips based on plan
-            logger.info("Generating SFX clips based on plan")
+            logger.info(f"🎬 Generated SFX plan with {len(sfx_plan)} entries")
+
+            # --- SFX CLIPS ---
             sfx_clips = self.generate_sfx_clips_from_plan(sfx_plan)
-            logger.info(f"Generated {len(sfx_clips)} SFX clips")
-            for i, clip in enumerate(sfx_clips):
-                logger.info(f"Clip {i}: {clip['description']} [{clip['start']:.2f}s - {clip['end']:.2f}s] Has audio: {bool(clip.get('audio_bytes'))}")
-                if not clip.get('audio_bytes'):
-                    logger.warning(f"Clip has no audio bytes - ElevenLabs may have failed to generate audio")
-            
-            if not sfx_clips:
-                logger.warning("No SFX clips were generated! Returning original audio.")
-        
-            # Step 4: Mix SFX with original audio
-            logger.info("Mixing SFX with original audio")
+            logger.info(f"🔊 Generated {len(sfx_clips)} SFX clips")
+
+            # --- MIX ---
             mixed_audio_bytes = self.mix_sfx_audio_bytes(audio_bytes, sfx_clips)
-            logger.info(f"Mixed audio generated: {len(mixed_audio_bytes)} bytes")
-        
-            # Convert to base64 for frontend
             mixed_audio_b64 = "data:audio/wav;base64," + base64.b64encode(mixed_audio_bytes).decode()
-        
-            # Prepare the sfx_clips for the response (remove audio_bytes which is not needed in the response)
-            sfx_clips_response = []
-            for clip in sfx_clips:
-                sfx_clips_response.append({
+
+            sfx_clips_response = [
+                {
                     "description": clip["description"],
                     "start": clip["start"],
                     "end": clip["end"],
                     "sfxUrl": clip["sfxUrl"]
-                })
-            
-            if mixed_audio_bytes == audio_bytes:
-                logger.error("ERROR: Mixed audio is identical to original! No SFX were mixed in.")
-            else:
-                logger.info("SUCCESS: Mixed audio is different from original.")
-            
-            logger.info("SFX mixing process complete, returning results")
+                }
+                for clip in sfx_clips
+            ]
+
+            logger.info("✅ SFX mixing complete")
             return {
                 "sfx_plan": sfx_plan,
                 "sfx_clips": sfx_clips_response,
@@ -714,12 +712,10 @@ class AudioService:
             }
 
         except Exception as e:
-            logger.error(f"Error in plan_and_mix_sfx: {e}", exc_info=True)
+            logger.error(f"❌ Error in plan_and_mix_sfx: {e}", exc_info=True)
             raise
-        finally:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-                logger.info(f"Cleaned up temporary file: {temp_path}")
+
+
 
     def generate_sfx_plan_from_analysis(self, transcript_segments: list) -> list:
         """
@@ -835,7 +831,8 @@ class AudioService:
             logger.info(f"Calculated duration: {duration}s")
             
             payload = {
-                "text": f"Create a {duration}-second sound effect for: {description}. The sound should be perfect for a podcast.",
+                "text": f"Generate a rich, cinematic sound effect that captures: {description}. The sound should match podcast storytelling tone and not overpower speech. Use real-world textures if possible.",
+
                 "duration_seconds": duration,
                 "prompt_influence": 1
             }

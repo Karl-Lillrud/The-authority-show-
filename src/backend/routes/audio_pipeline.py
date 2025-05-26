@@ -186,10 +186,14 @@ def process_audio_pipeline():
                         metadata["steps_applied"].append(step)
                         metadata["transcript"] = result.get("transcript", "")
                         metadata["analysis"] = result
+                        metadata["word_timestamps"] = result.get("words")  # ✅ NYCKELRADEN
                         if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "plan_and_mix_sfx":
-                        current_audio, temp_path, result = process_plan_and_mix_sfx_step(current_audio, temp_path, temp_dir)
+                        word_timestamps = metadata.get("word_timestamps")
+                        current_audio, temp_path, result = process_plan_and_mix_sfx_step(
+                            current_audio, temp_path, temp_dir, word_timestamps=word_timestamps
+                        )
                         metadata["steps_applied"].append(step)
                         metadata["sfx_plan"] = result.get("sfx_plan", [])
                         metadata["sfx_clips"] = result.get("sfx_clips", [])
@@ -465,36 +469,37 @@ def process_analyze_audio_step(audio_bytes: bytes) -> Dict[str, Any]:
     return analysis_result
 
 
-def process_plan_and_mix_sfx_step(audio_bytes: bytes, input_path: str, temp_dir: str) -> Tuple[bytes, str, Dict[str, Any]]:
+def process_plan_and_mix_sfx_step(audio_bytes: bytes, input_path: str, temp_dir: str, word_timestamps: Optional[list] = None) -> Tuple[bytes, str, Dict[str, Any]]:
     """
     Process the plan and mix SFX step: plan and mix sound effects with the audio.
-    
+
     Args:
         audio_bytes: Current audio bytes
         input_path: Path to the current audio file
         temp_dir: Temporary directory for processing
-        
+        word_timestamps: Optional list of timestamped words
+
     Returns:
         Tuple of (new audio bytes, new file path, SFX result)
     """
     logger.info("Processing plan and mix SFX step")
-    
-    # Call the audio service to plan and mix SFX
-    sfx_result = audio_service.plan_and_mix_sfx(audio_bytes)
-    
+
+    # Call the audio service to plan and mix SFX with optional timestamps
+    sfx_result = audio_service.plan_and_mix_sfx(audio_bytes, word_timestamps)
+
     # Get the mixed audio from the result
     mixed_audio_base64 = sfx_result.get("merged_audio", "")
     if not mixed_audio_base64 or not mixed_audio_base64.startswith("data:audio/wav;base64,"):
         logger.warning("No valid mixed audio returned from plan_and_mix_sfx")
         return audio_bytes, input_path, sfx_result
-    
+
     # Extract the base64 data and decode it
     mixed_audio_base64 = mixed_audio_base64.split(",")[1]
     mixed_audio = base64.b64decode(mixed_audio_base64)
-    
+
     # Save the mixed audio to a new file
     output_path = os.path.join(temp_dir, "sfx_mixed.wav")
     with open(output_path, "wb") as f:
         f.write(mixed_audio)
-    
+
     return mixed_audio, output_path, sfx_result
