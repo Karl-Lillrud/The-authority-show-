@@ -123,6 +123,7 @@ a,
 .header {
   margin-bottom: 1.5rem;
   z-index: 1;
+  position: relative;
 }
 
 .header-content {
@@ -166,9 +167,60 @@ a,
   font-size: 0.875rem;
 }
 
-.header-right {
-  display: flex;
+.header-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.publish-button {
+  display: inline-flex;
+  align-items: center;
   gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--success);
+  color: white;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow);
+  font-size: 0.875rem;
+}
+
+.publish-button i {
+  font-size: 0.875rem;
+}
+
+/* Tablet and larger screens */
+@media (min-width: 768px) {
+  .publish-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .publish-button i {
+    font-size: 1rem;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 480px) {
+  .publish-button {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .publish-button i {
+    font-size: 0.75rem;
+  }
+}
+
+.publish-button:hover {
+  background-color: #0d946a;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 /* Progress Tracker */

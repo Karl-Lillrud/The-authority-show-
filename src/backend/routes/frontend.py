@@ -1,5 +1,9 @@
 from flask import Blueprint, redirect, render_template, send_from_directory, request, session
 import os
+from backend.database.mongo_connection import database
+
+invitations_collection = database.Invitations
+
 
 frontend_bp = Blueprint(
     "frontend", __name__, template_folder="../../frontend/templates"
@@ -42,3 +46,22 @@ def root():
     return render_template("index/index.html")
 
 
+@frontend_bp.route('/greenroom')
+def greenroom_redirect():
+    # Extract the same params
+    guest_id = request.args.get("guestId")
+    token = request.args.get("token")
+    episode_id = request.args.get("episodeId")
+
+    # Optional: look up token if missing
+    if not token and episode_id and guest_id:
+        invitation = invitations_collection.find_one({
+            "episode_id": episode_id,
+            "guest_id": guest_id
+        })
+        if not invitation:
+            return "Invitation not found", 404
+        token = invitation.get("invite_token")
+
+    # Render the same template
+    return render_template("greenroom/greenroom.html", guestId=guest_id, token=token)

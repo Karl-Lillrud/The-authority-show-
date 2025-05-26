@@ -25,7 +25,10 @@ class EpisodeRepository:
     @staticmethod
     def get_episodes_by_user_id(user_id):
         """Fetch episodes for a specific user."""
-        return list(collection.Episodes.find({"ownerId": user_id}))
+        episodes = list(collection.Episodes.find({"ownerId": user_id}))
+        for ep in episodes:
+            ep["_id"] = str(ep["_id"])
+        return episodes
 
     def register_episode(self, data, user_id):
         try:
@@ -110,6 +113,7 @@ class EpisodeRepository:
             )
             if not result:
                 return {"error": "Episode not found"}, 404
+            result["_id"] = str(result["_id"])
             return result, 200
         except Exception as e:
             return {"error": f"Failed to fetch episode: {str(e)}"}, 500
@@ -231,7 +235,7 @@ class EpisodeRepository:
                         logger.error(f"No podcast_id found for episode {episode_id}")
                         return {"error": "Podcast ID not found for episode"}, 500
 
-                    # Upload the audio file using AudioToEpisodeService
+                    logger.warning(f"DEBUG: account_id={account_id}, podcast_id={podcast_id}, episode_id={episode_id}, audio_file={audio_file}, filename={getattr(audio_file, 'filename', None)}, content_type={getattr(audio_file, 'content_type', None)}")
                     upload_result = self.audio_service.upload_episode_audio(
                         account_id=account_id,
                         podcast_id=podcast_id,
@@ -341,6 +345,7 @@ class EpisodeRepository:
             episode = self.collection.find_one({"_id": episode_id})
             if not episode:
                 return None, None
+            episode["_id"] = str(episode["_id"])
             podcast = (
                 collection.database.Podcasts.find_one(
                     {"_id": episode.get("podcast_id")}

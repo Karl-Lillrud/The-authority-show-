@@ -1,3 +1,6 @@
+import { updateEpisode } from "../../requests/episodeRequest.js";
+import { fetchGuestsByEpisode } from "../../requests/guestRequests.js";
+
 class RecordingStudio {
     constructor() {
         this.mediaRecorder = null;
@@ -14,10 +17,15 @@ class RecordingStudio {
         this.visualizerCanvas = document.getElementById('audio-visualizer');
         this.visualizerContext = this.visualizerCanvas.getContext('2d');
         this.videoPreview = document.getElementById('video-preview');
+        this.participantsContainer = document.getElementById('participants-container'); // New container for participant videos
+        this.socket = io(); // Initialize Socket.IO
+        this.participants = new Map(); // Track participant streams
         
         this.initializeElements();
         this.initializeEventListeners();
         this.loadDevices();
+        this.initializeSocketEvents();
+        this.joinStudioRoom();
     }
 
     initializeElements() {
@@ -51,6 +59,75 @@ class RecordingStudio {
         this.videoQualitySelect.addEventListener('change', () => this.updateVideoStream());
     }
 
+    initializeSocketEvents() {
+        this.socket.on('request_join_studio', async (data) => {
+            const { guestId, guestName, episodeId } = data;
+            try {
+                // Validate guest
+                const guests = await fetchGuestsByEpisode(episodeId);
+                const isValidGuest = guests.some(guest => guest.id === guestId);
+                if (!isValidGuest) {
+                    this.socket.emit('deny_join_studio', { guestId, reason: 'Not authorized for this episode' });
+                    return;
+                }
+
+                // Show join request popup
+                this.showJoinRequestPopup(guestId, guestName, episodeId, data.room);
+            } catch (error) {
+                console.error('Error validating guest:', error);
+                this.socket.emit('deny_join_studio', { guestId, reason: 'Error validating guest' });
+            }
+        });
+
+        this.socket.on('participant_stream', (data) => {
+            this.addParticipantStream(data.userId, data.streamId);
+        });
+    }
+
+    joinStudioRoom() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const room = urlParams.get('room');
+        const episodeId = urlParams.get('episodeId');
+        if (room && episodeId) {
+            this.socket.emit('join_studio', { room, episodeId, isHost: true });
+        }
+    }
+
+    showJoinRequestPopup(guestId, guestName, episodeId, room) {
+        const popup = document.createElement('div');
+        popup.className = 'popup';
+        popup.style.position = 'fixed';
+        popup.style.top = '50%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -50%)';
+        popup.style.background = '#fff';
+        popup.style.padding = '20px';
+        popup.style.borderRadius = '8px';
+        popup.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+        popup.style.zIndex = '1000';
+
+        popup.innerHTML = `
+            <h3>Join Request</h3>
+            <p>${guestName} is requesting to join the studio for episode ${episodeId}</p>
+            <button id="accept-join-btn" class="btn btn-success">Accept</button>
+            <button id="deny-join-btn" class="btn btn-danger">Deny</button>
+        `;
+
+        document.body.appendChild(popup);
+
+        document.getElementById('accept-join-btn').addEventListener('click', () => {
+            this.socket.emit('approve_join_studio', { guestId, episodeId, room });
+            document.body.removeChild(popup);
+            this.showNotification(`Accepted ${guestName} to join studio`, 'success');
+        });
+
+        document.getElementById('deny-join-btn').addEventListener('click', () => {
+            this.socket.emit('deny_join_studio', { guestId, reason: 'Host denied the request' });
+            document.body.removeChild(popup);
+            this.showNotification(`Denied ${guestName}'s join request`, 'info');
+        });
+    }
+
     async loadDevices() {
         try {
             const devices = await navigator.mediaDevices.enumerateDevices();
@@ -70,7 +147,6 @@ class RecordingStudio {
                 .map(device => `<option value="${device.deviceId}">${device.label || `Camera ${videoInputs.indexOf(device) + 1}`}</option>`)
                 .join('');
 
-            // Initialize video stream with default device
             if (videoInputs.length > 0) {
                 await this.updateVideoStream();
             }
@@ -82,7 +158,6 @@ class RecordingStudio {
 
     async updateVideoStream() {
         try {
-            // Stop existing stream if any
             if (this.videoStream) {
                 this.videoStream.getTracks().forEach(track => track.stop());
             }
@@ -100,10 +175,37 @@ class RecordingStudio {
 
             this.videoPreview.srcObject = this.videoStream;
             this.updateVideoStats();
+
+            // Share host's stream with participants
+            this.socket.emit('participant_stream', {
+                userId: this.socket.id,
+                streamId: this.videoStream.id
+            });
         } catch (error) {
             console.error('Error updating video stream:', error);
             this.showNotification('Error accessing camera', 'error');
         }
+    }
+
+    addParticipantStream(userId, streamId) {
+        if (this.participants.has(userId)) return;
+
+        const videoElement = document.createElement('video');
+        videoElement.autoplay = true;
+        videoElement.playsinline = true;
+        videoElement.style.width = '200px';
+        videoElement.style.margin = '5px';
+
+        const participantDiv = document.createElement('div');
+        participantDiv.className = 'participant-video';
+        participantDiv.dataset.userId = userId;
+        participantDiv.appendChild(videoElement);
+
+        this.participantsContainer.appendChild(participantDiv);
+        this.participants.set(userId, videoElement);
+
+        // Note: Actual stream handling requires WebRTC integration, simplified here
+        console.log(`Added participant stream for user ${userId}, streamId: ${streamId}`);
     }
 
     getVideoResolution() {
@@ -141,20 +243,18 @@ class RecordingStudio {
 
     async startRecording() {
         try {
-            // Get audio stream
             this.audioStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
                     deviceId: this.inputDeviceSelect.value
                 }
             });
 
-            // Combine audio and video streams
-            const combinedStream = new MediaStream([
-                ...this.audioStream.getTracks(),
-                ...this.videoStream.getTracks()
-            ]);
+            let combinedTracks = [...this.audioStream.getTracks()];
+            if (this.videoStream) {
+                combinedTracks = combinedTracks.concat(this.videoStream.getTracks());
+            }
+            const combinedStream = new MediaStream(combinedTracks);
 
-            // Set up audio visualization
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.analyser = this.audioContext.createAnalyser();
             const source = this.audioContext.createMediaStreamSource(this.audioStream);
@@ -185,10 +285,9 @@ class RecordingStudio {
                 }
             };
 
-            // Set up media recorder
             this.mediaRecorder = new MediaRecorder(combinedStream, {
                 mimeType: 'video/webm;codecs=vp9,opus',
-                videoBitsPerSecond: 2500000 // 2.5 Mbps
+                videoBitsPerSecond: 2500000
             });
 
             this.audioChunks = [];
@@ -293,20 +392,25 @@ class RecordingStudio {
 
         const videoBlob = new Blob(this.videoChunks, { type: 'video/webm' });
         const formData = new FormData();
-        formData.append('video', videoBlob);
-        const episodeId = document.getElementById('episode-id-display').textContent;
+        formData.append('audioFile', videoBlob);
+        const episodeId = document.getElementById('episode-id-display').textContent.trim();
+
+        if (!episodeId) {
+            this.showNotification('Episode ID missing – cannot save!', 'error');
+            console.error('Episode ID missing!');
+            return;
+        }
+
+        console.log("Frontend: Will send PUT to /episodes/" + episodeId);
+        console.log("Frontend: Episode ID from DOM:", episodeId);
 
         try {
-            const response = await fetch(`/api/episodes/${episodeId}`, {
-                method: 'PUT',
-                body: formData
-            });
-
-            if (response.ok) {
+            const result = await updateEpisode(episodeId, formData);
+            if (!result.error) {
                 this.showNotification('Recording saved successfully', 'success');
                 this.resetRecording();
             } else {
-                throw new Error('Failed to save recording');
+                throw new Error(result.error || 'Failed to save recording');
             }
         } catch (error) {
             console.error('Error saving recording:', error);
@@ -336,12 +440,11 @@ class RecordingStudio {
     }
 
     showNotification(message, type = 'info') {
-        // Implement notification system here
         console.log(`${type}: ${message}`);
+        // Implement notification UI here, e.g., a toast or alert
     }
 }
 
-// Initialize the recording studio when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     new RecordingStudio();
 });
