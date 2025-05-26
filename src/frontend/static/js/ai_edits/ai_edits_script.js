@@ -86,24 +86,75 @@ const aiOptions = [
     resultContainer: "generateQuotes-result"
   },
   {
-  id: "analyzeAudio",
-  title: "Analyze Audio",
-  description: "Analyze audio to extract timestamps and metadata",
-  icon: "🔍",
-  dependencies: {},
-  resultContainer: "analyzeAudio-result"
+    id: "generateQuoteImages",
+    title: "Generate Quote Images",
+    description: "Turn quotes into shareable images",
+    icon: "🖼️",
+    dependencies: {
+      generateQuotes: "Quote generation is required first"
+    },
+    resultContainer: "generateQuoteImages-result"
+  },
+  {
+    id: "osintLookup",
+    title: "OSINT Search",
+    description: "Lookup guest using Open Source Intelligence",
+    icon: "🔎",
+    dependencies: {
+      transcribe: "Transcription is required for OSINT"
+    },
+    resultContainer: "osintLookup-result"
+  },
+  {
+    id: "generateIntroOutro",
+    title: "Generate Intro/Outro Script",
+    description: "Let AI create an intro and outro for the podcast",
+    icon: "📜",
+    dependencies: {
+      transcribe: "Transcription is required for intro/outro"
+    },
+    resultContainer: "generateIntroOutro-result"
+  },
+  {
+    id: "introOutroToSpeech",
+    title: "Convert Intro/Outro to Audio",
+    description: "Use AI voice to generate audio for intro/outro",
+    icon: "🔊",
+    dependencies: {
+      generateIntroOutro: "Generate the intro/outro script first"
+    },
+    resultContainer: "introOutroToSpeech-result"
+  },
+  {
+    id: "generateAudioClip",
+    title: "Generate Translated Podcast",
+    description: "Convert translated transcript to audio clip",
+    icon: "🎙️",
+    dependencies: {
+      transcribe: "Transcription is required"
+    },
+    resultContainer: "generateAudioClip-result"
+  },
+  {
+    id: "analyzeAudio",
+    title: "Analyze Audio",
+    description: "Analyze audio to extract timestamps and metadata",
+    icon: "📊",
+    dependencies: {},
+    resultContainer: "analyzeAudio-result"
   },
   {
     id: "planAndMixSfx",
     title: "Plan & Mix Sound Effects",
     description: "Add sound effects to your podcast",
-    icon: "M",
+    icon: "🎧",
     dependencies: {
       transcribe: "Transcription is required for sound effect planning"
     },
     resultContainer: "planAndMixSfx-result"
   }
 ];
+
 
 // Initialize the page when DOM is loaded
 document.addEventListener("DOMContentLoaded", function() {
@@ -126,21 +177,21 @@ document.addEventListener("DOMContentLoaded", function() {
 function populateOptionsList() {
   const optionList = document.getElementById("option-list");
   if (!optionList) return;
-  
+
   optionList.innerHTML = "";
-  
-  aiOptions.forEach((option, index) => {
+
+  aiOptions.forEach((option) => {
     const optionItem = document.createElement("div");
     optionItem.className = "option-item";
     optionItem.dataset.optionId = option.id;
-    
-    // Check if option should be disabled based on dependencies
+
     const isDisabled = !checkDependenciesMet(option);
     if (isDisabled) {
       optionItem.classList.add("disabled-option");
     }
-    
-    optionItem.innerHTML = `
+
+    // Standard innerHTML (for all except OSINT)
+    let innerHTML = `
       <div class="option-icon">${option.icon}</div>
       <div class="option-content">
         <div class="option-title">${option.title}</div>
@@ -148,34 +199,45 @@ function populateOptionsList() {
       </div>
       <input type="checkbox" class="option-checkbox" data-function="${option.id}" ${isDisabled ? 'disabled' : ''}>
     `;
-    
-    // Add tooltip for disabled options
-    if (isDisabled) {
-      const dependencyMessages = [];
-      for (const [depId, message] of Object.entries(option.dependencies)) {
-        dependencyMessages.push(message);
-      }
-      
-      if (dependencyMessages.length > 0) {
-        optionItem.addEventListener("mouseenter", function(e) {
-          const tooltip = document.createElement("div");
-          tooltip.className = "dependency-tooltip";
-          tooltip.textContent = dependencyMessages.join(", ");
-          this.appendChild(tooltip);
-        });
-        
-        optionItem.addEventListener("mouseleave", function() {
-          const tooltip = this.querySelector(".dependency-tooltip");
-          if (tooltip) {
-            tooltip.remove();
-          }
-        });
-      }
+
+    // Inject OSINT input field inline
+    if (option.id === "osintLookup") {
+      innerHTML = `
+        <div class="option-icon">${option.icon}</div>
+        <div class="option-content" style="flex-grow: 1;">
+          <div class="option-title" style="display: flex; align-items: center; gap: 10px;">
+            ${option.title}
+            <input type="text" id="osint-query" placeholder="Enter guest name..." 
+              style="padding: 6px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; width: 200px;" />
+          </div>
+          <div class="option-description" style="margin-top: 4px;">${option.description}</div>
+        </div>
+        <input type="checkbox" class="option-checkbox" data-function="${option.id}" ${isDisabled ? 'disabled' : ''}>
+      `;
     }
-    
+
+
+    optionItem.innerHTML = innerHTML;
+
+    // Tooltip för dependencies
+    if (isDisabled && option.dependencies) {
+      const messages = Object.values(option.dependencies);
+      optionItem.addEventListener("mouseenter", function () {
+        const tooltip = document.createElement("div");
+        tooltip.className = "dependency-tooltip";
+        tooltip.textContent = messages.join(", ");
+        this.appendChild(tooltip);
+      });
+      optionItem.addEventListener("mouseleave", function () {
+        const tooltip = this.querySelector(".dependency-tooltip");
+        if (tooltip) tooltip.remove();
+      });
+    }
+
     optionList.appendChild(optionItem);
   });
 }
+
 
 /**
  * Sets up event listeners for the page
@@ -192,7 +254,21 @@ function setupEventListeners() {
   if (audioFileInput) {
     audioFileInput.addEventListener("change", handleFileInputChange);
   }
-  
+  // Attach after the DOM + options have been rendered
+  setTimeout(() => {
+    const osintCheckbox = document.querySelector('.option-checkbox[data-function="osintLookup"]');
+    const osintInputWrapper = document.getElementById("osint-query-wrapper");
+
+    if (osintCheckbox && osintInputWrapper) {
+      osintCheckbox.addEventListener("change", () => {
+        osintInputWrapper.style.display = osintCheckbox.checked ? "block" : "none";
+      });
+
+      // Initiera korrekt visning
+      osintInputWrapper.style.display = osintCheckbox.checked ? "block" : "none";
+    }
+  }, 0);
+
   // Option checkbox change handler
   document.addEventListener("change", function(e) {
     if (e.target.classList.contains("option-checkbox")) {
@@ -466,49 +542,61 @@ function handleRunButtonClick() {
     showStatusMessage("Please select an audio file", "warning");
     return;
   }
-  
+
   const selectedOptions = Array.from(document.querySelectorAll(".option-checkbox:checked"));
   if (selectedOptions.length === 0) {
     showStatusMessage("Please select at least one AI function", "warning");
     return;
   }
-  
+
   // Get selected steps
-const selectedSteps = selectedOptions.map(checkbox => checkbox.dataset.function);
+  const selectedSteps = selectedOptions.map(checkbox => checkbox.dataset.function);
 
-// Map frontend IDs to backend step names
-const stepMappings = {
-  transcribe: "transcribe",
-  enhanceAudio: "enhance",
-  aiCut: "ai_cut",
-  voice_isolation: "voice_isolation",
-  cleanTranscript: "clean_transcript",
-  planAndMixSfx: "plan_and_mix_sfx",
-  analyzeAudio: "analyze_audio",
-  generateShowNotes: "generate_show_notes",
-  aiSuggestions: "ai_suggestions",
-  generateQuotes: "generate_quotes"
-};
+  // Map frontend IDs to backend step names
+  const stepMappings = {
+    transcribe: "transcribe",
+    enhanceAudio: "enhance",
+    aiCut: "ai_cut",
+    voice_isolation: "voice_isolation",
+    cleanTranscript: "clean_transcript",
+    planAndMixSfx: "plan_and_mix_sfx",
+    analyzeAudio: "analyze_audio",
+    generateShowNotes: "generate_show_notes",
+    aiSuggestions: "ai_suggestions",
+    generateQuotes: "generate_quotes",
+    generateQuoteImages: "generate_quote_images",
+    osintLookup: "osint_lookup",
+    generateIntroOutro: "generate_intro_outro",
+    introOutroToSpeech: "intro_outro_to_speech",
+    generateAudioClip: "generate_audio_clip"
+  };
 
+  // Sort steps by dependencies (still frontend IDs)
+  const sortedSteps = sortFunctionsByDependencies(selectedSteps);
 
+  // Map sorted steps to backend-compatible step names
+  const mappedSteps = sortedSteps.map(step => stepMappings[step] || step);
 
-// Sort steps by dependencies (still frontend IDs)
-const sortedSteps = sortFunctionsByDependencies(selectedSteps);
+  // Show loading state
+  showStatusMessage("Processing audio...", "info");
+  showSpinner();
 
-// Map sorted steps to backend-compatible step names
-const mappedSteps = sortedSteps.map(step => stepMappings[step] || step);
+  // Create form data
+  const formData = new FormData();
+  formData.append("audio", activeAudioBlob);
+  formData.append("episode_id", CURRENT_EPISODE_ID);
+  formData.append("steps", JSON.stringify(mappedSteps));
 
-// Show loading state
-showStatusMessage("Processing audio...", "info");
-showSpinner();
+  // ✅ Add OSINT query if selected
+  const osintQuery = document.getElementById("osint-query")?.value.trim();
+  if (selectedSteps.includes("osintLookup")) {
+    if (!osintQuery) {
+      showStatusMessage("Please enter a name for OSINT search.", "warning");
+      return;
+    }
+    formData.append("osint_query", osintQuery);
+  }
 
-// Create form data
-const formData = new FormData();
-formData.append("audio", activeAudioBlob);
-formData.append("episode_id", CURRENT_EPISODE_ID);
-formData.append("steps", JSON.stringify(mappedSteps));  // ✅ Fixat här
-
-  
   // Send request to server
   fetch("/audio/process_pipeline", {
     method: "POST",
@@ -523,24 +611,20 @@ formData.append("steps", JSON.stringify(mappedSteps));  // ✅ Fixat här
       return response.json();
     })
     .then(data => {
-      // Process successful response
       processSuccessResponse(data, sortedSteps);
     })
     .catch(error => {
-      // Handle error
       showStatusMessage(`Error: ${error.message}`, "error");
     })
     .finally(() => {
-      // Hide spinner
       hideSpinner();
-      
-      // Re-enable run button
       if (runButton) {
         runButton.disabled = false;
         runButton.classList.remove("disabled-button");
       }
     });
 }
+
 
 /**
  * Processes successful response from the server
@@ -599,6 +683,25 @@ function processSuccessResponse(data, steps) {
         
       case "voice_isolation":
         // Voice isolation is handled in the final audio
+        break;
+      case "generateQuoteImages":
+        updateQuoteImagesResult(data.quote_images || []);
+        break;
+
+      case "osintLookup":
+        updateOSINTResult(data.osint || "No OSINT data found.");
+        break;
+
+      case "generateIntroOutro":
+        updateIntroOutroScriptResult(data.intro_outro_script || "No script generated.");
+        break;
+
+      case "introOutroToSpeech":
+        updateIntroOutroAudioResult(data.intro_outro_audio_url || null);
+        break;
+
+      case "generateAudioClip":
+        updateAudioClipResult(data.translated_clip_url || null);
         break;
     }
   });

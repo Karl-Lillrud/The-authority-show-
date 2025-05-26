@@ -260,9 +260,15 @@
     <pre id="quotes-output">Generated quotes will appear here...</pre>
   </div>
 
+  <!-- OSINT input should be visible when checkbox is checked -->
+  <div id="osint-query-wrapper" style="display: none; margin: 15px 0;">
+    <label for="osint-query" style="display: block; font-weight: bold; margin-bottom: 5px;">Guest name for OSINT:</label>
+    <input type="text" id="osint-query" placeholder="Enter guest name..." style="width: 100%; max-width: 300px; padding: 8px; border-radius: 5px; border: 1px solid #ccc;" />
+  </div>
+
+  <!-- OSINT result output -->
   <div class="output-section" id="osintLookup-result" style="display: none;">
     <h2>OSINT Lookup</h2>
-    <input type="text" id="osint-query" placeholder="Enter a person or company to search..." />
     <pre id="osint-output">OSINT results will appear here...</pre>
   </div>
 
@@ -281,6 +287,26 @@
   <div class="output-section" id="planAndMixSfx-result" style="display: none;">
     <h2>Sound Effects</h2>
     <!-- Sound effect timeline and clips will be populated via JS -->
+  </div>
+
+  <div class="output-section" id="generateQuoteImages-result" style="display: none;">
+  <h2>Quote Images</h2>
+  <div id="quoteImagesResult">Quote images will appear here...</div>
+  </div>
+
+  <div class="output-section" id="generateIntroOutro-result" style="display: none;">
+    <h2>Intro/Outro Script</h2>
+    <pre id="introOutroScriptResult">Generated intro/outro will appear here...</pre>
+  </div>
+
+  <div class="output-section" id="introOutroToSpeech-result" style="display: none;">
+    <h2>Intro/Outro Audio</h2>
+    <div id="introOutroAudioResult">Converted audio will appear here...</div>
+  </div>
+
+  <div class="output-section" id="generateAudioClip-result" style="display: none;">
+    <h2>Translated Podcast Clip</h2>
+    <div id="audioClipResult">Generated audio will appear here...</div>
   </div>
 
   <div class="output-section" id="finalAudioResult" style="display: none;">
