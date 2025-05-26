@@ -14,7 +14,7 @@ from backend.services.creditService import consume_credits
 from backend.utils.blob_storage import upload_file_to_blob
 from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.edit_repository import create_edit_entry
-from backend.utils.ai_utils import check_audio_duration, insufficient_credits_response,enhance_audio_with_ffmpeg
+from backend.utils.ai_utils import check_audio_duration, insufficient_credits_response,enhance_audio_with_ffmpeg,get_osint_info, create_podcast_scripts_paid,text_to_speech_with_elevenlabs
 
 logger = logging.getLogger(__name__)
 audio_pipeline_bp = Blueprint("audio_pipeline_bp", __name__)
@@ -75,10 +75,10 @@ def process_audio_pipeline():
 
     # Validate steps
     valid_steps = [
-    "transcribe","enhance", "ai_cut", "voice_isolation", "cut_audio",
-    "analyze_audio", "plan_and_mix_sfx",
-    "clean_transcript", "generate_show_notes",
-    "ai_suggestions", "generate_quotes"
+        "transcribe", "enhance", "ai_cut", "voice_isolation", "cut_audio",
+        "analyze_audio", "plan_and_mix_sfx",
+        "clean_transcript", "generate_show_notes", "ai_suggestions", "generate_quotes",
+        "generate_quote_images", "osint_lookup", "generate_intro_outro", "intro_outro_to_speech", "generate_audio_clip"
     ]
     for step in steps:
         if step not in valid_steps:
@@ -98,17 +98,22 @@ def process_audio_pipeline():
     # --- Credit handling ---
     user_id = g.user_id
     credit_types = {
-        "transcribe": "transcription",
-        "enhance": "audio_enhancement",
-        "ai_cut": "ai_audio_cutting",
-        "voice_isolation": "voice_isolation",
-        "cut_audio": "audio_cutting",
-        "analyze_audio": "ai_audio_analysis",
-        "plan_and_mix_sfx": "audio_clip",
-        "clean_transcript": "clean_transcript",
-        "generate_show_notes": "show_notes",
-        "ai_suggestions": "ai_suggestions",
-        "generate_quotes": "ai_quotes"
+    "transcribe": "transcription",
+    "enhance": "audio_enhancement",
+    "ai_cut": "ai_audio_cutting",
+    "voice_isolation": "voice_isolation",
+    "cut_audio": "audio_cutting",
+    "analyze_audio": "ai_audio_analysis",
+    "plan_and_mix_sfx": "audio_clip",
+    "clean_transcript": "clean_transcript",
+    "generate_show_notes": "show_notes",
+    "ai_suggestions": "ai_suggestions",
+    "generate_quotes": "ai_quotes",
+    "generate_quote_images": "ai_quote_images",
+    "osint_lookup": "ai_osint",
+    "generate_intro_outro": "ai_intro",
+    "intro_outro_to_speech": "ai_intro",
+    "generate_audio_clip": "audio_clip"
     }
 
     for step in steps:
@@ -136,11 +141,16 @@ def process_audio_pipeline():
                 "enhance",
                 "analyze_audio",
                 "ai_cut",
-                "clean_transcript",
-                "generate_show_notes",
-                "ai_suggestions",
+                "clean_transcript", 
+                "generate_show_notes", 
+                "ai_suggestions", 
                 "generate_quotes",
-                "cut_audio",
+                "generate_quote_images", 
+                "osint_lookup", 
+                "generate_intro_outro", 
+                "intro_outro_to_speech",
+                "generate_audio_clip", 
+                "cut_audio", 
                 "plan_and_mix_sfx"
             ]
 
@@ -225,6 +235,60 @@ def process_audio_pipeline():
                         metadata["quotes"] = quotes
                         if credit_type: consume_credits(user_id, credit_type)
 
+                    elif step == "generate_quote_images":
+                        quotes = metadata.get("quotes", "")
+                        if not quotes:
+                            raise ValueError("No quotes found to generate images from")
+                        quotes_list = [q.strip() for q in quotes.split("\n\n") if q.strip()]
+                        images = transcription_service.get_quote_images(quotes_list, method="local")
+                        metadata["steps_applied"].append(step)
+                        metadata["quote_images"] = images
+                        if credit_type: consume_credits(user_id, credit_type)
+
+
+                    elif step == "osint_lookup":
+                        guest_name = request.form.get("osint_query", "").strip()
+                        if not guest_name:
+                            raise ValueError("Missing guest name for OSINT")
+                        osint_result = get_osint_info(guest_name)
+                        metadata["steps_applied"].append(step)
+                        metadata["osint"] = osint_result
+                        if credit_type: consume_credits(user_id, credit_type)
+
+                    elif step == "generate_intro_outro":
+                        guest_name = request.form.get("osint_query", "").strip()
+                        raw_transcript = metadata.get("raw_transcription", "")
+                        if not guest_name or not raw_transcript:
+                            raise ValueError("Missing guest name or raw transcript")
+                        osint_data = get_osint_info(guest_name)
+                        intro_outro_script = create_podcast_scripts_paid(osint_data, guest_name, raw_transcript)
+                        metadata["steps_applied"].append(step)
+                        metadata["intro_outro_script"] = intro_outro_script
+                        if credit_type: consume_credits(user_id, credit_type)
+
+                    elif step == "intro_outro_to_speech":
+                        script = metadata.get("intro_outro_script", "")
+                        if not script:
+                            raise ValueError("Intro/outro script is missing")
+                        audio_bytes = text_to_speech_with_elevenlabs(script)
+                        b64 = base64.b64encode(audio_bytes).decode("utf-8")
+                        metadata["steps_applied"].append(step)
+                        metadata["intro_outro_audio_url"] = f"data:audio/mp3;base64,{b64}"
+                        if credit_type: consume_credits(user_id, credit_type)
+
+
+                    elif step == "generate_audio_clip":
+                        transcript = metadata.get("transcript", "")
+                        if not transcript:
+                            raise ValueError("Transcript missing for translation")
+                        audio_bytes = transcription_service.generate_audio_from_translated(transcript, "English")  # or use language param later
+                        b64 = base64.b64encode(audio_bytes).decode("utf-8")
+                        metadata["steps_applied"].append(step)
+                        metadata["translated_clip_url"] = f"data:audio/mp3;base64,{b64}"
+                        if credit_type: consume_credits(user_id, credit_type)
+
+
+
                 except Exception as e:
                     logger.error(f"Error in step '{step}': {str(e)}", exc_info=True)
                     return jsonify({"error": f"Step '{step}' failed: {str(e)}", "steps_applied": metadata["steps_applied"]}), 500
@@ -259,7 +323,12 @@ def process_audio_pipeline():
                 "show_notes": metadata.get("show_notes"),
                 "clean_transcript": metadata.get("clean_transcript"),
                 "sfx_plan": metadata.get("sfx_plan"),
-                "sfx_clips": metadata.get("sfx_clips")
+                "sfx_clips": metadata.get("sfx_clips"),
+                "quote_images": metadata.get("quote_images"),
+                "osint": metadata.get("osint"),
+                "intro_outro_script": metadata.get("intro_outro_script"),
+                "intro_outro_audio_url": metadata.get("intro_outro_audio_url"),
+                "translated_clip_url": metadata.get("translated_clip_url")
             })
 
         except Exception as e:
