@@ -371,7 +371,8 @@ label {
 }
 
 input[type="text"],
-input[type="email"]{
+input[type="email"],
+input[type="tel"]{
   width: 100%;
   padding: 0.75rem 1rem;
   background-color: var(--account-input);
