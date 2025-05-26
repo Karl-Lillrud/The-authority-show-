@@ -282,11 +282,8 @@ function selectDependencies(functionId) {
   Object.keys(option.dependencies).forEach(depId => {
     const depCheckbox = document.querySelector(`.option-checkbox[data-function="${depId}"]`);
     if (depCheckbox && !depCheckbox.checked) {
-      // Check the dependency
       depCheckbox.checked = true;
-      
-      // Recursively select dependencies of this dependency
-      selectDependencies(depId);
+      depCheckbox.dispatchEvent(new Event("change")); // 🛠 triggar UI + order
     }
   });
 }
@@ -328,7 +325,20 @@ function updateExecutionPreview() {
 function sortFunctionsByDependencies(functionIds) {
   // Create a dependency graph
   const graph = {};
-  const options = aiOptions.filter(opt => functionIds.includes(opt.id));
+  const options = [];
+
+  function collectAllDependencies(optionId, visited = new Set()) {
+    if (visited.has(optionId)) return;
+    visited.add(optionId);
+    const opt = aiOptions.find(o => o.id === optionId);
+    if (!opt) return;
+    options.push(opt);
+    if (opt.dependencies) {
+      Object.keys(opt.dependencies).forEach(dep => collectAllDependencies(dep, visited));
+    }
+  }
+
+  functionIds.forEach(id => collectAllDependencies(id));
   
   // Initialize graph
   options.forEach(opt => {
