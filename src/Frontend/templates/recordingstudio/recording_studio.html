@@ -4,6 +4,7 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/recordingstudio/recording_studio.css') }}">
+
 {% endblock %}
 
 {% block content %}
@@ -25,7 +26,7 @@
         <div class="controls-panel">
             <div class="media-preview">
                 <div class="video-container">
-                    <video id="video-preview" autoplay muted playsinline></video>
+                    <video id="videoPreview" autoplay muted playsinline></video>
                     <div class="video-overlay">
                         <div class="recording-indicator"></div>
                     </div>
@@ -36,7 +37,7 @@
             </div>
             
             <div class="recording-controls">
-                <button id="recordButton" class="control-button record">
+                <button id="startRecordingBtn" class="control-button record">
                     <i class="fas fa-microphone"></i>
                     <span>Start Recording</span>
                 </button>
@@ -44,7 +45,7 @@
                     <i class="fas fa-pause"></i>
                     <span>Pause</span>
                 </button>
-                <button id="stopButton" class="control-button stop" disabled>
+                <button id="stopRecordingBtn" class="control-button stop" disabled>
                     <i class="fas fa-stop"></i>
                     <span>Stop</span>
                 </button>
@@ -52,16 +53,16 @@
 
             <div class="media-settings">
                 <div class="setting-group">
-                    <label for="inputDevice">Audio Input</label>
-                    <select id="inputDevice" class="device-select"></select>
+                    <label for="microphoneSelect">Audio Input</label>
+                    <select id="microphoneSelect" class="device-select"></select>
                 </div>
                 <div class="setting-group">
-                    <label for="outputDevice">Audio Output</label>
-                    <select id="outputDevice" class="device-select"></select>
+                    <label for="speakerSelect">Audio Output</label>
+                    <select id="speakerSelect" class="device-select"></select>
                 </div>
                 <div class="setting-group">
-                    <label for="videoDevice">Video Input</label>
-                    <select id="videoDevice" class="device-select"></select>
+                    <label for="cameraSelect">Video Input</label>
+                    <select id="cameraSelect" class="device-select"></select>
                 </div>
                 <div class="setting-group">
                     <label for="videoQuality">Video Quality</label>
@@ -101,6 +102,12 @@
         </div>
     </div>
 
+    <div id="participantsContainer"></div>
+
+    <div id="joinRequestModal" style="display:none;">
+        <div class="modal-content"></div>
+    </div>
+
     <div class="studio-footer">
         <div class="recording-actions">
             <button id="saveRecording" class="action-button save" disabled>
@@ -118,5 +125,6 @@
 
 {% block scripts %}
 <script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+<script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
 <script type="module" src="{{ url_for('static', filename='js/recordingstudio/recording_studio.js') }}"></script>
 {% endblock %}
