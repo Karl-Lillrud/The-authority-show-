@@ -942,3 +942,43 @@
     gap: var(--spacing-xs);
   }
 }
+
+.subscription-section {
+  justify-content: center;
+}
+
+.subscription-toggle {
+  display: flex;
+  background-color: #f0f0f0;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.toggle-button {
+  border: none;
+  background-color: transparent;
+  color: var(--text-color-light);
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+  font-weight: 600;
+}
+
+.toggle-button:focus {
+  outline: none;
+}
+
+.toggle-button.active {
+  background-color: var(--highlight-color);
+  color: white;
+}
+
+.product-features-list li {
+  font-size: 0.85rem;
+}
