@@ -2,7 +2,8 @@
   rel="stylesheet"
   href="{{ url_for('static', filename='css/components/header.css') }}"
 />
-<header>
+<header id="main-header">
+  <div id="header-wrapper">
   <!-- Logo and Page Title -->
   <div class="logo-title-container">
     <a href="{{ url_for('dashboard_bp.dashboard') }}" class="logo-container">
@@ -55,7 +56,7 @@
       <a href="{{ url_for('dashboard_bp.store') }}">Store</a>
       <a href="#" id="logout-link">Log out</a>
     </div>
-</header>
+  </div>
   <div id="main-menu">
     <nav>
       <ul>
@@ -67,6 +68,7 @@
       </ul>
     </nav>
   </div>
+</header>
 
 <!-- Custom Logout Modal (TikTok-style) -->
 <div id="logout-modal" class="modal">

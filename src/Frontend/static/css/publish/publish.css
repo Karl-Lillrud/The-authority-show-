@@ -8,10 +8,9 @@ body {
 .publish-container {
   max-width: 900px;
   margin: 2rem auto;
-  margin-top: 84px;
   padding: 2rem;
   background-color: #fff;
-  border-radius: var(--radius-large, 12px);
+  border-radius: var(--border-radius-md, 20px);
   box-shadow: var(--card-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
 }
 
@@ -294,6 +293,7 @@ body {
   .publish-container {
     margin: 1rem;
     padding: 1.5rem;
+    margin-top: 30px;
   }
 
   .page-title {

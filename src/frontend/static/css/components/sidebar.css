@@ -1,3 +1,15 @@
+main {
+  margin-top: -54px;
+}
+
+main main {
+  margin-top: 0;
+}
+
+#main-menu {
+  padding-left: 260px;
+}
+
 /* Sidebar Styles */
 .sidebar {
   position: absolute;
@@ -550,6 +562,9 @@
 
 /* Mobile-specific improvements */
 @media (max-width: 992px) {
+  #main-menu {
+    padding-left: 0;
+  }
   /* Sidebar positioning for mobile */
   #sidebar-container {
     position: fixed;

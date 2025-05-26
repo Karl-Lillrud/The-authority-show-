@@ -9,7 +9,6 @@
   max-width: 1600px; /* Example max-width for the whole container */
   margin: 0 auto; /* Center the container */
   padding: 0 var(--spacing-lg); /* Add horizontal padding */
-  padding-top: 44px;
 }
 
 .store {

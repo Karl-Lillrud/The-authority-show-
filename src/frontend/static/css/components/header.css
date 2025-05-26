@@ -48,8 +48,14 @@ img {
   border-bottom: 5px solid #000;
 }
 
+header#main-header {
+  min-height: calc(116px + 54px);
+  display: flex;
+  flex-direction: column;
+}
+
 /* Header */
-header {
+header #header-wrapper {
   display: flex;
   flex-direction: row; /* Håll innehållet i rad */
   justify-content: space-between; /* Sprid ut innehållet horisontellt */
@@ -414,7 +420,6 @@ header {
   color: #797979;
   background-color: white;
   border: 1px solid white;
-  border-top: 0;
   border-bottom-left-radius: 1rem;
   border-bottom-right-radius: 1rem;
   box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
@@ -435,9 +440,32 @@ header {
   border-color: var(--highlight-color);
  }
 
+@media (max-width: 992px) {
+  #main-menu {
+    position: relative;
+    top: initial;
+  }
+
+  #main-menu nav ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 30px 30px 0px 30px;
+  }
+
+  #main-menu nav ul li a {
+    border-radius: 1rem;
+  }
+
+}
+
 
 @media (max-width: 768px) {
-  header {
+  header#main-header {
+    min-height: auto;
+  }
+
+  header #header-wrapper {
     flex-direction: row; /* Keep horizontal layout */
     justify-content: space-between; /* Keep elements spread out */
     align-items: center;
@@ -491,7 +519,17 @@ header {
 
 /* Replace the 480px media query with this */
 @media (max-width: 480px) {
-  header {
+
+  #main-menu nav ul li {
+    width: 100%;
+  }
+
+  #main-menu nav ul li a {
+    width: 100%;
+    text-align: center;
+  }
+
+  header #header-wrapper {
     flex-direction: row; /* Keep horizontal layout */
     justify-content: space-between; /* Keep elements spread out */
     padding: var(--spacing-xs) var(--spacing-sm); /* Smaller padding */
