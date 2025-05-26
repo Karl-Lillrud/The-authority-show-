@@ -253,19 +253,22 @@ class AudioService:
                 })
 
                 cut = audio[start_ms:end_ms]
+
                 with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_cut:
                     cut.export(tmp_cut.name, format="wav")
                     tmp_cut.flush()
+                    tmp_cut_path = tmp_cut.name  # Spara tempfilens path
 
-                    with open(tmp_cut.name, "rb") as f:
-                        file_id = save_file(
-                            f.read(),
-                            filename=f"cut_{idx}.wav",
-                            metadata={"type": "ai_cut", "source": filename}
-                        )
-                        cut_file_ids.append(file_id)
+                with open(tmp_cut_path, "rb") as f:
+                    file_id = save_file(
+                        f.read(),
+                        filename=f"cut_{idx}.wav",
+                        metadata={"type": "ai_cut", "source": filename}
+                    )
+                    cut_file_ids.append(file_id)
 
-                    os.remove(tmp_cut.name)
+                os.remove(tmp_cut_path)  # Radera efter att filen är stängd
+
 
             sentiment = analyze_sentiment(transcript)
             show_notes = generate_ai_show_notes(transcript)

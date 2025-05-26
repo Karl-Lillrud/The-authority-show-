@@ -1,3429 +1,1003 @@
-// Global variables for audio processing
-let enhancedAudioBlob = null
-const enhancedAudioId = null
-let isolatedAudioBlob = null
-const isolatedAudioId = null
-let activeAudioBlob = null
-let activeAudioId = null
-let rawAudioBlob = null
-let rawTranscript = ""
-let fullTranscript = ""
+/**
+ * AI Podcast Editing Script
+ * Handles the client-side logic for processing audio through the AI pipeline
+ */
 
-// Credit costs for different features
-const CREDIT_COSTS = {
-  ai_audio_analysis: 300,
-  ai_audio_cutting: 800,
-  ai_quotes: 200,
-  ai_quote_images: 1000,
-  ai_suggestions: 800,
-  audio_clip: 1000,
-  audio_cutting: 500,
-  audio_enhancement: 500,
-  show_notes: 500,
-  transcription: 600,
-  clean_transcript: 500,
-  translation: 500,
-  video_cutting: 500,
-  video_enhancement: 500,
-  voice_isolation: 500,
-  ai_osint: 800,
-  ai_intro_outro: 800,
-  ai_intro_outro_audio: 500,
-}
+// Global variables
+let activeAudioBlob = null;
+// Ensure CURRENT_EPISODE_ID is loaded from session
+const storedEpisodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+let CURRENT_EPISODE_ID = storedEpisodeId || `episode_${Date.now()}`;
 
-// Define dependencies for each function
-const FUNCTION_DEPENDENCIES = {
-  transcribe: {}, // No dependencies
-  enhanceAudio: {}, // No dependencies
-  isolateVoice: {}, // No dependencies
-  cleanTranscript: {
-    fullTranscript: "Requires transcript from transcribe()",
-  },
-  generateShowNotes: {
-    rawTranscript: "Requires transcript from transcribe()",
-  },
-  aiSuggestions: {
-    rawTranscript: "Requires transcript from transcribe()",
-  },
-  generateQuotes: {
-    rawTranscript: "Requires transcript from transcribe()",
-  },
-  generateQuoteImages: {
-    quotesResult: "Requires quotes to be generated first",
-  },
-  translateTranscript: {
-    rawTranscript: "Requires transcript from transcribe()",
-  },
-  generateAudioClip: {
-    translateResult: "Requires translation to be generated first",
-  },
-  osintLookup: {
-    guestNameInput: "Requires guest name to be entered",
-  },
-  generatePodcastIntroOutro: {
-    rawTranscript: "Requires transcript from transcribe()",
-    guestNameInput: "Requires guest name to be entered",
-  },
-  convertIntroOutroToSpeech: {
-    introOutroScriptResult: "Requires intro/outro script to be generated",
-  },
-  analyzeEnhancedAudio: {
-    activeAudioBlob: "Requires enhanced or isolated audio",
-  },
-  displayBackgroundAndMix: {
-    analysisData: "Requires audio analysis",
-  },
-  cutAudio: {
-    audioBlob: "Requires loaded audio file",
-    cutStartEnd: "Requires valid cut start and end times",
-  },
-  aiCutAudio: {
-    activeAudioBlob: "Requires active audio",
-  },
-  applySelectedCuts: {
-    selectedAiCuts: "Requires AI cuts to be selected",
-  },
-}
-
-// Lista över AI-funktioner och deras info
+// AI processing options with dependencies
 const aiOptions = [
   {
     id: "transcribe",
-    title: "Transcribe",
-    description: "Convert audio to text using AI transcription",
+    title: "Transcribe Audio",
+    description: "Convert speech to text using AI",
     icon: "T",
-    cost: CREDIT_COSTS.transcription,
-    handler: transcribe,
-  },
-  {
-    id: "enhanceAudio",
-    title: "Enhance Audio",
-    description: "Improve audio quality and reduce background noise",
-    icon: "A",
-    cost: CREDIT_COSTS.audio_enhancement,
-    handler: enhanceAudio,
-  },
-  {
-    id: "isolateVoice",
-    title: "Isolate Voice",
-    description: "Separate voice from background sounds",
-    icon: "V",
-    cost: CREDIT_COSTS.voice_isolation,
-    handler: runVoiceIsolation,
+    dependencies: {},
+    resultContainer: "transcribe-result"
   },
   {
     id: "cleanTranscript",
     title: "Clean Transcript",
     description: "Remove filler words and improve readability",
     icon: "C",
-    cost: CREDIT_COSTS.clean_transcript,
-    handler: generateCleanTranscript,
-    dependencies: FUNCTION_DEPENDENCIES.cleanTranscript,
+    dependencies: {
+      transcribe: "Transcription is required first"
+    },
+    resultContainer: "cleanTranscript-result"
+  },
+  {
+    id: "enhanceAudio",
+    title: "Enhance Audio",
+    description: "Improve audio quality and reduce noise",
+    icon: "E",
+    dependencies: {},
+    resultContainer: "enhanceAudio-result"
+  },
+  {
+    id: "aiCut",
+    title: "AI Cut Suggestions",
+    description: "Get AI suggestions for content cuts",
+    icon: "A",
+    dependencies: {
+      transcribe: "Transcription is required for AI cuts"
+    },
+    resultContainer: "aiCut-result"
+  },
+  {
+    id: "voice_isolation",
+    title: "Voice Isolation",
+    description: "Separate voice from background noise",
+    icon: "V",
+    dependencies: {},
+    resultContainer: "voiceIsolation-result"
   },
   {
     id: "generateShowNotes",
     title: "Generate Show Notes",
     description: "Create detailed notes from your content",
     icon: "N",
-    cost: CREDIT_COSTS.show_notes,
-    handler: generateShowNotes,
-    dependencies: FUNCTION_DEPENDENCIES.generateShowNotes,
+    dependencies: {
+      transcribe: "Transcription is required for show notes"
+    },
+    resultContainer: "generateShowNotes-result"
   },
   {
     id: "aiSuggestions",
     title: "AI Suggestions",
     description: "Get content improvement recommendations",
     icon: "S",
-    cost: CREDIT_COSTS.ai_suggestions,
-    handler: generateAISuggestions,
-    dependencies: FUNCTION_DEPENDENCIES.aiSuggestions,
+    dependencies: {
+      transcribe: "Transcription is required for AI suggestions"
+    },
+    resultContainer: "aiSuggestions-result"
   },
   {
     id: "generateQuotes",
     title: "Generate Quotes",
     description: "Extract quotable moments from your content",
     icon: "Q",
-    cost: CREDIT_COSTS.ai_quotes,
-    handler: generateQuotes,
-    dependencies: FUNCTION_DEPENDENCIES.generateQuotes,
-  },
-  {
-    id: "generateQuoteImages",
-    title: "Generate Quote Images",
-    description: "Create shareable images from quotes",
-    icon: "I",
-    cost: CREDIT_COSTS.ai_quote_images,
-    handler: generateQuoteImages,
-    dependencies: FUNCTION_DEPENDENCIES.generateQuoteImages,
-  },
-  {
-    id: "translateTranscript",
-    title: "Translate Transcript",
-    description: "Translate transcript to another language",
-    icon: "L",
-    cost: CREDIT_COSTS.translation,
-    handler: translateTranscript,
-    dependencies: FUNCTION_DEPENDENCIES.translateTranscript,
-  },
-  {
-    id: "generateAudioClip",
-    title: "Generate Audio Clip",
-    description: "Create audio from translated text",
-    icon: "A",
-    cost: CREDIT_COSTS.audio_clip,
-    handler: generateAudioClip,
-    dependencies: FUNCTION_DEPENDENCIES.generateAudioClip,
-  },
-  {
-    id: "osintLookup",
-    title: "OSINT Lookup",
-    description: "Research additional information from open sources",
-    icon: "O",
-    cost: CREDIT_COSTS.ai_osint,
-    handler: runOsintSearch,
-    dependencies: FUNCTION_DEPENDENCIES.osintLookup,
-  },
-  {
-    id: "generatePodcastIntroOutro",
-    title: "Generate Intro/Outro",
-    description: "Create podcast intro and outro scripts",
-    icon: "P",
-    cost: CREDIT_COSTS.ai_intro_outro,
-    handler: generatePodcastIntroOutro,
-    dependencies: FUNCTION_DEPENDENCIES.generatePodcastIntroOutro,
-  },
-  {
-    id: "convertIntroOutroToSpeech",
-    title: "Convert Intro/Outro to Speech",
-    description: "Generate audio from intro/outro script",
-    icon: "S",
-    cost: CREDIT_COSTS.ai_intro_outro_audio,
-    handler: convertIntroOutroToSpeech,
-    dependencies: FUNCTION_DEPENDENCIES.convertIntroOutroToSpeech,
-  },
-  {
-    id: "analyzeEnhancedAudio",
-    title: "Analyze Audio",
-    description: "Analyze audio content with AI",
-    icon: "Z",
-    cost: CREDIT_COSTS.ai_audio_analysis,
-    handler: analyzeEnhancedAudio,
-    dependencies: FUNCTION_DEPENDENCIES.analyzeEnhancedAudio,
-  },
-  {
-    id: "displayBackgroundAndMix",
-    title: "Background & Mix",
-    description: "Add background music and mix audio",
-    icon: "M",
-    cost: CREDIT_COSTS.ai_audio_analysis,
-    handler: displayBackgroundAndMix,
-    dependencies: FUNCTION_DEPENDENCIES.displayBackgroundAndMix,
-  },
-  {
-    id: "cutAudio",
-    title: "Cut Audio",
-    description: "Trim audio to specific timestamps",
-    icon: "X",
-    cost: CREDIT_COSTS.audio_cutting,
-    handler: cutAudio,
-    dependencies: FUNCTION_DEPENDENCIES.cutAudio,
-  },
-  {
-    id: "aiCutAudio",
-    title: "AI Cut Audio",
-    description: "Automatically cut audio using AI",
-    icon: "C",
-    cost: CREDIT_COSTS.ai_audio_cutting,
-    handler: aiCutAudio,
-    dependencies: FUNCTION_DEPENDENCIES.aiCutAudio,
-  },
-  {
-    id: "applySelectedCuts",
-    title: "Apply Selected Cuts",
-    description: "Apply selected AI cuts to audio",
-    icon: "A",
-    cost: 0, // No additional cost as it's part of aiCutAudio
-    handler: applySelectedCuts,
-    dependencies: FUNCTION_DEPENDENCIES.applySelectedCuts,
-  },
-]
-
-// Add this function to display execution order indicators when functions are selected
-function updateExecutionOrder() {
-  // Get all checked checkboxes
-  const checkedBoxes = Array.from(document.querySelectorAll(".option-checkbox:checked"))
-
-  // Remove existing execution order indicators
-  document.querySelectorAll(".execution-order").forEach((el) => el.remove())
-
-  if (checkedBoxes.length === 0) return
-
-  // Get the function IDs
-  const functionIds = checkedBoxes.map((cb) => cb.dataset.function)
-
-  // Sort them based on dependencies
-  const sortedFunctions = sortFunctionsByDependencies(functionIds)
-
-  // Add execution order indicators
-  sortedFunctions.forEach((funcId, index) => {
-    const checkbox = document.querySelector(`.option-checkbox[data-function="${funcId}"]`)
-    if (checkbox) {
-      const optionItem = checkbox.closest(".option-item")
-      if (optionItem) {
-        const orderIndicator = document.createElement("div")
-        orderIndicator.className = "execution-order"
-        orderIndicator.textContent = index + 1
-        optionItem.querySelector(".option-content").appendChild(orderIndicator)
-      }
-    }
-  })
-}
-
-// Initialize the application when the DOM is loaded
-document.addEventListener("DOMContentLoaded", () => {
-  // Check if we're on the options selection page
-  const optionList = document.getElementById("option-list")
-  if (optionList) {
-    renderAIOptions(optionList)
-  }
-
-  // Workspace tab switching
-  const workspaceButtons = document.querySelectorAll(".workspace-tab-btn")
-  workspaceButtons.forEach((button) => {
-    button.addEventListener("click", function () {
-      const tabName = this.getAttribute("data-workspace")
-      showTab(tabName)
-    })
-  })
-
-  // Show transcription tab by default
-  if (document.getElementById("content")) {
-    showTab("transcription")
-  }
-
-  // Prevent double-click/spam-clicking to avoid duplicate credit usage
-  document.body.addEventListener(
-    "click",
-    (event) => {
-      const button = event.target.closest("button.ai-edit-button")
-      if (!button || button.disabled) return
-
-      button.disabled = true
-      button.classList.add("disabled")
-
-      setTimeout(() => {
-        button.disabled = false
-        button.classList.remove("disabled")
-      }, 1000)
+    dependencies: {
+      transcribe: "Transcription is required for quotes"
     },
-    true,
-  )
-
-  // Audio Cutting: Setup event listener for source selection
-  const cuttingSource = document.getElementById("audioSourceSelectCutting")
-  if (cuttingSource) {
-    cuttingSource.addEventListener("change", function () {
-      const source = this.value
-      let blob = null
-
-      if (source === "original") blob = rawAudioBlob
-      if (source === "enhanced") blob = enhancedAudioBlob
-      if (source === "isolated") blob = isolatedAudioBlob
-
-      if (blob) {
-        initWaveformCutting(blob)
-      } else {
-        document.getElementById("waveformCut").innerHTML = "<p>No audio available for the selected source.</p>"
-      }
-    })
+    resultContainer: "generateQuotes-result"
+  },
+  {
+    id: "planAndMixSfx",
+    title: "Plan & Mix Sound Effects",
+    description: "Add sound effects to your podcast",
+    icon: "M",
+    dependencies: {
+      transcribe: "Transcription is required for sound effect planning"
+    },
+    resultContainer: "planAndMixSfx-result"
   }
+];
 
-  // Run button for AI options
-  const runButton = document.getElementById("run-button")
-  if (runButton) {
-    runButton.addEventListener("click", () => {
-      const selected = []
-      document.querySelectorAll(".option-checkbox:checked").forEach((cb) => {
-        selected.push(cb.dataset.function)
-      })
+// Initialize the page when DOM is loaded
+document.addEventListener("DOMContentLoaded", function() {
+  // Generate a random episode ID if not already set
+  CURRENT_EPISODE_ID = CURRENT_EPISODE_ID || `episode_${Date.now()}`;
+  
+  // Populate the options list
+  populateOptionsList();
+  
+  // Set up event listeners
+  setupEventListeners();
+  
+  // Update UI state
+  updateUIState();
+});
 
-      if (selected.length === 0) {
-        showStatus("Please select at least one editing option", "error")
-        return
-      }
-
-      // Sort functions based on dependencies before running
-      const sortedFunctions = sortFunctionsByDependencies(selected)
-      runSelectedFunctions(sortedFunctions)
-    })
-  }
-
-  // Add file info display
-  const mainFileInput = document.getElementById("audio-file")
-  if (mainFileInput) {
-    mainFileInput.addEventListener("change", function () {
-      const fileInfo = document.getElementById("file-info")
-      if (fileInfo) {
-        if (this.files && this.files[0]) {
-          const file = this.files[0]
-          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2)
-          fileInfo.textContent = `Selected file: ${file.name} (${fileSizeMB} MB)`
-
-          // Store the file in rawAudioBlob for use in functions
-          rawAudioBlob = file
-
-          // Check dependencies after file is loaded
-          checkDependenciesAndToggleButtons()
-          updateCheckboxStates()
-        } else {
-          fileInfo.textContent = ""
-        }
-      }
-    })
-  }
-
-  // Run initial dependency check
-  checkDependenciesAndToggleButtons()
-  updateCheckboxStates()
-
-  // Add input event listeners for dependency checking
-  setupDependencyListeners()
-
-  // Add dependency details toggle
-  const showDetailsBtn = document.getElementById("show-dependency-details")
-  const detailsContainer = document.getElementById("dependency-details")
-
-  if (showDetailsBtn && detailsContainer) {
-    showDetailsBtn.addEventListener("click", () => {
-      if (detailsContainer.style.display === "none") {
-        // Generate dependency visualization
-        generateDependencyVisualization()
-        detailsContainer.style.display = "block"
-        showDetailsBtn.textContent = "Hide Dependency Details"
-      } else {
-        detailsContainer.style.display = "none"
-        showDetailsBtn.textContent = "Show Dependency Details"
-      }
-    })
-  }
-})
-
-// Setup listeners for inputs that affect dependencies
-function setupDependencyListeners() {
-  // Listen for guest name input changes
-  const guestNameInput = document.getElementById("guestNameInput")
-  if (guestNameInput) {
-    guestNameInput.addEventListener("input", () => {
-      checkDependenciesAndToggleButtons()
-      updateCheckboxStates()
-    })
-  }
-
-  // Listen for cut start/end input changes
-  const cutStart = document.getElementById("cut-start")
-  const cutEnd = document.getElementById("cut-end")
-  if (cutStart && cutEnd) {
-    cutStart.addEventListener("input", () => {
-      checkDependenciesAndToggleButtons()
-      updateCheckboxStates()
-    })
-    cutEnd.addEventListener("input", () => {
-      checkDependenciesAndToggleButtons()
-      updateCheckboxStates()
-    })
-  }
-}
-
-// Sort functions based on their dependencies
-function sortFunctionsByDependencies(functionIds) {
-  // Create a dependency graph
-  const graph = {}
-  const functionMap = {}
-
-  // Initialize the graph
-  functionIds.forEach((id) => {
-    graph[id] = []
-    functionMap[id] = aiOptions.find((opt) => opt.id === id)
-  })
-
-  // Build the dependency graph
-  functionIds.forEach((id) => {
-    const func = functionMap[id]
-    if (!func || !func.dependencies) return
-
-    // Check which other functions this function depends on
-    functionIds.forEach((otherId) => {
-      if (id === otherId) return
-
-      const otherFunc = functionMap[otherId]
-      if (!otherFunc) return
-
-      // Check if this function provides something the current function needs
-      const dependencies = Object.keys(func.dependencies)
-      let isDependency = false
-
-      // Special dependency checks
-      if (
-        otherId === "transcribe" &&
-        (dependencies.includes("rawTranscript") || dependencies.includes("fullTranscript"))
-      ) {
-        isDependency = true
-      } else if (otherId === "generateQuotes" && dependencies.includes("quotesResult")) {
-        isDependency = true
-      } else if (otherId === "translateTranscript" && dependencies.includes("translateResult")) {
-        isDependency = true
-      } else if (otherId === "generatePodcastIntroOutro" && dependencies.includes("introOutroScriptResult")) {
-        isDependency = true
-      } else if (otherId === "analyzeEnhancedAudio" && dependencies.includes("analysisData")) {
-        isDependency = true
-      } else if (
-        (otherId === "enhanceAudio" || otherId === "isolateVoice") &&
-        dependencies.includes("activeAudioBlob")
-      ) {
-        isDependency = true
-      } else if (otherId === "aiCutAudio" && dependencies.includes("selectedAiCuts")) {
-        isDependency = true
-      }
-
-      if (isDependency) {
-        graph[id].push(otherId)
-      }
-    })
-  })
-
-  // Topological sort
-  const visited = {}
-  const temp = {}
-  const result = []
-
-  function visit(node) {
-    if (temp[node]) {
-      // Circular dependency detected
-      console.warn(`Circular dependency detected with function: ${node}`)
-      return
+/**
+ * Populates the options list with AI processing options
+ */
+function populateOptionsList() {
+  const optionList = document.getElementById("option-list");
+  if (!optionList) return;
+  
+  optionList.innerHTML = "";
+  
+  aiOptions.forEach((option, index) => {
+    const optionItem = document.createElement("div");
+    optionItem.className = "option-item";
+    optionItem.dataset.optionId = option.id;
+    
+    // Check if option should be disabled based on dependencies
+    const isDisabled = !checkDependenciesMet(option);
+    if (isDisabled) {
+      optionItem.classList.add("disabled-option");
     }
-    if (!visited[node]) {
-      temp[node] = true
-
-      // Visit dependencies first
-      graph[node].forEach((dependency) => {
-        visit(dependency)
-      })
-
-      visited[node] = true
-      temp[node] = false
-      result.push(node)
-    }
-  }
-
-  // Visit all nodes
-  functionIds.forEach((id) => {
-    if (!visited[id]) {
-      visit(id)
-    }
-  })
-
-  return result
-}
-
-// Function to check dependencies and toggle button states
-function checkDependenciesAndToggleButtons() {
-  // Check for transcript-dependent buttons
-  toggleButton("cleanTranscriptBtn", !!fullTranscript, "Requires transcript")
-  toggleButton("showNotesBtn", !!rawTranscript, "Requires transcript")
-  toggleButton("aiSuggestionsBtn", !!rawTranscript, "Requires transcript")
-  toggleButton("quotesBtn", !!rawTranscript, "Requires transcript")
-  toggleButton("translateBtn", !!rawTranscript, "Requires transcript")
-
-  // Check for quotes-dependent buttons
-  const hasQuotes = !!document.getElementById("quotesResult")?.innerText.trim()
-  toggleButton("quoteImagesBtn", hasQuotes, "Requires quotes")
-
-  // Check for translation-dependent buttons
-  const hasTranslation = !!document.getElementById("translateResult")?.innerText.trim()
-  toggleButton("generateAudioClipBtn", hasTranslation, "Requires translation")
-
-  // Check for guest name input
-  const hasGuestName = !!document.getElementById("guestNameInput")?.value.trim()
-  toggleButton("osintBtn", hasGuestName, "Requires guest name")
-  toggleButton("introOutroBtn", hasGuestName && !!rawTranscript, "Requires guest name and transcript")
-
-  // Check for intro/outro script
-  const hasIntroOutroScript = !!document.getElementById("introOutroScriptResult")?.innerText.trim()
-  toggleButton("convertToSpeechBtn", hasIntroOutroScript, "Requires intro/outro script")
-
-  // Check for audio analysis
-  const hasActiveAudio = !!activeAudioBlob
-  toggleButton("analyzeAudioBtn", hasActiveAudio, "Requires enhanced or isolated audio")
-
-  // Check for analysis data
-  const hasAnalysisData = !!window.analysisData
-  toggleButton("backgroundMixBtn", hasAnalysisData, "Requires audio analysis")
-
-  // Check for audio cutting
-  const hasCutStartEnd = document.getElementById("cut-start") && document.getElementById("cut-end")
-  const validCutTimes =
-    hasCutStartEnd &&
-    !isNaN(Number.parseFloat(document.getElementById("cut-start").value)) &&
-    !isNaN(Number.parseFloat(document.getElementById("cut-end").value)) &&
-    Number.parseFloat(document.getElementById("cut-start").value) <
-      Number.parseFloat(document.getElementById("cut-end").value)
-
-  toggleButton("cutBtn", hasActiveAudio && validCutTimes, "Requires loaded audio and valid cut times")
-
-  // Check for AI cutting
-  toggleButton("aiCutBtn", hasActiveAudio, "Requires active audio")
-
-  // Check for selected AI cuts
-  const hasSelectedCuts = window.selectedAiCuts && Object.keys(window.selectedAiCuts).length > 0
-  toggleButton("applySelectedCutsBtn", hasSelectedCuts, "Requires AI cuts to be selected")
-}
-
-// Enhance the checkDependenciesForFunction to provide more detailed feedback
-function checkDependenciesForFunction(option) {
-  if (!option || !option.dependencies) return { met: true, messages: [] }
-
-  const dependencies = option.dependencies
-  const unmetDependencies = []
-
-  // Check each dependency
-  for (const [dep, message] of Object.entries(dependencies)) {
-    if (dep === "rawTranscript" && !rawTranscript) {
-      unmetDependencies.push(message)
-    }
-    if (dep === "fullTranscript" && !fullTranscript) {
-      unmetDependencies.push(message)
-    }
-    if (dep === "quotesResult" && !document.getElementById("quotesResult")?.innerText.trim()) {
-      unmetDependencies.push(message)
-    }
-    if (dep === "translateResult" && !document.getElementById("translateResult")?.innerText.trim()) {
-      unmetDependencies.push(message)
-    }
-    if (dep === "guestNameInput" && !document.getElementById("guestNameInput")?.value.trim()) {
-      unmetDependencies.push(message)
-    }
-    if (dep === "introOutroScriptResult" && !document.getElementById("introOutroScriptResult")?.innerText.trim()) {
-      unmetDependencies.push(message)
-    }
-    if (dep === "activeAudioBlob" && !activeAudioBlob) {
-      unmetDependencies.push(message)
-    }
-    if (dep === "analysisData" && !window.analysisData) {
-      unmetDependencies.push(message)
-    }
-    if (dep === "audioBlob" && !rawAudioBlob && !enhancedAudioBlob && !isolatedAudioBlob) {
-      unmetDependencies.push(message)
-    }
-    if (dep === "cutStartEnd") {
-      const start = document.getElementById("cut-start")
-      const end = document.getElementById("cut-end")
-      if (
-        !start ||
-        !end ||
-        isNaN(Number.parseFloat(start.value)) ||
-        isNaN(Number.parseFloat(end.value)) ||
-        Number.parseFloat(start.value) >= Number.parseFloat(end.value)
-      ) {
-        unmetDependencies.push(message)
-      }
-    }
-    if (dep === "selectedAiCuts" && (!window.selectedAiCuts || Object.keys(window.selectedAiCuts).length === 0)) {
-      unmetDependencies.push(message)
-    }
-  }
-
-  return {
-    met: unmetDependencies.length === 0,
-    messages: unmetDependencies,
-  }
-}
-
-// Update the updateCheckboxStates function to use the enhanced dependency checker
-function updateCheckboxStates() {
-  const checkboxes = document.querySelectorAll(".option-checkbox")
-  checkboxes.forEach((checkbox) => {
-    const functionId = checkbox.dataset.function
-    const option = aiOptions.find((opt) => opt.id === functionId)
-
-    if (!option || !option.dependencies) return
-
-    const dependencyCheck = checkDependenciesForFunction(option)
-    const dependenciesMet = dependencyCheck.met
-
-    // Update checkbox state
-    checkbox.disabled = !dependenciesMet
-
-    // Update parent container to show dependency status
-    const optionItem = checkbox.closest(".option-item")
-    if (optionItem) {
-      if (!dependenciesMet) {
-        optionItem.classList.add("disabled-option")
-
-        // Add tooltip if not already present
-        if (!optionItem.querySelector(".dependency-tooltip")) {
-          const tooltip = document.createElement("div")
-          tooltip.className = "dependency-tooltip"
-          tooltip.textContent = dependencyCheck.messages.join(", ")
-          optionItem.appendChild(tooltip)
-        }
-      } else {
-        optionItem.classList.remove("disabled-option")
-
-        // Remove tooltip if present
-        const tooltip = optionItem.querySelector(".dependency-tooltip")
-        if (tooltip) {
-          tooltip.remove()
-        }
-      }
-    }
-  })
-
-  // Update execution order indicators
-  updateExecutionOrder()
-}
-
-// Get dependency message for a function
-function getDependencyMessage(option) {
-  if (!option || !option.dependencies) return ""
-
-  const messages = []
-  for (const [dep, message] of Object.entries(option.dependencies)) {
-    if (dep === "rawTranscript" && !rawTranscript) {
-      messages.push(message)
-    }
-    if (dep === "fullTranscript" && !fullTranscript) {
-      messages.push(message)
-    }
-    if (dep === "quotesResult" && !document.getElementById("quotesResult")?.innerText.trim()) {
-      messages.push(message)
-    }
-    if (dep === "translateResult" && !document.getElementById("translateResult")?.innerText.trim()) {
-      messages.push(message)
-    }
-    if (dep === "guestNameInput" && !document.getElementById("guestNameInput")?.value.trim()) {
-      messages.push(message)
-    }
-    if (dep === "introOutroScriptResult" && !document.getElementById("introOutroScriptResult")?.innerText.trim()) {
-      messages.push(message)
-    }
-    if (dep === "activeAudioBlob" && !activeAudioBlob) {
-      messages.push(message)
-    }
-    if (dep === "analysisData" && !window.analysisData) {
-      messages.push(message)
-    }
-    if (dep === "audioBlob" && !rawAudioBlob && !enhancedAudioBlob && !isolatedAudioBlob) {
-      messages.push(message)
-    }
-    if (dep === "cutStartEnd") {
-      const start = document.getElementById("cut-start")
-      const end = document.getElementById("cut-end")
-      if (
-        !start ||
-        !end ||
-        isNaN(Number.parseFloat(start.value)) ||
-        isNaN(Number.parseFloat(end.value)) ||
-        Number.parseFloat(start.value) >= Number.parseFloat(end.value)
-      ) {
-        messages.push(message)
-      }
-    }
-    if (dep === "selectedAiCuts" && (!window.selectedAiCuts || Object.keys(window.selectedAiCuts).length === 0)) {
-      messages.push(message)
-    }
-  }
-
-  return messages.join(", ")
-}
-
-// Helper function to toggle button state
-function toggleButton(buttonId, enabled, disabledMessage) {
-  const button = document.getElementById(buttonId)
-  if (button) {
-    button.disabled = !enabled
-    if (enabled) {
-      button.title = ""
-      button.classList.remove("disabled-button")
-    } else {
-      button.title = disabledMessage || "This feature is currently locked"
-      button.classList.add("disabled-button")
-    }
-  }
-}
-
-// Modify the renderAIOptions function to add event listeners for execution order updates
-function renderAIOptions(optionList) {
-  aiOptions.forEach((option) => {
-    const item = document.createElement("div")
-    item.className = "option-item"
-
-    // Check if this option has dependencies
-    const hasDependencies = option.dependencies && Object.keys(option.dependencies).length > 0
-
-    item.innerHTML = `
+    
+    optionItem.innerHTML = `
       <div class="option-icon">${option.icon}</div>
       <div class="option-content">
         <div class="option-title">${option.title}</div>
-        <div class="option-description">${option.description} <span style="color: gray; font-size: 0.9em;">(${option.cost} credits)</span></div>
+        <div class="option-description">${option.description}</div>
       </div>
-      <input type="checkbox" class="option-checkbox" id="${option.id}" data-function="${option.id}">
-    `
-    optionList.appendChild(item)
-
-    // Klick på hela boxen togglar checkboxen
-    item.addEventListener("click", (e) => {
-      if (e.target.type !== "checkbox") {
-        const checkbox = item.querySelector(".option-checkbox")
-        if (!checkbox.disabled) {
-          checkbox.checked = !checkbox.checked
-          // Update execution order after checkbox state changes
-          updateExecutionOrder()
-        } else {
-          // Show tooltip when clicking on disabled option
-          showTooltip(item, getDependencyMessage(option))
-        }
+      <input type="checkbox" class="option-checkbox" data-function="${option.id}" ${isDisabled ? 'disabled' : ''}>
+    `;
+    
+    // Add tooltip for disabled options
+    if (isDisabled) {
+      const dependencyMessages = [];
+      for (const [depId, message] of Object.entries(option.dependencies)) {
+        dependencyMessages.push(message);
       }
-    })
-
-    // Add event listener to update execution order when checkbox state changes
-    const checkbox = item.querySelector(".option-checkbox")
-    checkbox.addEventListener("change", updateExecutionOrder)
-
-    // Add tooltip on hover for options with dependencies
-    if (hasDependencies) {
-      checkbox.addEventListener("mouseenter", function () {
-        if (this.disabled) {
-          showTooltip(item, getDependencyMessage(option))
-        }
-      })
-
-      checkbox.addEventListener("mouseleave", () => {
-        hideTooltip(item)
-      })
+      
+      if (dependencyMessages.length > 0) {
+        optionItem.addEventListener("mouseenter", function(e) {
+          const tooltip = document.createElement("div");
+          tooltip.className = "dependency-tooltip";
+          tooltip.textContent = dependencyMessages.join(", ");
+          this.appendChild(tooltip);
+        });
+        
+        optionItem.addEventListener("mouseleave", function() {
+          const tooltip = this.querySelector(".dependency-tooltip");
+          if (tooltip) {
+            tooltip.remove();
+          }
+        });
+      }
     }
-  })
-
-  // Initial update of checkbox states
-  updateCheckboxStates()
+    
+    optionList.appendChild(optionItem);
+  });
 }
 
-// Show tooltip for disabled options
-function showTooltip(element, message) {
-  // Remove any existing tooltips
-  hideTooltip(element)
-
-  // Create tooltip
-  const tooltip = document.createElement("div")
-  tooltip.className = "dependency-tooltip"
-  tooltip.textContent = message
-  element.appendChild(tooltip)
-
-  // Position tooltip
-  const rect = element.getBoundingClientRect()
-  tooltip.style.top = `${rect.height}px`
-  tooltip.style.left = "50%"
-  tooltip.style.transform = "translateX(-50%)"
-}
-
-// Hide tooltip
-function hideTooltip(element) {
-  const tooltip = element.querySelector(".dependency-tooltip")
-  if (tooltip) {
-    tooltip.remove()
-  }
-}
-
-// Run the selected AI functions
-async function runSelectedFunctions(functionNames) {
-  showStatus(`Running: ${functionNames.join(", ")}`, "info")
-
-  // Create a container for results if it doesn't exist
-  let resultsContainer = document.getElementById("ai-results-container")
-  if (!resultsContainer) {
-    resultsContainer = document.createElement("div")
-    resultsContainer.id = "ai-results-container"
-    resultsContainer.className = "results-container"
-    const container = document.querySelector(".container")
-    if (container) {
-      container.appendChild(resultsContainer)
-    } else {
-      console.error("Container element not found")
-      return
-    }
-  }
-
-  // Create result sections for each selected function if they don't exist
-  functionNames.forEach((funcName) => {
-    const resultSectionId = `${funcName}-result`
-    if (!document.getElementById(resultSectionId)) {
-      const resultSection = document.createElement("div")
-      resultSection.id = resultSectionId
-      resultSection.className = "output-section"
-      resultSection.style.display = "none"
-
-      const heading = document.createElement("h3")
-      const option = aiOptions.find((opt) => opt.id === funcName)
-      heading.textContent = option ? option.title : funcName
-
-      const content = document.createElement("div")
-      content.className = "result-content"
-
-      resultSection.appendChild(heading)
-      resultSection.appendChild(content)
-      resultsContainer.appendChild(resultSection)
-    }
-  })
-
-  // Hide all output sections first
-  document.querySelectorAll(".output-section").forEach((section) => {
-    section.style.display = "none"
-    section.classList.remove("visible")
-  })
-
-  // Disable run button during processing
-  const runButton = document.getElementById("run-button")
+/**
+ * Sets up event listeners for the page
+ */
+function setupEventListeners() {
+  // Run button click handler
+  const runButton = document.getElementById("run-button");
   if (runButton) {
-    runButton.disabled = true
-    runButton.textContent = "Processing..."
+    runButton.addEventListener("click", handleRunButtonClick);
   }
-
-  try {
-    // Process functions sequentially
-    for (const funcName of functionNames) {
-      // Find the function in aiOptions
-      const option = aiOptions.find((opt) => opt.id === funcName)
-      if (!option || !option.handler) {
-        showStatus(`Function ${funcName} not found or has no handler`, "error")
-        continue
-      }
-
-      // Check if dependencies are met
-      if (option.dependencies && !checkDependenciesForFunction(option).met) {
-        showStatus(`Skipping ${option.title}: Dependencies not met`, "warning")
-        continue
-      }
-
-      // Execute the function
-      showStatus(`Running: ${option.title}...`, "info")
-
-      try {
-        // Execute the handler function
-        await option.handler()
-
-        // Show the result section with animation
-        const resultSection = document.getElementById(`${funcName}-result`)
-        if (resultSection) {
-          resultSection.style.display = "block"
-          setTimeout(() => resultSection.classList.add("visible"), 10)
-        }
-
-        showStatus(`Completed: ${option.title}`, "info")
-
-        // Check dependencies after each function completes
-        checkDependenciesAndToggleButtons()
-        updateCheckboxStates()
-      } catch (error) {
-        // If there's an error, still show the section but with error message
-        const resultSection = document.getElementById(`${funcName}-result`)
-        if (resultSection) {
-          resultSection.style.display = "block"
-          setTimeout(() => resultSection.classList.add("visible"), 10)
-
-          const resultContent = resultSection.querySelector(".result-content") || resultSection
-          if (resultContent) {
-            resultContent.innerHTML = `<p class="error-message">Error: ${error.message}</p>`
-          }
-        }
-
-        showStatus(`Error in ${option.title}: ${error.message}`, "error")
-      }
-    }
-  } finally {
-    // Re-enable run button
-    if (runButton) {
-      runButton.disabled = false
-      runButton.textContent = "Run Selected Edits"
-    }
-    showStatus("All selected functions completed", "info")
+  
+  // Audio file input change handler
+  const audioFileInput = document.getElementById("audio-file");
+  if (audioFileInput) {
+    audioFileInput.addEventListener("change", handleFileInputChange);
   }
+  
+  // Option checkbox change handler
+  document.addEventListener("change", function(e) {
+    if (e.target.classList.contains("option-checkbox")) {
+      handleOptionCheckboxChange(e.target);
+    }
+  });
 }
 
-// Execute a function and capture its output
-async function executeFunction(func, resultContainerId) {
-  const resultContainer = document.getElementById(resultContainerId)
-
-  // Create a proxy for the original function to capture its output
-  const originalConsoleLog = console.log
-  const logs = []
-
-  console.log = (...args) => {
-    logs.push(args.join(" "))
-    originalConsoleLog(...args)
-  }
-
-  try {
-    // Execute the function
-    await func()
-
-    // Update the result container with any console output
-    if (logs.length > 0 && resultContainer) {
-      resultContainer.innerHTML += `
-        <pre class="console-output">${logs.join("\n")}</pre>
-      `
-    }
-
-    // Show the result section with animation
-    if (resultContainer) {
-      resultContainer.style.display = "block"
-      setTimeout(() => resultContainer.classList.add("visible"), 10)
-    }
-
-    // Check dependencies after function execution
-    checkDependenciesAndToggleButtons()
-    updateCheckboxStates()
-  } finally {
-    // Restore original console.log
-    console.log = originalConsoleLog
-  }
-}
-
-// Enhance the showStatus function to support warning type
-function showStatus(msg, type = "info") {
-  const el = document.getElementById("status-message")
-  if (el) {
-    el.textContent = msg
-    el.style.display = "block"
-
-    // Remove any existing status classes
-    el.classList.remove("status-warning")
-
-    // Set background and text color based on type
-    if (type === "error") {
-      el.style.backgroundColor = "#fff5f5"
-      el.style.color = "#c53030"
-    } else if (type === "warning") {
-      el.style.backgroundColor = "#fffbeb"
-      el.style.color = "#b45309"
-      el.classList.add("status-warning")
-    } else {
-      el.style.backgroundColor = "#f0f7ff"
-      el.style.color = "#2c5282"
-    }
-
-    setTimeout(() => {
-      el.style.display = "none"
-    }, 5000)
-  }
-}
-
-// Show the selected tab
-function showTab(tabName) {
-  // Get all workspace tab buttons
-  const workspaceButtons = document.querySelectorAll(".workspace-tab-btn")
-
-  // Remove active class from all buttons
-  workspaceButtons.forEach((btn) => btn.classList.remove("active"))
-
-  // Add active class to clicked button
-  const clickedButton = document.querySelector(`.workspace-tab-btn[data-workspace="${tabName}"]`)
-  if (clickedButton) {
-    clickedButton.classList.add("active")
-  }
-
-  const content = document.getElementById("content")
-  if (!content) return
-
-  content.innerHTML = ""
-
-  if (tabName === "transcription") {
-    content.innerHTML = `
-      <div class="content-wrapper">
-        <h1>AI-Powered Transcription</h1>
-
-        <input type="file" id="fileUploader" accept="audio/*,video/*">
-        <div class="button-with-help">
-            <button class="btn ai-edit-button" onclick="transcribe()">
-              Transcribe <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.transcription} credits)</span>
-            </button>
-            <span class="help-icon" data-tooltip="Converts the uploaded audio or video file into text using AI">?</span>
-        </div>
-        <div class="result-field">
-            <pre id="transcriptionResult"></pre>
-        </div>
-      </div>
-
-      <div class="content-wrapper" id="enhancementTools" style="display: none;">
-        <h2>Enhancement Tools</h2>
-
-        <div class="result-group">
-          <div class="button-with-help">
-            <button id="cleanTranscriptBtn" class="btn ai-edit-button" onclick="generateCleanTranscript()" disabled title="Requires transcript">
-              Clean Transcript <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.clean_transcript} credits)</span>
-            </button>
-            <span class="help-icon" data-tooltip="Removes filler words, repeated phrases, and fixes typos in the raw transcription">?</span>
-          </div>
-          <div class="result-field">
-            <pre id="cleanTranscriptResult"></pre>
-          </div>
-        </div>
-
-        <div class="result-group">
-          <label for="languageSelect">Language:</label>
-          <select id="languageSelect" class="input-field">
-            <option value="English">English</option>
-            <option value="Spanish">Spanish</option>
-            <option value="French">French</option>
-            <option value="German">German</option>
-            <option value="Swedish">Swedish</option>
-          </select>
-
-          <div class="button-with-help">
-            <button id="translateBtn" class="btn ai-edit-button" onclick="translateTranscript()" disabled title="Requires transcript">
-              Translate <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.translation} credits)</span>
-            </button>
-            <span class="help-icon" data-tooltip="Translates the transcript into the selected language">?</span>
-          </div>
-
-          <div class="result-field">
-            <pre id="translateResult"></pre>
-          </div>
-        </div>
-
-        <div class="result-group">
-          <div class="button-with-help">
-            <button id="generateAudioClipBtn" class="btn ai-edit-button" onclick="generateAudioClip()" disabled title="Requires translation">
-              Generate Translated Podcast <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.audio_clip} credits)</span>
-            </button>
-            <span class="help-icon" data-tooltip="Produces an audio file of the translated text, ready to play as a podcast">?</span>
-          </div>
-          <div class="result-field" id="audioClipResult"></div>
-        </div>
-
-        <div class="result-group">
-          <div class="button-with-help">
-            <button id="aiSuggestionsBtn" class="btn ai-edit-button" onclick="generateAISuggestions()" disabled title="Requires transcript">
-              AI Suggestions <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_suggestions} credits)</span>
-            </button>
-            <span class="help-icon" data-tooltip="Provides AI-generated tips on how to improve your transcript">?</span>
-          </div>
-          <div class="result-field">
-            <pre id="aiSuggestionsResult"></pre>
-          </div>
-        </div>
-
-        <div class="result-group">
-          <div class="button-with-help">
-            <button id="showNotesBtn" class="btn ai-edit-button" onclick="generateShowNotes()" disabled title="Requires transcript">
-              Show Notes <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.show_notes} credits)</span>
-            </button>
-            <span class="help-icon" data-tooltip="Creates a concise bullet-point summary of the main topics covered">?</span>
-          </div>
-          <div class="result-field">
-            <pre id="showNotesResult"></pre>
-          </div>
-        </div>
-
-        <div class="result-group">
-          <div class="button-with-help">
-            <button id="quotesBtn" class="btn ai-edit-button" onclick="generateQuotes()" disabled title="Requires transcript">
-              Generate Quotes <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_quotes} credits)</span>
-            </button>
-            <span class="help-icon" data-tooltip="Extracts memorable quotes from the transcript">?</span>
-          </div>
-          <div class="result-field">
-            <pre id="quotesResult"></pre>
-          </div>
-        </div>
-
-        <div class="result-group">
-          <label for="quoteImageMethodSelect"><strong>Quote Image Style:</strong></label>
-          <select id="quoteImageMethodSelect" class="input-field" style="margin-bottom: 0.5rem;">
-            <option value="local">Local Template</option>
-            <option value="dalle">DALL·E AI Image</option>
-          </select>
-          <button id="quoteImagesBtn" class="btn ai-edit-button" onclick="generateQuoteImages()" disabled title="Requires quotes">
-            Generate Quote Images <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_quote_images} credits)</span>
-          </button>
-          <div class="result-field">
-            <div id="quoteImagesResult"></div>
-          </div>
-        </div>
-
-        <div class="result-group">
-          <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field" onchange="checkDependenciesAndToggleButtons()">
-          <div class="button-with-help">
-            <button id="osintBtn" class="btn ai-edit-button" onclick="runOsintSearch()" disabled title="Requires guest name">
-              OSINT Search <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_osint} credits)</span>
-            </button>
-            <span class="help-icon" data-tooltip="Performs an open-source intelligence search on the entered guest name">?</span>
-          </div>
-          <div class="result-field">
-            <pre id="osintResult"></pre>
-          </div>
-        </div>
-
-        <div class="button-with-help">
-          <button id="introOutroBtn" class="btn ai-edit-button" onclick="generatePodcastIntroOutro()" disabled title="Requires guest name">
-            Generate Intro/Outro <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_intro_outro} credits)</span>
-          </button>
-          <span class="help-icon" data-tooltip="Writes a suggested introduction and closing script for your episode">?</span>
-        </div>
-        <div class="result-field">
-          <pre id="introOutroScriptResult"></pre>
-        </div>
-        <div class="button-with-help" style="margin-top: 1rem;">
-          <button id="convertToSpeechBtn" class="btn ai-edit-button" onclick="convertIntroOutroToSpeech()" disabled title="Requires intro/outro script">
-            Convert to Speech <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_intro_outro_audio} credits)</span>
-          </button>
-          <span class="help-icon" data-tooltip="Turns that script into a spoken audio file using AI voice">?</span>
-        </div>
-        <div class="result-field" id="introOutroAudioResult"></div>
-      </div>
-    `
-  } else if (tabName === "audio") {
-    content.innerHTML = `
-      <div class="content-wrapper">
-        <h1>AI Audio Enhancement</h1>
-        <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
-        <div id="originalAudioContainer" style="display: none; margin-bottom: 1rem;">
-          <p><strong>Original Audio</strong></p>
-        </div>
-
-        <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 12px;">
-          <h3>Choose Audio Processing Method</h3>
-          <p style="margin-bottom: 1rem;">Select one of the following enhancements:</p>
-
-          <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
-            <h4><strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
-            <div class="button-with-help">
-              <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
-                Isolate Voice <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.voice_isolation} credits)</span>
-              </button>
-              <span class="help-icon" data-tooltip="Separates the speaker's voice from background noise">?</span>
-            </div>
-            <div class="result-field">
-              <div id="isolatedVoiceResult"></div>
-            </div>
-            <a id="downloadIsolatedVoice"
-              class="btn ai-edit-button"
-              style="display: none;"
-              download="isolated_voice.wav">
-              Download Isolated Voice
-            </a>
-          </div>
-
-          <div id="audioEnhancementSection">
-            <h4><strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
-            <div class="button-with-help">
-              <button class="btn ai-edit-button" onclick="enhanceAudio()">
-                Enhance Audio <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.audio_enhancement} credits)</span>
-              </button>
-              <span class="help-icon" data-tooltip="Reduces noise and normalizes volume levels automatically">?</span>
-            </div>
-            <div class="result-field">
-              <div id="audioControls"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="content-wrapper" id="audioAnalysisSection" style="display: none;">
-        <h2>AI Analysis</h2>
-
-        <label for="audioSourceSelectAnalysis"><strong>Audio Source:</strong></label>
-        <select id="audioSourceSelectAnalysis" class="input-field" style="margin-bottom: 1rem;">
-          <option value="enhanced">Enhanced</option>
-          <option value="isolated">Isolated</option>
-          <option value="original">Original</option>
-        </select>
-
-        <div class="button-with-help">
-          <button id="analyzeAudioBtn" class="btn ai-edit-button" onclick="analyzeEnhancedAudio()" disabled title="Requires enhanced or isolated audio">
-            Analyze <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_audio_analysis} credits)</span>
-          </button>
-          <span class="help-icon" data-tooltip="Lets the AI analyze the selected audio source and provide content insights">?</span>
-        </div>
-        <div class="result-field">
-          <pre id="analysisResults"></pre>
-        </div>
-
-        <button id="backgroundMixBtn"
-          class="btn ai-edit-button"
-          style="display: none; margin-top: 1rem;"
-          onclick="displayBackgroundAndMix()" 
-          disabled 
-          title="Requires audio analysis">
-          Mix Background & Preview
-        </button>
-        <div class="result-field">
-          <div id="backgroundPreview"></div>
-        </div>
-        <div class="result-field">
-          <div id="soundEffectTimeline"></div>
-        </div>
-
-        <div class="button-with-help" style="margin-top: 1rem;">
-          <a id="downloadEnhanced"
-            class="btn ai-edit-button"
-            download="processed_audio.wav"
-            style="display: none;">
-            Download Processed Audio
-          </a>
-        </div>
-      </div>
-
-      <div class="content-wrapper" id="audioCuttingSection" style="display: none;">
-        <h2>Audio Cutting</h2>
-
-        <label for="audioSourceSelectCutting"><strong>Audio Source:</strong></label>
-        <select id="audioSourceSelectCutting" class="input-field" style="margin-bottom: 1rem;">
-          <option value="enhanced">Enhanced</option>
-          <option value="isolated">Isolated</option>
-          <option value="original">Original</option>
-        </select>
-        <button class="btn ai-edit-button" id="loadCuttingWaveformBtn" style="margin-bottom: 1rem;">
-          Load Audio Waveform
-        </button>
-        
-        <div id="waveformCut" style="margin: 1rem 0; height: 128px;"></div>
-        
-        <button id="cut-play-pause" class="btn ai-edit-button" style="display:none; margin-bottom:1rem;">
-          Play
-        </button>
-        <label>
-          Start (s):
-          <input id="cut-start" type="number" step="0.01" class="input-field" style="width:5em;" onchange="checkDependenciesAndToggleButtons()">
-        </label>
-        <label style="margin-left:1em;">
-          End (s):
-          <input id="cut-end" type="number" step="0.01" class="input-field" style="width:5em;" onchange="checkDependenciesAndToggleButtons()">
-        </label>
-
-        <div class="button-with-help">
-          <button id="cutBtn" class="btn ai-edit-button" onclick="cutAudio()" disabled title="Requires loaded audio file and valid cut times">
-            Cut <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.audio_cutting} credits)</span>
-          </button>
-          <span class="help-icon" data-tooltip="Trim the audio between the specified start and end">?</span>
-        </div>
-        <div class="result-field">
-          <div id="cutResult"></div>
-        </div>
-
-        <div class="button-with-help" style="margin-top: 1rem;">
-          <a id="downloadCut"
-            class="btn ai-edit-button"
-            download="cut_audio.wav"
-            style="display: none;">
-            Download Cut
-          </a>
-        </div>
-      </div>
-
-      <div class="content-wrapper" id="aiCuttingSection" style="display: none;">
-        <h2>AI Cutting + Transcript</h2>
-
-        <label for="audioSourceSelectAICut"><strong>Audio Source:</strong></label>
-        <select id="audioSourceSelectAICut" class="input-field" style="margin-bottom: 1rem;">
-          <option value="enhanced">Enhanced</option>
-          <option value="isolated">Isolated</option>
-          <option value="original">Original</option>
-        </select>
-        
-        <div class="button-with-help">
-          <button id="aiCutBtn" class="btn ai-edit-button" onclick="aiCutAudio()" disabled title="Requires active audio">
-            Run AI Cut <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.ai_audio_cutting} credits)</span>
-          </button>
-          <span class="help-icon" data-tooltip="Automatically removes silent or filler sections and provides a transcript">?</span>
-        </div>
-        <div class="result-field">
-          <h4>Transcript</h4>
-          <pre id="aiTranscript"></pre>
-        </div>
-        <div class="result-field">
-          <h4>Suggested Cuts</h4>
-          <pre id="aiSuggestedCuts"></pre>
-        </div>
-      </div>
-    `
-
-    // Setup waveform loading button
-    setTimeout(() => {
-      const loadCutBtn = document.getElementById("loadCuttingWaveformBtn")
-      if (loadCutBtn) {
-        loadCutBtn.onclick = () => {
-          const source = document.getElementById("audioSourceSelectCutting").value
-          let blob = null
-
-          if (source === "original") blob = rawAudioBlob
-          else if (source === "enhanced") blob = enhancedAudioBlob
-          else if (source === "isolated") blob = isolatedAudioBlob
-
-          if (blob) {
-            initWaveformCutting(blob)
-          } else {
-            document.getElementById("waveformCut").innerHTML = "<p>No audio available for the selected source.</p>"
-          }
-        }
-      }
-    }, 0)
-  } else if (tabName === "video") {
-    content.innerHTML = `
-      <div class="content-wrapper">
-        <h1>AI Video Enhancement</h1>
-        <input type="file" id="videoUploader" accept="video/*" onchange="previewOriginalVideo()">
-        <div id="originalVideoContainer" style="display: none; margin-bottom: 1rem;">
-          <p><strong>Original Video</strong></p>
-          <video id="originalVideoPlayer" controls style="width: 100%"></video>
-        </div>
-        <div class="button-group" style="margin-bottom: 1rem;">
-          <div class="button-with-help">
-            <button class="btn ai-edit-button" id="enhanceVideoBtn" onclick="enhanceVideo()">
-              Enhance Video <span style="color: rgba(255,255,255,0.7); font-size: 0.9em;">(${CREDIT_COSTS.video_enhancement} credits)</span>
-            </button>
-            <span class="help-icon" data-tooltip="Applies AI enhancements to improve the video's audio quality">?</span>
-          </div>
-          <button class="btn ai-edit-button" id="resetVideoBtn" onclick="resetVideo()" style="display: none;">
-            Reset
-          </button>
-        </div>
-        <div id="videoResult"></div>
-        <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none;">
-          Download Enhanced Video
-        </a>
-      </div>
-    `
-  }
-
-  // Run dependency check after tab content is loaded
-  checkDependenciesAndToggleButtons()
-}
-
-// Function to initialize waveform for audio cutting
-let waveformCut = null
-let selectedRegion = null
-
-function initWaveformCutting(blob) {
-  // Clean up any existing instance
-  if (waveformCut) {
-    waveformCut.destroy()
-    document.getElementById("waveformCut").innerHTML = ""
-  }
-
-  // Check if WaveSurfer and RegionsPlugin are available
-  if (!window.WaveSurfer || !window.WaveSurferRegions) {
-    document.getElementById("waveformCut").innerHTML =
-      "<p>WaveSurfer or Regions plugin not loaded. Please check your dependencies.</p>"
-    return
-  }
-
-  // Create a new WaveSurfer instance with the Regions plugin
-  waveformCut = WaveSurfer.create({
-    container: "#waveformCut",
-    waveColor: "#ccc",
-    progressColor: "#f69229",
-    height: 128,
-    barWidth: 2,
-    responsive: true,
-    backend: "WebAudio",
-    plugins: [
-      WaveSurferRegions.create({
-        dragSelection: true,
-      }),
-    ],
-  })
-
-  // Load the audio from the blob
-  waveformCut.load(URL.createObjectURL(blob))
-
-  waveformCut.on("ready", () => {
-    // Add a default region
-    const duration = waveformCut.getDuration()
-    selectedRegion = waveformCut.addRegion({
-      start: 0,
-      end: Math.min(5, duration),
-      color: "rgba(255, 87, 34, 0.3)",
-      drag: true,
-      resize: true,
-    })
-
-    // Show & wire the Play/Pause button
-    const btn = document.getElementById("cut-play-pause")
-    btn.style.display = "inline-block"
-    btn.onclick = () => {
-      waveformCut.isPlaying() ? waveformCut.pause() : waveformCut.play()
-    }
-    waveformCut.on("play", () => {
-      btn.textContent = "Pause"
-    })
-    waveformCut.on("pause", () => {
-      btn.textContent = "Play"
-    })
-
-    // Sync numeric inputs with region
-    const startInput = document.getElementById("cut-start")
-    const endInput = document.getElementById("cut-end")
-    startInput.value = selectedRegion.start.toFixed(2)
-    endInput.value = selectedRegion.end.toFixed(2)
-
-    startInput.oninput = () => {
-      const v = Number.parseFloat(startInput.value)
-      if (!isNaN(v) && v < selectedRegion.end) {
-        selectedRegion.update({ start: v })
-      }
-      checkDependenciesAndToggleButtons()
-    }
-    endInput.oninput = () => {
-      const v = Number.parseFloat(endInput.value)
-      if (!isNaN(v) && v > selectedRegion.start) {
-        selectedRegion.update({ end: v })
-      }
-      checkDependenciesAndToggleButtons()
-    }
-
-    // Check dependencies after waveform is ready
-    checkDependenciesAndToggleButtons()
-  })
-
-  // Keep inputs in sync whenever the user drags/resizes the region
-  waveformCut.on("region-updated", (region) => {
-    selectedRegion = region
-    document.getElementById("cut-start").value = region.start.toFixed(2)
-    document.getElementById("cut-end").value = region.end.toFixed(2)
-    checkDependenciesAndToggleButtons()
-  })
-}
-
-// Transcription function
-async function transcribe() {
-  // Try to get the file input from either the tab content or the main page
-  let fileInput = document.getElementById("fileUploader")
-  if (!fileInput) {
-    fileInput = document.getElementById("audio-file")
-    if (!fileInput) {
-      alert("File uploader element not found. Please upload a file using the file input above.")
-      return
-    }
-  }
-
-  const file = fileInput.files && fileInput.files[0]
+/**
+ * Handles file input change
+ * @param {Event} e - The change event
+ */
+function handleFileInputChange(e) {
+  const file = e.target.files[0];
   if (!file) {
-    alert("Please upload a file before transcribing.")
-    return
+    activeAudioBlob = null;
+    updateFileInfo("");
+    return;
   }
+  
+  // Check if file is audio
+  if (!file.type.startsWith("audio/") && !file.type.startsWith("video/")) {
+    showStatusMessage("Please select an audio or video file", "error");
+    e.target.value = "";
+    activeAudioBlob = null;
+    updateFileInfo("");
+    return;
+  }
+  
+  // Store the file as blob
+  activeAudioBlob = file;
+  
+  // Update file info display
+  updateFileInfo(`Selected: ${file.name} (${formatFileSize(file.size)})`);
+  
+  // Clear status message
+  hideStatusMessage();
+}
 
-  // Get or create the transcription result element
-  let transcriptionResult = document.getElementById("transcriptionResult")
-  if (!transcriptionResult) {
-    // Try to find the parent container
-    let transcribeResult = document.getElementById("transcribe-result")
-    if (!transcribeResult) {
-      // Create the container if it doesn't exist
-      transcribeResult = document.createElement("div")
-      transcribeResult.id = "transcribe-result"
-      transcribeResult.className = "output-section"
-      transcribeResult.style.display = "block"
+/**
+ * Updates the file info display
+ * @param {string} message - The message to display
+ */
+function updateFileInfo(message) {
+  const fileInfo = document.getElementById("file-info");
+  if (fileInfo) {
+    fileInfo.textContent = message;
+  }
+}
 
-      const heading = document.createElement("h2")
-      heading.textContent = "Transcript"
+/**
+ * Formats file size in human-readable format
+ * @param {number} bytes - The file size in bytes
+ * @returns {string} - Formatted file size
+ */
+function formatFileSize(bytes) {
+  if (bytes === 0) return "0 Bytes";
+  
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
 
-      transcriptionResult = document.createElement("pre")
-      transcriptionResult.id = "transcriptionResult"
+/**
+ * Handles option checkbox change
+ * @param {HTMLInputElement} checkbox - The changed checkbox
+ */
+function handleOptionCheckboxChange(checkbox) {
+  const functionId = checkbox.dataset.function;
+  const isChecked = checkbox.checked;
+  
+  // If auto-select dependencies is enabled and checkbox is checked
+  if (window.autoSelectDependencies && isChecked) {
+    selectDependencies(functionId);
+  }
+  
+  // Update execution order preview
+  updateExecutionPreview();
+  
+  // Update UI state
+  updateUIState();
+}
 
-      transcribeResult.appendChild(heading)
-      transcribeResult.appendChild(transcriptionResult)
+/**
+ * Selects all dependencies for a function
+ * @param {string} functionId - The function ID
+ */
+function selectDependencies(functionId) {
+  const option = aiOptions.find(opt => opt.id === functionId);
+  if (!option || !option.dependencies) return;
+  
+  // For each dependency
+  Object.keys(option.dependencies).forEach(depId => {
+    const depCheckbox = document.querySelector(`.option-checkbox[data-function="${depId}"]`);
+    if (depCheckbox && !depCheckbox.checked) {
+      // Check the dependency
+      depCheckbox.checked = true;
+      
+      // Recursively select dependencies of this dependency
+      selectDependencies(depId);
+    }
+  });
+}
 
-      // Add to the container
-      const container = document.querySelector(".container")
-      if (container) {
-        container.appendChild(transcribeResult)
+/**
+ * Updates the execution order preview
+ */
+function updateExecutionPreview() {
+  const previewContainer = document.getElementById("execution-preview");
+  if (!previewContainer) return;
+  
+  const checkedBoxes = Array.from(document.querySelectorAll(".option-checkbox:checked"));
+  
+  if (checkedBoxes.length === 0) {
+    previewContainer.innerHTML = "<em>Select functions to see execution order</em>";
+    return;
+  }
+  
+  const functionIds = checkedBoxes.map(cb => cb.dataset.function);
+  const sortedFunctions = sortFunctionsByDependencies(functionIds);
+  
+  let html = '<ol style="margin: 0; padding-left: 20px;">';
+  sortedFunctions.forEach(funcId => {
+    const option = aiOptions.find(opt => opt.id === funcId);
+    if (option) {
+      html += `<li><strong>${option.title}</strong></li>`;
+    }
+  });
+  html += "</ol>";
+  
+  previewContainer.innerHTML = html;
+}
+
+/**
+ * Sorts functions by their dependencies
+ * @param {string[]} functionIds - Array of function IDs
+ * @returns {string[]} - Sorted array of function IDs
+ */
+function sortFunctionsByDependencies(functionIds) {
+  // Create a dependency graph
+  const graph = {};
+  const options = aiOptions.filter(opt => functionIds.includes(opt.id));
+  
+  // Initialize graph
+  options.forEach(opt => {
+    graph[opt.id] = [];
+  });
+  
+  // Add dependencies
+  options.forEach(opt => {
+    if (opt.dependencies) {
+      Object.keys(opt.dependencies).forEach(depId => {
+        if (functionIds.includes(depId)) {
+          graph[depId].push(opt.id);
+        }
+      });
+    }
+  });
+  
+  // Topological sort
+  const visited = {};
+  const temp = {};
+  const result = [];
+  
+  function visit(node) {
+    if (temp[node]) {
+      // Circular dependency detected
+      return;
+    }
+    if (!visited[node]) {
+      temp[node] = true;
+      
+      // Visit dependencies
+      graph[node].forEach(dep => {
+        visit(dep);
+      });
+      
+      temp[node] = false;
+      visited[node] = true;
+      result.unshift(node);
+    }
+  }
+  
+  // Visit all nodes
+  Object.keys(graph).forEach(node => {
+    if (!visited[node]) {
+      visit(node);
+    }
+  });
+  
+  return result;
+}
+
+/**
+ * Checks if all dependencies for an option are met
+ * @param {Object} option - The option to check
+ * @returns {boolean} - True if all dependencies are met
+ */
+function checkDependenciesMet(option) {
+  if (!option.dependencies || Object.keys(option.dependencies).length === 0) {
+    return true;
+  }
+  
+  // Check each dependency
+  for (const depId of Object.keys(option.dependencies)) {
+    const depOption = aiOptions.find(opt => opt.id === depId);
+    if (!depOption) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+/**
+ * Updates the UI state based on current selections
+ */
+function updateUIState() {
+  // Update option availability based on dependencies
+  aiOptions.forEach(option => {
+    const optionItem = document.querySelector(`.option-item[data-option-id="${option.id}"]`);
+    const checkbox = optionItem?.querySelector(".option-checkbox");
+    
+    if (optionItem && checkbox) {
+      const shouldBeDisabled = !checkDependenciesMet(option);
+      
+      if (shouldBeDisabled) {
+        optionItem.classList.add("disabled-option");
+        checkbox.disabled = true;
       } else {
-        alert("Container not found. Please refresh the page.")
-        return
+        optionItem.classList.remove("disabled-option");
+        checkbox.disabled = false;
       }
+    }
+  });
+  
+  // Update run button state
+  const runButton = document.getElementById("run-button");
+  if (runButton) {
+    const hasAudioFile = !!activeAudioBlob;
+    const hasSelectedOptions = document.querySelectorAll(".option-checkbox:checked").length > 0;
+    
+    if (!hasAudioFile || !hasSelectedOptions) {
+      runButton.classList.add("disabled-button");
+      runButton.disabled = true;
     } else {
-      // If the container exists but not the result element
-      transcriptionResult = document.createElement("pre")
-      transcriptionResult.id = "transcriptionResult"
-      transcribeResult.appendChild(transcriptionResult)
+      runButton.classList.remove("disabled-button");
+      runButton.disabled = false;
     }
-  }
-
-  // Make sure the container is visible
-  const transcribeResultContainer = document.getElementById("transcribe-result")
-  if (transcribeResultContainer) {
-    transcribeResultContainer.style.display = "block"
-    transcribeResultContainer.classList.add("visible")
-  }
-
-  // Show loading indicator
-  transcriptionResult.innerHTML = '<div class="spinner"></div><p>Transcribing audio... Please wait.</p>'
-  showStatus("Transcribing audio... This may take a moment.", "info")
-
-  // Get episode ID (or use a default if not available)
-  const episodeId = getSelectedEpisodeId() || "default_episode"
-
-  const formData = new FormData()
-  formData.append("file", file)
-  formData.append("episode_id", episodeId)
-
-  try {
-    console.log("Starting transcription for file:", file.name)
-    const response = await fetch("/transcription/transcribe", {
-      method: "POST",
-      body: formData,
-    })
-
-    console.log("Transcription API response status:", response.status)
-    const result = await response.json()
-    console.log("Transcription result received:", result)
-
-    if (response.status === 403) {
-      transcriptionResult.innerHTML = `
-        <p style="color: red;">${result.error || "You don't have enough credits."}</p>
-        ${result.redirect ? `<a href="${result.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      showStatus("Transcription failed: Not enough credits", "error")
-      return
-    }
-
-    if (!response.ok) {
-      throw new Error(result.error || "Transcription failed")
-    }
-
-    // Store the transcripts in global variables
-    rawTranscript = result.raw_transcription || ""
-    fullTranscript = result.full_transcript || ""
-
-    // Display the transcript
-    transcriptionResult.innerHTML = rawTranscript || "No transcript was returned from the server."
-
-    // Show enhancement tools if they exist
-    const enhancementTools = document.getElementById("enhancementTools")
-    if (enhancementTools) {
-      enhancementTools.style.display = "block"
-    }
-
-    if (result.credit_warning) {
-      alert("Transcription completed, but your credits are too low. Please visit the store.")
-    }
-
-    // Only consume credits after successful transcription
-    await consumeStoreCredits("transcription")
-
-    showStatus("Transcription completed successfully!", "info")
-
-    // Check dependencies after transcription
-    checkDependenciesAndToggleButtons()
-  } catch (error) {
-    console.error("Transcription error:", error)
-    transcriptionResult.innerHTML = `<p style="color: red;">Transcription failed: ${error.message}</p>`
-    showStatus(`Transcription failed: ${error.message}`, "error")
   }
 }
 
-// Translation function
-async function translateTranscript() {
-  const resultContainer = document.getElementById("translateResult")
-  const lang = document.getElementById("languageSelect").value
-  if (!rawTranscript) return alert("You need to transcribe first.")
-
-  showSpinner("translateResult")
-  try {
-    const res = await fetch("/transcription/translate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        raw_transcription: rawTranscript,
-        language: lang,
-      }),
-    })
-    hideSpinner("translateResult")
-
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error || res.statusText)
-
-    resultContainer.innerText = data.translated_transcription
-
-    // Only consume credits after successful translation
-    await consumeStoreCredits("translation")
-
-    // Check dependencies after translation
-    checkDependenciesAndToggleButtons()
-  } catch (err) {
-    hideSpinner("translateResult")
-    resultContainer.innerText = `Error: ${err.message}`
-  }
-}
-
-// Clean transcript function
-async function generateCleanTranscript() {
-  // First, ensure we have a container for the result
-  let container = document.getElementById("cleanTranscriptResult")
-  if (!container) {
-    // Try to find the parent container
-    let resultSection = document.getElementById("cleanTranscript-result")
-    if (!resultSection) {
-      // Create the container if it doesn't exist
-      resultSection = document.createElement("div")
-      resultSection.id = "cleanTranscript-result"
-      resultSection.className = "output-section"
-      resultSection.style.display = "block"
-
-      const heading = document.createElement("h2")
-      heading.textContent = "Cleaned Transcript"
-
-      container = document.createElement("pre")
-      container.id = "cleanTranscriptResult"
-
-      resultSection.appendChild(heading)
-      resultSection.appendChild(container)
-
-      // Add to the container
-      const mainContainer = document.querySelector(".container")
-      if (mainContainer) {
-        mainContainer.appendChild(resultSection)
-      } else {
-        alert("Container not found. Please refresh the page.")
-        return
-      }
-    } else {
-      // If the container exists but not the result element
-      container = document.createElement("pre")
-      container.id = "cleanTranscriptResult"
-      resultSection.appendChild(container)
-    }
-  }
-
-  // Make sure the container is visible
-  const resultSection = document.getElementById("cleanTranscript-result")
-  if (resultSection) {
-    resultSection.style.display = "block"
-    resultSection.classList.add("visible")
-  }
-
-  // Show loading indicator
-  container.innerHTML = '<div class="spinner"></div><p>Cleaning transcript... Please wait.</p>'
-  showStatus("Cleaning transcript...", "info")
-
-  try {
-    if (!fullTranscript) {
-      container.innerHTML = '<p style="color: red;">No transcript available. Please transcribe first.</p>'
-      return
-    }
-
-    const res = await fetch("/transcription/clean", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcript: fullTranscript }),
-    })
-
-    if (res.status === 403) {
-      const errorData = await res.json()
-      container.innerHTML = `
-        <p style="color: red;">${errorData.error || "You don't have enough credits."}</p>
-        ${errorData.redirect ? `<a href="${errorData.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-
-    const data = await res.json()
-    container.innerHTML = data.clean_transcript || "No clean result."
-
-    // Only consume credits after successful clean transcript generation
-    await consumeStoreCredits("clean_transcript")
-    showStatus("Transcript cleaned successfully!", "info")
-  } catch (err) {
-    container.innerHTML = `<p style="color: red;">Failed to clean transcript: ${err.message}</p>`
-    showStatus(`Failed to clean transcript: ${err.message}`, "error")
-  }
-}
-
-// AI Suggestions function
-async function generateAISuggestions() {
-  // First, ensure we have a container for the result
-  let container = document.getElementById("ai-suggestions-output")
-  if (!container) {
-    // Try to find the parent container
-    let resultSection = document.getElementById("aiSuggestions-result")
-    if (!resultSection) {
-      // Create the container if it doesn't exist
-      resultSection = document.createElement("div")
-      resultSection.id = "aiSuggestions-result"
-      resultSection.className = "output-section"
-      resultSection.style.display = "block"
-
-      const heading = document.createElement("h2")
-      heading.textContent = "AI Suggestions"
-
-      container = document.createElement("pre")
-      container.id = "ai-suggestions-output"
-
-      resultSection.appendChild(heading)
-      resultSection.appendChild(container)
-
-      // Add to the container
-      const mainContainer = document.querySelector(".container")
-      if (mainContainer) {
-        mainContainer.appendChild(resultSection)
-      } else {
-        alert("Container not found. Please refresh the page.")
-        return
-      }
-    } else {
-      // If the container exists but not the result element
-      container = document.createElement("pre")
-      container.id = "ai-suggestions-output"
-      resultSection.appendChild(container)
-    }
-  }
-
-  // Make sure the container is visible
-  const resultSection = document.getElementById("aiSuggestions-result")
-  if (resultSection) {
-    resultSection.style.display = "block"
-    resultSection.classList.add("visible")
-  }
-
-  // Show loading indicator
-  container.innerHTML = '<div class="spinner"></div><p>Generating AI suggestions... Please wait.</p>'
-  showStatus("Generating AI suggestions...", "info")
-
-  try {
-    if (!rawTranscript) {
-      container.innerHTML = '<p style="color: red;">No transcript available. Please transcribe first.</p>'
-      return
-    }
-
-    const res = await fetch("/transcription/ai_suggestions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcript: rawTranscript }),
-    })
-
-    if (res.status === 403) {
-      const data = await res.json()
-      container.innerHTML = `
-        <p style="color: red;">${data.error || "You don't have enough credits."}</p>
-        ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-
-    const data = await res.json()
-    const primary = data.primary_suggestions || ""
-    const additional = (data.additional_suggestions || []).join("\n")
-    container.innerHTML = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions."
-
-    // Only consume credits after successful AI suggestions generation
-    await consumeStoreCredits("ai_suggestions")
-    showStatus("AI suggestions generated successfully!", "info")
-  } catch (err) {
-    container.innerHTML = `<p style="color: red;">Failed to generate suggestions: ${err.message}</p>`
-    showStatus(`Failed to generate suggestions: ${err.message}`, "error")
-  }
-}
-
-// Show notes function
-async function generateShowNotes() {
-  // First, ensure we have a container for the result
-  let container = document.getElementById("show-notes-output")
-  if (!container) {
-    // Try to find the parent container
-    let resultSection = document.getElementById("generateShowNotes-result")
-    if (!resultSection) {
-      // Create the container if it doesn't exist
-      resultSection = document.createElement("div")
-      resultSection.id = "generateShowNotes-result"
-      resultSection.className = "output-section"
-      resultSection.style.display = "block"
-
-      const heading = document.createElement("h2")
-      heading.textContent = "Show Notes"
-
-      container = document.createElement("pre")
-      container.id = "show-notes-output"
-
-      resultSection.appendChild(heading)
-      resultSection.appendChild(container)
-
-      // Add to the container
-      const mainContainer = document.querySelector(".container")
-      if (mainContainer) {
-        mainContainer.appendChild(resultSection)
-      } else {
-        alert("Container not found. Please refresh the page.")
-        return
-      }
-    } else {
-      // If the container exists but not the result element
-      container = document.createElement("pre")
-      container.id = "show-notes-output"
-      resultSection.appendChild(container)
-    }
-  }
-
-  // Make sure the container is visible
-  const resultSection = document.getElementById("generateShowNotes-result")
-  if (resultSection) {
-    resultSection.style.display = "block"
-    resultSection.classList.add("visible")
-  }
-
-  // Show loading indicator
-  container.innerHTML = '<div class="spinner"></div><p>Generating show notes... Please wait.</p>'
-  showStatus("Generating show notes...", "info")
-
-  try {
-    if (!rawTranscript) {
-      container.innerHTML = '<p style="color: red;">No transcript available. Please transcribe first.</p>'
-      return
-    }
-
-    const res = await fetch("/transcription/show_notes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcript: rawTranscript }),
-    })
-
-    if (res.status === 403) {
-      const data = await res.json()
-      container.innerHTML = `
-        <p style="color: red;">${data.error || "You don't have enough credits."}</p>
-        ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-
-    const data = await res.json()
-    container.innerHTML = data.show_notes || "No notes."
-
-    // Only consume credits after successful show notes generation
-    await consumeStoreCredits("show_notes")
-    showStatus("Show notes generated successfully!", "info")
-  } catch (err) {
-    container.innerHTML = `<p style="color: red;">Failed to generate show notes: ${err.message}</p>`
-    showStatus(`Failed to generate show notes: ${err.message}`, "error")
-  }
-}
-
-// Generate quotes function
-async function generateQuotes() {
-  // First, ensure we have a container for the result
-  let container = document.getElementById("quotes-output")
-  if (!container) {
-    // Try to find the parent container
-    let resultSection = document.getElementById("generateQuotes-result")
-    if (!resultSection) {
-      // Create the container if it doesn't exist
-      resultSection = document.createElement("div")
-      resultSection.id = "generateQuotes-result"
-      resultSection.className = "output-section"
-      resultSection.style.display = "block"
-
-      const heading = document.createElement("h2")
-      heading.textContent = "Quotes"
-
-      container = document.createElement("pre")
-      container.id = "quotes-output"
-
-      resultSection.appendChild(heading)
-      resultSection.appendChild(container)
-
-      // Add to the container
-      const mainContainer = document.querySelector(".container")
-      if (mainContainer) {
-        mainContainer.appendChild(resultSection)
-      } else {
-        alert("Container not found. Please refresh the page.")
-        return
-      }
-    } else {
-      // If the container exists but not the result element
-      container = document.createElement("pre")
-      container.id = "quotes-output"
-      resultSection.appendChild(container)
-    }
-  }
-
-  // Make sure the container is visible
-  const resultSection = document.getElementById("generateQuotes-result")
-  if (resultSection) {
-    resultSection.style.display = "block"
-    resultSection.classList.add("visible")
-  }
-
-  // Show loading indicator
-  container.innerHTML = '<div class="spinner"></div><p>Generating quotes... Please wait.</p>'
-  showStatus("Generating quotes...", "info")
-
-  try {
-    if (!rawTranscript) {
-      container.innerHTML = '<p style="color: red;">No transcript available. Please transcribe first.</p>'
-      return
-    }
-
-    const res = await fetch("/transcription/quotes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcript: rawTranscript }),
-    })
-
-    if (res.status === 403) {
-      const data = await res.json()
-      container.innerHTML = `
-        <p style="color: red;">${data.error || "You don't have enough credits."}</p>
-        ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-    const data = await res.json()
-    container.innerHTML = data.quotes || "No quotes."
-
-    // Only consume credits after successful quotes generation
-    await consumeStoreCredits("ai_quotes")
-    showStatus("Quotes generated successfully!", "info")
-
-    // Check dependencies after quotes generation
-    checkDependenciesAndToggleButtons()
-  } catch (err) {
-    container.innerHTML = `<p style="color: red;">Failed to generate quotes: ${err.message}</p>`
-    showStatus(`Failed to generate quotes: ${err.message}`, "error")
-  }
-}
-
-// Generate quote images function
-async function generateQuoteImages() {
-  const containerId = "quoteImagesResult"
-  const container = document.getElementById(containerId)
-
-  const quotes = document.getElementById("quotesResult").innerText.trim()
-  const method = document.getElementById("quoteImageMethodSelect")?.value || "local"
-
-  if (!quotes) {
-    alert("Generate quotes first.")
-    return
-  }
-
-  showSpinner(containerId)
-
-  try {
-    const res = await fetch("/transcription/quote_images", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quotes, method }),
-    })
-
-    const data = await res.json()
-    container.innerHTML = ""
-
-    if (res.status === 403) {
-      container.innerHTML = `
-        <p style="color: red;">${data.error || "You don't have enough credits."}</p>
-        ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-    ;(data.quote_images || []).forEach((url) => {
-      const img = document.createElement("img")
-      img.src = url
-      img.style.maxWidth = "100%"
-      img.style.margin = "10px 0"
-      container.appendChild(img)
-    })
-
-    // Only consume credits after successful quote images generation
-    await consumeStoreCredits("ai_quote_images")
-  } catch (err) {
-    container.innerText = "Failed to generate quote images: " + err.message
-  }
-}
-
-// Helper function to fetch audio from blob URL
-async function fetchAudioFromBlobUrl(blobUrl) {
-  try {
-    const res = await fetch(blobUrl)
-    if (!res.ok) throw new Error(`Failed to fetch audio: ${res.statusText}`)
-    const blob = await res.blob()
-    const objectUrl = URL.createObjectURL(blob)
-    return { blob, objectUrl }
-  } catch (err) {
-    console.error("Error fetching audio from blob URL:", err)
-    throw err
-  }
-}
-
-// OSINT search function
-async function runOsintSearch() {
-  const containerId = "osintResult"
-  const container = document.getElementById(containerId)
-
-  const guestName = document.getElementById("guestNameInput").value
-  if (!guestName.trim()) {
-    alert("Please enter a guest name.")
-    return
-  }
-
-  showSpinner(containerId)
-
-  try {
-    const response = await fetch("/transcription/osint_lookup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ guest_name: guestName }),
-    })
-    if (response.status === 403) {
-      const data = await response.json()
-      container.innerHTML = `
-        <p style="color: red;">${data.error || "You don't have enough credits."}</p>
-        ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-    const data = await response.json()
-    container.innerText = data.osint_info || "No info found."
-
-    // Only consume credits after successful OSINT search
-    await consumeStoreCredits("ai_osint")
-  } catch (err) {
-    container.innerText = `Failed: ${err.message}`
-  }
-}
-
-// Generate podcast intro/outro function
-async function generatePodcastIntroOutro() {
-  const containerId = "introOutroScriptResult"
-  const container = document.getElementById(containerId)
-
-  const guestName = document.getElementById("guestNameInput").value
-  if (!guestName.trim()) return alert("Please enter a guest name.")
-  if (!rawTranscript) return alert("No transcript available yet.")
-
-  showSpinner(containerId)
-
-  try {
-    const res = await fetch("/transcription/generate_intro_outro", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        guest_name: guestName,
-        transcript: rawTranscript,
-      }),
-    })
-    if (res.status === 403) {
-      const data = await res.json()
-      container.innerHTML = `
-        <p style="color: red;">${data.error || "You don't have enough credits."}</p>
-        ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-    const data = await res.json()
-    container.innerText = data.script || "No result."
-
-    // Only consume credits after successful intro/outro generation
-    await consumeStoreCredits("ai_intro_outro")
-
-    // Check dependencies after intro/outro generation
-    checkDependenciesAndToggleButtons()
-  } catch (err) {
-    container.innerText = `Failed: ${err.message}`
-  }
-}
-
-// Convert intro/outro to speech function
-async function convertIntroOutroToSpeech() {
-  const containerId = "introOutroAudioResult"
-  const container = document.getElementById(containerId)
-
-  const scriptContainer = document.getElementById("introOutroScriptResult")
-  const script = scriptContainer ? scriptContainer.innerText.trim() : ""
-  if (!script) return alert("No script to convert.")
-
-  showSpinner(containerId)
-
-  try {
-    const res = await fetch("/transcription/intro_outro_audio", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ script }),
-    })
-
-    const data = await res.json()
-
-    if (res.status === 403) {
-      container.innerHTML = `
-        <p style="color: red;">${data.error || "You don't have enough credits."}</p>
-        ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-
-    if (data.audio_base64) {
-      container.innerHTML = `
-        <audio controls src="${data.audio_base64}"></audio>
-        <a href="${data.audio_base64}" download="intro_outro.mp3" class="btn ai-edit-button">
-          Download Intro/Outro Audio
-        </a>
-      `
-
-      // Only consume credits after successful intro/outro audio conversion
-      await consumeStoreCredits("ai_intro_outro_audio")
-    } else {
-      container.innerText = data.error || "Unknown error occurred."
-    }
-  } catch (err) {
-    container.innerText = `Failed to convert to audio: ${err.message}`
-  }
-}
-
-// Enhance audio function
-async function enhanceAudio() {
-  const containerId = "audioControls"
-  let container = document.getElementById(containerId)
-  if (!container) {
-    // Create a container for results if it doesn't exist
-    const resultsContainer = document.getElementById("ai-results-container") || document.querySelector(".container")
-    if (resultsContainer) {
-      container = document.createElement("div")
-      container.id = "audioControls"
-      container.className = "result-field"
-      resultsContainer.appendChild(container)
-    } else {
-      alert("Results container not found. Please refresh the page and try again.")
-      return
-    }
-  }
-
-  // Try to get the file input from either the tab content or the main page
-  let input = document.getElementById("audioUploader")
-  if (!input) {
-    input = document.getElementById("audio-file")
-    if (!input) {
-      alert("Audio uploader element not found. Please upload a file using the file input above.")
-      return
-    }
-  }
-
-  const file = input.files && input.files[0]
-  if (!file) return alert("Upload an audio file first.")
-
-  const episodeId = getSelectedEpisodeId() || "default_episode"
-
-  showProcessingStatus(containerId, 1, 3, "Uploading audio file...")
-
-  try {
-    const formData = new FormData()
-    formData.append("audio", file)
-    formData.append("episode_id", episodeId)
-
-    const response = await fetch("/audio/enhancement", {
-      method: "POST",
-      body: formData,
-    })
-
-    const result = await response.json()
-
-    if (response.status === 403) {
-      container.innerHTML = `
-        <p style="color: red;">${result.error || "You don't have enough credits."}</p>
-        ${result.redirect ? `<a href="${result.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-
-    if (!response.ok) {
-      throw new Error(result.error || "Enhancement failed.")
-    }
-
-    const blobUrl = result.enhanced_audio_url || result.clipUrl
-    if (!blobUrl) {
-      throw new Error("No audio URL returned")
-    }
-
-    showProcessingStatus(containerId, 2, 3, "Enhancing audio quality...")
-
-    // Fetch the enhanced audio
-    const audioRes = await fetch(`/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`)
-    if (!audioRes.ok) {
-      throw new Error("Failed to fetch enhanced audio")
-    }
-
-    const blob = await audioRes.blob()
-    const url = URL.createObjectURL(blob)
-
-    enhancedAudioBlob = blob
-    activeAudioBlob = blob
-    activeAudioId = "external"
-
-    showProcessingStatus(containerId, 3, 3, "Finalizing enhancement...")
-
-    // Show comparison if we have the original audio
-    if (rawAudioBlob) {
-      showAudioComparison(rawAudioBlob, blob, "Enhanced")
-    }
-
-    container.innerHTML = `
-  <div style="padding: 15px; background-color: #f0f8ff; border-radius: 8px; margin: 10px 0;">
-    <h4 style="color: #2c5282; margin-bottom: 10px;">✅ Audio Enhancement Complete!</h4>
-    <p style="margin-bottom: 15px;">Your audio has been processed with noise reduction and normalization.</p>
-    <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
-      <p style="margin: 0 0 10px 0; font-weight: 600;">Enhanced Audio Preview:</p>
-      <div id="enhancedAudioPlayer"></div>
-    </div>
-  </div>
-`
-    renderAudioPlayer("enhancedAudioPlayer", blob, "enhancedAudioPlayerElement")
-
-    const audioAnalysisSection = document.getElementById("audioAnalysisSection")
-    if (audioAnalysisSection) audioAnalysisSection.style.display = "block"
-
-    const audioCuttingSection = document.getElementById("audioCuttingSection")
-    if (audioCuttingSection) audioCuttingSection.style.display = "block"
-
-    const aiCuttingSection = document.getElementById("aiCuttingSection")
-    if (aiCuttingSection) aiCuttingSection.style.display = "block"
-
-    const dl = document.getElementById("downloadEnhanced")
-    if (dl) {
-      dl.href = url
-      dl.style.display = "inline-block"
-    }
-
-    // Only consume credits after successful audio enhancement
-    await consumeStoreCredits("audio_enhancement")
-    showStatus("Audio enhancement completed successfully!", "info")
-
-    // Check dependencies after audio enhancement
-    checkDependenciesAndToggleButtons()
-  } catch (err) {
-    container.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`
-    showStatus(`Audio enhancement failed: ${err.message}`, "error")
-  }
-}
-
-// Add audio comparison feature
-function showAudioComparison(originalBlob, processedBlob, processType) {
-  const comparisonContainer = document.createElement("div")
-  comparisonContainer.style.cssText = `
-    margin-top: 20px; 
-    padding: 20px; 
-    background-color: #f8fafc; 
-    border-radius: 12px; 
-    border: 1px solid #e2e8f0;
-  `
-
-  comparisonContainer.innerHTML = `
-    <h4 style="margin-bottom: 15px; color: #2d3748;">🔊 Audio Comparison</h4>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
-      <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-        <h5 style="margin-bottom: 10px; color: #4a5568;">Original Audio</h5>
-        <div id="originalComparisonPlayer"></div>
-      </div>
-      <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-        <h5 style="margin-bottom: 10px; color: #4a5568;">${processType} Audio</h5>
-        <div id="processedComparisonPlayer"></div>
-      </div>
-    </div>
-    <div style="text-align: center; padding: 10px; background-color: #edf2f7; border-radius: 6px;">
-      <p style="margin: 0; font-size: 14px; color: #4a5568;">
-        💡 <strong>Tip:</strong> Play both audio files to hear the difference in quality and clarity.
-      </p>
-    </div>
-  `
-
-  // Find the appropriate container to append to
-  const audioControlsContainer = document.getElementById("audioControls")
-  if (audioControlsContainer) {
-    audioControlsContainer.appendChild(comparisonContainer)
-  }
-
-  // Render both audio players
-  renderAudioPlayer("originalComparisonPlayer", originalBlob, "originalComparisonAudio")
-  renderAudioPlayer("processedComparisonPlayer", processedBlob, "processedComparisonAudio")
-}
-
-// Voice isolation function
-async function runVoiceIsolation() {
-  const containerId = "isolatedVoiceResult"
-  let container = document.getElementById(containerId)
-  if (!container) {
-    // Create a container for results if it doesn't exist
-    const resultsContainer = document.getElementById("ai-results-container") || document.querySelector(".container")
-    if (resultsContainer) {
-      container = document.createElement("div")
-      container.id = containerId
-      container.className = "result-field"
-      const heading = document.createElement("h3")
-      heading.textContent = "Voice Isolation Result"
-      resultsContainer.appendChild(heading)
-      resultsContainer.appendChild(container)
-    } else {
-      alert("Results container not found. Please refresh the page and try again.")
-      return
-    }
-  }
-
-  // Try to get the file input from either the tab content or the main page
-  let input = document.getElementById("audioUploader")
-  if (!input) {
-    input = document.getElementById("audio-file")
-    if (!input) {
-      alert("Audio uploader element not found. Please upload a file using the file input above.")
-      return
-    }
-  }
-
-  const file = input.files && input.files[0]
-  if (!file) return alert("Upload an audio file first.")
-
-  const episodeId = getSelectedEpisodeId() || "default_episode"
-
-  showProcessingStatus(containerId, 1, 3, "Uploading audio file...")
-
-  try {
-    const formData = new FormData()
-    formData.append("audio", file)
-    formData.append("episode_id", episodeId)
-
-    // Use the correct endpoint from your backend
-    const response = await fetch("/voice_isolate", {
-      method: "POST",
-      body: formData,
-    })
-
-    if (response.status === 403) {
-      const data = await response.json()
-      container.innerHTML = `
-        <p style="color: red;">${data.error || "You don't have enough credits."}</p>
-        ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.error || "Voice isolation failed")
-    }
-
-    // Use the correct response field name from your backend
-    const blobUrl = data.isolated_blob_url
-    if (!blobUrl) {
-      throw new Error("No isolated audio URL returned")
-    }
-
-    showProcessingStatus(containerId, 2, 3, "Isolating voice from background...")
-
-    // Use the correct proxy endpoint from your backend
-    const audioRes = await fetch(`/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`)
-    if (!audioRes.ok) {
-      throw new Error("Failed to fetch isolated audio")
-    }
-
-    const blob = await audioRes.blob()
-    const url = URL.createObjectURL(blob)
-
-    isolatedAudioBlob = blob
-    activeAudioBlob = blob
-    activeAudioId = "external"
-
-    showProcessingStatus(containerId, 3, 3, "Finalizing voice isolation...")
-
-    // Show comparison if we have the original audio
-    if (rawAudioBlob) {
-      showAudioComparison(rawAudioBlob, blob, "Voice Isolated")
-    }
-
-    container.innerHTML = `
-  <div style="padding: 15px; background-color: #f0fff4; border-radius: 8px; margin: 10px 0;">
-    <h4 style="color: #22543d; margin-bottom: 10px;">✅ Voice Isolation Complete!</h4>
-    <p style="margin-bottom: 15px;">Background noise and music have been separated from the voice track.</p>
-    <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
-      <p style="margin: 0 0 10px 0; font-weight: 600;">Isolated Voice Preview:</p>
-      <div id="isolatedAudioPlayer"></div>
-    </div>
-    <div style="margin-top: 15px; padding: 10px; background-color: #edf2f7; border-radius: 6px;">
-      <p style="margin: 0; font-size: 14px; color: #4a5568;">
-        <strong>Tip:</strong> You can now use this isolated voice for further processing, cutting, or analysis.
-      </p>
-    </div>
-  </div>
-`
-    renderAudioPlayer("isolatedAudioPlayer", blob, "isolatedAudioPlayerElement")
-
-    const audioAnalysisSection = document.getElementById("audioAnalysisSection")
-    if (audioAnalysisSection) audioAnalysisSection.style.display = "block"
-
-    const audioCuttingSection = document.getElementById("audioCuttingSection")
-    if (audioCuttingSection) audioCuttingSection.style.display = "block"
-
-    const aiCuttingSection = document.getElementById("aiCuttingSection")
-    if (aiCuttingSection) aiCuttingSection.style.display = "block"
-
-    const dl = document.getElementById("downloadIsolatedVoice")
-    if (dl) {
-      dl.href = url
-      dl.style.display = "inline-block"
-    }
-
-    // Only consume credits after successful voice isolation
-    await consumeStoreCredits("voice_isolation")
-    showStatus("Voice isolation completed successfully!", "info")
-
-    // Check dependencies after voice isolation
-    checkDependenciesAndToggleButtons()
-  } catch (err) {
-    console.error("Voice isolation failed:", err)
-    container.innerHTML = `<p style="color: red;">Isolation failed: ${err.message}</p>`
-    showStatus(`Voice isolation failed: ${err.message}`, "error")
-  }
-}
-
-// Analyze enhanced audio function
-let selectedSoundFX = {}
-async function analyzeEnhancedAudio() {
-  const containerId = "analysisResults"
-  const container = document.getElementById(containerId)
-  const timeline = document.getElementById("soundEffectTimeline")
-  const mixBtn = document.getElementById("mixBackgroundBtn")
-
+/**
+ * Handles run button click
+ */
+function handleRunButtonClick() {
+  // Validate inputs
   if (!activeAudioBlob) {
-    return alert("No audio loaded. Enhance or Isolate first.")
+    showStatusMessage("Please select an audio file", "warning");
+    return;
   }
-
-  showSpinner(containerId)
-
-  try {
-    const fd = new FormData()
-    fd.append("audio", activeAudioBlob, "processed_audio.wav")
-
-    const res = await fetch("/audio_analysis", { method: "POST", body: fd })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error || res.statusText)
-
-    container.innerText = `
-      Sentiment:     ${data.sentiment ?? "–"}
-      Clarity Score: ${data.clarity_score ?? "–"}
-      Noise Level:   ${data.background_noise ?? "–"}
-      Dominant Emo:  ${data.dominant_emotion}
-    `
-
-    timeline.innerHTML = ""
-    renderSoundSuggestions(data, timeline)
-
-    window.analysisData = {
-      emotion: data.dominant_emotion,
-      audioBlob: activeAudioBlob,
-    }
-
-    mixBtn.style.display = "inline-block"
-
-    // Only consume credits after successful audio analysis
-    await consumeStoreCredits("ai_audio_analysis")
-
-    // Check dependencies after audio analysis
-    checkDependenciesAndToggleButtons()
-  } catch (err) {
-    container.innerText = `Analysis failed: ${err.message}`
+  
+  const selectedOptions = Array.from(document.querySelectorAll(".option-checkbox:checked"));
+  if (selectedOptions.length === 0) {
+    showStatusMessage("Please select at least one AI function", "warning");
+    return;
   }
-}
+  
+  // Get selected steps
+const selectedSteps = selectedOptions.map(checkbox => checkbox.dataset.function);
 
-// Render sound suggestions function
-function renderSoundSuggestions(data, timeline) {
-  timeline.innerHTML = "<h4>AI-Driven Sound Suggestions</h4>"
-  selectedSoundFX = {}
-  ;(data.sound_effect_suggestions || []).forEach((entry, i) => {
-    const sfxList = entry.sfx_options || []
-    const container = document.createElement("div")
-    container.className = "sound-suggestion"
-    container.innerHTML = `
-      <p><strong>Text:</strong> ${entry.timestamp_text}</p>
-      <p><strong>Emotion:</strong> ${entry.emotion}</p>
-      ${sfxList.length ? `<audio controls src="${sfxList[0]}" class="sfx-preview"></audio>` : "<em>No preview.</em>"}
-    `
-    timeline.appendChild(container)
-    if (sfxList.length) {
-      selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] }
-    }
+// Map frontend IDs to backend step names
+const stepMappings = {
+  enhanceAudio: "enhance",
+  aiCut: "ai_cut",
+  voice_isolation: "voice_isolation",
+  cleanTranscript: "clean_transcript",
+  planAndMixSfx: "plan_and_mix_sfx",
+  transcribe: "analyze_audio",
+  generateShowNotes: "generate_show_notes",
+  aiSuggestions: "ai_suggestions",
+  generateQuotes: "generate_quotes"
+};
+
+// Sort steps by dependencies (still frontend IDs)
+const sortedSteps = sortFunctionsByDependencies(selectedSteps);
+
+// Map sorted steps to backend-compatible step names
+const mappedSteps = sortedSteps.map(step => stepMappings[step] || step);
+
+// Show loading state
+showStatusMessage("Processing audio...", "info");
+showSpinner();
+
+// Create form data
+const formData = new FormData();
+formData.append("audio", activeAudioBlob);
+formData.append("episode_id", CURRENT_EPISODE_ID);
+formData.append("steps", JSON.stringify(mappedSteps));  // ✅ Fixat här
+
+  
+  // Send request to server
+  fetch("/audio/process_pipeline", {
+    method: "POST",
+    body: formData
   })
-}
-
-// Display background and mix function
-async function displayBackgroundAndMix() {
-  const preview = document.getElementById("backgroundPreview")
-  const mixBtn = document.getElementById("mixBackgroundBtn")
-  const dl = document.getElementById("downloadEnhanced")
-  const timeline = document.getElementById("soundEffectTimeline")
-  const { audioBlob } = window.analysisData || {}
-
-  console.log("Starting displayBackgroundAndMix function")
-
-  if (!audioBlob) {
-    console.error("No audioBlob available in window.analysisData")
-    return alert("Run analysis first!")
-  }
-
-  console.log(`Audio blob size: ${audioBlob.size} bytes, type: ${audioBlob.type}`)
-
-  // Disable button & show spinner text
-  mixBtn.disabled = true
-  mixBtn.innerText = "Generating…"
-  preview.innerHTML = ""
-
-  const fd = new FormData()
-  fd.append("audio", audioBlob, "processed_audio.wav")
-  console.log("FormData created with audio blob")
-
-  try {
-    console.log("Sending request to /plan_and_mix_sfx endpoint")
-    // Call our new endpoint that uses the GPT-based SFX plan
-    const res = await fetch("/plan_and_mix_sfx", { method: "POST", body: fd })
-    console.log(`Response status: ${res.status}`)
-
-    const data = await res.json()
-    console.log("Response data received:", data)
-
-    if (!res.ok) {
-      console.error(`Error response: ${data.error || res.statusText}`)
-      throw new Error(data.error || res.statusText)
-    }
-
-    // Check if we have a valid SFX plan
-    if (!data.sfx_plan || data.sfx_plan.length === 0) {
-      console.warn("No SFX plan returned from server")
-      preview.innerHTML = `
-        <div class="alert alert-warning">
-          <p>No sound effects were generated for this audio.</p>
-          <p>This might be because:</p>
-          <ul>
-            <li>The content doesn't have clear opportunities for sound effects</li>
-            <li>The GPT model couldn't identify suitable moments</li>
-            <li>There was an issue with the SFX generation process</li>
-          </ul>
-        </div>
-      `
-    } else {
-      console.log(`Received SFX plan with ${data.sfx_plan.length} effects`)
-
-      // Render the SFX plan
-      timeline.innerHTML = "<h4>AI-Generated Sound Effects Plan</h4>"
-      renderSfxPlan(data.sfx_plan, timeline)
-    }
-
-    // Check if we have mixed audio
-    if (data.merged_audio) {
-      console.log(`Received merged audio (${data.merged_audio.length} characters)`)
-      preview.innerHTML = `
-        <h4>Mixed Preview</h4>
-        <audio controls src="${data.merged_audio}" style="width:100%;"></audio>
-      `
-      // Update download link
-      dl.href = data.merged_audio
-      dl.style.display = "inline-block"
-
-      // Only consume credits after successful background mixing
-      await consumeStoreCredits("ai_audio_analysis")
-    } else {
-      console.warn("No merged audio in response")
-      preview.innerHTML += `<p class="text-warning">No mixed audio was returned from the server.</p>`
-    }
-  } catch (err) {
-    console.error("Error in displayBackgroundAndMix:", err)
-    preview.innerText = `Error: ${err.message}`
-  } finally {
-    // Restore button
-    mixBtn.disabled = false
-    mixBtn.innerText = "Mix Background & Preview"
-    console.log("displayBackgroundAndMix function completed")
-  }
-}
-
-/* Renders the GPT-generated SFX plan */
-function renderSfxPlan(sfxPlan, timeline) {
-  console.log(`Rendering SFX plan with ${sfxPlan.length} effects`)
-  selectedSoundFX = {}
-  ;(sfxPlan || []).forEach((entry, i) => {
-    console.log(`Rendering SFX ${i}: ${entry.description} [${entry.start}s - ${entry.end}s]`)
-
-    const container = document.createElement("div")
-    container.className = "sound-suggestion"
-
-    // Check if we have a valid sfxUrl
-    const hasAudio = entry.sfxUrl && entry.sfxUrl.startsWith("data:")
-    console.log(`SFX ${i} has audio: ${hasAudio}`)
-
-    container.innerHTML = `
-    <p><strong>Description:</strong> ${entry.description}</p>
-    <p><strong>Timing:</strong> ${entry.start.toFixed(2)}s - ${entry.end.toFixed(2)}s</p>
-    ${
-      hasAudio
-        ? `<audio controls src="${entry.sfxUrl}" class="sfx-preview"></audio>`
-        : "<em>No audio preview available.</em>"
-    }
-    <!-- SFX interaction controls (disabled for now) -->
-    <!--
-    <div class="sfx-controls">
-        <button class="btn btn-sm" onclick="acceptSfx(${i}, '${entry.description}', '${entry.sfxUrl || ""}')">Accept</button>
-        <button class="btn btn-sm" onclick="rejectSfx(${i})">Reject</button>
-    </div>
-    -->
-    `
-    timeline.appendChild(container)
-
-    if (hasAudio) {
-      selectedSoundFX[i] = {
-        description: entry.description,
-        sfxUrl: entry.sfxUrl,
-        start: entry.start,
-        end: entry.end,
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(data => {
+          throw new Error(data.error || "Server error");
+        });
       }
-    }
-  })
-
-  console.log("SFX plan rendering complete")
-}
-
-// Cut audio function
-async function cutAudio() {
-  const startInput = document.getElementById("cut-start")
-  const endInput = document.getElementById("cut-end")
-  const cutResult = document.getElementById("cutResult")
-  const dl = document.getElementById("downloadCut")
-
-  const start = Number.parseFloat(startInput.value)
-  const end = Number.parseFloat(endInput.value)
-
-  const episodeId = getSelectedEpisodeId()
-  if (!episodeId) return alert("No episode selected.")
-
-  const selectedSource = document.getElementById("audioSourceSelectCutting").value
-
-  let blobToUse
-  if (selectedSource === "enhanced") {
-    blobToUse = enhancedAudioBlob
-  } else if (selectedSource === "isolated") {
-    blobToUse = isolatedAudioBlob
-  } else if (selectedSource === "original") {
-    blobToUse = rawAudioBlob
-  }
-
-  if (!blobToUse) return alert("No audio selected or loaded.")
-  if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid timestamps.")
-
-  const formData = new FormData()
-  formData.append("audio", new File([blobToUse], "clip.wav", { type: "audio/wav" }))
-  formData.append("episode_id", episodeId)
-  formData.append("start", start)
-  formData.append("end", end)
-
-  try {
-    const response = await fetch("/cut_from_blob", {
-      method: "POST",
-      body: formData,
+      return response.json();
     })
-
-    const result = await response.json()
-
-    if (response.status === 403) {
-      cutResult.innerHTML = `
-        <p style="color: red;">${result.error || "You don't have enough credits."}</p>
-        ${result.redirect ? `<a href="${result.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-
-    if (!response.ok || !result.clipped_audio_url) {
-      throw new Error(result.error || "Clipping failed.")
-    }
-
-    const proxyUrl = `/get_clipped_audio?url=${encodeURIComponent(result.clipped_audio_url)}`
-    const audioRes = await fetch(proxyUrl)
-    if (!audioRes.ok) throw new Error("Failed to fetch clipped audio.")
-    const blob = await audioRes.blob()
-    const url = URL.createObjectURL(blob)
-
-    cutResult.innerHTML = `<audio controls src="${url}" style="width: 100%;"></audio>`
-    dl.href = url
-    dl.download = "clipped_audio.wav"
-    dl.style.display = "inline-block"
-
-    activeAudioBlob = blob
-    activeAudioId = "external"
-
-    // Only consume credits after successful audio cutting
-    await consumeStoreCredits("audio_cutting")
-  } catch (err) {
-    alert(`Cut failed: ${err.message}`)
-  }
-}
-
-// AI cut audio function
-async function aiCutAudio() {
-  const episodeId = getSelectedEpisodeId()
-  if (!episodeId) {
-    alert("No episode selected.")
-    return
-  }
-
-  const selectedSource = document.getElementById("audioSourceSelectAICut").value
-
-  let blobToUse
-  if (selectedSource === "enhanced") {
-    blobToUse = enhancedAudioBlob
-    activeAudioId = "external"
-  } else if (selectedSource === "isolated") {
-    blobToUse = isolatedAudioBlob
-    activeAudioId = "external"
-  } else if (selectedSource === "original") {
-    blobToUse = rawAudioBlob
-    activeAudioId = "external"
-  }
-
-  if (!blobToUse) {
-    alert("No audio selected or loaded.")
-    return
-  }
-
-  activeAudioBlob = blobToUse
-
-  const containerIdTranscript = "aiTranscript"
-  const containerTranscript = document.getElementById(containerIdTranscript)
-  const containerIdCuts = "aiSuggestedCuts"
-  const containerCuts = document.getElementById(containerIdCuts)
-
-  showSpinner(containerIdTranscript)
-  containerCuts.innerHTML = ""
-
-  try {
-    let response
-    if (!activeAudioId || activeAudioId === "external") {
-      const formData = new FormData()
-      formData.append("audio", new File([blobToUse], "ai_cut.wav", { type: "audio/wav" }))
-      formData.append("episode_id", episodeId)
-
-      response = await fetch("/ai_cut_from_blob", {
-        method: "POST",
-        body: formData,
-      })
-    } else {
-      response = await fetch("/ai_cut_audio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          file_id: activeAudioId,
-          episode_id: episodeId,
-        }),
-      })
-    }
-
-    const data = await response.json()
-
-    if (response.status === 403) {
-      containerTranscript.innerHTML = `
-        <p style="color: red;">${data.error || "You don't have enough credits."}</p>
-        ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-
-    if (!response.ok) {
-      throw new Error(data.error || "AI Cut failed")
-    }
-
-    containerTranscript.innerText = data.cleaned_transcript || "No transcript available."
-
-    const suggestedCuts = data.suggested_cuts || []
-    if (!suggestedCuts.length) {
-      containerCuts.innerText = "No suggested cuts found."
-      return
-    }
-
-    containerCuts.innerHTML = ""
-    window.selectedAiCuts = {}
-
-    suggestedCuts.forEach((cut, index) => {
-      const checkbox = document.createElement("input")
-      checkbox.type = "checkbox"
-      checkbox.checked = true
-      checkbox.dataset.index = index
-      checkbox.onchange = () => {
-        if (checkbox.checked) {
-          window.selectedAiCuts[index] = cut
-        } else {
-          delete window.selectedAiCuts[index]
-        }
-        checkDependenciesAndToggleButtons()
+    .then(data => {
+      // Process successful response
+      processSuccessResponse(data, sortedSteps);
+    })
+    .catch(error => {
+      // Handle error
+      showStatusMessage(`Error: ${error.message}`, "error");
+    })
+    .finally(() => {
+      // Hide spinner
+      hideSpinner();
+      
+      // Re-enable run button
+      if (runButton) {
+        runButton.disabled = false;
+        runButton.classList.remove("disabled-button");
       }
-      window.selectedAiCuts[index] = cut
+    });
+}
 
-      const label = document.createElement("label")
-      label.innerText = ` "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score.toFixed(2)}`
-
-      const div = document.createElement("div")
-      div.appendChild(checkbox)
-      div.appendChild(label)
-      containerCuts.appendChild(div)
-    })
-
-    const applyBtn = document.createElement("button")
-    applyBtn.id = "applySelectedCutsBtn"
-    applyBtn.className = "btn ai-edit-button"
-    applyBtn.innerText = "Apply AI Cuts"
-    applyBtn.onclick = applySelectedCuts
-    containerCuts.appendChild(applyBtn)
-
-    // Only consume credits after successful AI audio cutting
-    await consumeStoreCredits("ai_audio_cutting")
-
-    // Check dependencies after AI cuts are generated
-    checkDependenciesAndToggleButtons()
-  } catch (err) {
-    containerTranscript.innerText = "Failed to process audio."
-    alert(`AI Cut failed: ${err.message}`)
+/**
+ * Processes successful response from the server
+ * @param {Object} data - The response data
+ * @param {string[]} steps - The steps that were processed
+ */
+function processSuccessResponse(data, steps) {
+  // Show success message
+  showStatusMessage(`Processing complete! ${steps.length} functions applied.`, "success");
+  
+  // Process each result based on the steps
+  steps.forEach(step => {
+    const option = aiOptions.find(opt => opt.id === step);
+    if (!option) return;
+    
+    // Show the result container
+    const resultContainer = document.getElementById(option.resultContainer);
+    if (resultContainer) {
+      resultContainer.style.display = "block";
+      resultContainer.classList.add("visible");
+    }
+    
+    // Process specific result types
+    switch (step) {
+      case "transcribe":
+        updateTranscriptionResult(data.transcript || "No transcript generated");
+        break;
+        
+      case "cleanTranscript":
+        updateCleanTranscriptResult(data.clean_transcript || data.transcript || "No clean transcript generated");
+        break;
+        
+      case "enhanceAudio":
+        updateEnhancedAudioResult(data.final_audio_url);
+        break;
+        
+      case "aiCut":
+        updateAICutResult(data.cuts || []);
+        break;
+        
+      case "generateShowNotes":
+        updateShowNotesResult(data.show_notes || "No show notes generated");
+        break;
+        
+      case "aiSuggestions":
+        updateAISuggestionsResult(data.ai_suggestions || "No AI suggestions generated");
+        break;
+        
+      case "generateQuotes":
+        updateQuotesResult(data.quotes || "No quotes generated");
+        break;
+        
+      case "planAndMixSfx":
+        updateSoundEffectsResult(data.sfx_plan || [], data.sfx_clips || []);
+        break;
+        
+      case "voice_isolation":
+        // Voice isolation is handled in the final audio
+        break;
+    }
+  });
+  
+  // Always update the final audio result if available
+  if (data.final_audio_url) {
+    updateFinalAudioResult(data.final_audio_url);
   }
 }
 
-// Apply selected cuts function
-async function applySelectedCuts() {
-  const cuts = Object.values(window.selectedAiCuts || {})
-  if (!cuts.length) {
-    alert("No cuts selected.")
-    return
-  }
-
-  const episodeId = getSelectedEpisodeId()
-
-  try {
-    let blobUrl
-
-    // Send to the right backend depending on where the audio is
-    if (activeAudioId === "external") {
-      const formData = new FormData()
-      formData.append("audio", new File([activeAudioBlob], "cleaned.wav", { type: "audio/wav" }))
-      formData.append("episode_id", episodeId)
-      formData.append("cuts", JSON.stringify(cuts))
-
-      const response = await fetch("/apply_ai_cuts_from_blob", {
-        method: "POST",
-        body: formData,
-      })
-
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error || "Apply failed")
-      blobUrl = result.cleaned_file_url
-    } else {
-      const response = await fetch("/apply_ai_cuts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          file_id: activeAudioId,
-          cuts: cuts.map((c) => ({ start: c.start, end: c.end })),
-          episode_id: episodeId,
-        }),
-      })
-
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error || "Apply failed")
-      blobUrl = result.cleaned_file_url
-    }
-
-    // Use backend proxy to avoid CORS
-    const proxyUrl = `/get_clipped_audio?url=${encodeURIComponent(blobUrl)}`
-    const audioRes = await fetch(proxyUrl)
-    if (!audioRes.ok) throw new Error("Failed to fetch clipped audio.")
-    const blob = await audioRes.blob()
-    const url = URL.createObjectURL(blob)
-
-    // Show player and download button
-    const section = document.getElementById("aiCuttingSection")
-    section.appendChild(document.createElement("hr"))
-
-    const player = document.createElement("audio")
-    player.controls = true
-    player.src = url
-    section.appendChild(player)
-
-    const dl = document.createElement("a")
-    dl.href = url
-    dl.download = "ai_cleaned_audio.wav"
-    dl.className = "btn ai-edit-button"
-    dl.innerText = "Download Cleaned Audio"
-    section.appendChild(dl)
-
-    // Update active blob
-    activeAudioBlob = blob
-    activeAudioId = "external"
-
-    // No credit consumption here as it's already done in aiCutAudio
-  } catch (err) {
-    alert(`Apply failed: ${err.message}`)
+/**
+ * Updates the transcription result
+ * @param {string} transcript - The transcript text
+ */
+function updateTranscriptionResult(transcript) {
+  const container = document.getElementById("transcriptionResult");
+  if (container) {
+    container.textContent = transcript;
   }
 }
 
-// Enhance video function
-async function enhanceVideo() {
-  const fileInput = document.getElementById("videoUploader")
-  if (!fileInput) {
-    alert("Video uploader element not found. Please make sure you're on the correct tab.")
-    return
+/**
+ * Updates the clean transcript result
+ * @param {string} cleanTranscript - The clean transcript text
+ */
+function updateCleanTranscriptResult(cleanTranscript) {
+  const container = document.getElementById("cleanTranscriptResult");
+  if (container) {
+    container.textContent = cleanTranscript;
   }
+}
 
-  const file = fileInput.files && fileInput.files[0]
-  if (!file) {
-    alert("Please upload a video file.")
-    return
-  }
-
-  const containerId = "videoResult"
-  const container = document.getElementById(containerId)
-  if (!container) {
-    alert("Video result container not found. Please make sure you're on the correct tab.")
-    return
-  }
-
-  showSpinner(containerId)
-
-  try {
-    const formData = new FormData()
-    formData.append("video", file)
-
-    const uploadResponse = await fetch("/ai_videoedit", {
-      method: "POST",
-      body: formData,
-    })
-
-    if (!uploadResponse.ok) {
-      throw new Error(`Video upload failed: ${uploadResponse.statusText}`)
-    }
-
-    const uploadResult = await uploadResponse.json()
-    const video_id = uploadResult.video_id
-    if (!video_id) throw new Error("No video_id returned from upload.")
-
-    const enhanceResponse = await fetch("/ai_videoenhance", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ video_id }),
-    })
-
-    const enhanceResult = await enhanceResponse.json()
-
-    if (enhanceResponse.status === 403) {
-      container.innerHTML = `
-        <p style="color: red;">${enhanceResult.error || "You don't have enough credits."}</p>
-        ${enhanceResult.redirect ? `<a href="${enhanceResult.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-      `
-      return
-    }
-
-    if (!enhanceResponse.ok || !enhanceResult.processed_video_id) {
-      throw new Error(enhanceResult.error || "Enhancement failed.")
-    }
-
-    const processed_id = enhanceResult.processed_video_id
-    const videoURL = `/get_video/${processed_id}`
+/**
+ * Updates the enhanced audio result
+ * @param {string} audioUrl - The URL of the enhanced audio
+ */
+function updateEnhancedAudioResult(audioUrl) {
+  const container = document.getElementById("audioControls");
+  if (container && audioUrl) {
     container.innerHTML = `
-      <video controls src="${videoURL}" style="width: 100%; margin-top: 1rem;"></video>
-    `
-
-    const dl = document.getElementById("downloadVideo")
-    if (dl) {
-      dl.href = videoURL
-      dl.style.display = "inline-block"
-    }
-
-    // Only consume credits after successful video enhancement
-    await consumeStoreCredits("video_enhancement")
-  } catch (err) {
-    container.innerText = `Error: ${err.message}`
+      <audio controls>
+        <source src="${audioUrl}" type="audio/wav">
+        Your browser does not support the audio element.
+      </audio>
+      <p>Enhanced audio is ready for playback.</p>
+    `;
   }
 }
 
-// Preview original audio function
-function previewOriginalAudio() {
-  const fileInput = document.getElementById("audioUploader")
-  if (!fileInput) {
-    console.error("Audio uploader element not found")
-    return
+/**
+ * Updates the AI cut result
+ * @param {Array} cuts - The array of cuts
+ */
+function updateAICutResult(cuts) {
+  const container = document.getElementById("aiCut-result");
+  if (!container) return;
+  
+  // Create container if it doesn't exist
+  if (!document.getElementById("aiCut-result")) {
+    const newContainer = document.createElement("div");
+    newContainer.id = "aiCut-result";
+    newContainer.className = "output-section";
+    newContainer.innerHTML = `<h2>AI Cut Suggestions</h2>`;
+    document.querySelector(".container").appendChild(newContainer);
   }
-
-  const file = fileInput.files && fileInput.files[0]
-  if (!file) return
-
-  rawAudioBlob = file
-
-  const container = document.getElementById("originalAudioContainer")
-  if (!container) {
-    console.error("Original audio container not found")
-    return
+  
+  // Update container content
+  container.style.display = "block";
+  
+  if (cuts.length === 0) {
+    container.innerHTML = `
+      <h2>AI Cut Suggestions</h2>
+      <p>No cuts were suggested by the AI.</p>
+    `;
+    return;
   }
-
-  container.style.display = "block"
-
-  renderAudioPlayer("originalAudioContainer", rawAudioBlob, "originalAudioPlayer")
-}
-
-// Preview original video function
-function previewOriginalVideo() {
-  const fileInput = document.getElementById("videoUploader")
-  if (!fileInput) {
-    console.error("Video uploader element not found")
-    return
-  }
-
-  const file = fileInput.files && fileInput.files[0]
-  if (!file) return
-
-  const videoURL = URL.createObjectURL(file)
-  const videoPlayer = document.getElementById("originalVideoPlayer")
-  const container = document.getElementById("originalVideoContainer")
-
-  if (!videoPlayer || !container) {
-    console.error("Video player or container elements not found")
-    return
-  }
-
-  videoPlayer.src = videoURL
-  container.style.display = "block"
-}
-
-// Generate audio clip function
-async function generateAudioClip() {
-  const container = document.getElementById("audioClipResult")
-  const translated = document.getElementById("translateResult").innerText
-  if (!translated.trim()) return alert("No translated transcript available to generate an podcast.")
-
-  showSpinner("audioClipResult")
-  try {
-    const res = await fetch("/transcription/audio_clip", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ translated_transcription: translated }),
-    })
-    hideSpinner("audioClipResult")
-
-    if (!res.ok) throw new Error(`Server svarade ${res.status}`)
-    const data = await res.json()
-    const audio = document.createElement("audio")
-    audio.controls = true
-    audio.src = data.audio_base64
-    container.innerHTML = ""
-    container.appendChild(audio)
-
-    // Only consume credits after successful audio clip generation
-    await consumeStoreCredits("audio_clip")
-  } catch (err) {
-    hideSpinner("audioClipResult")
-    container.innerText = `Failed to generate audio clip: ${err.message}`
-  }
-}
-
-// Render audio player function
-function renderAudioPlayer(containerId, audioBlob, playerId, options = {}) {
-  const container = document.getElementById(containerId)
-  if (!container) {
-    console.error(`Audio player container '${containerId}' not found`)
-    return
-  }
-
-  const url = URL.createObjectURL(audioBlob)
-
-  // Create audio element
-  const audioEl = document.createElement("audio")
-  audioEl.id = playerId
-  audioEl.controls = true
-  audioEl.src = url
-  audioEl.style.width = "100%"
-  audioEl.style.marginBottom = "10px"
-  container.appendChild(audioEl)
-
-  // Create waveform container
-  const waveformDiv = document.createElement("div")
-  waveformDiv.id = `${playerId}_waveform`
-  waveformDiv.style.cssText =
-    "width: 100%; height: 80px; margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 4px;"
-  container.appendChild(waveformDiv)
-
-  // Add file info
-  const fileInfo = document.createElement("div")
-  fileInfo.style.cssText = "margin-top: 10px; font-size: 12px; color: #718096;"
-  const fileSizeMB = (audioBlob.size / (1024 * 1024)).toFixed(2)
-  const duration = audioEl.duration || "calculating..."
-  fileInfo.innerHTML = `
-    <div style="display: flex; justify-content: space-between;">
-      <span>Size: ${fileSizeMB} MB</span>
-      <span>Type: ${audioBlob.type || "audio/wav"}</span>
-    </div>
-  `
-  container.appendChild(fileInfo)
-
-  // Initialize WaveSurfer if available
-  if (window.WaveSurfer) {
-    try {
-      const wavesurfer = WaveSurfer.create({
-        container: `#${playerId}_waveform`,
-        waveColor: "#cbd5e0",
-        progressColor: "#4299e1",
-        height: 60,
-        barWidth: 2,
-        responsive: true,
-        backend: "MediaElement",
-        media: audioEl,
-      })
-
-      wavesurfer.load(url)
-
-      wavesurfer.on("ready", () => {
-        const duration = wavesurfer.getDuration()
-        fileInfo.innerHTML = `
-          <div style="display: flex; justify-content: space-between;">
-            <span>Size: ${fileSizeMB} MB</span>
-            <span>Duration: ${duration.toFixed(1)}s</span>
-            <span>Type: ${audioBlob.type || "audio/wav"}</span>
+  
+  let html = `
+    <h2>AI Cut Suggestions</h2>
+    <p>The AI has suggested ${cuts.length} cuts:</p>
+    <div id="aiSuggestedCuts">
+  `;
+  
+  cuts.forEach((cut, index) => {
+    const startTime = formatTime(cut.start);
+    const endTime = formatTime(cut.end);
+    const duration = formatTime(cut.end - cut.start);
+    
+    html += `
+      <div class="cut-item" style="margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong>Cut ${index + 1}:</strong> ${startTime} - ${endTime} (${duration})
           </div>
-        `
-      })
-
-      if (options.onWaveformClick) {
-        wavesurfer.on("click", options.onWaveformClick)
+          <div>
+            <input type="checkbox" id="cut-${index}" class="cut-checkbox" data-start="${cut.start}" data-end="${cut.end}" checked>
+            <label for="cut-${index}">Apply this cut</label>
+          </div>
+        </div>
+        ${cut.reason ? `<div style="margin-top: 5px; color: #666;">Reason: ${cut.reason}</div>` : ''}
+      </div>
+    `;
+  });
+  
+  html += `
+    </div>
+    <button id="apply-cuts-button" class="btn ai-edit-button" style="margin-top: 15px;">Apply Selected Cuts</button>
+  `;
+  
+  container.innerHTML = html;
+  
+  // Add event listener to apply cuts button
+  const applyButton = document.getElementById("apply-cuts-button");
+  if (applyButton) {
+    applyButton.addEventListener("click", function() {
+      const selectedCuts = Array.from(document.querySelectorAll(".cut-checkbox:checked")).map(checkbox => {
+        return {
+          start: parseFloat(checkbox.dataset.start),
+          end: parseFloat(checkbox.dataset.end)
+        };
+      });
+      
+      if (selectedCuts.length === 0) {
+        showStatusMessage("Please select at least one cut to apply", "warning");
+        return;
       }
-    } catch (error) {
-      console.warn("WaveSurfer initialization failed:", error)
-      waveformDiv.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; height: 60px; background-color: #f7fafc; color: #718096; font-size: 14px;">
-          Waveform visualization unavailable
-        </div>
-      `
-    }
-  } else {
-    waveformDiv.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: center; height: 60px; background-color: #f7fafc; color: #718096; font-size: 14px;">
-        Waveform visualization requires WaveSurfer.js
-      </div>
-    `
-  }
-
-  // Add download button
-  const downloadBtn = document.createElement("a")
-  downloadBtn.href = url
-  downloadBtn.download = `processed_audio_${Date.now()}.wav`
-  downloadBtn.className = "btn ai-edit-button"
-  downloadBtn.style.cssText = "display: inline-block; margin-top: 10px; text-decoration: none;"
-  downloadBtn.textContent = "Download Audio"
-  container.appendChild(downloadBtn)
-}
-
-// Helper functions for SFX
-function acceptSfx(index, emotion, url) {
-  selectedSoundFX[index] = { emotion, sfxUrl: url }
-}
-
-function rejectSfx(index) {
-  delete selectedSoundFX[index]
-}
-
-function replaceSfx(index, url) {
-  if (selectedSoundFX[index]) {
-    selectedSoundFX[index].sfxUrl = url
+      
+      // Apply the cuts
+      applyCuts(selectedCuts);
+    });
   }
 }
 
-// Enhanced spinner with progress indication
-function showSpinner(containerId, message = "Processing...") {
-  const container = document.getElementById(containerId)
-  if (container) {
-    container.innerHTML = `
-      <div style="text-align: center; padding: 30px;">
-        <div class="spinner" style="margin: 0 auto 15px auto;"></div>
-        <p style="margin: 0; color: #4a5568; font-weight: 500;">${message}</p>
-        <div style="margin-top: 10px; padding: 8px; background-color: #edf2f7; border-radius: 6px; font-size: 14px; color: #718096;">
-          This may take a few moments depending on file size...
-        </div>
-      </div>
-    `
+/**
+ * Applies selected cuts to the audio
+ * @param {Array} cuts - The array of cuts to apply
+ */
+function applyCuts(cuts) {
+  if (!activeAudioBlob) {
+    showStatusMessage("No audio file available", "error");
+    return;
   }
-}
-
-// Show processing status with steps
-function showProcessingStatus(containerId, step, totalSteps, message) {
-  const container = document.getElementById(containerId)
-  if (container) {
-    const progress = Math.round((step / totalSteps) * 100)
-    container.innerHTML = `
-      <div style="text-align: center; padding: 30px;">
-        <div class="spinner" style="margin: 0 auto 15px auto;"></div>
-        <p style="margin: 0 0 10px 0; color: #4a5568; font-weight: 500;">${message}</p>
-        <div style="background-color: #e2e8f0; border-radius: 10px; height: 8px; margin: 10px 0;">
-          <div style="background-color: #4299e1; height: 100%; border-radius: 10px; width: ${progress}%; transition: width 0.3s ease;"></div>
-        </div>
-        <p style="margin: 0; font-size: 14px; color: #718096;">Step ${step} of ${totalSteps} (${progress}%)</p>
-      </div>
-    `
-  }
-}
-
-// Get selected episode ID
-function getSelectedEpisodeId() {
-  return (
-    sessionStorage.getItem("selected_episode_id") ||
-    localStorage.getItem("selected_episode_id") ||
-    window.CURRENT_EPISODE_ID
-  )
-}
-
-// Consume store credits function
-async function consumeStoreCredits(featureKey) {
-  if (!window.CURRENT_USER_ID) {
-    console.warn("User not logged in, skipping credit consumption")
-    return
-  }
-
-  try {
-    const res = await fetch("/credits/consume", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: window.CURRENT_USER_ID,
-        feature: featureKey,
-      }),
+  
+  // Show loading state
+  showStatusMessage("Applying cuts...", "info");
+  showSpinner();
+  
+  // Create form data
+  const formData = new FormData();
+  formData.append("audio", activeAudioBlob);
+  formData.append("episode_id", CURRENT_EPISODE_ID);
+  formData.append("steps", JSON.stringify(["cut_audio"]));
+  formData.append("cuts", JSON.stringify(cuts));
+  
+  // Send request to server
+  fetch("/audio/process_pipeline", {
+    method: "POST",
+    body: formData
+  })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(data => {
+          throw new Error(data.error || "Server error");
+        });
+      }
+      return response.json();
     })
-
-    const result = await res.json()
-    if (!res.ok) {
-      throw new Error(result.error || "Failed to consume credits")
-    }
-
-    if (window.populateStoreCredits) {
-      await window.populateStoreCredits()
-    }
-
-    return result.data
-  } catch (err) {
-    console.error("Error consuming credits:", err)
-  }
+    .then(data => {
+      // Update the final audio
+      if (data.final_audio_url) {
+        updateFinalAudioResult(data.final_audio_url);
+        showStatusMessage("Cuts applied successfully!", "success");
+        
+        // Update the active audio blob
+        fetch(data.final_audio_url)
+          .then(response => response.blob())
+          .then(blob => {
+            activeAudioBlob = new File([blob], "cut_audio.wav", { type: "audio/wav" });
+            updateFileInfo(`Updated: cut_audio.wav (${formatFileSize(blob.size)})`);
+          });
+      } else {
+        showStatusMessage("No audio was returned after applying cuts", "warning");
+      }
+    })
+    .catch(error => {
+      showStatusMessage(`Error applying cuts: ${error.message}`, "error");
+    })
+    .finally(() => {
+      hideSpinner();
+    });
 }
 
-// Run initial dependency check when script loads
-document.addEventListener("DOMContentLoaded", checkDependenciesAndToggleButtons)
-
-// Export the updated script
-console.log("AI Edits Script updated with dependency management system")
-
-// Helper function to hide spinner
-function hideSpinner(containerId) {
-  const container = document.getElementById(containerId)
+/**
+ * Updates the show notes result
+ * @param {string} showNotes - The show notes text
+ */
+function updateShowNotesResult(showNotes) {
+  const container = document.getElementById("show-notes-output");
   if (container) {
-    container.innerHTML = "" // Clear the container content
+    container.textContent = showNotes;
   }
 }
 
-// Add this function to generate a dependency visualization
-function generateDependencyVisualization() {
-  const container = document.getElementById("dependency-details")
-  if (!container) return
+/**
+ * Updates the AI suggestions result
+ * @param {string} suggestions - The AI suggestions text
+ */
+function updateAISuggestionsResult(suggestions) {
+  const container = document.getElementById("ai-suggestions-output");
+  if (container) {
+    container.textContent = suggestions;
+  }
+}
 
-  let html = "<h4>Function Dependencies:</h4>"
+/**
+ * Updates the quotes result
+ * @param {string} quotes - The quotes text
+ */
+function updateQuotesResult(quotes) {
+  const container = document.getElementById("quotes-output");
+  if (container) {
+    container.textContent = quotes;
+  }
+}
 
-  // Create a graph representation
-  const graph = {}
+/**
+ * Updates the sound effects result
+ * @param {Array} sfxPlan - The sound effects plan
+ * @param {Array} sfxClips - The sound effects clips
+ */
+function updateSoundEffectsResult(sfxPlan, sfxClips) {
+  const container = document.getElementById("planAndMixSfx-result");
+  
+  // Create container if it doesn't exist
+  if (!container) {
+    const newContainer = document.createElement("div");
+    newContainer.id = "planAndMixSfx-result";
+    newContainer.className = "output-section";
+    document.querySelector(".container").appendChild(newContainer);
+  }
+  
+  // Update container content
+  let html = `<h2>Sound Effects</h2>`;
+  
+  if (sfxPlan.length === 0) {
+    html += `<p>No sound effects plan was generated.</p>`;
+  } else {
+    html += `
+      <h3>Sound Effects Plan</h3>
+      <div id="soundEffectTimeline" style="margin-bottom: 20px;">
+    `;
+    
+    sfxPlan.forEach((item, index) => {
+      html += `
+        <div class="sfx-item" style="margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+          <strong>${index + 1}. ${item.type || "Sound Effect"}</strong> at ${formatTime(item.timestamp)}
+          <div style="margin-top: 5px; color: #666;">${item.description || ""}</div>
+        </div>
+      `;
+    });
+    
+    html += `</div>`;
+  }
+  
+  if (sfxClips.length > 0) {
+    html += `
+      <h3>Sound Effect Clips</h3>
+      <div id="soundEffectClips">
+    `;
+    
+    sfxClips.forEach((clip, index) => {
+      html += `
+        <div class="sfx-clip" style="margin-bottom: 15px;">
+          <div style="margin-bottom: 5px;"><strong>${index + 1}. ${clip.name || "Sound Clip"}</strong></div>
+          ${clip.url ? `
+            <audio controls>
+              <source src="${clip.url}" type="audio/wav">
+              Your browser does not support the audio element.
+            </audio>
+          ` : "No audio URL provided"}
+        </div>
+      `;
+    });
+    
+    html += `</div>`;
+  }
+  
+  // Update the container
+  if (container) {
+    container.innerHTML = html;
+    container.style.display = "block";
+    container.classList.add("visible");
+  }
+}
 
-  // Initialize the graph with all functions
-  aiOptions.forEach((option) => {
-    graph[option.id] = {
-      title: option.title,
-      dependsOn: [],
-      requiredBy: [],
-    }
-  })
+/**
+ * Updates the final audio result
+ * @param {string} audioUrl - The URL of the final audio
+ */
+function updateFinalAudioResult(audioUrl) {
+  const container = document.getElementById("finalAudioResult");
+  
+  // Create container if it doesn't exist
+  if (!container) {
+    const newContainer = document.createElement("div");
+    newContainer.id = "finalAudioResult";
+    newContainer.className = "output-section";
+    document.querySelector(".container").appendChild(newContainer);
+  }
+  
+  // Update container content
+  const finalContainer = document.getElementById("finalAudioResult");
+  if (finalContainer && audioUrl) {
+    finalContainer.innerHTML = `
+      <h2>Final Processed Audio</h2>
+      <audio controls style="width: 100%;">
+        <source src="${audioUrl}" type="audio/wav">
+        Your browser does not support the audio element.
+      </audio>
+      <div style="margin-top: 10px;">
+        <a href="${audioUrl}" download="processed_audio.wav" class="btn ai-edit-button">Download Audio</a>
+      </div>
+    `;
+    finalContainer.style.display = "block";
+    finalContainer.classList.add("visible");
+  }
+}
 
-  // Fill in the dependencies
-  aiOptions.forEach((option) => {
-    if (option.dependencies && Object.keys(option.dependencies).length > 0) {
-      // Find which functions this depends on
-      aiOptions.forEach((dep) => {
-        if (option.id === dep.id) return
+/**
+ * Shows a status message
+ * @param {string} message - The message to show
+ * @param {string} type - The type of message (info, success, warning, error)
+ */
+function showStatusMessage(message, type = "info") {
+  const statusMessage = document.getElementById("status-message");
+  if (!statusMessage) return;
+  
+  // Clear existing classes
+  statusMessage.className = "status-message";
+  
+  // Add type-specific class
+  statusMessage.classList.add(`status-${type}`);
+  
+  // Set message
+  statusMessage.textContent = message;
+  
+  // Show message
+  statusMessage.style.display = "block";
+}
 
-        // Check if this function provides something the current function needs
-        const dependencies = Object.keys(option.dependencies)
-        let isDependency = false
+/**
+ * Hides the status message
+ */
+function hideStatusMessage() {
+  const statusMessage = document.getElementById("status-message");
+  if (statusMessage) {
+    statusMessage.style.display = "none";
+  }
+}
 
-        // Special dependency checks
-        if (
-          dep.id === "transcribe" &&
-          (dependencies.includes("rawTranscript") || dependencies.includes("fullTranscript"))
-        ) {
-          isDependency = true
-          graph[option.id].dependsOn.push(dep.id)
-          graph[dep.id].requiredBy.push(option.id)
-        } else if (dep.id === "generateQuotes" && dependencies.includes("quotesResult")) {
-          isDependency = true
-          graph[option.id].dependsOn.push(dep.id)
-          graph[dep.id].requiredBy.push(option.id)
-        } else if (dep.id === "translateTranscript" && dependencies.includes("translateResult")) {
-          isDependency = true
-          graph[option.id].dependsOn.push(dep.id)
-          graph[dep.id].requiredBy.push(option.id)
-        } else if (dep.id === "generatePodcastIntroOutro" && dependencies.includes("introOutroScriptResult")) {
-          isDependency = true
-          graph[option.id].dependsOn.push(dep.id)
-          graph[dep.id].requiredBy.push(option.id)
-        } else if (dep.id === "analyzeEnhancedAudio" && dependencies.includes("analysisData")) {
-          isDependency = true
-          graph[option.id].dependsOn.push(dep.id)
-          graph[dep.id].requiredBy.push(option.id)
-        } else if (
-          (dep.id === "enhanceAudio" || dep.id === "isolateVoice") &&
-          dependencies.includes("activeAudioBlob")
-        ) {
-          isDependency = true
-          graph[option.id].dependsOn.push(dep.id)
-          graph[dep.id].requiredBy.push(option.id)
-        } else if (dep.id === "aiCutAudio" && dependencies.includes("selectedAiCuts")) {
-          isDependency = true
-          graph[option.id].dependsOn.push(dep.id)
-          graph[dep.id].requiredBy.push(option.id)
-        }
-      })
-    }
-  })
+/**
+ * Shows the loading spinner
+ */
+function showSpinner() {
+  // Check if spinner already exists
+  if (document.querySelector(".spinner")) return;
+  
+  // Create spinner
+  const spinner = document.createElement("div");
+  spinner.className = "spinner";
+  
+  // Add spinner to status message
+  const statusMessage = document.getElementById("status-message");
+  if (statusMessage) {
+    statusMessage.appendChild(spinner);
+  }
+}
 
-  // Generate HTML for the visualization
-  html += '<div class="dependency-visualization">'
+/**
+ * Hides the loading spinner
+ */
+function hideSpinner() {
+  const spinner = document.querySelector(".spinner");
+  if (spinner) {
+    spinner.remove();
+  }
+}
 
-  // Functions with no dependencies
-  html += '<div class="dependency-group">'
-  html += "<h5>Base Functions (No Dependencies):</h5>"
-  html += "<ul>"
-  Object.entries(graph).forEach(([id, info]) => {
-    if (info.dependsOn.length === 0) {
-      html += `<li><strong>${info.title}</strong>`
-      if (info.requiredBy.length > 0) {
-        html += ` - Required by: ${info.requiredBy.map((depId) => graph[depId].title).join(", ")}`
-      }
-      html += "</li>"
-    }
-  })
-  html += "</ul>"
-  html += "</div>"
+/**
+ * Hides all result containers
+ */
+function hideAllResults() {
+  // Hide all output sections
+  const outputSections = document.querySelectorAll(".output-section");
+  outputSections.forEach(section => {
+    section.style.display = "none";
+    section.classList.remove("visible");
+  });
+}
 
-  // Functions with dependencies
-  html += '<div class="dependency-group">'
-  html += "<h5>Functions With Dependencies:</h5>"
-  html += "<ul>"
-  Object.entries(graph).forEach(([id, info]) => {
-    if (info.dependsOn.length > 0) {
-      html += `<li><strong>${info.title}</strong> - Depends on: ${info.dependsOn.map((depId) => graph[depId].title).join(", ")}`
-      if (info.requiredBy.length > 0) {
-        html += `<br>Required by: ${info.requiredBy.map((depId) => graph[depId].title).join(", ")}`
-      }
-      html += "</li>"
-    }
-  })
-  html += "</ul>"
-  html += "</div>"
+/**
+ * Formats time in seconds to MM:SS format
+ * @param {number} seconds - The time in seconds
+ * @returns {string} - Formatted time
+ */
+function formatTime(seconds) {
+  if (isNaN(seconds)) return "00:00";
+  
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
 
-  html += "</div>"
-
-  container.innerHTML = html
+// Export functions for testing
+if (typeof module !== "undefined") {
+  module.exports = {
+    formatTime,
+    formatFileSize,
+    sortFunctionsByDependencies,
+    checkDependenciesMet
+  };
 }
