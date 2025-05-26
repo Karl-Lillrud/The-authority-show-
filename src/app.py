@@ -21,6 +21,8 @@ from backend.routes.user_to_team import usertoteam_bp
 from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
 from backend.routes.episode import episode_bp
+from backend.routes.episodes import episodes_bp
+from backend.routes.files import files_bp
 from backend.routes.podprofile import podprofile_bp
 from backend.routes.activation import activation_bp, podprofile_initial_bp
 from backend.routes.frontend import frontend_bp
@@ -85,6 +87,8 @@ app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)
 app.register_blueprint(episode_bp)
+app.register_blueprint(episodes_bp, url_prefix="/api/episodes")
+app.register_blueprint(files_bp, url_prefix="/api/files")
 app.register_blueprint(podprofile_bp)
 app.register_blueprint(activation_bp, url_prefix='/activation')
 app.register_blueprint(podprofile_initial_bp, url_prefix='/podprofile')

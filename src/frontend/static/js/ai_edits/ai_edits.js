@@ -73,6 +73,33 @@ function labelWithCredits(text, key) {
     return `${text} <span class="credit-cost">${cost} credits</span>`;
 }
 
+// Function to fetch episode's audio file
+async function fetchEpisodeAudio(episodeId) {
+    try {
+        const response = await fetch(`/api/episodes/${episodeId}/audio`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch episode audio');
+        }
+        const data = await response.json();
+        return data.audio_url;
+    } catch (error) {
+        console.error('Error fetching episode audio:', error);
+        return null;
+    }
+}
+
+// Function to create a File object from a URL
+async function createFileFromUrl(url, filename) {
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new File([blob], filename, { type: blob.type });
+    } catch (error) {
+        console.error('Error creating file from URL:', error);
+        return null;
+    }
+}
+
 function showTab(tabName) {
     // Get all workspace tab buttons
     const workspaceButtons = document.querySelectorAll('.workspace-tab-btn');
@@ -105,155 +132,65 @@ function showTab(tabName) {
         content.innerHTML = `
           <div class="content-wrapper">
             <h1>AI-Powered Transcription</h1>
-
-            <input type="file" id="fileUploader" accept="audio/*,video/*">
-            <div class="button-with-help">
-                <button class="btn ai-edit-button" onclick="transcribe()">
-                ${labelWithCredits("Transcribe", "transcription")}
-                </button>
-                <span class="help-icon" data-tooltip="Converts the uploaded audio or video file into text using AI">?</span>
+            
+            <div class="file-upload-section">
+                <div id="existing-audio-info" style="display: none; margin-bottom: 15px;">
+                    <p>Episode audio file: <span id="episode-audio-name"></span></p>
+                </div>
+                <input type="file" id="fileUploader" accept="audio/*,video/*">
+                <div class="button-with-help">
+                    <button class="btn ai-edit-button" onclick="transcribe()">
+                        ${labelWithCredits("Transcribe", "transcription")}
+                    </button>
+                    <span class="help-icon" data-tooltip="Converts the uploaded audio or video file into text using AI">?</span>
+                </div>
             </div>
             <div class="result-field">
                 <pre id="transcriptionResult"></pre>
             </div>
-
           </div>
 
           <div class="content-wrapper">
-            <div id="enhancementTools";">
+            <div id="enhancementTools">
                 <h2>Enhancement Tools</h2>
-
-    
                 <div class="result-group">
                     <div class="button-with-help">
                         <button class="btn ai-edit-button" onclick="generateCleanTranscript()">
                             ${labelWithCredits("Clean Transcript", "clean_transcript")}
                         </button>
-                        <span class="help-icon" data-tooltip="Removes filler words, repeated phrases, and fixes typos in the raw transcription">?</span>
+                        <span class="help-icon" data-tooltip="Removes filler words and improves readability">?</span>
                     </div>
-                    <div class="result-field">
                     <pre id="cleanTranscriptResult"></pre>
-                    </div>
-                </div>
-
-                <div class="result-group">
-                    <label for="languageSelect">
-                      <strong>Language:</strong>
-                    </label>
-                    <select id="languageSelect" class="input-field">
-                        <option value="English">English</option>
-                        <option value="Spanish">Spanish</option>
-                        <!-- lägg till fler språk här -->
-                    </select>
-
-                    <div class="button-with-help">
-                        <button class="btn ai-edit-button" onclick="translateTranscript()">
-                            ${labelWithCredits("Translate", "translation")}
-                        </button>
-                        <span class="help-icon" data-tooltip="Translates the transcript into the selected language">?</span>
-                    </div>
-
-                    <div class="result-field">
-                        <pre id="translateResult"></pre>
-                    </div>
-                </div>
-
-                <div class="result-group">
-                    <div class="button-with-help">
-                        <button class="btn ai-edit-button" onclick="generateAudioClip()">
-                            ${labelWithCredits("Generate Translated Podcast", "audio_clip")}
-                        </button>
-                        <span class="help-icon" data-tooltip="Produces an audio file of the translated text, ready to play as a podcast">?</span>
-                    </div>
-                    <div class="result-field" id="audioClipResult"></div>
-                </div>
-    
-                <div class="result-group">
-                    <div class="button-with-help">
-                        <button class="btn ai-edit-button" onclick="generateAISuggestions()">
-                            ${labelWithCredits("AI Suggestions", "ai_suggestions")}
-                        </button>
-                        <span class="help-icon" data-tooltip="Provides AI-generated tips on how to improve your transcript">?</span>
-                    </div>
-                    <div class="result-field">
-                        <pre id="aiSuggestionsResult"></pre>
-                    </div>
-                </div>
-    
-                <div class="result-group">
-                    <div class="button-with-help">
-                        <button class="btn ai-edit-button" onclick="generateShowNotes()">
-                           ${labelWithCredits("Show Notes", "show_notes")}
-                        </button>
-                        <span class="help-icon" data-tooltip="Creates a concise bullet-point summary of the main topics covered">?</span>
-                    </div>
-                    <div class="result-field">
-                        <pre id="showNotesResult"></pre>
-                    </div>
-                </div>
-    
-                <div class="result-group">
-                    <div class="button-with-help">
-                        <button class="btn ai-edit-button" onclick="generateQuotes()">
-                            ${labelWithCredits("Generate Quotes", "ai_quotes")}
-                        </button>
-                        <span class="help-icon" data-tooltip="Extracts memorable quotes from the transcript">?</span>
-                    </div>
-                    <div class="result-field">
-                        <pre id="quotesResult"></pre>
-                    </div>
-                </div>
-    
-                <div class="result-group">
-                    <label for="quoteImageMethodSelect"><strong>Quote Image Style:</strong></label>
-                    <select id="quoteImageMethodSelect" class="input-field" style="margin-bottom: 0.5rem;">
-                        <option value="local">Local Template</option>
-                        <option value="dalle">DALL·E AI Image</option>
-                    </select>
-                    <button class="btn ai-edit-button" onclick="generateQuoteImages()">
-                        ${labelWithCredits("Generate Quote Images", "ai_quote_images")}
-                    </button>
-                    <div class="result-field">
-                        <div id="quoteImagesResult"></div>
-                    </div>
-                    <div class="result-field" id="quoteImagesResult"></div>
-                </div>
-    
-                <div class="result-group">
-                    <label><strong>Guest Name:</strong></label>
-                    <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field">
-                    <div class="button-with-help">
-                        <button class="btn ai-edit-button" onclick="runOsintSearch()">
-                            ${labelWithCredits("OSINT Search", "ai_osint")}
-                        </button>
-                        <span class="help-icon" data-tooltip="Performs an open-source intelligence search on the entered guest name">?</span>
-                    </div>
-                    <div class="result-field">
-                        <pre id="osintResult"></pre>
-                    </div>
-                </div>
-    
-                <div class="button-with-help">
-                    <button class="btn ai-edit-button" onclick="generatePodcastIntroOutro()">
-                        ${labelWithCredits("Generate Intro/Outro", "ai_intro_outro")}
-                    </button>
-                    <span class="help-icon" data-tooltip="Writes a suggested introduction and closing script for your episode">?</span>
-                </div>
-                <div class="result-field">
-                    <pre id="introOutroScriptResult"></pre>
-                </div>
-                <div class="button-with-help" style="margin-top: 1rem;">
-                    <button class="btn ai-edit-button" onclick="convertIntroOutroToSpeech()">
-                        ${labelWithCredits("Convert to Speech", "ai_intro_outro_audio")}
-                    </button>
-                    <span class="help-icon" data-tooltip="Turns that script into a spoken audio file using AI voice">?</span>
-                </div>
-                    <div class="result-field" id="introOutroAudioResult"></div>
                 </div>
             </div>
-          </div>
-        `;
-    }else if (tabName === 'audio') {
+          </div>`;
+
+        // Load episode's audio file if available
+        const episodeId = getSelectedEpisodeId();
+        if (episodeId) {
+            fetchEpisodeAudio(episodeId).then(async audioUrl => {
+                if (audioUrl) {
+                    const file = await createFileFromUrl(audioUrl, 'episode-audio.mp3');
+                    if (file) {
+                        // Store the file in a hidden input
+                        const fileUploader = document.getElementById('fileUploader');
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        fileUploader.files = dataTransfer.files;
+                        
+                        // Show the existing audio info
+                        const audioInfo = document.getElementById('existing-audio-info');
+                        const audioName = document.getElementById('episode-audio-name');
+                        audioInfo.style.display = 'block';
+                        audioName.textContent = file.name;
+                        
+                        // Hide the file uploader since we have the episode audio
+                        fileUploader.style.display = 'none';
+                    }
+                }
+            });
+        }
+    } else if (tabName === 'audio') {
         content.innerHTML = `
           <div class="content-wrapper">
             <h1>AI Audio Enhancement</h1>
@@ -272,7 +209,7 @@ function showTab(tabName) {
                     <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
                         ${labelWithCredits("Isolate Voice", "voice_isolation")}
                     </button>
-                    <span class="help-icon" data-tooltip="Separates the speaker’s voice from background noise">?</span>
+                    <span class="help-icon" data-tooltip="Separates the speaker's voice from background noise">?</span>
                 </div>
                 <div class="result-field">
                     <div id="isolatedVoiceResult"></div>
@@ -465,7 +402,7 @@ function showTab(tabName) {
                     <button class="btn ai-edit-button" id="enhanceVideoBtn" onclick="enhanceVideo()">
                         ${labelWithCredits("Enhance Video", "video_enhancement")}
                     </button>
-                    <span class="help-icon" data-tooltip="Applies AI enhancements to improve the video’s audio quality">?</span>
+                    <span class="help-icon" data-tooltip="Applies AI enhancements to improve the video's audio quality">?</span>
                 </div>
                 <button class="btn ai-edit-button" id="resetVideoBtn" onclick="resetVideo()" style="display: none;">
                     Reset
