@@ -249,28 +249,32 @@ async function loadEpisodesForPodcast(podcastId, episodeSelectElement) {
   try {
     const episodes = await fetchEpisodesByPodcast(podcastId);
     if (episodes && episodes.length > 0) {
-      // Sort episodes by created_at or createdAt (handle both cases)
-      episodes.sort((a, b) => {
-        const dateA = new Date(a.created_at || a.createdAt);
-        const dateB = new Date(b.created_at || b.createdAt);
-        return dateB - dateA; // Sort in descending order (newest first)
-      });
+      // Filter out published episodes
+      const unpublishedEpisodes = episodes.filter(episode => 
+        !episode.status || episode.status.toLowerCase() !== "published"
+      );
 
-      episodeSelectElement.innerHTML = '<option value="">Select Episode</option>';
-      episodes.forEach((episode) => {
-        const option = document.createElement("option");
-        option.value = episode._id;
-        // Append [Published] to published episodes
-        option.textContent = episode.status && episode.status.toLowerCase() === "published" 
-          ? `${episode.title} [Published]` 
-          : episode.title;
-        // Apply class based on status
-        option.className = episode.status && episode.status.toLowerCase() === "published" 
-          ? "published" 
-          : "non-published";
-        episodeSelectElement.appendChild(option);
-      });
-      episodeSelectElement.disabled = false;
+      if (unpublishedEpisodes.length > 0) {
+        // Sort episodes by created_at or createdAt (handle both cases)
+        unpublishedEpisodes.sort((a, b) => {
+          const dateA = new Date(a.created_at || a.createdAt);
+          const dateB = new Date(b.created_at || b.createdAt);
+          return dateB - dateA; // Sort in descending order (newest first)
+        });
+
+        episodeSelectElement.innerHTML = '<option value="">Select Episode</option>';
+        unpublishedEpisodes.forEach((episode) => {
+          const option = document.createElement("option");
+          option.value = episode._id;
+          option.textContent = episode.title;
+          option.className = "non-published";
+          episodeSelectElement.appendChild(option);
+        });
+        episodeSelectElement.disabled = false;
+      } else {
+        episodeSelectElement.innerHTML = '<option value="">No Unpublished Episodes Available</option>';
+        episodeSelectElement.disabled = true;
+      }
     } else {
       episodeSelectElement.innerHTML = '<option value="">No Episodes Found for this Podcast</option>';
       episodeSelectElement.disabled = true;
