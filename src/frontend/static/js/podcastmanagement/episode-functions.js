@@ -243,18 +243,21 @@ export function renderEpisodeDetail(episode) {
 `;
 
   // Add event listener for the Studio button
-  const studioButton = document.getElementById("studio-btn");
-  if (studioButton && !studioButton.disabled) {
+const studioButton = document.getElementById("studio-btn");
+if (studioButton && !studioButton.disabled) {
     studioButton.addEventListener("click", () => {
-      const podcastId = studioButton.getAttribute("data-podcast-id");
-      const episodeId = studioButton.getAttribute("data-episode-id");
-      // Example action: Navigate to studio page
-      window.location.href = `/studio?podcastId=${podcastId}&episodeId=${episodeId}`;
-      // Alternatively, trigger a custom function:
-      // openStudio(podcastId, episodeId);
-      console.log(`Studio button clicked for podcast ${podcastId}, episode ${episodeId}`);
+        const podcastId = studioButton.getAttribute("data-podcast-id");
+        const episodeId = studioButton.getAttribute("data-episode-id");
+        if (!podcastId || !episodeId) {
+            console.error('Missing podcastId or episodeId on studio button');
+            showNotification('Error: Invalid podcast or episode.', 'error');
+            return;
+        }
+        // Navigate to studio page with room parameter
+        window.location.href = `/studio?podcastId=${podcastId}&episodeId=${episodeId}&room=${episodeId}`;
+        console.log(`Studio button clicked for podcast ${podcastId}, episode ${episodeId}, room ${episodeId}`);
     });
-  }
+}
 
   // Add event listener for the AI Edit button
   const aiEditButton = document.getElementById("ai-edit-episode-btn");
