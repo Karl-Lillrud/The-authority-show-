@@ -410,24 +410,23 @@ fetchGuestsByEpisode(episode._id)
           // Check for guest ID (_id, id, or guestId)
           const guestId = guest._id || guest.id || guest.guestId;
           if (guestId) {
-            const inviteGuestBtn = document.createElement("button");
-            inviteGuestBtn.className = "invite-guest-btn";
+           const inviteGuestBtn = document.createElement("button");
+        
+            inviteGuestBtn.className = "view-profile-btn";  // Use same style as View Profile button
             inviteGuestBtn.textContent = "Invite Guest";
             inviteGuestBtn.addEventListener("click", async (e) => {
               e.stopPropagation();
               try {
                 console.log("Sending invitation for episode:", episode._id, "guest:", guestId);
                 const result = await createGuestInvitation(episode._id, guestId);
-                showNotification(`Invitation sent! Link: ${result.inviteUrl}`, "success");
-                console.log("Invitation link:", result.inviteUrl); // Log link for clicking
-                // Redirect to greenroom.html
-                window.location.href = `/greenroom?episodeId=${episode._id}&guestId=${guestId}`;
+                showNotification(`Invitation sent! Link:`, "success");
               } catch (error) {
                 console.error("Error sending invitation:", error);
                 showNotification(`Failed to send invitation: ${error.message}`, "error");
               }
             });
             buttonContainer.appendChild(inviteGuestBtn);
+
           } else {
             console.warn("No valid guest ID found for guest:", JSON.stringify(guest, null, 2));
             const errorMsg = document.createElement("span");
