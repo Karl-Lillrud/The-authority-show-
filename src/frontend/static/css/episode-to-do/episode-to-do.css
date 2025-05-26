@@ -123,6 +123,7 @@ a,
 .header {
   margin-bottom: 1.5rem;
   z-index: 1;
+  position: relative;
 }
 
 .header-content {
@@ -166,9 +167,35 @@ a,
   font-size: 0.875rem;
 }
 
-.header-right {
-  display: flex;
+.header-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.publish-button {
+  display: inline-flex;
+  align-items: center;
   gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--success);
+  color: white;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow);
+}
+
+.publish-button:hover {
+  background-color: #0d946a;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.publish-button i {
+  font-size: 1rem;
 }
 
 /* Progress Tracker */
