@@ -460,16 +460,19 @@ const selectedSteps = selectedOptions.map(checkbox => checkbox.dataset.function)
 
 // Map frontend IDs to backend step names
 const stepMappings = {
+  transcribe: "transcribe",
   enhanceAudio: "enhance",
   aiCut: "ai_cut",
   voice_isolation: "voice_isolation",
   cleanTranscript: "clean_transcript",
   planAndMixSfx: "plan_and_mix_sfx",
-  transcribe: "analyze_audio",
+  analyzeAudio: "analyze_audio",
   generateShowNotes: "generate_show_notes",
   aiSuggestions: "ai_suggestions",
   generateQuotes: "generate_quotes"
 };
+
+
 
 // Sort steps by dependencies (still frontend IDs)
 const sortedSteps = sortFunctionsByDependencies(selectedSteps);

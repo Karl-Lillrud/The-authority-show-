@@ -73,7 +73,7 @@ def process_audio_pipeline():
 
     # Validate steps
     valid_steps = [
-    "enhance", "ai_cut", "voice_isolation", "cut_audio",
+    "transcribe","enhance", "ai_cut", "voice_isolation", "cut_audio",
     "analyze_audio", "plan_and_mix_sfx",
     "clean_transcript", "generate_show_notes",
     "ai_suggestions", "generate_quotes"
@@ -96,6 +96,7 @@ def process_audio_pipeline():
     # --- Credit handling ---
     user_id = g.user_id
     credit_types = {
+        "transcribe": "transcription",
         "enhance": "audio_enhancement",
         "ai_cut": "ai_audio_cutting",
         "voice_isolation": "voice_isolation",
@@ -112,19 +113,14 @@ def process_audio_pipeline():
         credit_type = credit_types.get(step)
         if credit_type:
             try:
-                # Just validating credit availability now (not consuming yet)
+                # Just check (simulate) credit availability here (no deduction yet)
                 pass
             except ValueError as e:
                 return insufficient_credits_response(credit_type, e)
 
-    # --- Process the pipeline ---
     current_audio = audio_bytes
     filename = f"pipeline_audio.wav"
-    metadata = {
-        "steps_applied": [],
-        "transcript": "",
-        "cuts": []
-    }
+    metadata = {"steps_applied": [], "transcript": "", "cuts": []}
 
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
@@ -132,102 +128,102 @@ def process_audio_pipeline():
             with open(temp_path, "wb") as f:
                 f.write(current_audio)
 
+            ordered_step_priority = [
+                "transcribe",
+                "voice_isolation",
+                "enhance",
+                "analyze_audio",
+                "ai_cut",
+                "clean_transcript",
+                "generate_show_notes",
+                "ai_suggestions",
+                "generate_quotes",
+                "cut_audio",
+                "plan_and_mix_sfx"
+            ]
+
+            steps = sorted(set(steps), key=lambda x: ordered_step_priority.index(x) if x in ordered_step_priority else 999)
+
             for step in steps:
                 logger.info(f"Processing step: {step}")
                 credit_type = credit_types.get(step)
 
                 try:
+                    if step in ["clean_transcript", "generate_show_notes", "ai_suggestions", "generate_quotes"] and not metadata.get("transcript"):
+                        raise ValueError(f"Step '{step}' requires transcript. Ensure 'transcribe', 'analyze_audio' or 'ai_cut' is included.")
+
                     if step == "enhance":
                         current_audio, temp_path = process_enhance_step(current_audio, temp_path, temp_dir)
                         metadata["steps_applied"].append(step)
-                        if credit_type:
-                            consume_credits(user_id, credit_type)
+                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "ai_cut":
-                        current_audio, temp_path, ai_cut_result = process_ai_cut_step(current_audio, temp_path, temp_dir, filename)
+                        current_audio, temp_path, result = process_ai_cut_step(current_audio, temp_path, temp_dir, filename)
                         metadata["steps_applied"].append(step)
-                        metadata["transcript"] = ai_cut_result.get("cleaned_transcript", "")
-                        metadata["cuts"] = ai_cut_result.get("suggested_cuts", [])
-                        if credit_type:
-                            consume_credits(user_id, credit_type)
+                        metadata["transcript"] = result.get("cleaned_transcript", "")
+                        metadata["cuts"] = result.get("suggested_cuts", [])
+                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "voice_isolation":
                         current_audio, temp_path = process_voice_isolation_step(current_audio, temp_path, temp_dir)
                         metadata["steps_applied"].append(step)
-                        if credit_type:
-                            consume_credits(user_id, credit_type)
+                        if credit_type: consume_credits(user_id, credit_type)
+
+                    elif step == "transcribe":
+                        result = transcription_service.transcribe_audio(current_audio, filename)
+                        metadata["steps_applied"].append(step)
+                        metadata["transcript"] = result.get("full_transcript", "")
+                        metadata["raw_transcription"] = result.get("raw_transcription", "")
+                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "cut_audio":
                         current_audio, temp_path = process_cut_audio_step(current_audio, temp_path, temp_dir, cuts)
                         metadata["steps_applied"].append(step)
-                        if credit_type:
-                            consume_credits(user_id, credit_type)
+                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "analyze_audio":
-                        analysis_result = process_analyze_audio_step(current_audio)
+                        result = process_analyze_audio_step(current_audio)
                         metadata["steps_applied"].append(step)
-                        metadata["analysis"] = analysis_result
-
-                        # 🧠 Extract transcript from analysis step for future use
-                        transcript_text = analysis_result.get("transcript")
-                        if transcript_text:
-                            metadata["transcript"] = transcript_text
-
-                        if credit_type:
-                            consume_credits(user_id, credit_type)
+                        metadata["transcript"] = result.get("transcript", "")
+                        metadata["analysis"] = result
+                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "plan_and_mix_sfx":
-                        current_audio, temp_path, sfx_result = process_plan_and_mix_sfx_step(current_audio, temp_path, temp_dir)
+                        current_audio, temp_path, result = process_plan_and_mix_sfx_step(current_audio, temp_path, temp_dir)
                         metadata["steps_applied"].append(step)
-                        metadata["sfx_plan"] = sfx_result.get("sfx_plan", [])
-                        metadata["sfx_clips"] = sfx_result.get("sfx_clips", [])
-                        if credit_type:
-                            consume_credits(user_id, credit_type)
+                        metadata["sfx_plan"] = result.get("sfx_plan", [])
+                        metadata["sfx_clips"] = result.get("sfx_clips", [])
+                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "clean_transcript":
-                        if not metadata.get("transcript"):
-                            raise ValueError("Transcript is required before cleaning")
                         cleaned = transcription_service.get_clean_transcript(metadata["transcript"])
                         metadata["steps_applied"].append(step)
                         metadata["clean_transcript"] = cleaned
-                        if credit_type:
-                            consume_credits(user_id, credit_type)
+                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "generate_show_notes":
-                        if not metadata.get("transcript"):
-                            raise ValueError("Transcript is required before generating show notes")
                         notes = transcription_service.get_show_notes(metadata["transcript"])
                         metadata["steps_applied"].append(step)
                         metadata["show_notes"] = notes
-                        if credit_type:
-                            consume_credits(user_id, credit_type)
+                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "ai_suggestions":
-                        if not metadata.get("transcript"):
-                            raise ValueError("Transcript is required before generating AI suggestions")
                         suggestions = transcription_service.get_ai_suggestions(metadata["transcript"])
                         metadata["steps_applied"].append(step)
                         metadata["ai_suggestions"] = suggestions
-                        if credit_type:
-                            consume_credits(user_id, credit_type)
+                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "generate_quotes":
-                        if not metadata.get("transcript"):
-                            raise ValueError("Transcript is required before generating quotes")
                         quotes = transcription_service.get_quotes(metadata["transcript"])
                         metadata["steps_applied"].append(step)
                         metadata["quotes"] = quotes
-                        if credit_type:
-                            consume_credits(user_id, credit_type)
+                        if credit_type: consume_credits(user_id, credit_type)
 
                 except Exception as e:
                     logger.error(f"Error in step '{step}': {str(e)}", exc_info=True)
-                    return jsonify({
-                        "error": f"Step '{step}' failed: {str(e)}",
-                        "steps_applied": metadata["steps_applied"]
-                    }), 500
+                    return jsonify({"error": f"Step '{step}' failed: {str(e)}", "steps_applied": metadata["steps_applied"]}), 500
 
-            # --- Upload final audio ---
+            # Final audio upload
             podcast_id = episode_repo.get_podcast_id_by_episode(episode_id)
             output_filename = f"pipeline_{'-'.join(metadata['steps_applied'])}_{filename}"
             blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{output_filename}"
@@ -238,32 +234,31 @@ def process_audio_pipeline():
             final_audio_stream = BytesIO(final_audio_bytes)
             blob_url = upload_file_to_blob("podmanagerfiles", blob_path, final_audio_stream)
 
-            # Save metadata to edits
             create_edit_entry(
                 episode_id=episode_id,
                 user_id=user_id,
                 edit_type="pipeline",
                 clip_url=blob_url,
                 clipName=output_filename,
-                metadata={
-                    "steps_applied": metadata["steps_applied"],
-                    "edit_type": "pipeline"
-                }
+                metadata={"steps_applied": metadata["steps_applied"], "edit_type": "pipeline"}
             )
 
             return jsonify({
                 "final_audio_url": blob_url,
                 "steps_applied": metadata["steps_applied"],
-                "transcript": metadata["transcript"],
-                "cuts": metadata["cuts"]
+                "transcript": metadata.get("transcript"),
+                "cuts": metadata.get("cuts", []),
+                "ai_suggestions": metadata.get("ai_suggestions"),
+                "quotes": metadata.get("quotes"),
+                "show_notes": metadata.get("show_notes"),
+                "clean_transcript": metadata.get("clean_transcript"),
+                "sfx_plan": metadata.get("sfx_plan"),
+                "sfx_clips": metadata.get("sfx_clips")
             })
 
         except Exception as e:
             logger.error(f"Error in audio pipeline: {str(e)}", exc_info=True)
-            return jsonify({
-                "error": f"Pipeline processing failed: {str(e)}",
-                "steps_applied": metadata["steps_applied"]
-            }), 500
+            return jsonify({"error": f"Pipeline processing failed: {str(e)}", "steps_applied": metadata["steps_applied"]}), 500
 
 
 

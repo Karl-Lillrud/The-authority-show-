@@ -231,82 +231,61 @@
 
     <hr>
 
-    <!-- Output Areas (initially hidden) -->
 
-    <div class="output-section" id="transcribe-result" style="display: none;">
-      <h2>Transcript</h2>
-      <pre id="transcriptionResult">Transcript will appear here...</pre>
-    </div>
 
-    <div class="output-section" id="cleanTranscript-result" style="display: none;">
-      <h2>Cleaned Transcript</h2>
-      <pre id="cleanTranscriptResult">Cleaned transcript will appear here...</pre>
-    </div>
+  <!-- Output Areas (initially hidden) -->
 
-    <div class="output-section" id="generateShowNotes-result" style="display: none;">
-      <h2>Show Notes</h2>
-      <pre id="show-notes-output">Show notes will appear here...</pre>
-    </div>
+  <div class="output-section" id="transcribe-result" style="display: none;">
+    <h2>Transcript</h2>
+    <pre id="transcriptionResult">Transcript will appear here...</pre>
+  </div>
 
-    <div class="output-section" id="aiSuggestions-result" style="display: none;">
-      <h2>AI Suggestions</h2>
-      <pre id="ai-suggestions-output">AI suggestions will appear here...</pre>
-    </div>
+  <div class="output-section" id="cleanTranscript-result" style="display: none;">
+    <h2>Cleaned Transcript</h2>
+    <pre id="cleanTranscriptResult">Cleaned transcript will appear here...</pre>
+  </div>
 
-    <div class="output-section" id="generateQuotes-result" style="display: none;">
-      <h2>Quotes</h2>
-      <pre id="quotes-output">Generated quotes will appear here...</pre>
-    </div>
+  <div class="output-section" id="generateShowNotes-result" style="display: none;">
+    <h2>Show Notes</h2>
+    <pre id="show-notes-output">Show notes will appear here...</pre>
+  </div>
 
-    <div class="output-section" id="osintLookup-result" style="display: none;">
-      <h2>OSINT Lookup</h2>
-      <input type="text" id="osint-query" placeholder="Enter a person or company to search..." />
-      <pre id="osint-output">OSINT results will appear here...</pre>
+  <div class="output-section" id="aiSuggestions-result" style="display: none;">
+    <h2>AI Suggestions</h2>
+    <pre id="ai-suggestions-output">AI suggestions will appear here...</pre>
+  </div>
+
+  <div class="output-section" id="generateQuotes-result" style="display: none;">
+    <h2>Quotes</h2>
+    <pre id="quotes-output">Generated quotes will appear here...</pre>
+  </div>
+
+  <div class="output-section" id="osintLookup-result" style="display: none;">
+    <h2>OSINT Lookup</h2>
+    <input type="text" id="osint-query" placeholder="Enter a person or company to search..." />
+    <pre id="osint-output">OSINT results will appear here...</pre>
+  </div>
+
+  <div class="output-section" id="enhanceAudio-result" style="display: none;">
+    <h2>Enhanced Audio</h2>
+    <div id="audioControls" class="result-field">
+      <p>Enhanced audio will appear here...</p>
     </div>
-    
-    <!-- Enhancement Tools Section -->
-    <div id="enhancementTools" style="display: none; margin-top: 30px;">
-      <h2>Enhancement Tools</h2>
-      
-      <div class="option-item" onclick="generateCleanTranscript()">
-        <div class="option-icon">C</div>
-        <div class="option-content">
-          <div class="option-title">Clean Transcript</div>
-          <div class="option-description">Remove filler words and improve readability</div>
-        </div>
-      </div>
-      
-      <div class="option-item" onclick="generateShowNotes()">
-        <div class="option-icon">N</div>
-        <div class="option-content">
-          <div class="option-title">Generate Show Notes</div>
-          <div class="option-description">Create detailed notes from your content</div>
-        </div>
-      </div>
-      
-      <div class="option-item" onclick="generateAISuggestions()">
-        <div class="option-icon">S</div>
-        <div class="option-content">
-          <div class="option-title">AI Suggestions</div>
-          <div class="option-description">Get content improvement recommendations</div>
-        </div>
-      </div>
-      
-      <div class="option-item" onclick="generateQuotes()">
-        <div class="option-icon">Q</div>
-        <div class="option-content">
-          <div class="option-title">Generate Quotes</div>
-          <div class="option-description">Extract quotable moments from your content</div>
-        </div>
-      </div>
-    
-    <!-- Add a dedicated container for enhanced audio results -->
-    <div class="output-section" id="enhanceAudio-result" style="display: none;">
-      <h2>Enhanced Audio</h2>
-      <div id="audioControls" class="result-field">
-        <p>Enhanced audio will appear here...</p>
-      </div>
-    </div>
+  </div>
+
+  <div class="output-section" id="aiCut-result" style="display: none;">
+    <h2>AI Cut Suggestions</h2>
+    <!-- Cut suggestions will be populated via JS -->
+  </div>
+
+  <div class="output-section" id="planAndMixSfx-result" style="display: none;">
+    <h2>Sound Effects</h2>
+    <!-- Sound effect timeline and clips will be populated via JS -->
+  </div>
+
+  <div class="output-section" id="finalAudioResult" style="display: none;">
+    <h2>Final Processed Audio</h2>
+    <!-- Audio player and download link will be inserted here -->
   </div>
 
   <script src="{{ url_for('static', filename='js/ai_edits/ai_edits_script.js') }}"></script>
