@@ -104,7 +104,7 @@ app.register_blueprint(edit_bp)
 app.register_blueprint(enterprise_bp, url_prefix="/enterprise")
 app.register_blueprint(lia_bp, url_prefix="/lia")
 app.register_blueprint(index_bp)
-app.register_blueprint(recording_studio_bp, url_prefix="/recording-studio")
+app.register_blueprint(recording_studio_bp)
 app.register_blueprint(publish_bp) # Register the publish blueprint
 
 # Set up environment and logging

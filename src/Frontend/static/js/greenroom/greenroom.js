@@ -1,5 +1,4 @@
 import { fetchGuestsByEpisode } from "../../../static/requests/guestRequests.js";
-// Add other imports here as needed for greenroom logic
 
 // Initialize Socket.IO connection
 const socket = io();
@@ -50,6 +49,7 @@ async function initializeDevices() {
         }
     } catch (error) {
         console.error('Error initializing devices:', error);
+        showNotification('Error initializing devices', 'error');
     }
 }
 
@@ -71,23 +71,45 @@ async function loadGuestsForEpisode(episodeId) {
 
       if (guest.id === guestId) {
         card.classList.add("bg-light", "border-success");
+        // Add Request to Join Studio button for the current guest
+        card.innerHTML = `
+          <h5>${guest.name}</h5>
+          <p><strong>Email:</strong> ${guest.email || "N/A"}</p>
+          <p><strong>Bio:</strong> ${guest.bio || "No bio available."}</p>
+          <button class="btn btn-primary join-studio-btn" data-guest-id="${guest.id}">Request to Join Studio</button>
+        `;
+      } else {
+        card.innerHTML = `
+          <h5>${guest.name}</h5>
+          <p><strong>Email:</strong> ${guest.email || "N/A"}</p>
+          <p><strong>Bio:</strong> ${guest.bio || "No bio available."}</p>
+        `;
       }
 
-      card.innerHTML = `
-        <h5>${guest.name}</h5>
-        <p><strong>Email:</strong> ${guest.email || "N/A"}</p>
-        <p><strong>Bio:</strong> ${guest.bio || "No bio available."}</p>
-      `;
-
       container.appendChild(card);
+    });
+
+    // Add event listeners for join studio buttons
+    document.querySelectorAll('.join-studio-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const guestId = button.getAttribute('data-guest-id');
+        socket.emit('request_join_studio', {
+          room: currentRoom,
+          episodeId,
+          guestId,
+          guestName: guests.find(g => g.id === guestId)?.name || 'Anonymous'
+        });
+        button.disabled = true;
+        button.textContent = 'Request Sent';
+        showNotification('Join request sent to host', 'info');
+      });
     });
   } catch (err) {
     console.error("Failed to load guests:", err);
     document.getElementById("participantsContainer").innerHTML = "<p>Error loading guests.</p>";
+    showNotification('Error loading guests', 'error');
   }
 }
-
-
 
 // Start camera preview
 async function startCamera(deviceId) {
@@ -104,6 +126,7 @@ async function startCamera(deviceId) {
         cameraPreview.srcObject = localStream;
     } catch (error) {
         console.error('Error starting camera:', error);
+        showNotification('Error starting camera', 'error');
     }
 }
 
@@ -146,6 +169,7 @@ microphoneSelect.addEventListener('change', async (e) => {
         setupAudioAnalysis(stream);
     } catch (error) {
         console.error('Error setting up microphone:', error);
+        showNotification('Error setting up microphone', 'error');
     }
 });
 
@@ -173,6 +197,7 @@ testSpeakerButton.addEventListener('click', async () => {
         }, 1000);
     } catch (error) {
         console.error('Error testing speaker:', error);
+        showNotification('Error testing speaker', 'error');
     }
 });
 
@@ -224,8 +249,17 @@ socket.on('host_ready', (data) => {
     roomStatus.querySelector('.status-indicator').classList.add('active');
 });
 
-socket.on('move_to_studio', (data) => {
-    window.location.href = `/studio?room=${currentRoom}`;
+socket.on('join_studio_approved', (data) => {
+    showNotification('Join request approved! Joining studio...', 'success');
+    window.location.href = `/studio?room=${currentRoom}&episodeId=${data.episodeId}&guestId=${data.guestId}`;
+});
+
+socket.on('join_studio_denied', (data) => {
+    showNotification(`Join request denied: ${data.reason || 'No reason provided'}`, 'error');
+    document.querySelectorAll('.join-studio-btn').forEach(button => {
+        button.disabled = false;
+        button.textContent = 'Request to Join Studio';
+    });
 });
 
 // Helper Functions
@@ -256,6 +290,12 @@ function updateParticipantStatus(user) {
     });
 }
 
+function showNotification(message, type = 'info') {
+    console.log(`${type}: ${message}`);
+    // Implement your notification UI here, e.g., a toast or alert
+    // Example: alert(`${type.toUpperCase()}: ${message}`);
+}
+
 // Initialize
 initializeDevices();
 
@@ -264,6 +304,5 @@ const urlParams = new URLSearchParams(window.location.search);
 const episodeId = urlParams.get("episodeId");
 
 if (episodeId) {
-    loadGuestsForEpisode(episodeId); // <--- this fixes the "never read" warning
+    loadGuestsForEpisode(episodeId);
 }
-
