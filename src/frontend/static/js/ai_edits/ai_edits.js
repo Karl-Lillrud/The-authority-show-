@@ -76,12 +76,19 @@ function labelWithCredits(text, key) {
 // Function to fetch episode's audio file
 async function fetchEpisodeAudio(episodeId) {
     try {
-        const response = await fetch(`/api/episodes/${episodeId}/audio`);
+        // First try to get the episode data to check for audioUrl
+        const response = await fetch(`/get_episodes/${episodeId}`);
         if (!response.ok) {
-            throw new Error('Failed to fetch episode audio');
+            throw new Error('Failed to fetch episode data');
         }
-        const data = await response.json();
-        return data.audio_url;
+        const episode = await response.json();
+        
+        // If episode has an audioUrl (from Azure blob storage), use that
+        if (episode.audioUrl) {
+            return episode.audioUrl;
+        }
+        
+        return null;
     } catch (error) {
         console.error('Error fetching episode audio:', error);
         return null;
@@ -93,7 +100,7 @@ async function createFileFromUrl(url, filename) {
     try {
         const response = await fetch(url);
         const blob = await response.blob();
-        return new File([blob], filename, { type: blob.type });
+        return new File([blob], filename, { type: blob.type || 'audio/mpeg' });
     } catch (error) {
         console.error('Error creating file from URL:', error);
         return null;
@@ -135,6 +142,7 @@ function showTab(tabName) {
             
             <div class="file-upload-section">
                 <div id="existing-audio-info" style="display: none; margin-bottom: 15px;">
+                    <h3 id="episode-title"></h3>
                     <p>Episode audio file: <span id="episode-audio-name"></span></p>
                 </div>
                 <input type="file" id="fileUploader" accept="audio/*,video/*">
@@ -168,27 +176,42 @@ function showTab(tabName) {
         // Load episode's audio file if available
         const episodeId = getSelectedEpisodeId();
         if (episodeId) {
-            fetchEpisodeAudio(episodeId).then(async audioUrl => {
-                if (audioUrl) {
-                    const file = await createFileFromUrl(audioUrl, 'episode-audio.mp3');
-                    if (file) {
-                        // Store the file in a hidden input
-                        const fileUploader = document.getElementById('fileUploader');
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(file);
-                        fileUploader.files = dataTransfer.files;
-                        
-                        // Show the existing audio info
-                        const audioInfo = document.getElementById('existing-audio-info');
-                        const audioName = document.getElementById('episode-audio-name');
-                        audioInfo.style.display = 'block';
-                        audioName.textContent = file.name;
-                        
-                        // Hide the file uploader since we have the episode audio
-                        fileUploader.style.display = 'none';
+            // First fetch episode details
+            fetch(`/get_episodes/${episodeId}`)
+                .then(async response => {
+                    if (!response.ok) throw new Error('Failed to fetch episode details');
+                    const episode = await response.json();
+                    
+                    // Set episode title
+                    const titleEl = document.getElementById('episode-title');
+                    if (titleEl && episode.title) {
+                        titleEl.textContent = episode.title;
                     }
-                }
-            });
+                    
+                    // If episode has audioUrl, use it
+                    if (episode.audioUrl) {
+                        const file = await createFileFromUrl(episode.audioUrl, 'episode-audio.mp3');
+                        if (file) {
+                            // Store the file in a hidden input
+                            const fileUploader = document.getElementById('fileUploader');
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            fileUploader.files = dataTransfer.files;
+                            
+                            // Show the existing audio info
+                            const audioInfo = document.getElementById('existing-audio-info');
+                            const audioName = document.getElementById('episode-audio-name');
+                            audioInfo.style.display = 'block';
+                            audioName.textContent = file.name;
+                            
+                            // Hide the file uploader since we have the episode audio
+                            fileUploader.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading episode details:', error);
+                });
         }
     } else if (tabName === 'audio') {
         content.innerHTML = `
