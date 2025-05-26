@@ -28,3 +28,56 @@ export async function sendTeamInviteRequest(teamId, email, role) {
   console.log("Response from /send_team_invite:", data); // Debug log
   return data;
 }
+
+export async function createGuestInvitation(episodeId, guestId) {
+  try {
+    const response = await fetch("/invite-guest", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        episode_id: episodeId,
+        guest_id: guestId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Failed to create invitation: ${errorData.error}`);
+    }
+
+    const data = await response.json();
+    return {
+      message: data.message,
+      inviteUrl: data.invite_url,
+    };
+  } catch (error) {
+    console.error("Error creating guest invitation:", error);
+    throw error;
+  }
+}
+
+export async function acceptGuestInvitation(token) {
+  try {
+    const response = await fetch(`/accept-invite/${token}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Failed to accept invitation: ${errorData.error}`);
+    }
+
+    const data = await response.json();
+    return {
+      message: data.message,
+    };
+  } catch (error) {
+    console.error("Error accepting guest invitation:", error);
+    throw error;
+  }
+}

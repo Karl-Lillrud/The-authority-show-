@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, session, g, redirect, url_for, request, jsonify
 from flask_socketio import join_room, leave_room, emit, SocketIO
 from datetime import datetime
+import logging
 
 from backend.database.mongo_connection import database
 from backend.services.invitation_service import InvitationService
@@ -12,6 +13,9 @@ recording_studio_bp = Blueprint("recording_studio_bp", __name__)
 invitations_collection = database.Invitations
 episodes_collection = database.Episodes
 guests_collection = database.Guests
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------
 # 🔌 REGISTER SOCKET.IO EVENTS
@@ -110,10 +114,19 @@ def create_invitation():
         data = request.get_json()
         email = data.get("email")
         episode_id = data.get("episode_id")
-        if not email or not episode_id:
-            return jsonify({"error": "Email and episode_id are required"}), 400
+        guest_id = data.get("guest_id")  # Include guest_id in the request
 
-        response, status_code = InvitationService.send_session_invitation(email, episode_id)
+        if not all([email, episode_id, guest_id]):
+            return jsonify({"error": "Email, episode_id, and guest_id are required"}), 400
+
+        # Use the updated InvitationService to handle the invitation logic
+        response, status_code = InvitationService.send_session_invitation(email, episode_id, guest_id)
+
+        # Log the invitation details
+        logger.info(f"Generated invite token: {response.get('token')}")
+        logger.info(f"Greenroom URL: {response.get('greenroom_url')}")
+        logger.info(f"Email sent to: {email}")
+
         return jsonify(response), status_code
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -187,13 +200,24 @@ def verify_invite(invite_token):
 
 @recording_studio_bp.route('/studio')
 def recording_studio():
-    if not g.user_id:
-        return redirect(url_for('auth.login'))
-    episode_id = request.args.get('episode_id')
-    return render_template('recordingstudio/recording_studio.html', episode_id=episode_id)
+    return render_template('recordingstudio/recording_studio.html')
 
-@recording_studio_bp.route('/greenroom')
+@recording_studio_bp.route('/greenroom', methods=['GET'])
 def greenroom():
-    if not g.user_id:
-        return redirect(url_for('auth_bp.signin'))
-    return render_template('greenroom/greenroom.html')
+    guest_id = request.args.get("guestId")
+    token = request.args.get("token")
+    episode_id = request.args.get("episodeId")  # fallback usage
+
+    # Optional: look up token from episode_id and guest_id if token missing
+    if not token and episode_id and guest_id:
+        invitation = invitations_collection.find_one({
+            "episode_id": episode_id,
+            "guest_id": guest_id
+        })
+        if not invitation:
+            return "Invitation not found", 404
+        token = invitation.get("invite_token")
+
+    return render_template("greenroom/greenroom.html", guestId=guest_id, token=token)
+
+

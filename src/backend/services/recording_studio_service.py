@@ -1,7 +1,6 @@
 from typing import Dict, List
 from datetime import datetime
 
-# Service logic for room join/leave and user management (expand as needed)
 class RecordingStudioService:
     def __init__(self):
         self.rooms: Dict[str, List[dict]] = {}

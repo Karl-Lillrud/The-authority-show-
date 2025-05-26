@@ -10,10 +10,10 @@ import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
 import { showNotification, showConfirmationPopup } from "../components/notifications.js";
-
 import { consumeStoreCredits, getCredits } from "../../../static/requests/creditRequests.js";
 import { incrementUpdateAccount } from "../../../static/requests/accountRequests.js";
 import { showAddGuestPopup } from "./guest-functions.js";
+import { createGuestInvitation } from "../../../static/requests/invitationRequests.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -78,7 +78,6 @@ export function playAudio(audioUrl, episodeTitle) {
     });
 }
 
-// Function to render episode detail
 export function renderEpisodeDetail(episode) {
   sessionStorage.setItem("selected_episode_id", episode._id);
   const episodeDetailElement = document.getElementById("podcast-detail");
@@ -121,35 +120,29 @@ export function renderEpisodeDetail(episode) {
         }
       }
       if (isStudioEnabled) {
-        return `<button class=\"studio-btn\" id=\"studio-btn\" style=\"background: #ff7f3f; color: white; margin-left: 8px;\" data-podcast-id=\"${episode.podcastId || episode.podcast_id}\" data-episode-id=\"${episode._id}\">Studio</button>`;
+        return `<button class="studio-btn" id="studio-btn" style="background: #ff7f3f; color: white; margin-left: 8px;" data-podcast-id="${episode.podcastId || episode.podcast_id}" data-episode-id="${episode._id}">Studio</button>`;
       } else {
-        return `<button class=\"studio-btn\" id=\"studio-btn\" style=\"background: #ccc; color: #888; margin-left: 8px; cursor: not-allowed;\" disabled>${timeLeft || 'Not available'}</button>`;
+        return `<button class="studio-btn" id="studio-btn" style="background: #ccc; color: #888; margin-left: 8px; cursor: not-allowed;" disabled>${timeLeft || 'Not available'}</button>`;
       }
     })()}
     ${
       !episode.isImported
         ? `
-    <button class=\"save-btn\" id=\"ai-edit-episode-btn\" data-id=\"${episode._id}\">\n      AI Edit\n    </button>\n    `
+    <button class="save-btn" id="ai-edit-episode-btn" data-id="${episode._id}">\n      AI Edit\n    </button>\n    `
         : ""
     }
-    <button class=\"action-btn edit-btn\" id=\"edit-episode-btn\" data-id=\"${
-      episode._id
-    }\">\n      ${shared.svgpodcastmanagement.edit}\n    </button>\n    <button class=\"action-btn delete-btn\" id=\"delete-episode-btn\" data-id=\"${episode._id}\">\n      <span class=\"icon\">${shared.svgpodcastmanagement.delete}</span>\n    </button>\n  </div>
+    <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${episode._id}">\n      ${shared.svgpodcastmanagement.edit}\n    </button>\n    <button class="action-btn delete-btn" id="delete-episode-btn" data-id="${episode._id}">\n      <span class="icon">${shared.svgpodcastmanagement.delete}</span>\n    </button>\n  </div>
 </div>
 
 <div class="podcast-detail-container"></div>
   <!-- Header section with image and basic info -->
   <div class="podcast-header-section">
     <div class="podcast-image-container">
-      <div class="detail-image" style="background-image: url('${
-        episode.image || episode.imageUrl || "/static/images/default-image.png"
-      }')"></div>
+      <div class="detail-image" style="background-image: url('${episode.image || episode.imageUrl || "/static/images/default-image.png"}')"></div>
     </div>
     <div class="podcast-basic-info">
       <h1 class="detail-title">${episode.title}</h1>
-      ${
-        episode.status ? `<p class="detail-category">${episode.status}</p>` : ""
-      }
+      ${episode.status ? `<p class="detail-category">${episode.status}</p>` : ""}
       <div class="podcast-meta-info">
         <div class="meta-item">
           <span class="meta-label">Publish Date:</span>
@@ -170,43 +163,36 @@ export function renderEpisodeDetail(episode) {
   <!-- About section -->
   <div class="podcast-about-section">
     <h2 class="section-title">Description</h2>
-    <p class="podcast-description">${
-      episode.description || "No description available."
-    }</p>
+    <p class="podcast-description">${episode.description || "No description available."}</p>
     
     <!-- Audio Section Wrapper - Only contains the main player now -->
-    <div class="audio-section-wrapper" style="margin-top: 1.5rem;"> <!-- Removed flex styles -->
+    <div class="audio-section-wrapper" style="margin-top: 1.5rem;">
       <!-- Main Audio Player -->
-      <div class="main-audio-player"> <!-- Removed flex properties -->
+      <div class="main-audio-player">
         <h3>Main Episode Audio</h3>
         ${
           episode.audioUrl
             ? `<audio controls style="width: 20%;">
-                 <source src="${episode.audioUrl}" type="${
-                fileType || "audio/mpeg"
-              }">
+                 <source src="${episode.audioUrl}" type="${fileType || "audio/mpeg"}">
                  Your browser does not support the audio element.
                </audio>`
             : "<p>No audio available for this episode.</p>"
         }
       </div>
-    </div> <!-- End audio-section-wrapper -->
+    </div>
 
-    <!-- Saved Audio Edits - Moved outside and below the wrapper -->
+    <!-- Saved Audio Edits -->
     ${
       episode.audioEdits && episode.audioEdits.length > 0
-        ? `<div class="audio-edits" style="margin-top: 1.5rem;"> <!-- Added margin-top -->
+        ? `<div class="audio-edits" style="margin-top: 1.5rem;">
             <h3>🎧 Saved Edits</h3>
             ${episode.audioEdits
               .map((edit) => {
                 const blobUrl = edit.metadata?.blob_url;
-                const label =
-                  edit.metadata?.edit_type || edit.edit_type || "Unknown Type";
+                const label = edit.metadata?.edit_type || edit.edit_type || "Unknown Type";
                 return `
                 <div class="edit-entry" style="margin-bottom: 1rem;">
-                  <p style="margin-bottom: 0.25rem;"><strong>${label}</strong> – ${
-                  edit.filename
-                }</p>
+                  <p style="margin-bottom: 0.25rem;"><strong>${label}</strong> – ${edit.filename}</p>
                   ${
                     blobUrl
                       ? `<audio controls style="width: 100%;">
@@ -221,9 +207,8 @@ export function renderEpisodeDetail(episode) {
           </div>`
         : ""
     }
-  </div> <!-- End podcast-about-section -->
+  </div>
 
-  
   <!-- Additional details section -->
   <div class="podcast-details-section">
     <div class="details-column">
@@ -243,11 +228,7 @@ export function renderEpisodeDetail(episode) {
         </div>
         <div class="detail-item">
           <h3>Link</h3>
-          ${
-            link !== "No link available"
-              ? `<a href="${link}" target="_blank">${link}</a>`
-              : `<p>${link}</p>`
-          }
+          ${link !== "No link available" ? `<a href="${link}" target="_blank">${link}</a>` : `<p>${link}</p>`}
         </div>
       </div>
     </div>
@@ -259,29 +240,35 @@ export function renderEpisodeDetail(episode) {
     <div id="guests-list"></div>
   </div>
 </div>
-
 `;
 
-  // Add event listener for the AI Edit button only if it exists
+  // Add event listener for the Studio button
+  const studioButton = document.getElementById("studio-btn");
+  if (studioButton && !studioButton.disabled) {
+    studioButton.addEventListener("click", () => {
+      const podcastId = studioButton.getAttribute("data-podcast-id");
+      const episodeId = studioButton.getAttribute("data-episode-id");
+      // Example action: Navigate to studio page
+      window.location.href = `/studio?podcastId=${podcastId}&episodeId=${episodeId}`;
+      // Alternatively, trigger a custom function:
+      // openStudio(podcastId, episodeId);
+      console.log(`Studio button clicked for podcast ${podcastId}, episode ${episodeId}`);
+    });
+  }
+
+  // Add event listener for the AI Edit button
   const aiEditButton = document.getElementById("ai-edit-episode-btn");
   if (aiEditButton) {
     aiEditButton.addEventListener("click", () => {
       const episodeId = aiEditButton.getAttribute("data-id");
-      const episodeTitle = episode.title || "Untitled Episode"; // Get episode title
-      let aiEditUrl = `/transcription/ai_edits?episodeId=${episodeId}&episodeTitle=${encodeURIComponent(
-        episodeTitle
-      )}`; // Add episodeTitle
-      // Append audioUrl if it exists and the episode is not imported (meaning audio was manually uploaded)
+      const episodeTitle = episode.title || "Untitled Episode";
+      let aiEditUrl = `/transcription/ai_edits?episodeId=${episodeId}&episodeTitle=${encodeURIComponent(episodeTitle)}`;
       if (episode.audioUrl && episode.isImported === false) {
-        // Ensure the URL is properly encoded
         aiEditUrl += `&audioUrl=${encodeURIComponent(episode.audioUrl)}`;
       }
       window.location.href = aiEditUrl;
     });
   }
-
-  // Define the episodeActions container
-  const episodeActions = document.getElementById("episode-actions");
 
   // Back button event listener
   const backButton = document.getElementById("back-to-podcast");
@@ -293,14 +280,8 @@ export function renderEpisodeDetail(episode) {
       if (shared.selectedPodcastId) {
         viewPodcast(shared.selectedPodcastId);
       } else {
-        console.error(
-          "Podcast ID is missing. Cannot navigate back to podcast."
-        );
-        showNotification(
-          "Error",
-          "Podcast ID is missing. Cannot navigate back.",
-          "error"
-        );
+        console.error("Podcast ID is missing. Cannot navigate back to podcast.");
+        showNotification("Error", "Podcast ID is missing. Cannot navigate back.", "error");
       }
     });
   }
@@ -342,37 +323,34 @@ export function renderEpisodeDetail(episode) {
     });
   }
 
-// Add event listener for the Studio button
-const studioBtn = document.getElementById("studio-btn");
-if (studioBtn && !studioBtn.disabled) {
-  studioBtn.addEventListener("click", () => {
-    const podcastId = studioBtn.getAttribute("data-podcast-id");
-    const episodeId = studioBtn.getAttribute("data-episode-id");
-    window.location.href = `/studio?podcastId=${podcastId}&episodeId=${episodeId}`;
-  });
-}
-
-  // Fetch and display guests for the episode
   fetchGuestsByEpisode(episode._id)
     .then((guests) => {
       const guestsListEl = document.getElementById("guests-list");
       if (guestsListEl) {
         guestsListEl.innerHTML = "";
-
         if (guests && guests.length) {
+          console.log("Guests fetched:", JSON.stringify(guests, null, 2));
           const guestsContainer = document.createElement("div");
           guestsContainer.className = "guests-container";
+
+          if (!episode._id) {
+            console.error("Episode ID is undefined or missing:", episode);
+            showNotification("Failed to send invitation: Episode ID is missing", "error");
+            return;
+          }
 
           guests.forEach((guest) => {
             const guestCard = document.createElement("div");
             guestCard.className = "guest-card";
 
             const initials = guest.name
-              .split(" ")
-              .map((word) => word[0])
-              .join("")
-              .substring(0, 2)
-              .toUpperCase();
+              ? guest.name
+                  .split(" ")
+                  .map((word) => word[0])
+                  .join("")
+                  .substring(0, 2)
+                  .toUpperCase()
+              : "NA";
 
             const contentDiv = document.createElement("div");
             contentDiv.className = "guest-info";
@@ -386,14 +364,17 @@ if (studioBtn && !studioBtn.disabled) {
 
             const nameDiv = document.createElement("div");
             nameDiv.className = "guest-name";
-            nameDiv.textContent = guest.name;
+            nameDiv.textContent = guest.name || "Unknown";
 
             const emailDiv = document.createElement("div");
             emailDiv.className = "guest-email";
-            emailDiv.textContent = guest.email;
+            emailDiv.textContent = guest.email || "No email";
 
             infoDiv.appendChild(nameDiv);
             infoDiv.appendChild(emailDiv);
+
+            const buttonContainer = document.createElement("div");
+            buttonContainer.className = "guest-buttons";
 
             const viewProfileBtn = document.createElement("button");
             viewProfileBtn.className = "view-profile-btn";
@@ -404,19 +385,48 @@ if (studioBtn && !studioBtn.disabled) {
               renderGuestDetail(guest);
             });
 
+            const guestId = guest._id || guest.id || guest.guestId;
+            if (guestId) {
+              const inviteGuestBtn = document.createElement("button");
+              inviteGuestBtn.className = "view-profile-btn";
+              inviteGuestBtn.textContent = "Invite Guest";
+              inviteGuestBtn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                try {
+                  console.log("Sending invitation for episode:", episode._id, "guest:", guestId);
+                  const result = await createGuestInvitation(episode._id, guestId);
+                  showNotification(`Invitation sent! Link:`, "success");
+                } catch (error) {
+                  console.error("Error sending invitation:", error);
+                  showNotification(`Failed to send invitation: ${error.message}`, "error");
+                }
+              });
+              buttonContainer.appendChild(inviteGuestBtn);
+            } else {
+              console.warn("No valid guest ID found for guest:", JSON.stringify(guest, null, 2));
+              const errorMsg = document.createElement("span");
+              errorMsg.className = "guest-error";
+              errorMsg.textContent = "Cannot invite: No ID";
+              errorMsg.style.color = "red";
+              errorMsg.style.fontSize = "0.8em";
+              buttonContainer.appendChild(errorMsg);
+            }
+
             guestCard.addEventListener("click", () => {
               renderGuestDetail(guest);
             });
 
             contentDiv.appendChild(avatarDiv);
             contentDiv.appendChild(infoDiv);
+            buttonContainer.appendChild(viewProfileBtn);
             guestCard.appendChild(contentDiv);
-            guestCard.appendChild(viewProfileBtn);
+            guestCard.appendChild(buttonContainer);
             guestsContainer.appendChild(guestCard);
           });
 
           guestsListEl.appendChild(guestsContainer);
         } else {
+          console.log("No guests found for episode:", episode._id);
           const noGuestsContainer = document.createElement("div");
           noGuestsContainer.className = "no-guests-container";
 
@@ -427,7 +437,7 @@ if (studioBtn && !studioBtn.disabled) {
           const addGuestBtn = document.createElement("button");
           addGuestBtn.className = "save-btn guest-btn";
           addGuestBtn.textContent = "Add Guest";
-          addGuestBtn.onclick = function() {
+          addGuestBtn.onclick = function () {
             showAddGuestPopup();
           };
 
