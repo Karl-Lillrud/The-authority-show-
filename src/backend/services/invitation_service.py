@@ -80,49 +80,26 @@ class InvitationService:
     @staticmethod
     def send_session_invitation(email, episode_id, guest_id):
         """
-        Generates an invitation token using guest_to_episode and sends an email with a link to greenroom.html.
+        Assigns guest to episode and sends booking email via /invite-guest.
         """
         try:
-            # Call the guest_to_episode /invite-guest route to create an invite token
-            invite_url = f"http://127.0.0.1:8000/invite-guest"
+            invite_url = "http://127.0.0.1:8000/invite-guest"
             payload = {"episode_id": episode_id, "guest_id": guest_id}
             response = requests.post(invite_url, json=payload)
 
-            logger.info(f"Response from /invite-guest: {response.json()}")
+            data = response.json()
+            logger.info(f"Response from /invite-guest: {data}")
 
             if response.status_code != 201:
-                logger.error(f"Failed to create invite token: {response.json()}")
-                return {"error": "Failed to create invite token"}, 500
+                logger.error(f"Failed to create invite: {data}")
+                return {"error": data.get("error", "Failed to create invite")}, 500
 
-            # Extract the invite token and construct the greenroom link
-            invite_data = response.json()
-            invite_url = invite_data.get("invite_url")
-            if not invite_url:
-                logger.error("Invite URL not found in response")
-                return {"error": "Failed to retrieve invite URL"}, 500
-
-            token = invite_url.split("/")[-1]  # Extract token from the URL
-            logger.info(f"Extracted token: {token}")
-
-            greenroom_url = url_for(
-                "recording_studio_bp.greenroom",
-                _external=True,
-                guestId=guest_id,
-                token=token
-            )
-
-            # Send the invitation email
-            subject = "You're Invited to Join the Recording Session"
-            body = f"Click the link below to join the greenroom:\n\n{greenroom_url}"
-            send_email(email, subject, body)
-
-            logger.info(f"Session invitation email sent to {email}")
             return {
-                "message": "Invitation sent successfully",
-                "greenroom_url": greenroom_url,
-                "token": token
+                "message": "Guest assigned and invitation sent successfully",
+                "greenroom_url": data.get("invite_url")
             }, 201
 
         except Exception as e:
             logger.error(f"Failed to send session invitation: {e}", exc_info=True)
             return {"error": f"Failed to send session invitation: {str(e)}"}, 500
+

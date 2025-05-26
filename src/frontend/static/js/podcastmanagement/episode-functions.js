@@ -10,10 +10,10 @@ import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
 import { showNotification, showConfirmationPopup } from "../components/notifications.js";
-
 import { consumeStoreCredits, getCredits } from "../../../static/requests/creditRequests.js";
 import { incrementUpdateAccount } from "../../../static/requests/accountRequests.js";
 import { showAddGuestPopup } from "./guest-functions.js";
+import { createGuestInvitation } from "../../../static/requests/invitationRequests.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -342,112 +342,147 @@ export function renderEpisodeDetail(episode) {
     });
   }
 
-// Add event listener for the Studio button
-const studioBtn = document.getElementById("studio-btn");
-if (studioBtn && !studioBtn.disabled) {
-  studioBtn.addEventListener("click", () => {
-    const podcastId = studioBtn.getAttribute("data-podcast-id");
-    const episodeId = studioBtn.getAttribute("data-episode-id");
-    window.location.href = `/studio?podcastId=${podcastId}&episodeId=${episodeId}`;
-  });
-}
+fetchGuestsByEpisode(episode._id)
+  .then((guests) => {
+    const guestsListEl = document.getElementById("guests-list");
+    if (guestsListEl) {
+      guestsListEl.innerHTML = "";
 
-  // Fetch and display guests for the episode
-  fetchGuestsByEpisode(episode._id)
-    .then((guests) => {
-      const guestsListEl = document.getElementById("guests-list");
-      if (guestsListEl) {
-        guestsListEl.innerHTML = "";
+      if (guests && guests.length) {
+        console.log("Guests fetched:", JSON.stringify(guests, null, 2)); // Log guest objects
+        const guestsContainer = document.createElement("div");
+        guestsContainer.className = "guests-container";
 
-        if (guests && guests.length) {
-          const guestsContainer = document.createElement("div");
-          guestsContainer.className = "guests-container";
+        // Validate episode._id
+        if (!episode._id) {
+          console.error("Episode ID is undefined or missing:", episode);
+          showNotification("Failed to send invitation: Episode ID is missing", "error");
+          return;
+        }
 
-          guests.forEach((guest) => {
-            const guestCard = document.createElement("div");
-            guestCard.className = "guest-card";
+        guests.forEach((guest) => {
+          const guestCard = document.createElement("div");
+          guestCard.className = "guest-card";
 
-            const initials = guest.name
-              .split(" ")
-              .map((word) => word[0])
-              .join("")
-              .substring(0, 2)
-              .toUpperCase();
+          const initials = guest.name
+            ? guest.name
+                .split(" ")
+                .map((word) => word[0])
+                .join("")
+                .substring(0, 2)
+                .toUpperCase()
+            : "NA";
 
-            const contentDiv = document.createElement("div");
-            contentDiv.className = "guest-info";
+          const contentDiv = document.createElement("div");
+          contentDiv.className = "guest-info";
 
-            const avatarDiv = document.createElement("div");
-            avatarDiv.className = "guest-avatar";
-            avatarDiv.textContent = initials;
+          const avatarDiv = document.createElement("div");
+          avatarDiv.className = "guest-avatar";
+          avatarDiv.textContent = initials;
 
-            const infoDiv = document.createElement("div");
-            infoDiv.className = "guest-content";
+          const infoDiv = document.createElement("div");
+          infoDiv.className = "guest-content";
 
-            const nameDiv = document.createElement("div");
-            nameDiv.className = "guest-name";
-            nameDiv.textContent = guest.name;
+          const nameDiv = document.createElement("div");
+          nameDiv.className = "guest-name";
+          nameDiv.textContent = guest.name || "Unknown";
 
-            const emailDiv = document.createElement("div");
-            emailDiv.className = "guest-email";
-            emailDiv.textContent = guest.email;
+          const emailDiv = document.createElement("div");
+          emailDiv.className = "guest-email";
+          emailDiv.textContent = guest.email || "No email";
 
-            infoDiv.appendChild(nameDiv);
-            infoDiv.appendChild(emailDiv);
+          infoDiv.appendChild(nameDiv);
+          infoDiv.appendChild(emailDiv);
 
-            const viewProfileBtn = document.createElement("button");
-            viewProfileBtn.className = "view-profile-btn";
-            viewProfileBtn.textContent = "View Profile";
+          // Button container for better styling
+          const buttonContainer = document.createElement("div");
+          buttonContainer.className = "guest-buttons";
 
-            viewProfileBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              renderGuestDetail(guest);
-            });
+          const viewProfileBtn = document.createElement("button");
+          viewProfileBtn.className = "view-profile-btn";
+          viewProfileBtn.textContent = "View Profile";
 
-            guestCard.addEventListener("click", () => {
-              renderGuestDetail(guest);
-            });
-
-            contentDiv.appendChild(avatarDiv);
-            contentDiv.appendChild(infoDiv);
-            guestCard.appendChild(contentDiv);
-            guestCard.appendChild(viewProfileBtn);
-            guestsContainer.appendChild(guestCard);
+          viewProfileBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            renderGuestDetail(guest);
           });
 
-          guestsListEl.appendChild(guestsContainer);
-        } else {
-          const noGuestsContainer = document.createElement("div");
-          noGuestsContainer.className = "no-guests-container";
+          // Check for guest ID (_id, id, or guestId)
+          const guestId = guest._id || guest.id || guest.guestId;
+          if (guestId) {
+            const inviteGuestBtn = document.createElement("button");
+            inviteGuestBtn.className = "invite-guest-btn";
+            inviteGuestBtn.textContent = "Invite Guest";
+            inviteGuestBtn.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              try {
+                console.log("Sending invitation for episode:", episode._id, "guest:", guestId);
+                const result = await createGuestInvitation(episode._id, guestId);
+                showNotification(`Invitation sent! Link: ${result.inviteUrl}`, "success");
+                console.log("Invitation link:", result.inviteUrl); // Log link for clicking
+                // Redirect to greenroom.html
+                window.location.href = `/greenroom?episodeId=${episode._id}&guestId=${guestId}`;
+              } catch (error) {
+                console.error("Error sending invitation:", error);
+                showNotification(`Failed to send invitation: ${error.message}`, "error");
+              }
+            });
+            buttonContainer.appendChild(inviteGuestBtn);
+          } else {
+            console.warn("No valid guest ID found for guest:", JSON.stringify(guest, null, 2));
+            const errorMsg = document.createElement("span");
+            errorMsg.className = "guest-error";
+            errorMsg.textContent = "Cannot invite: No ID";
+            errorMsg.style.color = "red";
+            errorMsg.style.fontSize = "0.8em";
+            buttonContainer.appendChild(errorMsg);
+          }
 
-          const noGuestsMsg = document.createElement("p");
-          noGuestsMsg.className = "no-guests-message";
-          noGuestsMsg.textContent = "No guests to display.";
+          guestCard.addEventListener("click", () => {
+            renderGuestDetail(guest);
+          });
 
-          const addGuestBtn = document.createElement("button");
-          addGuestBtn.className = "save-btn guest-btn";
-          addGuestBtn.textContent = "Add Guest";
-          addGuestBtn.onclick = function() {
-            showAddGuestPopup();
-          };
+          contentDiv.appendChild(avatarDiv);
+          contentDiv.appendChild(infoDiv);
+          buttonContainer.appendChild(viewProfileBtn);
+          guestCard.appendChild(contentDiv);
+          guestCard.appendChild(buttonContainer);
+          guestsContainer.appendChild(guestCard);
+        });
 
-          noGuestsContainer.appendChild(noGuestsMsg);
-          noGuestsContainer.appendChild(addGuestBtn);
-          guestsListEl.appendChild(noGuestsContainer);
-        }
+        guestsListEl.appendChild(guestsContainer);
+      } else {
+        console.log("No guests found for episode:", episode._id);
+        const noGuestsContainer = document.createElement("div");
+        noGuestsContainer.className = "no-guests-container";
+
+        const noGuestsMsg = document.createElement("p");
+        noGuestsMsg.className = "no-guests-message";
+        noGuestsMsg.textContent = "No guests to display.";
+
+        const addGuestBtn = document.createElement("button");
+        addGuestBtn.className = "save-btn guest-btn";
+        addGuestBtn.textContent = "Add Guest";
+        addGuestBtn.onclick = function() {
+          showAddGuestPopup();
+        };
+
+        noGuestsContainer.appendChild(noGuestsMsg);
+        noGuestsContainer.appendChild(addGuestBtn);
+        guestsListEl.appendChild(noGuestsContainer);
       }
-    })
-    .catch((error) => {
-      console.error("Error fetching guests:", error);
-      const guestsListEl = document.getElementById("guests-list");
-      if (guestsListEl) {
-        const errorMsg = document.createElement("p");
-        errorMsg.className = "error-message";
-        errorMsg.textContent = "No guests to display.";
-        guestsListEl.appendChild(errorMsg);
-      }
-    });
-
+    }
+  })
+  .catch((error) => {
+    console.error("Error fetching guests:", error);
+    const guestsListEl = document.getElementById("guests-list");
+    if (guestsListEl) {
+      const errorMsg = document.createElement("p");
+      errorMsg.className = "error-message";
+      errorMsg.textContent = "No guests to display.";
+      guestsListEl.appendChild(errorMsg);
+    }
+  });
   // Update edit buttons after rendering
   updateEditButtons();
 }

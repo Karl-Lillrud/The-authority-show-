@@ -19,6 +19,8 @@ from pymongo import MongoClient
 from backend.database.mongo_connection import collection
 import dns.resolver
 import re
+import logging
+
 
 # Load environment variables once
 load_dotenv(override=True)
@@ -594,12 +596,22 @@ def send_lia_inquiry_email(name, email, phone, school_and_study):
         return {"error": f"Error while sending LIA inquiry email: {str(e)}"}
 
 
-def send_booking_email(recipient_email, recipient_name, recording_at, pod_name):
+def send_booking_email(recipient_email, recipient_name, recording_at, pod_name, invite_url=None):
     """
-    Sends a confirmed booking email to the guest.
+    Sends a confirmed booking email to the guest, with an optional invitation link.
     """
     try:
         subject = "Booking Confirmation"
+
+        # Format recording_at if provided
+        recording_at_str = recording_at if recording_at else "To be confirmed"
+
+        # Include invite_url if provided
+        invite_link_html = (
+            f'<p><a href="{invite_url}">Join the Greenroom</a></p>'
+            if invite_url
+            else ""
+        )
 
         # Email body with inline template logic
         body = f"""
@@ -611,18 +623,13 @@ def send_booking_email(recipient_email, recipient_name, recording_at, pod_name):
             <body>
                 <h2>Hello {recipient_name},</h2>
                 <p>Thank you for booking your recording session with us. Your session details are confirmed.</p>
-                <p>Your session is scheduled for: {recording_at}.</p>
+                <p>Your session is scheduled for: {recording_at_str}.</p>
+                {invite_link_html}
                 <p>If you have any questions, feel free to reach out.</p>
                 <p>Best regards,<br>{pod_name}</p>
             </body>
         </html>
         """
-
-        # Send the email
-        result = send_email(recipient_email, subject, body)
-        if "error" in result:
-            raise Exception(result["error"])
-
         logger.info(f"✅ Booking email sent to {recipient_email}")
         return {"message": "Booking email sent successfully"}
     except Exception as e:

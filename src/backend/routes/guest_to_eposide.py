@@ -26,19 +26,71 @@ def create_invitation():
     if not episode_id or not guest_id:
         return jsonify({"error": "Both episode_id and guest_id are required"}), 400
 
+    # Validate episode exists
+    episode = collection.database.Episodes.find_one({"_id": episode_id})
+    if not episode:
+        return jsonify({"error": "Episode not found"}), 404
+
+    # Fetch guest details
+    guest = collection.database.Guests.find_one({"_id": guest_id})
+    if not guest:
+        return jsonify({"error": "Guest not found"}), 404
+    if not guest.get("email"):
+        return jsonify({"error": "Guest has no email address"}), 400
+
+    # Fetch podcast details
+    podcast = collection.database.Podcasts.find_one({"_id": episode.get("podcastId")})
+    pod_name = podcast.get("podName", "Your Podcast") if podcast else "Your Podcast"
+
+    # Generate token and invitation record
     invite_token = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
     invitation = {
         "guest_id": guest_id,
         "episode_id": episode_id,
+        "email": guest.get("email"),
         "token": invite_token,
-        "created_at": datetime.now(timezone.utc),
-        "accepted": False
+        "created_at": now,
+        "accepted": True,
+        "accepted_at": now
     }
 
     invitations_collection.insert_one(invitation)
-    invite_url = f"/accept-invite/{invite_token}"
-    return jsonify({"message": "Invitation created", "invite_url": invite_url}), 201
 
+    # Assign guest to episode
+    assignments_collection.insert_one({
+        "guest_id": guest_id,
+        "episode_id": episode_id,
+        "assigned_at": now
+    })
+
+    # Generate invite URL
+    invite_url = f"{request.host_url}greenroom?episodeId={episode_id}&guestId={guest_id}&token={invite_token}"
+    logger.info(f"Invitation created for guest {guest_id} to episode {episode_id}: {invite_url}")
+
+    # Send booking email
+    try:
+        result = send_booking_email(
+            recipient_email=guest.get("email"),
+            recipient_name=guest.get("name", "Guest"),
+            recording_at=episode.get("recordingAt"),
+            pod_name=pod_name,
+            invite_url=invite_url
+        )
+        if "error" in result:
+            logger.error(f"Failed to send email: {result['error']}")
+            return jsonify({"error": f"Failed to send email: {result['error']}"}), 500
+    except Exception as e:
+        logger.error(f"Error sending invitation email: {e}", exc_info=True)
+        return jsonify({"error": f"Failed to send email: {str(e)}"}), 500
+
+    return jsonify({
+        "message": "Invitation created, guest assigned, and email sent",
+        "invite_url": invite_url,
+        "token": invite_token
+    }), 201
+
+    
 # 2️⃣ Guest accepts the invite via URL
 @guesttoepisode_bp.route("/accept-invite/<token>", methods=["GET"])
 def accept_invitation(token):
