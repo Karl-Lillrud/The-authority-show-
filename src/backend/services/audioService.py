@@ -908,7 +908,7 @@ class AudioService:
 
                     sfx = AudioSegment.from_file(BytesIO(clip["audio_bytes"]), format="wav")
                     sfx = sfx.fade_in(300).fade_out(300)
-                    sfx = sfx - 3  # Slightly lower volume
+                    sfx = sfx - 10  # Slightly lower volume
                     mixed = mixed.overlay(sfx, position=start_ms)
 
                     logger.info(f"✔️ Mixed SFX {i+1}/{len(sfx_clips)} at {start_ms}ms")
