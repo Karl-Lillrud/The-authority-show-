@@ -1,36 +1,36 @@
-from marshmallow import Schema, fields
-from backend.models.podtasks import PodtaskSchema
+from pydantic import BaseModel, EmailStr, HttpUrl
+from typing import Optional, List, Dict
 
+class Podcast(BaseModel):
+    id: Optional[str] = None
+    teamId: Optional[str] = None
+    accountId: str  # Required
+    podName: str  # Required
 
-class PodcastSchema(Schema):
-    id = fields.Str()
-    teamId = fields.Str()
-    accountId = fields.Str(required=True)  # Ensure account is provided
-    podName = fields.Str(required=True)  # Podcast name must be required
-    ownerName = fields.Str(allow_none=True)
-    hostName = fields.Str(allow_none=True)
-    rssFeed = fields.Url(allow_none=True)
-    googleCal = fields.String(allow_none=True)  # Allow null values
-    guestUrl = fields.String(allow_none=True)  # Allow null values
-    socialMedia = fields.List(fields.String(), allow_none=True)
-    email = fields.Email(allow_none=True)
-    description = fields.Str(allow_none=True)
-    logoUrl = fields.Str(allow_none=True)  # Changed from fields.Url to fields.Str
-    category = fields.Str(allow_none=True)
-    podUrl = fields.Url(allow_none=True)
-    title = fields.Str(allow_none=True)  # Added field
-    language = fields.Str(allow_none=True)  # Added field
-    author = fields.Str(allow_none=True)  # Added field
-    copyright_info = fields.Str(allow_none=True)  # Added field
-    imageUrl = fields.Str(allow_none=True)  # Added field
-    podRss = fields.Str(allow_none=True)  # Ensure this field is included
-    generator = fields.Str(allow_none=True)  # Added field
-    lastBuildDate = fields.Str(allow_none=True)  # Added field
-    itunesType = fields.Str(allow_none=True)  # Added field
-    link = fields.Str(allow_none=True)  # Added field
-    itunesOwner = fields.Dict(allow_none=True)  # Added field
-    bannerUrl = fields.Str(allow_none=True)  # Added field
-    tagline = fields.Str(allow_none=True)  # Added field
-    hostBio = fields.Str(allow_none=True)  # Added field
-    hostImage = fields.Str(allow_none=True)  # Added field
-    isImported = fields.Bool(allow_none=True, load_default=False)  # Added field, default to False
+    ownerName: Optional[str] = None
+    hostName: Optional[str] = None
+    rssFeed: Optional[HttpUrl] = None
+    googleCal: Optional[str] = None
+    guestUrl: Optional[str] = None
+    socialMedia: Optional[List[str]] = None
+    email: Optional[EmailStr] = None
+    description: Optional[str] = None
+    logoUrl: Optional[str] = None
+    category: Optional[str] = None
+    podUrl: Optional[HttpUrl] = None
+    title: Optional[str] = None
+    language: Optional[str] = None
+    author: Optional[str] = None
+    copyright_info: Optional[str] = None
+    imageUrl: Optional[str] = None
+    podRss: Optional[str] = None
+    generator: Optional[str] = None
+    lastBuildDate: Optional[str] = None
+    itunesType: Optional[str] = None
+    link: Optional[str] = None
+    itunesOwner: Optional[Dict] = None
+    bannerUrl: Optional[str] = None
+    tagline: Optional[str] = None
+    hostBio: Optional[str] = None
+    hostImage: Optional[str] = None
+    isImported: Optional[bool] = False  # Default value

@@ -74,12 +74,20 @@ def get_outbox():
                 for trigger_name, is_sent in email_data["triggers"].items():
                     if is_sent:
                         # Fetch the episode
-                        episode = episode_collection.find_one({"_id": episode_id})
+                        episode = episode_collection.find_one({"id": episode_id}) # Changed _id to id
                         if not episode:
                             continue
 
-                        # Fetch the guest using the `guid` field
-                        guest = guest_collection.find_one({"_id": episode.get("guid")})
+                        # Fetch the guest using the `guid` field which might store an ID
+                        # If guid stores an 'id' that was previously an '_id', this query is fine.
+                        # If guid itself is the field name in Guests collection that needs to be 'id':
+                        # guest = guest_collection.find_one({"id": episode.get("guid")})
+                        # Assuming guid stores the value of the guest's ID.
+                        guest_doc_id_value = episode.get("guid")
+                        guest = None
+                        if guest_doc_id_value:
+                             guest = guest_collection.find_one({"id": guest_doc_id_value}) # Query Guests by id
+                        
                         guest_email = guest["email"] if guest else "Unknown"
 
                         # Render the email content dynamically

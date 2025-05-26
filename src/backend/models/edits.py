@@ -1,19 +1,21 @@
-from marshmallow import Schema, fields
+from pydantic import BaseModel, Field, HttpUrl
+from typing import Optional, List, Dict
+from datetime import datetime
 
-class EditSchema(Schema):
-    id = fields.Str()
-    episodeId = fields.Str(required=True)
-    userId = fields.Str(required=True)  # Vem som gjorde redigeringen
-    editType = fields.Str(required=True)  # "enhance", "isolate", "ai_cut", etc.
-    clipName = fields.Str()
-    duration = fields.Int()
-    createdAt = fields.DateTime()
-    clipUrl = fields.Url(required=True)  # Azure blob URL
-    status = fields.Str()  # t.ex. "done", "processing", "error"
-    tags = fields.List(fields.Str())
+class Edit(BaseModel):
+    id: Optional[str] = None
+    episodeId: str
+    userId: str  # Vem som gjorde redigeringen
+    editType: str  # "enhance", "isolate", "ai_cut", etc.
+    clipName: Optional[str] = None
+    duration: Optional[int] = None
+    createdAt: Optional[datetime] = None
+    clipUrl: HttpUrl  # Azure blob URL
+    status: Optional[str] = None  # t.ex. "done", "processing", "error"
+    tags: List[str] = []
 
     # Nya fält:
-    transcript = fields.Str()  # transkription av klippet
-    sentiment = fields.Dict()  # t.ex. {"positive": 0.9, "neutral": 0.1, "negative": 0.0}
-    metadata = fields.Dict()  # Övrig data som {"filename": "...", "source": "..."}
-    emotion = fields.Dict()  # Emotionell analys av klippet, t.ex. {"happy": 0.8, "sad": 0.1, "angry": 0.1}
+    transcript: Optional[str] = None  # transkription av klippet
+    sentiment: Optional[Dict[str, float]] = None  # t.ex. {"positive": 0.9, ...}
+    metadata: Optional[Dict[str, str]] = None  # {"filename": "...", "source": "..."}
+    emotion: Optional[Dict[str, float]] = None  # {"happy": 0.8, ...}

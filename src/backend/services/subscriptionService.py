@@ -319,7 +319,7 @@ class SubscriptionService:
 
             # Also record in the subscriptions collection
             subscription_data = {
-                "_id": str(uuid.uuid4()),
+                "id": str(uuid.uuid4()),
                 "user_id": user_id,
                 "plan": account.get("subscriptionPlan", "FREE"),
                 "amount": amount_paid,
@@ -446,7 +446,7 @@ class SubscriptionService:
 
             # Create a new subscription record
             subscription_data = {
-                "_id": str(uuid.uuid4()),
+                "id": str(uuid.uuid4()),
                 "user_id": user_id,
                 "plan": plan_name,
                 "amount": amount_paid,
@@ -716,7 +716,7 @@ class SubscriptionService:
 
             # Create a new subscription record
             subscription_data = {
-                "_id": str(uuid.uuid4()),
+                "id": str(uuid.uuid4()),
                 "user_id": user_id,
                 "plan": plan_name,  # Make sure it's the correct case
                 "amount": amount_paid,

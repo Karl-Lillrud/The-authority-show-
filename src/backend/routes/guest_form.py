@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import os
 from backend.repository.user_repository import UserRepository
 from google.auth.transport.requests import Request
+import uuid
 
 guest_form_bp = Blueprint("guest_form_bp", __name__)  # Use a unique name for the blueprint
 logger = logging.getLogger(__name__)
@@ -164,7 +165,7 @@ def update_guest_calendar_event_id(guest_id, event_id):
     """
     try:
         collection.database.Guests.update_one(
-            {"_id": guest_id},
+            {"id": guest_id},  # Changed _id to id
             {"$set": {"calendarEventId": event_id}}
         )
         logger.info(f"Updated guest {guest_id} with calendar event ID {event_id}")
@@ -199,8 +200,14 @@ def save_guest_to_db(data):
         "calendarEventId": data.get("calendarEventId")  # Store the calendar event ID
     }
     # Save the guest data to the guests collection
-    guest_id = collection.database.Guests.insert_one(guest_data).inserted_id
-    return guest_id
+    # Ensure guest_data uses "id" if it's to be the primary key
+    if "guestId" in guest_data and ("id" not in guest_data or not guest_data["id"]):
+        guest_data["id"] = guest_data.pop("guestId")
+    elif "id" not in guest_data or not guest_data["id"]:
+        guest_data["id"] = str(uuid.uuid4()) # Or however IDs are generated
+
+    guest_id_val = collection.database.Guests.insert_one(guest_data).inserted_id # Renamed guest_id to guest_id_val
+    return guest_id_val # This will be the value of the 'id' field
 
 # RENAMED this route function to avoid the naming conflict
 @guest_form_bp.route("/create-google-calendar-event", methods=["POST"])
@@ -290,7 +297,7 @@ def create_calendar_event_route():
         if guest_id:
             try:
                 collection.database.Guests.update_one(
-                    {"_id": guest_id},
+                    {"id": guest_id}, # Changed _id to id
                     {"$set": {"calendarEventId": event_result['id']}}
                 )
                 logger.info(f"Updated guest {guest_id} with new calendar event ID {event_result['id']}")

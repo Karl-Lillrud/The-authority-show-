@@ -1,11 +1,12 @@
-from marshmallow import Schema, fields
+from pydantic import BaseModel
+from typing import Optional, List, Dict
+from datetime import datetime
 
-# No required fields for the moment.
-class WorkflowSchema(Schema):
-    _id = fields.Str()
-    user_id = fields.Str()
-    episode_id = fields.Str()
-    tasks = fields.List(fields.Dict())
-    created_at = fields.DateTime()
-    name = fields.Str()
-    description = fields.Str()
+class Workflow(BaseModel):
+    id: Optional[str] = None  # Changed from _id to id for Pydantic compatibility
+    user_id: Optional[str] = None
+    episode_id: Optional[str] = None
+    tasks: Optional[List[Dict]] = []
+    created_at: Optional[datetime] = None
+    name: Optional[str] = None
+    description: Optional[str] = None

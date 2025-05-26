@@ -1,30 +1,37 @@
-from marshmallow import Schema, fields, validate
+from pydantic import BaseModel, Field, validator
+from typing import Optional, List, Dict
 from datetime import datetime
 import uuid
 
-class CreditHistoryEntrySchema(Schema):
-    """Schema for a single entry in the credit history."""
-    _id = fields.Str(load_default=lambda: str(uuid.uuid4()))
-    timestamp = fields.DateTime(load_default=datetime.utcnow)
-    type = fields.Str(required=True, validate=validate.OneOf(
-        ["initial_sub", "initial_user", "purchase", "monthly_sub_grant", "consumption", "sub_reset", "user_reset", "adjustment"]
-    ))
-    amount = fields.Int(required=True) # Can be positive (grant/purchase) or negative (consumption/reset)
-    description = fields.Str(required=True)
-    balance_after = fields.Dict(keys=fields.Str(), values=fields.Int(), required=False) # Optional: store sub/user balance after tx
+class CreditHistoryEntry(BaseModel):
+    """Pydantic model for a single entry in the credit history."""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))  # Changed from _id to id
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    type: str = Field(..., description="One of allowed types")
+    amount: int  # Can be positive (grant/purchase) or negative (consumption/reset)
+    description: str
+    balance_after: Optional[Dict[str, int]] = None  # Optional: sub/user balance after tx
 
-class CreditsSchema(Schema):
-    """Schema for the main user credits document."""
-    _id = fields.Str(load_default=lambda: str(uuid.uuid4()))
-    user_id = fields.Str(required=True)
-    subCredits = fields.Int(load_default=0, validate=validate.Range(min=0)) # Current month's Sub credits
-    storeCredits = fields.Int(load_default=0, validate=validate.Range(min=0)) # Purchased credits
-    # availableCredits is calculated, not stored
-    usedCredits = fields.Int(load_default=0, validate=validate.Range(min=0)) # Lifetime used credits
-    lastUpdated = fields.DateTime(load_default=datetime.utcnow) # Tracks last update, crucial for reset
-    carryOverstoreCredits = fields.Bool(load_default=True) # Determines if storeCredits reset monthly
-    lastSubResetMonth = fields.Int(allow_none=True) # Store the month (1-12) of the last subCredits reset
-    lastSubResetYear = fields.Int(allow_none=True) # Store the year of the last subCredits reset
-    creditsHistory = fields.List(fields.Nested(CreditHistoryEntrySchema), load_default=list)
+    @validator('type')
+    def validate_type(cls, v):
+        allowed = {
+            "initial_sub", "initial_user", "purchase", "monthly_sub_grant",
+            "consumption", "sub_reset", "user_reset", "adjustment"
+        }
+        if v not in allowed:
+            raise ValueError(f"Invalid type: {v}")
+        return v
 
-    
+
+class Credits(BaseModel):
+    """Pydantic model for the main user credits document."""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))  # Changed from _id to id
+    user_id: str
+    subCredits: int = Field(default=0, ge=0)
+    storeCredits: int = Field(default=0, ge=0)
+    usedCredits: int = Field(default=0, ge=0)
+    lastUpdated: datetime = Field(default_factory=datetime.utcnow)
+    carryOverstoreCredits: bool = True
+    lastSubResetMonth: Optional[int] = None  # Should be 1–12 if provided
+    lastSubResetYear: Optional[int] = None
+    creditsHistory: List[CreditHistoryEntry] = Field(default_factory=list)

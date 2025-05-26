@@ -27,14 +27,14 @@ invite_id = str(uuid.uuid4())
 
 # Users
 db.Users.insert_one({
-    "_id": user_id,
+    "id": user_id,
     "email": email,
     "createdAt": fake.date_time_this_year().isoformat()
 })
 
 # Accounts
 db.Accounts.insert_one({
-    "_id": account_id,
+    "id": account_id,
     "userId": user_id,
     "subscriptionId": str(uuid.uuid4()),
     "email": email,
@@ -51,7 +51,7 @@ db.Accounts.insert_one({
 
 # Podcasts
 db.Podcasts.insert_one({
-    "_id": podcast_id,
+    "id": podcast_id,
     "teamId": None,
     "accountId": account_id,
     "podName": "Dev Podcast",
@@ -68,7 +68,7 @@ db.Podcasts.insert_one({
 
 # Episodes
 db.Episodes.insert_one({
-    "_id": episode_id,
+    "id": episode_id,
     "podcast_id": podcast_id,
     "title": "Welcome to Testing",
     "description": "Sample episode",
@@ -83,7 +83,7 @@ db.Episodes.insert_one({
 
 # Guests
 db.Guests.insert_one({
-    "_id": guest_id,
+    "id": guest_id,
     "episodeId": episode_id,
     "name": fake.name(),
     "email": "guest@example.com",
@@ -96,7 +96,7 @@ db.Guests.insert_one({
 
 # Podtasks
 db.Podtasks.insert_one({
-    "_id": task_id,
+    "id": task_id,
     "podcastId": podcast_id,
     "name": "Review Episode",
     "action": "listen",
@@ -109,7 +109,7 @@ db.Podtasks.insert_one({
 
 # Teams
 db.Teams.insert_one({
-    "_id": team_id,
+    "id": team_id,
     "name": "QA Team",
     "email": email,
     "phone": "",
@@ -123,7 +123,7 @@ db.Teams.insert_one({
 
 # UsersToTeams
 db.UsersToTeams.insert_one({
-    "_id": user_to_team_id,
+    "id": user_to_team_id,
     "userId": user_id,
     "teamId": team_id,
     "role": "creator",
@@ -136,7 +136,7 @@ user_to_team_id_2 = str(uuid.uuid4())
 
 # Team entry
 db.Teams.insert_one({
-    "_id": secondary_team_id,
+    "id": secondary_team_id,
     "name": "Dev Collab Team",
     "email": "anotherlead@example.com",  # Team lead
     "phone": "+1234567890",
@@ -151,7 +151,7 @@ db.Teams.insert_one({
 
 # UsersToTeams entry for test user
 db.UsersToTeams.insert_one({
-    "_id": user_to_team_id_2,
+    "id": user_to_team_id_2,
     "userId": user_id,
     "teamId": secondary_team_id,
     "role": "member",

@@ -1,15 +1,14 @@
-from marshmallow import Schema, fields
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+from datetime import datetime
 
-class UserSchema(Schema):
-    id = fields.Str() 
-    email = fields.Email(required=True)
-    fullName = fields.Str(allow_none=True)
-    phone = fields.Str(allow_none=True)
-    createdAt = fields.DateTime()
-    referralCode = fields.Str()
-    referredBy = fields.Str(allow_none=True)
-
-class User:
-    googleCal: str  # Store the publicly shareable calendar link
-    googleCalRefreshToken: str  # Store the Google Calendar refresh token
-    googleCal: str  # Store the publicly shareable calendar link
+class User(BaseModel):
+    id: Optional[str] = None
+    email: EmailStr
+    fullName: Optional[str] = None
+    phone: Optional[str] = None
+    createdAt: Optional[datetime] = None
+    referralCode: Optional[str] = None
+    referredBy: Optional[str] = None
+    googleCal: Optional[str] = None  # Offentlig kalenderlänk
+    googleCalRefreshToken: Optional[str] = None  # Google Calendar refresh token
