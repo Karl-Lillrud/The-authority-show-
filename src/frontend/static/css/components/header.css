@@ -518,6 +518,7 @@ header #header-wrapper {
   padding: 0.3rem 0.8rem;
   border-radius: 2rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 5px;
 }
 
 .credit-text {
