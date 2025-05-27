@@ -375,7 +375,7 @@ header #header-wrapper {
   font-size: 14px;
 }
 #logout-link {
-  color: var(--error-color);
+  color: var(--highlight-color);
 }
 #cancel-logout {
   background: #f1f1f1;
