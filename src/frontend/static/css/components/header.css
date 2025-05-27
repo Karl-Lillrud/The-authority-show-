@@ -373,6 +373,9 @@ header #header-wrapper {
   cursor: pointer;
   font-size: 14px;
 }
+#logout-link {
+  color: var(--error-color);
+}
 #cancel-logout {
   background: #f1f1f1;
   color: #333;
@@ -400,9 +403,6 @@ header #header-wrapper {
 .custom-dropdown:hover {
     box-shadow: 0 4px 10px rgba(255, 115, 0, 0.4); /* Keep original hover effect */
 }
-
-  
-  
 
 .custom-dropdown .dropdown-lp-selected {
   padding: var(--spacing-xs) var(--spacing-xs); /* Minskad padding */
