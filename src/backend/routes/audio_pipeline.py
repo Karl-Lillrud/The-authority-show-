@@ -22,6 +22,16 @@ audio_service = AudioService()
 episode_repo = EpisodeRepository()
 transcription_service = TranscriptionService()
 
+def safe_consume_credits_after_success(user_id: str, credit_type: Optional[str], step_fn):
+    try:
+        result = step_fn()
+        if credit_type:
+            consume_credits(user_id, credit_type)
+        return result
+    except Exception as e:
+        logger.error(f"Error in GPT step: {str(e)}", exc_info=True)
+        raise
+
 @audio_pipeline_bp.route("/audio/process_pipeline", methods=["POST"])
 def process_audio_pipeline():
     """
@@ -203,90 +213,82 @@ def process_audio_pipeline():
                         if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "plan_and_mix_sfx":
-                        current_audio, temp_path, result = process_plan_and_mix_sfx_step(
-                            current_audio, temp_path, temp_dir, word_timestamps
-                        )
+                        current_audio, temp_path, result = process_plan_and_mix_sfx_step(current_audio, temp_path, temp_dir, word_timestamps)
                         metadata["steps_applied"].append(step)
                         metadata["sfx_plan"] = result.get("sfx_plan", [])
                         metadata["sfx_clips"] = result.get("sfx_clips", [])
                         if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "clean_transcript":
-                        cleaned = transcription_service.get_clean_transcript(metadata["transcript"])
+                        cleaned = safe_consume_credits_after_success(user_id, credit_type, lambda: transcription_service.get_clean_transcript(metadata["transcript"]))
                         metadata["steps_applied"].append(step)
                         metadata["clean_transcript"] = cleaned
-                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "generate_show_notes":
-                        notes = transcription_service.get_show_notes(metadata["transcript"])
+                        notes = safe_consume_credits_after_success(user_id, credit_type, lambda: transcription_service.get_show_notes(metadata["transcript"]))
                         metadata["steps_applied"].append(step)
                         metadata["show_notes"] = notes
-                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "ai_suggestions":
-                        suggestions = transcription_service.get_ai_suggestions(metadata["transcript"])
+                        suggestions = safe_consume_credits_after_success(user_id, credit_type, lambda: transcription_service.get_ai_suggestions(metadata["transcript"]))
                         metadata["steps_applied"].append(step)
                         metadata["ai_suggestions"] = suggestions
-                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "generate_quotes":
-                        quotes = transcription_service.get_quotes(metadata["transcript"])
+                        quotes = safe_consume_credits_after_success(user_id, credit_type, lambda: transcription_service.get_quotes(metadata["transcript"]))
                         metadata["steps_applied"].append(step)
                         metadata["quotes"] = quotes
-                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "generate_quote_images":
                         quotes = metadata.get("quotes", "")
                         if not quotes:
                             raise ValueError("No quotes found to generate images from")
                         quotes_list = [q.strip() for q in quotes.split("\n\n") if q.strip()]
-                        images = transcription_service.get_quote_images(quotes_list, method="local")
+                        images = safe_consume_credits_after_success(user_id, credit_type, lambda: transcription_service.get_quote_images(quotes_list, method="local"))
                         metadata["steps_applied"].append(step)
                         metadata["quote_images"] = images
-                        if credit_type: consume_credits(user_id, credit_type)
-
 
                     elif step == "osint_lookup":
                         guest_name = request.form.get("osint_query", "").strip()
                         if not guest_name:
                             raise ValueError("Missing guest name for OSINT")
-                        osint_result = get_osint_info(guest_name)
+                        osint_result = safe_consume_credits_after_success(user_id, credit_type, lambda: get_osint_info(guest_name))
                         metadata["steps_applied"].append(step)
                         metadata["osint"] = osint_result
-                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "generate_intro_outro":
                         guest_name = request.form.get("osint_query", "").strip()
                         raw_transcript = metadata.get("raw_transcription", "")
                         if not guest_name or not raw_transcript:
                             raise ValueError("Missing guest name or raw transcript")
-                        osint_data = get_osint_info(guest_name)
-                        intro_outro_script = create_podcast_scripts_paid(osint_data, guest_name, raw_transcript)
+                        def generate_script():
+                            osint_data = get_osint_info(guest_name)
+                            return create_podcast_scripts_paid(osint_data, guest_name, raw_transcript)
+                        intro_outro_script = safe_consume_credits_after_success(user_id, credit_type, generate_script)
                         metadata["steps_applied"].append(step)
                         metadata["intro_outro_script"] = intro_outro_script
-                        if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "intro_outro_to_speech":
                         script = metadata.get("intro_outro_script", "")
                         if not script:
                             raise ValueError("Intro/outro script is missing")
-                        audio_bytes = text_to_speech_with_elevenlabs(script)
-                        b64 = base64.b64encode(audio_bytes).decode("utf-8")
+                        def convert_to_audio():
+                            audio_bytes = text_to_speech_with_elevenlabs(script)
+                            return base64.b64encode(audio_bytes).decode("utf-8")
+                        b64 = safe_consume_credits_after_success(user_id, credit_type, convert_to_audio)
                         metadata["steps_applied"].append(step)
                         metadata["intro_outro_audio_url"] = f"data:audio/mp3;base64,{b64}"
-                        if credit_type: consume_credits(user_id, credit_type)
-
 
                     elif step == "generate_audio_clip":
                         transcript = metadata.get("transcript", "")
                         if not transcript:
                             raise ValueError("Transcript missing for translation")
-                        audio_bytes = transcription_service.generate_audio_from_translated(transcript, "English")  # or use language param later
-                        b64 = base64.b64encode(audio_bytes).decode("utf-8")
+                        def create_clip():
+                            audio_bytes = transcription_service.generate_audio_from_translated(transcript, "English")
+                            return base64.b64encode(audio_bytes).decode("utf-8")
+                        b64 = safe_consume_credits_after_success(user_id, credit_type, create_clip)
                         metadata["steps_applied"].append(step)
                         metadata["translated_clip_url"] = f"data:audio/mp3;base64,{b64}"
-                        if credit_type: consume_credits(user_id, credit_type)
-
 
 
                 except Exception as e:
