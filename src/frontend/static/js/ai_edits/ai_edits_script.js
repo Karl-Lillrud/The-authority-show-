@@ -230,7 +230,6 @@ async function preloadAudioOrRequestUpload() {
   }
 }
 
-
 function requestManualUpload(fileInput) {
   if (!fileInput) return;
   fileInput.classList.add("highlight");
