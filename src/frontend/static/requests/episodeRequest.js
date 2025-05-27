@@ -174,50 +174,47 @@ export async function fetchEpisodesByPodcast(podcastId) {
 }
 
 export async function updateEpisode(episodeId, data) {
-  const isFormData = data instanceof FormData // Check if data is FormData
+  const isFormData = data instanceof FormData;
+
+  console.log("Episode ID type and value:", typeof episodeId, episodeId);
 
   try {
+    const headers = {
+      Accept: "application/json",
+    };
+
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
+
     const response = await fetch(`/episodes/${episodeId}`, {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        // Add other necessary headers like Accept if needed
-        Accept: "application/json", // It's good practice to specify what you accept back
-      },
-      // Send FormData directly, or stringify if it's a plain object
+      headers,
       body: isFormData ? data : JSON.stringify(data),
-    })
-
-    // Log request details for debugging
-    console.log(`Updating episode ${episodeId}. Is FormData: ${isFormData}`)
+    });
 
     if (!response.ok) {
-      let errorData
+      let errorData;
       try {
-        errorData = await response.json() // Try to parse error response
-        console.error("Update Episode Error Response:", errorData)
+        errorData = await response.json();
+        console.error("Update Episode Error Response:", errorData);
       } catch (e) {
-        // If response is not JSON (e.g., plain text or HTML error page)
-        errorData = { error: await response.text() }
-        console.error("Update Episode Non-JSON Error Response:", errorData.error)
+        errorData = { error: await response.text() };
+        console.error("Update Episode Non-JSON Error Response:", errorData.error);
       }
-      // Throw a more informative error
-      throw new Error(errorData?.error || errorData?.message || `HTTP error! status: ${response.status}`)
+      throw new Error(errorData?.error || errorData?.message || `HTTP error! status: ${response.status}`);
     }
 
-    // If response is OK, try to parse JSON, handle potential empty response for 200/204
     if (response.status === 204) {
-      // No Content
-      return { message: "Episode updated successfully (No Content)" }
+      return { message: "Episode updated successfully (No Content)" };
     }
 
-    const result = await response.json()
-    console.log("Update Episode Success Response:", result)
-    return result // Contains { message: "..." } or potentially updated episode data
+    const result = await response.json();
+    console.log("Update Episode Success Response:", result);
+    return result;
   } catch (error) {
-    console.error("Failed to update episode:", error.message || error)
-    // Return an object with an error key for consistent handling in the calling function
-    return { error: `Failed to update episode: ${error.message || error}` }
+    console.error("Failed to update episode:", error.message || error);
+    return { error: `Failed to update episode: ${error.message || error}` };
   }
 }
 
