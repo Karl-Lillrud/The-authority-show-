@@ -106,7 +106,10 @@ function showTab(tabName) {
           <div class="content-wrapper">
             <h1>AI-Powered Transcription</h1>
 
-            <input type="file" id="fileUploader" accept="audio/*,video/*">
+            <input type="file" id="fileUploader" accept="audio/*,video/*" onchange="previewOriginalAudio()">
+            <div id="originalAudioContainer" style="display: none; margin-bottom: 1rem;">
+                <p><strong>Original Audio</strong></p>
+            </div>
             <div class="button-with-help">
                 <button class="btn ai-edit-button" onclick="transcribe()">
                 ${labelWithCredits("Transcribe", "transcription")}
@@ -253,7 +256,13 @@ function showTab(tabName) {
             </div>
           </div>
         `;
-    }else if (tabName === 'audio') {
+        setTimeout(() => {
+        if (rawAudioBlob) {
+            renderAudioPlayer("originalAudioContainer", rawAudioBlob, "originalAudioPlayer");
+        }
+    }, 100);
+
+}   else if (tabName === 'audio') {
         content.innerHTML = `
           <div class="content-wrapper">
             <h1>AI Audio Enhancement</h1>
@@ -1760,18 +1769,19 @@ async function enhanceVideo() {
 let rawAudioBlob = null;
 
 function previewOriginalAudio() {
-    const fileInput = document.getElementById('audioUploader');
-    const file = fileInput.files[0];
+    const audioInput = document.getElementById('audioUploader');
+    const transcriptionInput = document.getElementById('fileUploader');
+    const file = (audioInput?.files?.[0]) || (transcriptionInput?.files?.[0]);
     if (!file) return;
 
     rawAudioBlob = file;
 
     const container = document.getElementById("originalAudioContainer");
-    container.style.display = "block";
-
-    renderAudioPlayer("originalAudioContainer", rawAudioBlob, "originalAudioPlayer")
+    if (container) {
+        container.style.display = "block";
+        renderAudioPlayer("originalAudioContainer", rawAudioBlob, "originalAudioPlayer");
+    }
 }
-
 function previewOriginalVideo() {
     const fileInput = document.getElementById('videoUploader');
     const file = fileInput.files[0];
