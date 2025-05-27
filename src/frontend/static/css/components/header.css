@@ -41,6 +41,7 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
+  user-select: none;
 }
 
 .user-wrapper .circle:hover .user-avatar svg g path {
