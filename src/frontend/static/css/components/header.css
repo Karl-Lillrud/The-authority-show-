@@ -377,6 +377,9 @@ header #header-wrapper {
 #logout-link {
   color: var(--highlight-color);
 }
+#logout-link:hover {
+  text-decoration: underline;
+}
 #cancel-logout {
   background: #f1f1f1;
   color: #333;
