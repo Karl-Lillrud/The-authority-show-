@@ -423,38 +423,6 @@ def register_socketio_events(socketio: SocketIO):
 # ROUTES
 # ---------------------------------------------
 
-@recording_studio_bp.route('/recording/metadata', methods=['POST'])
-def log_recording_metadata():
-    try:
-        data = request.get_json()
-        user_id = data.get("user_id")
-        episode_id = data.get("episode_id")
-        file_url = data.get("file_url")
-        size = data.get("file_size")
-        duration = data.get("duration")
-
-        if not all([user_id, episode_id, file_url, size, duration]):
-            logger.error(f"Missing required fields for metadata: {data}")
-            return jsonify({"error": "Missing required fields"}), 400
-
-        update_fields = {
-            "audioUrl": file_url,
-            "fileSize": size,
-            "duration": duration,
-            "updated_at": datetime.now(timezone.utc)
-        }
-
-        result = episodes_collection.update_one({"_id": episode_id}, {"$set": update_fields})
-        if result.matched_count == 0:
-            logger.error(f"Episode not found: {episode_id}")
-            return jsonify({"error": "Episode not found"}), 404
-
-        logger.info(f"Recording metadata updated for episode: {episode_id}")
-        return jsonify({"message": "Recording metadata updated successfully"}), 200
-    except Exception as e:
-        logger.error(f"Error logging metadata: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
 @recording_studio_bp.route('/participants/<episode_id>', methods=['GET'])
 def get_participants(episode_id):
     try:
