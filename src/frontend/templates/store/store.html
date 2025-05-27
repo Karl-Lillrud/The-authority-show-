@@ -63,13 +63,23 @@ endblock %} {% block content %}
                 <span class="section-description"
                   >Enhance your PodManager experience!</span
                 >
+                <!-- Subscription Toggle -->
+                <div class="subscription-toggle">
+                  <button class="toggle-button active" data-period="monthly">
+                    Monthly
+                  </button>
+                  <button class="toggle-button" data-period="yearly">
+                    Yearly
+                  </button>
+                </div>
               </div>
               <div class="cards-container">
                 <div
                   class="product-card subscription-card"
                   data-product-id="sub-standard"
                   data-product-type="subscription"
-                  data-price="29.99"
+                  data-monthly-price="29.99"
+                  data-yearly-price="297.00"
                 >
                   <div class="product-header">
                     <div class="product-icon subscription-icon">
@@ -77,14 +87,14 @@ endblock %} {% block content %}
                         class="svg-placeholder subscription-pro-icon"
                       ></span>
                     </div>
-                    <h3>Pro Subscription</h3>
+                    <h3 class="product-name">Pro Subscription</h3>
                   </div>
                   <div class="product-price">
                     <span class="price-amount">$29.99</span>
                     <span class="price-period">/month</span>
                   </div>
                   <div class="product-features">
-                    <ul>
+                    <ul class="product-features-list">
                       <li>
                         10,000 Credits at Month's Start<br />(resets monthly, no
                         carry-over)
@@ -107,7 +117,8 @@ endblock %} {% block content %}
                   class="product-card subscription-card"
                   data-product-id="sub-pro"
                   data-product-type="subscription"
-                  data-price="69.00"
+                  data-monthly-price="69.00"
+                  data-yearly-price="607.00"
                 >
                   <div class="product-badge">Best Value</div>
                   <div class="product-header">
@@ -116,14 +127,14 @@ endblock %} {% block content %}
                         class="svg-placeholder subscription-team-icon"
                       ></span>
                     </div>
-                    <h3>Studio Subscription</h3>
+                    <h3 class="product-name">Studio Subscription</h3>
                   </div>
                   <div class="product-price">
                     <span class="price-amount">$69.00</span>
                     <span class="price-period">/month</span>
                   </div>
                   <div class="product-features">
-                    <ul>
+                    <ul class="product-features-list">
                       <li>
                         20,000 Credits at Month's Start <br />(resets monthly,
                         no carry-over)
@@ -143,7 +154,8 @@ endblock %} {% block content %}
                   class="product-card subscription-card"
                   data-product-id="sub-enterprise"
                   data-product-type="subscription"
-                  data-price="0.00"
+                  data-monthly-price="0.00"
+                  data-yearly-price="0.00"
                 >
                   <div class="product-header">
                     <div class="product-icon subscription-icon">
@@ -151,14 +163,14 @@ endblock %} {% block content %}
                         class="svg-placeholder subscription-enterprise-icon"
                       ></span>
                     </div>
-                    <h3>Enterprise Subscription</h3>
+                    <h3 class="product-name">Enterprise Subscription</h3>
                   </div>
                   <div class="product-price">
                     <span class="price-amount">Contact Us</span>
                     <span class="price-period">for pricing</span>
                   </div>
                   <div class="product-features">
-                    <ul>
+                    <ul class="product-features-list">
                       <li>Pricing Based on Annual Episodes</li>
                       <li>Total Unlock of Pricings</li>
                       <li>All The Episode Slots You Need</li>

@@ -1,450 +1,383 @@
-import { updateEpisode } from "../../requests/episodeRequest.js";
-import { fetchGuestsByEpisode } from "../../requests/guestRequests.js";
+import { showNotification } from '../components/notifications.js';
+import { fetchEpisode } from '../../../static/requests/episodeRequest.js';
+import { fetchGuestsByEpisode } from '../../../static/requests/guestRequests.js';
 
-class RecordingStudio {
-    constructor() {
-        this.mediaRecorder = null;
-        this.audioChunks = [];
-        this.videoChunks = [];
-        this.isRecording = false;
-        this.isPaused = false;
-        this.startTime = 0;
-        this.timerInterval = null;
-        this.audioContext = null;
-        this.analyser = null;
-        this.videoStream = null;
-        this.audioStream = null;
-        this.visualizerCanvas = document.getElementById('audio-visualizer');
-        this.visualizerContext = this.visualizerCanvas.getContext('2d');
-        this.videoPreview = document.getElementById('video-preview');
-        this.participantsContainer = document.getElementById('participants-container'); // New container for participant videos
-        this.socket = io(); // Initialize Socket.IO
-        this.participants = new Map(); // Track participant streams
-        
-        this.initializeElements();
-        this.initializeEventListeners();
-        this.loadDevices();
-        this.initializeSocketEvents();
-        this.joinStudioRoom();
+// Initialize Socket.IO with reconnection
+const socket = io({
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000
+});
+
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
+    const participantsContainer = document.getElementById('participantsContainer');
+    const startRecordingBtn = document.getElementById('startRecordingBtn');
+    const stopRecordingBtn = document.getElementById('stopRecordingBtn');
+    const cameraSelect = document.getElementById('cameraSelect');
+    const microphoneSelect = document.getElementById('microphoneSelect');
+    const speakerSelect = document.getElementById('speakerSelect');
+    const videoPreview = document.getElementById('videoPreview');
+    const joinRequestModal = document.getElementById('joinRequestModal');
+
+    // Variables
+    let localStream = null;
+    let episode = null;
+    let isRecording = false;
+    let connectedUsers = []; // Track studio participants
+    let greenroomUsers = []; // Track greenroom join requests
+
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const podcastId = urlParams.get('podcastId');
+    const episodeId = urlParams.get('episodeId');
+    const guestId = urlParams.get('guestId');
+    const token = urlParams.get('token');
+    let room = urlParams.get('room');
+
+    console.log('Studio initialized with params:', { podcastId, episodeId, room, guestId, token });
+
+    // Validate DOM elements
+    if (!participantsContainer) {
+        console.error('participantsContainer element not found in DOM');
+        showNotification('Error: Guest list container not found.', 'error');
+        return;
+    }
+    if (!joinRequestModal) {
+        console.error('joinRequestModal element not found in DOM');
+        showNotification('Error: Join request modal not found.', 'error');
+        return;
     }
 
-    initializeElements() {
-        this.recordButton = document.getElementById('recordButton');
-        this.pauseButton = document.getElementById('pauseButton');
-        this.stopButton = document.getElementById('stopButton');
-        this.saveButton = document.getElementById('saveRecording');
-        this.discardButton = document.getElementById('discardRecording');
-        this.timerDisplay = document.getElementById('recordingTime');
-        this.levelBar = document.querySelector('.level-bar');
-        this.levelValue = document.querySelector('.level-value');
-        this.statusIndicator = document.querySelector('.status-indicator');
-        this.statusText = document.querySelector('.status-text');
-        this.inputDeviceSelect = document.getElementById('inputDevice');
-        this.outputDeviceSelect = document.getElementById('outputDevice');
-        this.videoDeviceSelect = document.getElementById('videoDevice');
-        this.videoQualitySelect = document.getElementById('videoQuality');
-        this.recordingIndicator = document.querySelector('.recording-indicator');
-        this.resolutionDisplay = document.getElementById('resolution');
-        this.fpsDisplay = document.getElementById('fps');
-        this.bitrateDisplay = document.getElementById('bitrate');
+    // Validate URL parameters
+    if (!episodeId || !room || (guestId && !token)) {
+        console.error('Missing required URL parameters:', { episodeId, room, guestId, token });
+        showNotification('Error: Missing required parameters (episodeId, room, or token).', 'error');
+        return;
     }
 
-    initializeEventListeners() {
-        this.recordButton.addEventListener('click', () => this.toggleRecording());
-        this.pauseButton.addEventListener('click', () => this.togglePause());
-        this.stopButton.addEventListener('click', () => this.stopRecording());
-        this.saveButton.addEventListener('click', () => this.saveRecording());
-        this.discardButton.addEventListener('click', () => this.discardRecording());
-        this.videoDeviceSelect.addEventListener('change', () => this.updateVideoStream());
-        this.videoQualitySelect.addEventListener('change', () => this.updateVideoStream());
-    }
-
-    initializeSocketEvents() {
-        this.socket.on('request_join_studio', async (data) => {
-            const { guestId, guestName, episodeId } = data;
-            try {
-                // Validate guest
-                const guests = await fetchGuestsByEpisode(episodeId);
-                const isValidGuest = guests.some(guest => guest.id === guestId);
-                if (!isValidGuest) {
-                    this.socket.emit('deny_join_studio', { guestId, reason: 'Not authorized for this episode' });
-                    return;
-                }
-
-                // Show join request popup
-                this.showJoinRequestPopup(guestId, guestName, episodeId, data.room);
-            } catch (error) {
-                console.error('Error validating guest:', error);
-                this.socket.emit('deny_join_studio', { guestId, reason: 'Error validating guest' });
+    // Initialize devices
+    async function initializeDevices() {
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                throw new Error('Media devices API not supported in this browser');
             }
-        });
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            console.log('Available devices:', devices.map(d => ({ kind: d.kind, label: d.label, deviceId: d.deviceId })));
 
-        this.socket.on('participant_stream', (data) => {
-            this.addParticipantStream(data.userId, data.streamId);
-        });
-    }
+            // Populate camera options
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            cameraSelect.innerHTML = '<option value="">Select Camera</option>' +
+                videoDevices.map(device => `<option value="${device.deviceId}">${device.label || `Camera ${videoDevices.indexOf(device) + 1}`}</option>`).join('');
 
-    joinStudioRoom() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const room = urlParams.get('room');
-        const episodeId = urlParams.get('episodeId');
-        if (room && episodeId) {
-            this.socket.emit('join_studio', { room, episodeId, isHost: true });
+            // Populate microphone options
+            const audioDevices = devices.filter(device => device.kind === 'audioinput');
+            microphoneSelect.innerHTML = '<option value="">Select Microphone</option>' +
+                audioDevices.map(device => `<option value="${device.deviceId}">${device.label || `Microphone ${audioDevices.indexOf(device) + 1}`}</option>`).join('');
+
+            // Populate speaker options
+            const speakerDevices = devices.filter(device => device.kind === 'audiooutput');
+            speakerSelect.innerHTML = '<option value="">Select Speaker</option>' +
+                speakerDevices.map(device => `<option value="${device.deviceId}">${device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}</option>`).join('');
+
+            if (videoDevices.length > 0) {
+                await startCamera(videoDevices[0].deviceId);
+            } else {
+                console.warn('No cameras detected');
+                showNotification('No cameras detected. You can still host the studio.', 'info');
+            }
+        } catch (error) {
+            console.error('Error initializing devices:', error.name, error.message);
+            showNotification(`Failed to initialize devices: ${error.message}. Please grant camera/microphone permissions or connect a device.`, 'error');
         }
     }
 
-    showJoinRequestPopup(guestId, guestName, episodeId, room) {
-        const popup = document.createElement('div');
-        popup.className = 'popup';
-        popup.style.position = 'fixed';
-        popup.style.top = '50%';
-        popup.style.left = '50%';
-        popup.style.transform = 'translate(-50%, -50%)';
-        popup.style.background = '#fff';
-        popup.style.padding = '20px';
-        popup.style.borderRadius = '8px';
-        popup.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-        popup.style.zIndex = '1000';
+    // Start camera
+    async function startCamera(deviceId) {
+        try {
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                throw new Error('Camera access requires HTTPS');
+            }
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            localStream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: deviceId ? { exact: deviceId } : undefined },
+                audio: false
+            });
+            videoPreview.srcObject = localStream;
+            const userId = guestId || 'host';
+            const streamId = guestId ? `stream-${guestId}` : 'stream-host';
+            const guestName = guestId ? 'Guest' : 'Host';
+            socket.emit('participant_stream', {
+                room,
+                userId,
+                streamId,
+                guestName
+            });
+        } catch (error) {
+            console.error('Error starting camera:', error.name, error.message);
+            showNotification(`Camera error: ${error.message}. Please allow camera access.`, 'error');
+        }
+    }
 
-        popup.innerHTML = `
+    // Initialize guest
+    async function initializeGuest() {
+        await initializeDevices();
+        const joinPayload = {
+            room,
+            episodeId,
+            isHost: false,
+            user: { id: guestId, name: 'Guest' },
+            token
+        };
+        socket.emit('join_studio', joinPayload);
+        console.log('Emitted join_studio as guest:', joinPayload);
+    }
+
+    // Load episode details
+    async function loadEpisodeDetails() {
+        try {
+            console.log('Fetching episode details for:', episodeId);
+            const response = await fetchEpisode(episodeId);
+            console.log('fetchEpisode response:', response);
+            if (!response || !response._id) {
+                throw new Error('No episode data returned');
+            }
+            episode = response;
+
+            if (!room) {
+                room = episodeId; // Fallback to episodeId
+                console.warn('No room parameter in URL, using episodeId:', room);
+                showNotification('Room parameter missing, using episode ID.', 'warning');
+            }
+
+            // Wait for socket connection
+            const waitForSocketConnection = () => {
+                return new Promise((resolve) => {
+                    if (socket.connected) {
+                        resolve();
+                    } else {
+                        console.warn('Socket not connected, waiting for connect event');
+                        socket.once('connect', () => {
+                            console.log(`Socket.IO connected: ${socket.id}`);
+                            resolve();
+                        });
+                    }
+                });
+            };
+
+            await waitForSocketConnection();
+
+            // Emit join_studio as host
+            const joinPayload = {
+                room,
+                episodeId,
+                isHost: true,
+                user: {
+                    id: 'host',
+                    name: 'Host'
+                }
+            };
+            socket.emit('join_studio', joinPayload);
+            console.log('Emitted join_studio:', joinPayload);
+
+            // Initialize socket listeners
+            initializeSocket();
+        } catch (error) {
+            console.error('Error loading episode:', error.name, error.message);
+            showNotification(`Error loading episode details: ${error.message}`, 'error');
+        }
+    }
+
+    // Load guests for episode
+    async function loadGuestsForEpisode() {
+        try {
+            const guests = await fetchGuestsByEpisode(episodeId);
+            updateParticipantsList(guests, connectedUsers, greenroomUsers);
+        } catch (error) {
+            console.error('Failed to load guests:', error.name, error.message);
+            if (participantsContainer) {
+                participantsContainer.innerHTML = '<p>Error loading guests. Please try again.</p>';
+            } else {
+                console.error('participantsContainer is null, cannot display error message');
+                showNotification('Error: Guest list container not found.', 'error');
+            }
+        }
+    }
+
+    // Update participant list
+    function updateParticipantsList(guests, connectedUsers, greenroomUsers) {
+        if (!participantsContainer) {
+            console.error('participantsContainer is null, cannot update guest list');
+            showNotification('Error: Guest list container not found.', 'error');
+            return;
+        }
+        participantsContainer.innerHTML = '';
+
+        if (!guests.length) {
+            participantsContainer.innerHTML = '<p>No guests found for this episode.</p>';
+            return;
+        }
+
+        guests.forEach(guest => {
+            const isConnected = connectedUsers.some(u => u.userId === guest.id);
+            const isInGreenroom = greenroomUsers.some(u => u.userId === guest.id);
+            const card = document.createElement('div');
+            card.className = 'participant-card';
+            card.innerHTML = `
+                <h5>${guest.name}</h5>
+                <p>Status: ${isConnected ? 'In Studio' : isInGreenroom ? 'Awaiting Approval' : 'Not Connected'}</p>
+                <div id="video-${guest.id}" class="video-placeholder"></div>
+            `;
+            participantsContainer.appendChild(card);
+        });
+    }
+
+    // Add participant stream
+    function addParticipantStream(userId, streamId, guestName) {
+        const videoElement = document.getElementById(`video-${userId}`);
+        if (videoElement) {
+            videoElement.innerHTML = `<p>${guestName}'s Video (Stream ID: ${streamId})</p>`;
+        }
+    }
+
+    // Show join request modal
+    function showJoinRequest(guestId, guestName, episodeId, room) {
+        greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
+        greenroomUsers.push({ userId: guestId, guestName });
+        loadGuestsForEpisode(); // Refresh participant list
+
+        if (!joinRequestModal) {
+            console.error('joinRequestModal is null, cannot display join request');
+            showNotification(`Join request from ${guestName} received, but modal is unavailable.`, 'error');
+            return;
+        }
+
+        const modalContent = joinRequestModal.querySelector('.modal-content');
+        if (!modalContent) {
+            console.error('modal-content element not found in joinRequestModal');
+            showNotification(`Join request from ${guestName} received, but modal content is missing.`, 'error');
+            return;
+        }
+
+        modalContent.innerHTML = `
             <h3>Join Request</h3>
-            <p>${guestName} is requesting to join the studio for episode ${episodeId}</p>
-            <button id="accept-join-btn" class="btn btn-success">Accept</button>
-            <button id="deny-join-btn" class="btn btn-danger">Deny</button>
+            <p>Guest: ${guestName}</p>
+            <button id="acceptJoinBtn" class="btn btn-success">Accept</button>
+            <button id="denyJoinBtn" class="btn btn-danger">Deny</button>
         `;
 
-        document.body.appendChild(popup);
+        joinRequestModal.style.display = 'block';
 
-        document.getElementById('accept-join-btn').addEventListener('click', () => {
-            this.socket.emit('approve_join_studio', { guestId, episodeId, room });
-            document.body.removeChild(popup);
-            this.showNotification(`Accepted ${guestName} to join studio`, 'success');
-        });
+        const acceptBtn = document.getElementById('acceptJoinBtn');
+        const denyBtn = document.getElementById('denyJoinBtn');
 
-        document.getElementById('deny-join-btn').addEventListener('click', () => {
-            this.socket.emit('deny_join_studio', { guestId, reason: 'Host denied the request' });
-            document.body.removeChild(popup);
-            this.showNotification(`Denied ${guestName}'s join request`, 'info');
-        });
-    }
-
-    async loadDevices() {
-        try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const audioInputs = devices.filter(device => device.kind === 'audioinput');
-            const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
-            const videoInputs = devices.filter(device => device.kind === 'videoinput');
-
-            this.inputDeviceSelect.innerHTML = audioInputs
-                .map(device => `<option value="${device.deviceId}">${device.label || `Microphone ${audioInputs.indexOf(device) + 1}`}</option>`)
-                .join('');
-
-            this.outputDeviceSelect.innerHTML = audioOutputs
-                .map(device => `<option value="${device.deviceId}">${device.label || `Speaker ${audioOutputs.indexOf(device) + 1}`}</option>`)
-                .join('');
-
-            this.videoDeviceSelect.innerHTML = videoInputs
-                .map(device => `<option value="${device.deviceId}">${device.label || `Camera ${videoInputs.indexOf(device) + 1}`}</option>`)
-                .join('');
-
-            if (videoInputs.length > 0) {
-                await this.updateVideoStream();
-            }
-        } catch (error) {
-            console.error('Error loading devices:', error);
-            this.showNotification('Error loading devices', 'error');
-        }
-    }
-
-    async updateVideoStream() {
-        try {
-            if (this.videoStream) {
-                this.videoStream.getTracks().forEach(track => track.stop());
-            }
-
-            const videoConstraints = {
-                deviceId: this.videoDeviceSelect.value,
-                width: { ideal: this.getVideoResolution().width },
-                height: { ideal: this.getVideoResolution().height },
-                frameRate: { ideal: 30 }
-            };
-
-            this.videoStream = await navigator.mediaDevices.getUserMedia({
-                video: videoConstraints
-            });
-
-            this.videoPreview.srcObject = this.videoStream;
-            this.updateVideoStats();
-
-            // Share host's stream with participants
-            this.socket.emit('participant_stream', {
-                userId: this.socket.id,
-                streamId: this.videoStream.id
-            });
-        } catch (error) {
-            console.error('Error updating video stream:', error);
-            this.showNotification('Error accessing camera', 'error');
-        }
-    }
-
-    addParticipantStream(userId, streamId) {
-        if (this.participants.has(userId)) return;
-
-        const videoElement = document.createElement('video');
-        videoElement.autoplay = true;
-        videoElement.playsinline = true;
-        videoElement.style.width = '200px';
-        videoElement.style.margin = '5px';
-
-        const participantDiv = document.createElement('div');
-        participantDiv.className = 'participant-video';
-        participantDiv.dataset.userId = userId;
-        participantDiv.appendChild(videoElement);
-
-        this.participantsContainer.appendChild(participantDiv);
-        this.participants.set(userId, videoElement);
-
-        // Note: Actual stream handling requires WebRTC integration, simplified here
-        console.log(`Added participant stream for user ${userId}, streamId: ${streamId}`);
-    }
-
-    getVideoResolution() {
-        const quality = this.videoQualitySelect.value;
-        switch (quality) {
-            case '1080p':
-                return { width: 1920, height: 1080 };
-            case '720p':
-                return { width: 1280, height: 720 };
-            case '480p':
-                return { width: 854, height: 480 };
-            default:
-                return { width: 1280, height: 720 };
-        }
-    }
-
-    updateVideoStats() {
-        if (this.videoStream) {
-            const videoTrack = this.videoStream.getVideoTracks()[0];
-            const settings = videoTrack.getSettings();
-            
-            this.resolutionDisplay.textContent = `${settings.width}x${settings.height}`;
-            this.fpsDisplay.textContent = `${settings.frameRate || 30} fps`;
-            this.bitrateDisplay.textContent = `${Math.round(settings.width * settings.height * (settings.frameRate || 30) * 0.1 / 1000)} kbps`;
-        }
-    }
-
-    async toggleRecording() {
-        if (!this.isRecording) {
-            await this.startRecording();
-        } else {
-            this.stopRecording();
-        }
-    }
-
-    async startRecording() {
-        try {
-            this.audioStream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    deviceId: this.inputDeviceSelect.value
-                }
-            });
-
-            let combinedTracks = [...this.audioStream.getTracks()];
-            if (this.videoStream) {
-                combinedTracks = combinedTracks.concat(this.videoStream.getTracks());
-            }
-            const combinedStream = new MediaStream(combinedTracks);
-
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            this.analyser = this.audioContext.createAnalyser();
-            const source = this.audioContext.createMediaStreamSource(this.audioStream);
-            source.connect(this.analyser);
-            
-            this.analyser.fftSize = 2048;
-            const bufferLength = this.analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-
-            const drawVisualizer = () => {
-                if (!this.isRecording) return;
-
-                requestAnimationFrame(drawVisualizer);
-                this.analyser.getByteFrequencyData(dataArray);
-
-                this.visualizerContext.fillStyle = '#1f2937';
-                this.visualizerContext.fillRect(0, 0, this.visualizerCanvas.width, this.visualizerCanvas.height);
-
-                const barWidth = (this.visualizerCanvas.width / bufferLength) * 2.5;
-                let barHeight;
-                let x = 0;
-
-                for (let i = 0; i < bufferLength; i++) {
-                    barHeight = dataArray[i] / 2;
-                    this.visualizerContext.fillStyle = `rgb(16, 185, 129)`;
-                    this.visualizerContext.fillRect(x, this.visualizerCanvas.height - barHeight, barWidth, barHeight);
-                    x += barWidth + 1;
-                }
-            };
-
-            this.mediaRecorder = new MediaRecorder(combinedStream, {
-                mimeType: 'video/webm;codecs=vp9,opus',
-                videoBitsPerSecond: 2500000
-            });
-
-            this.audioChunks = [];
-            this.videoChunks = [];
-
-            this.mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    this.videoChunks.push(event.data);
-                }
-            };
-
-            this.mediaRecorder.onstop = () => {
-                this.updateRecordingStatus('stopped');
-                this.saveButton.disabled = false;
-                this.discardButton.disabled = false;
-                this.recordingIndicator.classList.remove('active');
-            };
-
-            this.mediaRecorder.start();
-            this.isRecording = true;
-            this.startTime = Date.now();
-            this.updateTimer();
-            this.updateRecordingStatus('recording');
-            this.updateButtonStates();
-            this.recordingIndicator.classList.add('active');
-            drawVisualizer();
-
-        } catch (error) {
-            console.error('Error starting recording:', error);
-            this.showNotification('Error starting recording', 'error');
-        }
-    }
-
-    togglePause() {
-        if (!this.isPaused) {
-            this.mediaRecorder.pause();
-            this.isPaused = true;
-            this.pauseButton.innerHTML = '<i class="fas fa-play"></i><span>Resume</span>';
-            this.updateRecordingStatus('paused');
-            this.recordingIndicator.classList.remove('active');
-        } else {
-            this.mediaRecorder.resume();
-            this.isPaused = false;
-            this.pauseButton.innerHTML = '<i class="fas fa-pause"></i><span>Pause</span>';
-            this.updateRecordingStatus('recording');
-            this.recordingIndicator.classList.add('active');
-        }
-    }
-
-    stopRecording() {
-        if (this.mediaRecorder && this.isRecording) {
-            this.mediaRecorder.stop();
-            this.isRecording = false;
-            this.isPaused = false;
-            clearInterval(this.timerInterval);
-            this.updateButtonStates();
-            this.recordingIndicator.classList.remove('active');
-        }
-    }
-
-    updateButtonStates() {
-        this.recordButton.disabled = this.isRecording;
-        this.pauseButton.disabled = !this.isRecording;
-        this.stopButton.disabled = !this.isRecording;
-    }
-
-    updateTimer() {
-        this.timerInterval = setInterval(() => {
-            const elapsed = Date.now() - this.startTime;
-            const hours = Math.floor(elapsed / 3600000);
-            const minutes = Math.floor((elapsed % 3600000) / 60000);
-            const seconds = Math.floor((elapsed % 60000) / 1000);
-            
-            this.timerDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }, 1000);
-    }
-
-    updateRecordingStatus(status) {
-        const statusColors = {
-            'ready': '#10b981',
-            'recording': '#ef4444',
-            'paused': '#f59e0b',
-            'stopped': '#6b7280'
+        const handleAccept = () => {
+            socket.emit('approve_join_studio', { guestId, episodeId, room });
+            joinRequestModal.style.display = 'none';
+            greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
+            showNotification(`Approved join for ${guestName}`, 'success');
+            acceptBtn.removeEventListener('click', handleAccept);
+            denyBtn.removeEventListener('click', handleDeny);
         };
 
-        const statusTexts = {
-            'ready': 'Ready to Record',
-            'recording': 'Recording...',
-            'paused': 'Paused',
-            'stopped': 'Recording Stopped'
+        const handleDeny = () => {
+            socket.emit('deny_join_studio', { guestId, reason: 'Denied by host', room });
+            joinRequestModal.style.display = 'none';
+            greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
+            showNotification(`Denied join for ${guestName}`, 'info');
+            acceptBtn.removeEventListener('click', handleAccept);
+            denyBtn.removeEventListener('click', handleDeny);
         };
 
-        this.statusIndicator.style.backgroundColor = statusColors[status];
-        this.statusText.textContent = statusTexts[status];
+        acceptBtn.addEventListener('click', handleAccept);
+        denyBtn.addEventListener('click', handleDeny);
     }
 
-    async saveRecording() {
-        if (this.videoChunks.length === 0) {
-            this.showNotification('No recording to save', 'error');
-            return;
+    // Initialize Socket.IO listeners
+    function initializeSocket() {
+        console.log('Initializing Socket.IO listeners');
+
+        socket.on('connect', () => {
+            console.log('Socket.IO connected:', socket.id);
+        });
+
+        socket.on('reconnect_attempt', (attempt) => {
+            console.log(`Socket.IO reconnect attempt ${attempt}`);
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Socket.IO connection error:', error);
+            showNotification('Failed to connect to server.', 'error');
+        });
+
+        socket.on('studio_joined', (data) => {
+            console.log('Joined studio room:', data);
+            showNotification(`Joined studio for episode ${data.episodeId}`, 'success');
+            loadGuestsForEpisode();
+        });
+
+        socket.on('participant_joined', (data) => {
+            console.log('Participant joined:', data);
+            connectedUsers = connectedUsers.filter(u => u.userId !== data.userId);
+            connectedUsers.push({ userId: data.userId, streamId: data.streamId, guestName: data.guestName });
+            greenroomUsers = greenroomUsers.filter(u => u.userId !== data.userId);
+            addParticipantStream(data.userId, data.streamId, data.guestName);
+            loadGuestsForEpisode();
+        });
+
+        socket.on('participant_left', (data) => {
+            console.log('Participant left:', data);
+            connectedUsers = connectedUsers.filter(u => u.userId !== data.userId);
+            loadGuestsForEpisode();
+        });
+
+        socket.on('participant_stream', (data) => {
+            console.log('Received participant stream:', data);
+            addParticipantStream(data.userId, data.streamId, data.guestName);
+        });
+
+        socket.on('request_join_studio', (data) => {
+            console.log('Join request received:', data);
+            showJoinRequest(data.guestId, data.guestName, data.episodeId, data.room);
+        });
+
+        socket.on('error', (data) => {
+            console.error('Server error:', data);
+            showNotification(`Error: ${data.message}`, 'error');
+        });
+    }
+
+    // Event Listeners
+    startRecordingBtn?.addEventListener('click', () => {
+        isRecording = true;
+        socket.emit('recording_started', { room, user: { id: 'host' } });
+        showNotification('Recording started.', 'success');
+    });
+
+    stopRecordingBtn?.addEventListener('click', () => {
+        isRecording = false;
+        socket.emit('recording_stopped', { room, user: { id: 'host' } });
+        showNotification('Recording stopped.', 'success');
+    });
+
+    cameraSelect?.addEventListener('change', (e) => {
+        startCamera(e.target.value);
+    });
+
+    // Initialize
+    if (episodeId) {
+        console.log('Starting studio initialization');
+        if (guestId && token) {
+            initializeGuest();
+        } else {
+            initializeDevices();
+            loadEpisodeDetails();
         }
-
-        const videoBlob = new Blob(this.videoChunks, { type: 'video/webm' });
-        const formData = new FormData();
-        formData.append('audioFile', videoBlob);
-        const episodeId = document.getElementById('episode-id-display').textContent.trim();
-
-        if (!episodeId) {
-            this.showNotification('Episode ID missing – cannot save!', 'error');
-            console.error('Episode ID missing!');
-            return;
-        }
-
-        console.log("Frontend: Will send PUT to /episodes/" + episodeId);
-        console.log("Frontend: Episode ID from DOM:", episodeId);
-
-        try {
-            const result = await updateEpisode(episodeId, formData);
-            if (!result.error) {
-                this.showNotification('Recording saved successfully', 'success');
-                this.resetRecording();
-            } else {
-                throw new Error(result.error || 'Failed to save recording');
-            }
-        } catch (error) {
-            console.error('Error saving recording:', error);
-            this.showNotification('Error saving recording', 'error');
-        }
+    } else {
+        console.error('No episodeId provided in URL');
+        showNotification('Error: No episode specified.', 'error');
     }
-
-    discardRecording() {
-        if (confirm('Are you sure you want to discard this recording?')) {
-            this.resetRecording();
-            this.showNotification('Recording discarded', 'info');
-        }
-    }
-
-    resetRecording() {
-        this.videoChunks = [];
-        this.isRecording = false;
-        this.isPaused = false;
-        clearInterval(this.timerInterval);
-        this.timerDisplay.textContent = '00:00:00';
-        this.updateRecordingStatus('ready');
-        this.updateButtonStates();
-        this.saveButton.disabled = true;
-        this.discardButton.disabled = true;
-        this.visualizerContext.clearRect(0, 0, this.visualizerCanvas.width, this.visualizerCanvas.height);
-        this.recordingIndicator.classList.remove('active');
-    }
-
-    showNotification(message, type = 'info') {
-        console.log(`${type}: ${message}`);
-        // Implement notification UI here, e.g., a toast or alert
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    new RecordingStudio();
 });
