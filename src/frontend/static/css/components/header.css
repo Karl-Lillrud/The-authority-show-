@@ -5,6 +5,49 @@ img {
   border: none;
 }
 
+.store-wrapper a svg {
+  margin-top: 5px;
+}
+
+.store-wrapper a svg g path {
+  stroke: var(--text-color-light);
+}
+
+.store-wrapper a svg:hover g path {
+  stroke: var(--highlight-color);
+  transform: rotate(5deg);
+}
+
+.user-wrapper .circle {
+  width: 34px;
+  height: 34px;
+  margin: 10px;
+  background-color: var(--text-color-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-wrapper .circle:hover {
+  background-color: var(--highlight-color);
+}
+
+.user-wrapper .circle .user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.user-wrapper .circle:hover .user-avatar svg g path {
+  fill: var(--highlight-color);
+}
+
 .dropdown-lp-content {
   display: none;
 }
@@ -37,19 +80,36 @@ img {
   border-right: 5px solid transparent;
   display: inline-block;
   vertical-align: middle; /* Ensures proper vertical alignment */
-  margin-left: 5px;
+  margin-left: 10px;
+  transition: var(--transition-normal);
 }
 
 .triangle-down {
-  border-top: 5px solid #000;
+  border-top: 5px solid var(--text-color-light);
+  transform: rotate(-90deg);
 }
 
 .triangle-up {
-  border-bottom: 5px solid #000;
+  border-bottom: 5px solid var(--text-color-light);
+  transform: rotate(180deg);
+}
+
+a:hover .triangle-down {
+  border-top: 5px solid var(--highlight-color);
+}
+
+a:hover .triangle-up {
+  border-bottom: 5px solid var(--highlight-color);
+}
+
+header#main-header {
+  min-height: calc(116px + 54px);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */
-header {
+header #header-wrapper {
   display: flex;
   flex-direction: row; /* Håll innehållet i rad */
   justify-content: space-between; /* Sprid ut innehållet horisontellt */
@@ -115,7 +175,7 @@ header {
   display: flex;
   flex-direction: row; /* Behåll horisontell layout */
   align-items: center;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
   margin-left: auto; /* Push to the right */
   flex-shrink: 0; /* Prevent nav from shrinking */
 }
@@ -314,6 +374,12 @@ header {
   cursor: pointer;
   font-size: 14px;
 }
+#logout-link {
+  color: var(--highlight-color);
+}
+#logout-link:hover {
+  text-decoration: underline;
+}
 #cancel-logout {
   background: #f1f1f1;
   color: #333;
@@ -341,9 +407,6 @@ header {
 .custom-dropdown:hover {
     box-shadow: 0 4px 10px rgba(255, 115, 0, 0.4); /* Keep original hover effect */
 }
-
-  
-  
 
 .custom-dropdown .dropdown-lp-selected {
   padding: var(--spacing-xs) var(--spacing-xs); /* Minskad padding */
@@ -383,103 +446,57 @@ header {
 .custom-dropdown.active .dropdown-lp-options {
   display: block;
 }
+ /* Main Menu (Bellow Header) */
+ #main-menu {
+  position:absolute;
+  width: 100%;
+  top: 116px;
+  z-index: 99;
+ }
 
-@media (max-width: 768px) {
-  header {
-    flex-direction: row; /* Keep horizontal layout */
-    justify-content: space-between; /* Keep elements spread out */
-    align-items: center;
-    padding: var(--spacing-xs) var(--spacing-md);
-    width: 100%; /* Ensure header takes full width */
-    max-width: 100%; /* Prevent overflow */
-    box-sizing: border-box; /* Include padding in width calculation */
-    margin: 0; /* Remove any margin */
-    left: 0; /* Align to left edge */
-    right: 0; /* Align to right edge */
-  }
+ #main-menu nav {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+ }
 
-  .logo-title-container {
-    flex-shrink: 0; /* Prevent container from shrinking */
-    justify-content: flex-start; /* Align to left */
-    margin-right: auto; /* Push other elements to the right */
-  }
+ #main-menu nav ul {
+  display: flex;
+  gap: 30px;
+ }
 
-  .header-nav {
-    flex-shrink: 0; /* Prevent nav from shrinking */
-    justify-content: flex-end; /* Align to right */
-    margin-left: auto; /* Push to the right */
-  }
+ #main-menu nav ul li {
+  list-style-type: none;
+  display: flex;
+ }
 
-  .logo-container,
-  .logo-container img {
-    width: 80px; /* Smaller logo on mobile */
-  }
+ #main-menu nav ul li a {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-weight: 600;
+  font-size: 14px;
+  color: #797979;
+  background-color: white;
+  border: 1px solid white;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  text-decoration: none;
+ }
 
-  .page-title {
-    font-size: 0.9rem;
-  }
+ #main-menu nav ul li a:hover {
+  text-decoration: none;
+  color: var(--highlight-color);
+  box-shadow: 0px 0px 6px rgba(255, 100, 0, 0.8);
+ }
 
-  .header-nav {
-    gap: var(--spacing-sm); /* Reduce gap between nav items */
-    flex-direction: row; /* Keep horizontal layout */
-    align-items: center;
-  }
+ #main-menu nav ul li a.active {
+  color: var(--highlight-color);
+  box-shadow: 0px 0px 6px rgba(255, 100, 0, 0.8);
+  border-color: var(--highlight-color);
+ }
 
-  #headerPodcastDropdown {
-    max-width: 120px;
-    font-size: 0.75rem; /* Smaller text */
-    display: none;
-  }
-
-  .menu-toggle {
-    width: 24px; /* Slightly smaller toggle */
-    height: 20px;
-  }
-}
-
-/* Replace the 480px media query with this */
-@media (max-width: 480px) {
-  header {
-    flex-direction: row; /* Keep horizontal layout */
-    justify-content: space-between; /* Keep elements spread out */
-    padding: var(--spacing-xs) var(--spacing-sm); /* Smaller padding */
-    width: 100%; /* Ensure header takes full width */
-    max-width: 100%; /* Prevent overflow */
-    box-sizing: border-box; /* Include padding in width calculation */
-  }
-
-  .logo-title-container {
-    flex-direction: row; /* Keep horizontal layout */
-    align-items: center;
-    gap: var(--spacing-xs); /* Reduce gap */
-    flex-shrink: 0; /* Prevent container from shrinking */
-    justify-content: flex-start; /* Align to left */
-  }
-
-  .logo-container,
-  .logo-container img {
-    width: 70px; /* Even smaller logo on very small screens */
-  }
-
-  .header-nav {
-    flex-direction: row; /* Keep horizontal layout */
-    align-items: center;
-    gap: var(--spacing-xs); /* Reduce gap */
-    flex-shrink: 0; /* Prevent nav from shrinking */
-    justify-content: flex-end; /* Align to right */
-    margin-left: auto; /* Push to the right */
-  }
-
-  #headerPodcastDropdown {
-    max-width: 100px; /* Smaller dropdown */
-    font-size: 0.7rem; /* Smaller text */
-  }
-
-  .custom-dropdown .dropdown-selected {
-    padding: var(--spacing-xs) var(--spacing-xs);
-    height: 24px; /* Smaller height */
-  }
-}
 .credits-info {
   padding: 8px 12px;
   background-color: #f4f4f4; /* Light Gray background */
@@ -496,11 +513,6 @@ header {
 .credits-info #user-credits {
   margin-left: 4px; /* Adjust the value as needed */
 }
-.credits-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
 
 .credits-wrapper {
   display: flex;
@@ -510,6 +522,7 @@ header {
   padding: 0.3rem 0.8rem;
   border-radius: 2rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 5px;
 }
 
 .credit-text {
@@ -627,4 +640,143 @@ header {
   background-color: #f4f4f4;
   color: var(--highlight-color);
   border-radius: 0;
+}
+
+@media (max-width: 992px) {
+  #main-menu {
+    position: relative;
+    top: initial;
+  }
+
+  #main-menu nav ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 30px 30px 0px 30px;
+  }
+
+  #main-menu nav ul li a {
+    border-radius: 1rem;
+  }
+
+}
+
+
+@media (max-width: 768px) {
+  header #page-title {
+    display: none; /* Hide page title on smaller screens */
+  }
+
+  header#main-header {
+    min-height: auto;
+  }
+
+  header #header-wrapper {
+    flex-direction: row; /* Keep horizontal layout */
+    justify-content: space-between; /* Keep elements spread out */
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-md);
+    width: 100%; /* Ensure header takes full width */
+    max-width: 100%; /* Prevent overflow */
+    box-sizing: border-box; /* Include padding in width calculation */
+    margin: 0; /* Remove any margin */
+    left: 0; /* Align to left edge */
+    right: 0; /* Align to right edge */
+  }
+
+  .logo-title-container {
+    flex-shrink: 0; /* Prevent container from shrinking */
+    justify-content: flex-start; /* Align to left */
+    margin-right: auto; /* Push other elements to the right */
+  }
+
+  .header-nav {
+    flex-shrink: 0; /* Prevent nav from shrinking */
+    justify-content: flex-end; /* Align to right */
+    margin-left: auto; /* Push to the right */
+  }
+
+  .logo-container,
+  .logo-container img {
+    width: 80px; /* Smaller logo on mobile */
+  }
+
+  .page-title {
+    font-size: 0.9rem;
+  }
+
+  .header-nav {
+    gap: var(--spacing-sm); /* Reduce gap between nav items */
+    flex-direction: row; /* Keep horizontal layout */
+    align-items: center;
+  }
+
+  #headerPodcastDropdown {
+    max-width: 120px;
+    font-size: 0.75rem; /* Smaller text */
+    display: none;
+  }
+
+  .menu-toggle {
+    width: 24px; /* Slightly smaller toggle */
+    height: 20px;
+  }
+}
+
+/* Replace the 480px media query with this */
+@media (max-width: 480px) {
+
+  #main-menu nav ul li {
+    width: 100%;
+  }
+
+  #main-menu nav ul li a {
+    width: 100%;
+    text-align: center;
+  }
+
+  .header-nav {
+    display: flex;
+    flex-direction: row; /* Keep horizontal layout */
+    align-items: center;
+    gap: var(--spacing-xs); /* Reduce gap */
+    flex-shrink: 0; /* Prevent nav from shrinking */
+    justify-content: center; 
+    margin-left: auto; /* Push to the right */
+    flex-wrap: wrap;
+    
+  }
+
+  header #header-wrapper {
+    flex-direction: row; /* Keep horizontal layout */
+    justify-content: space-between; /* Keep elements spread out */
+    padding: var(--spacing-xs) var(--spacing-sm); /* Smaller padding */
+    width: 100%; /* Ensure header takes full width */
+    max-width: 100%; /* Prevent overflow */
+    box-sizing: border-box; /* Include padding in width calculation */
+  }
+
+
+  .logo-title-container {
+    flex-direction: row; /* Keep horizontal layout */
+    align-items: center;
+    gap: var(--spacing-xs); /* Reduce gap */
+    flex-shrink: 0; /* Prevent container from shrinking */
+    justify-content: flex-start; /* Align to left */
+  }
+
+  .logo-container,
+  .logo-container img {
+    width: 70px; /* Even smaller logo on very small screens */
+  }
+
+  #headerPodcastDropdown {
+    max-width: 100px; /* Smaller dropdown */
+    font-size: 0.7rem; /* Smaller text */
+  }
+
+  .custom-dropdown .dropdown-selected {
+    padding: var(--spacing-xs) var(--spacing-xs);
+    height: 24px; /* Smaller height */
+  }
 }
