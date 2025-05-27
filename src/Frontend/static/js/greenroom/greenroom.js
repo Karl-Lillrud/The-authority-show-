@@ -239,18 +239,26 @@ testSpeakerButton.addEventListener('click', async () => {
 });
 
 // Socket.IO events
-socket.on('connect', () => {
+socket.on('connect', async () => {
     if (isConnected) return;
     isConnected = true;
     console.log('Connected to server');
     currentRoom = urlParams.get('room') || episodeId;
     if (currentRoom) {
-        socket.emit('join_greenroom', { 
-            room: currentRoom, 
-            user: { id: guestId, socketId: socket.id, name: 'Guest' },
-            token
-        });
-        console.log('Emitted join_greenroom:', currentRoom);
+        try {
+            const guests = await fetchGuestsByEpisode(episodeId);
+            const guest = guests.find(g => g.id === guestId);
+            const guestName = guest?.name || 'Guest';
+            socket.emit('join_greenroom', { 
+                room: currentRoom, 
+                user: { id: guestId, socketId: socket.id, name: guestName },
+                token
+            });
+            console.log('Emitted join_greenroom:', { room: currentRoom, user: { id: guestId, name: guestName } });
+        } catch (error) {
+            console.error('Error fetching guest name:', error);
+            showNotification('Error loading guest information.', 'error');
+        }
     } else {
         showNotification('Error: Room or Episode ID missing', 'error');
     }
