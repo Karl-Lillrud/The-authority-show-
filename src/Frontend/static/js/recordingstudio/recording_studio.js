@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateIndicators();
             updateLocalControls();
             micRetryCount = 0; // Reset retry count on success
-            showNotification('Audio devices initialized');
+            showNotification('Audio devices initialized.');
         } catch (error) {
             console.error('Error initializing microphone:', error);
             localStream = null; // Ensure localStream is null on failure
@@ -548,151 +548,185 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Show join request modal with proper cleanup
-    function showJoinRequest(guestId, guestName, episodeId, room) {
-        console.log('joinRequestModal:', joinRequestModal);
-        if (!joinRequestModal) {
-            console.error('joinRequestModal is null');
-            showNotification(`Join request from ${guestName} received, but modal is unavailable.`, 'error');
-            return;
-        }
-
-        // Cancel any existing request
-        if (currentJoinRequest) {
-            currentJoinRequest.abort();
-            console.log('Cancelled previous join request');
-        }
-
-        // Create new AbortController
-        currentJoinRequest = new AbortController();
-        const signal = currentJoinRequest.signal;
-
-        // Update greenroom users
-        greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
-        greenroomUsers.push({ userId: guestId, guestName });
-        loadGuestsForEpisode();
-
-        const modalContent = joinRequestModal.querySelector('.modal-content');
-        if (!modalContent) {
-            console.error('modal-content element not found');
-            showNotification(`Join request from ${guestName} received, but modal content is missing.`, 'error');
-            return;
-        }
-
-        // Create modal content
-        modalContent.innerHTML = `
-            <div class="modal-header">
-                <h3>Join Request</h3>
-                <button class="modal-close" style="float: right; background: none; border: none; font-size: 24px; cursor: pointer;" aria-label="Close">×</button>
-            </div>
-            <div class="modal-body">
-                <p><strong>Guest:</strong> ${guestName}</p>
-                <p><strong>Episode ID:</strong> ${episodeId}</p>
-                <p><strong>Room:</strong> ${room}</p>
-            </div>
-            <div class="modal-footer">
-                <button id="acceptJoinBtn" class="btn btn-success">Accept</button>
-                <button id="denyJoinBtn" class="btn btn-danger">Deny</button>
-            </div>
-        `;
-        
-        console.log('Modal display before:', joinRequestModal.style.display);
-        joinRequestModal.style.display = 'block !important';
-        console.log('Modal display after:', joinRequestModal.style.display);
-
-        // Get button elements
-        const acceptBtn = document.getElementById('acceptJoinBtn');
-        const denyBtn = document.getElementById('denyJoinBtn');
-        const closeBtn = modalContent.querySelector('.modal-close');
-
-        if (!acceptBtn || !denyBtn || !closeBtn) {
-            console.error('Modal buttons not found after creating content');
-            showNotification('Error: Modal buttons not available.', 'error');
-            joinRequestModal.style.display = 'none';
-            return;
-        }
-
-        // Close modal function
-        const closeModal = () => {
-            try {
-                joinRequestModal.style.display = 'none';
-                if (currentJoinRequest) {
-                    currentJoinRequest.abort();
-                    currentJoinRequest = null;
-                }
-                greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
-                loadGuestsForEpisode();
-            } catch (error) {
-                console.error('Error closing modal:', error);
-            }
-        };
-
-        // Handle Accept
-        const handleAccept = () => {
-            try {
-                socket.emit('approve_join_studio', { guestId, episodeId, room });
-                greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
-                showNotification(`Approved join for ${guestName}`, 'success');
-                loadGuestsForEpisode();
-                closeModal();
-            } catch (error) {
-                console.error('Error accepting join request:', error);
-                showNotification('Error processing accept request.', 'error');
-            }
-        };
-
-        // Handle Deny
-        const handleDeny = () => {
-            try {
-                socket.emit('deny_join_studio', { guestId, reason: 'Denied by host', room });
-                greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
-                showNotification(`Denied join for ${guestName}`, 'info');
-                loadGuestsForEpisode();
-                closeModal();
-            } catch (error) {
-                console.error('Error denying join request:', error);
-                showNotification('Error processing deny request.', 'error');
-            }
-        };
-
-        // Add event listeners with AbortController
-        acceptBtn.addEventListener('click', handleAccept, { signal });
-        denyBtn.addEventListener('click', handleDeny, { signal });
-        closeBtn.addEventListener('click', closeModal, { signal });
-
-        // Handle escape key
-        const handleEscape = (e) => {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-        };
-        document.addEventListener('keydown', handleEscape, { signal });
-
-        // Handle click outside modal
-        const handleClickOutside = (e) => {
-            if (e.target === joinRequestModal) {
-                closeModal();
-            }
-        };
-        joinRequestModal.addEventListener('click', handleClickOutside, { signal });
-
-        // Handle abort
-        signal.addEventListener('abort', () => {
-            console.log('Join request aborted, cleaning up...');
-            try {
-                if (joinRequestModal.style.display === 'block') {
-                    joinRequestModal.style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Error during abort cleanup:', error);
-            }
-        });
-
-        console.log(`Join request modal shown for guest: ${guestName} (ID: ${guestId})`);
+   // Show join request modal with proper cleanup
+function showJoinRequest(guestId, guestName, episodeId, roomId) {
+    console.log('Showing join request for:', { guestId, guestName, episodeId, roomId });
+    if (!joinRequestModal) {
+        console.error('joinRequestModal is null');
+        showNotification(`Join request from ${guestName} received, but modal is unavailable.`, 'error');
+        return;
     }
+
+    // Only abort previous request if it’s for a different guest
+    if (currentJoinRequest && currentJoinRequest.guestId !== guestId) {
+        console.log('Cancelling previous join request for guest:', currentJoinRequest.guestId);
+        currentJoinRequest.abort();
+        currentJoinRequest = null;
+    }
+
+    // Create new AbortController
+    currentJoinRequest = new AbortController();
+    currentJoinRequest.guestId = guestId;
+    const signal = currentJoinRequest.signal;
+
+    // Update greenroom users
+    greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
+    greenroomUsers.push({ userId: guestId, guestName });
+    loadGuestsForEpisode();
+
+    const modalContent = joinRequestModal.querySelector('.modal-content');
+    if (!modalContent) {
+        console.error('modal-content element not found');
+        showNotification(`Join request from ${guestName} received, but modal content is missing.`, 'error');
+        return;
+    }
+
+    // Create modal content
+    modalContent.innerHTML = `
+        <div class="modal-header">
+            <h3>Join Request</h3>
+            <button class="modal-close" style="float: right; background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text-primary);" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body">
+            <p><strong>Guest:</strong> ${guestName}</p>
+            <p><strong>Episode ID:</strong> ${episodeId}</p>
+            <p><strong>Room:</strong> ${roomId}</p>
+        </div>
+        <div class="modal-footer">
+            <button id="acceptJoinBtn" class="btn btn-success">Accept</button>
+            <button id="denyJoinBtn" class="btn btn-danger">Deny</button>
+        </div>
+    `;
+
+    // Force modal display
+    console.log('Modal display before:', joinRequestModal.style.display);
+    joinRequestModal.style.cssText = 'display: block !important; opacity: 1 !important; visibility: visible !important;';
+    joinRequestModal.classList.add('visible');
+    setTimeout(() => {
+        if (joinRequestModal.style.display !== 'block') {
+            console.warn('Modal display reset to none, reapplying');
+            showNotification('Modal display issue detected, retrying.', 'warning');
+            joinRequestModal.style.cssText = 'display: block !important; opacity: 1 !important; visibility: visible !important;';
+            joinRequestModal.classList.add('visible');
+        }
+        console.log('Modal display after timeout:', joinRequestModal.style.display);
+    }, 100);
+
+    // Get button elements
+    const acceptBtn = document.getElementById('acceptJoinBtn');
+    const denyBtn = document.getElementById('denyJoinBtn');
+    const closeBtn = modalContent.querySelector('.modal-close');
+
+    if (!acceptBtn || !denyBtn || !closeBtn) {
+        console.error('Modal buttons not found after creation');
+        showNotification('Error: Modal buttons not available.', 'error');
+        joinRequestModal.style.display = 'none';
+        joinRequestModal.classList.remove('visible');
+        return;
+    }
+
+    // Close modal function
+    const closeModal = () => {
+        console.log('Closing modal for guest:', guestId);
+        try {
+            joinRequestModal.style.display = 'none';
+            joinRequestModal.classList.remove('visible');
+            if (currentJoinRequest) {
+                currentJoinRequest.abort();
+                currentJoinRequest = null;
+            }
+            greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
+            loadGuestsForEpisode();
+        } catch (error) {
+            console.error('Error closing modal:', error);
+        }
+    };
+
+    const handleAccept = () => {
+        console.log('Accepting join request for guest:', guestId);
+        // Use episodeId as fallback if roomId is undefined
+        const effectiveRoomId = roomId || episodeId;
+        if (!guestId || !episodeId || !effectiveRoomId) {
+            console.error('Missing fields in approve_join_studio payload:', { guestId, episodeId, roomId: effectiveRoomId });
+            showNotification('Error: Missing required fields for join approval.', 'error');
+            closeModal();
+            return;
+        }
+        try {
+            const payload = { guestId, episodeId, roomId: effectiveRoomId, room: effectiveRoomId }; // Include both roomId and room
+            console.log('Emitting approve_join_studio with payload:', JSON.stringify(payload, null, 2));
+            socket.emit('approve_join_studio', payload, (response) => {
+                if (response && response.error) {
+                    console.error('Server rejected approve_join_studio:', response);
+                    showNotification(`Error: ${response.message}`, 'error');
+                } else {
+                    console.log('Approve join acknowledged by server:', response);
+                    showNotification(`Approved join for ${guestName}`, 'success');
+                    closeModal();
+                }
+            });
+        } catch (error) {
+            console.error('Error accepting join request:', error);
+            showNotification('Error processing accept request.', 'error');
+        }
+    };
+
+    // Handle Deny
+    const handleDeny = () => {
+        console.log('Denying join request for guest:', guestId);
+        try {
+            socket.emit('deny_join_studio', { guestId, reason: 'Denied by host', roomId: roomId || episodeId });
+            showNotification(`Denied join for ${guestName}`, 'info');
+            closeModal();
+        } catch (error) {
+            console.error('Error denying join request:', error);
+            showNotification('Error processing deny request.', 'error');
+        }
+    };
+
+    // Add event listeners with AbortController
+    acceptBtn.addEventListener('click', handleAccept, { signal });
+    denyBtn.addEventListener('click', handleDeny, { signal });
+    closeBtn.addEventListener('click', handleDeny, { signal });
+
+    // Handle escape key
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            console.log('Escape key pressed, closing modal');
+            handleDeny();
+        }
+    };
+    document.addEventListener('keydown', handleEscape, { signal });
+
+    // Handle click outside modal
+    const handleClickOutside = (e) => {
+        if (e.target === joinRequestModal) {
+            console.log('Clicked outside modal, closing');
+            handleDeny();
+        }
+    };
+    joinRequestModal.addEventListener('click', handleClickOutside, { signal });
+
+    // Handle abort
+    signal.addEventListener('abort', () => {
+        console.log('Join request aborted for guest:', guestId);
+        try {
+            if (joinRequestModal.style.display === 'block') {
+                joinRequestModal.style.display = 'none';
+                joinRequestModal.classList.remove('visible');
+            }
+        } catch (error) {
+            console.error('Error during abort cleanup:', error);
+        }
+    });
+
+    console.log(`Join request modal shown for guest: ${guestName} (ID: ${guestId})`);
+}
 
     // Helper function to close any open join request modal
     function closeJoinRequestModal() {
         if (currentJoinRequest) {
+            console.log('Closing current join request modal');
             currentJoinRequest.abort();
             currentJoinRequest = null;
         }
@@ -709,8 +743,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Socket.IO reconnect attempt: ${attempt}`);
         });
 
-        socket.on('connect_error', (error) => {
-            console.error('Socket.IO connection error:', error);
+        socket.on('connect_error', () => {
+            console.error('Socket.IO connection error');
             showNotification('Failed to connect to server.', 'error');
         });
 
@@ -737,8 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 peerConnections.delete(data.userId);
             }
             if (connectedUsers.length <= 1) {
-                showNotification('No connection to server', 'error');
-                remoteVideoWrapper.srcObject.display = null; 'none';
+                remoteVideoWrapper.style.display = 'none';
                 remoteVideo.srcObject = null;
             }
             loadGuestsForEpisode();
@@ -765,12 +798,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         socket.on('request_join_studio', (data) => {
-            console.log('Received request_join_studio:', data);
+            console.log('Received request_join_studio with data:', JSON.stringify(data, null, 2));
             if (isHost) {
                 console.log('Host processing join request for:', data.guestName);
-                showJoinRequest(data.guestId, data.guestName, data.episodeId, data.roomId);
+                // Fallback to episodeId if roomId is missing
+                const roomId = data.roomId || data.room || data.episodeId;
+                if (!roomId) {
+                    console.error('No roomId provided in request_join_studio:', data);
+                    showNotification('Error: Missing room ID for join request.', 'error');
+                    return;
+                }
+                showJoinRequest(data.guestId, data.guestName, data.episodeId, roomId);
             } else {
-                console.log('Ignoring join request: not host');
+                console.log('Ignoring request_join_studio: not host');
             }
         });
 
@@ -845,7 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     videoQualitySelect?.addEventListener('change', () => {
         if (isCameraActive) {
-            startCamera(cameraSelect.value);
+            startCamera(cameraSelect?.value);
         }
     });
 
