@@ -797,7 +797,9 @@
   font-weight: 600;
   font-size: 0.7rem;
   transition: all var(--transition-normal);
+  margin-right: 8px; /* Add this line for spacing */
 }
+
 
 .view-profile-btn:hover {
   background-color: var(--highlight-hover);
@@ -2059,5 +2061,25 @@ select#episode-id {
     cursor: not-allowed;
     box-shadow: none;
   }
+}
+
+.popup .form-box select {
+  background-color: white;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: var(--radius-small);
+  margin-bottom: 16px;
+}
+
+/* Hide published episodes in the dropdown */
+select option.published {
+  display: none;
+}
+
+/* Style for non-published episodes */
+select option.non-published {
+  color: #000000;
+  background-color: white;
 }
 

@@ -347,24 +347,20 @@ class PodcastRepository:
         Fetch RSS data using RSSService and add a podcast to the repository.
         """
         try:
-            # Fetch RSS data using the instance
+      
             rss_data, status_code = self.rss_service.fetch_rss_feed(rss_url)
             if status_code != 200:
                 return {"error": "Failed to fetch RSS feed", "details": rss_data}, 400
 
-            # Prepare data for add_podcast based on rss_data
-            # This part needs to be adapted based on what add_podcast expects
-            # and what rss_data provides. For example:
             podcast_data_for_add = {
                 "podName": rss_data.get("title", "Untitled Podcast from RSS"),
                 "rssFeed": rss_url,
                 "description": rss_data.get("description"),
                 "logoUrl": rss_data.get("imageUrl"),
-                # Add other necessary fields extracted from rss_data
-                # or default values as required by PodcastSchema
+          
             }
             
-            # Call existing add_podcast method
+    
             return self.add_podcast(user_id, podcast_data_for_add)
 
         except Exception as e:

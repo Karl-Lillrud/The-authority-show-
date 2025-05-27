@@ -19,7 +19,7 @@ class AudioToEpisodeService:
                 logger.warning("No audio file provided for upload")
                 return None
 
-            valid_mimes = ["audio/mpeg", "audio/mp3", "audio/wav"]
+            valid_mimes = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/webm", "video/webm"]
             mime_type = getattr(audio_file, "mimetype", None)
             if mime_type not in valid_mimes:
                 logger.warning(f"Invalid file type: {mime_type}")
