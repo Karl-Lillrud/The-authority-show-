@@ -162,6 +162,8 @@ def register_socketio_events(socketio: SocketIO):
             logger.error(f"Studio room not found: {room}")
             emit('error', {'error': 'room_not_found', 'message': 'Studio room not found'}, to=request.sid)
 
+    # ... (previous imports and setup remain unchanged)
+
     @socketio.on('approve_join_studio')
     def handle_approve_join_studio(data):
         guest_id = data.get('guestId')
@@ -183,20 +185,17 @@ def register_socketio_events(socketio: SocketIO):
             emit('error', {'error': 'unauthorized', 'message': 'Only host can approve join requests'}, to=request.sid)
             return
 
-        greenroom_users = recording_studio_service.get_greenroom_users(room)
+        greenroom_users = recording_studio_service.get_users_in_greenroom(room)
         guest = next((u for u in greenroom_users if u['id'] == guest_id), None)
         if not guest:
             logger.error(f"Guest {guest_id} not found in greenroom: {room}")
             emit('error', {'error': 'guest_not_found', 'message': 'Guest not in greenroom'}, to=request.sid)
             return
 
-        logger.info(f"Approved join for Guest {guest_id}: {room}, Episode {episode_id}")
-        emit('join_studio_approved', {
-            'room': room,
-            'episodeId': episode_id,
-            'guestId': guest_id
-        }, to=guest['socketId'])
+        # Remove from greenroom first
+        recording_studio_service.leave_greenroom(room, {'id': guest_id})
 
+        # Add to studio participants
         if room not in studio_participants:
             studio_participants[room] = []
         studio_participants[room].append({
@@ -205,7 +204,20 @@ def register_socketio_events(socketio: SocketIO):
             'name': guest.get('name', 'Guest'),
             'isHost': False
         })
-        recording_studio_service.leave_greenroom(room, {'id': guest_id})
+
+        logger.info(f"Approved join for Guest {guest_id}: {room}, Episode {episode_id}")
+        # Emit to the guest to join the studio
+        emit('join_studio_approved', {
+            'room': room,
+            'episodeId': episode_id,
+            'guestId': guest_id
+        }, to=guest['socketId'])
+        # Notify all participants of the new join
+        emit('participant_joined', {
+            'userId': guest_id,
+            'streamId': f"stream-{guest_id}",
+            'guestName': guest.get('name', 'Guest')
+        }, room=room)
 
     @socketio.on('deny_join_studio')
     def handle_deny_join_studio(data):
@@ -320,6 +332,92 @@ def register_socketio_events(socketio: SocketIO):
 
         logger.info(f"Recording stopped: {room}")
         emit('recording_stopped', {'room': room, 'user': user}, room=room)
+        
+        
+        @socketio.on('offer')
+        def handle_offer(data):
+            room = data.get('room')
+            user_id = data.get('userId')
+            offer = data.get('offer')
+            if room and user_id and offer:
+                emit('offer', {'userId': user_id, 'offer': offer}, room=room, include_self=False)
+            else:
+                logger.error(f"Invalid offer data: {data}")
+                emit('error', {'message': 'Invalid offer data'}, to=request.sid)
+
+        @socketio.on('answer')
+        def handle_answer(data):
+            room = data.get('room')
+            user_id = data.get('userId')
+            answer = data.get('answer')
+            if room and user_id and answer:
+                emit('answer', {'userId': user_id, 'answer': answer}, room=room, include_self=False)
+            else:
+                logger.error(f"Invalid answer data: {data}")
+                emit('error', {'message': 'Invalid answer data'}, to=request.sid)
+
+        @socketio.on('ice_candidate')
+        def handle_ice_candidate(data):
+            room = data.get('room')
+            user_id = data.get('userId')
+            candidate = data.get('candidate')
+            if room and user_id and candidate:
+                emit('ice_candidate', {'userId': user_id, 'candidate': candidate}, room=room, include_self=False)
+            else:
+                logger.error(f"Invalid ICE candidate data: {data}")
+                emit('error', {'message': 'Invalid ICE candidate data'}, to=request.sid)
+
+        @socketio.on('update_stream_state')
+        def handle_update_stream_state(data):
+            room = data.get('room')
+            user_id = data.get('userId')
+            is_camera_active = data.get('isCameraActive')
+            is_mic_active = data.get('isMicActive')
+            if room and user_id:
+                emit('update_stream_state', {
+                    'userId': user_id,
+                    'isCameraActive': is_camera_active,
+                    'isMicActive': is_mic_active
+                }, room=room, include_self=False)
+            else:
+                logger.error(f"Invalid stream state data: {data}")
+                emit('error', {'message': 'Invalid stream state data'}, to=request.sid)
+                
+                
+                @socketio.on('recording_paused')
+                def handle_recording_paused(data):
+                    room = data.get('room')
+                    is_paused = data.get('isPaused')
+                    if room and isinstance(is_paused, bool):
+                        logger.info(f"Recording {'paused' if is_paused else 'resumed'} for room: {room}")
+                        emit('recording_paused', {'isPaused': is_paused}, room=room, include_self=False)
+                    else:
+                        logger.error(f"Invalid recording_paused data: {data}")
+                        emit('error', {'message': 'Invalid recording pause data'}, to=request.sid)
+
+                @socketio.on('save_recording')
+                def handle_save_recording(data):
+                    room = data.get('room')
+                    episode_id = data.get('episodeId')
+                    if room and episode_id:
+                        logger.info(f"Saving recording for room: {room}, episode: {episode_id}")
+                        # Implement saving logic (e.g., store in MongoDB or filesystem)
+                        emit('recording_saved', {'episodeId': episode_id}, room=room)
+                    else:
+                        logger.error(f"Invalid save_recording data: {data}")
+                        emit('error', {'message': 'Invalid save recording data'}, to=request.sid)
+
+                @socketio.on('discard_recording')
+                def handle_discard_recording(data):
+                    room = data.get('room')
+                    episode_id = data.get('episodeId')
+                    if room and episode_id:
+                        logger.info(f"Discarding recording for room: {room}, episode: {episode_id}")
+                        # Implement discard logic (e.g., delete temporary files)
+                        emit('recording_discarded', {'episodeId': episode_id}, room=room)
+                    else:
+                        logger.error(f"Invalid discard_recording data: {data}")
+                        emit('error', {'message': 'Invalid discard recording data'}, to=request.sid)
 
 # ---------------------------------------------
 # ROUTES

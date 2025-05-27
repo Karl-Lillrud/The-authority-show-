@@ -127,7 +127,8 @@ class TranscriptionService:
         return {
             "file_id": str(file_id),
             "raw_transcription": raw_transcription,
-            "full_transcript": full_text
+            "full_transcript": full_text,
+            "word_timestamps": word_timings  # ✅ Add this line
         }
 
     def get_clean_transcript(self, transcript_text: str) -> str:
