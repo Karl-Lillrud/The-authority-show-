@@ -366,6 +366,83 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function addParticipantStream(userId, streamId, guestName) {
+    if (!localStream) {
+        console.warn('Local stream not initialized. Delaying participant stream setup for user:', userId);
+        showNotification('Local stream not ready. Please ensure microphone is initialized.', 'warning');
+        await new Promise(resolve => {
+            const checkStream = setInterval(() => {
+                if (localStream) {
+                    clearInterval(checkStream);
+                    resolve();
+                }
+            }, 1000);
+        });
+    }
+
+    if (connectedUsers.length <= 1) {
+        if (remoteVideo) {
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            peerConnections.set(userId, pc);
+
+            pc.ontrack = (event) => {
+                if (event.streams[0]) {
+                    remoteVideo.srcObject = event.streams[0];
+                    remoteVideoWrapper.style.display = 'block';
+                }
+            };
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('ice_candidate', { room, userId, candidate: event.candidate });
+                }
+            };
+
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                socket.emit('offer', { room, userId, offer: pc.localDescription });
+            } catch (error) {
+                console.error('Error creating WebRTC offer:', error);
+                showNotification('Failed to establish WebRTC connection.', 'error');
+            }
+        }
+    } else {
+        const videoElement = document.getElementById(`video-${userId}`);
+        if (videoElement) {
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            peerConnections.set(userId, pc);
+
+            pc.ontrack = (event) => {
+                if (event.streams[0]) {
+                    videoElement.srcObject = event.streams[0];
+                }
+            };
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('ice_candidate', { room, userId, candidate: event.candidate });
+                }
+            };
+
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                socket.emit('offer', { room, userId, offer: pc.localDescription });
+            } catch (error) {
+                console.error('Error creating WebRTC offer for participant:', error);
+                showNotification('Failed to establish WebRTC connection.', 'error');
+            }
+        }
+    }
+}
+
     // Load guests for episode
     async function loadGuestsForEpisode() {
         try {
@@ -414,81 +491,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Add participant stream
-    async function addParticipantStream(userId, streamId, guestName) {
-        if (!localStream) {
-            console.warn('Local stream not initialized. Delaying participant stream setup for user:', userId);
-            showNotification('Local stream not ready. Please ensure microphone is initialized.', 'warning');
-            // Wait for localStream to be initialized
-            await new Promise(resolve => {
-                const checkStream = setInterval(() => {
-                    if (localStream) {
-                        clearInterval(checkStream);
-                        resolve();
-                    }
-                }, 1000);
-            });
+    // Update participants list (only for more than two users)
+    function updateParticipantsList(guests) {
+        if (!participantsContainer) {
+            showNotification('Error: Guest list container not found.', 'error');
+            return;
+        }
+        participantsContainer.innerHTML = '';
+
+        if (!guests.length) {
+            participantsContainer.innerHTML = '<p>No guests found for this episode.</p>';
+            return;
         }
 
-        if (connectedUsers.length <= 1) {
-            if (remoteVideo) {
-                const pc = new RTCPeerConnection({
-                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-                });
-                peerConnections.set(userId, pc);
-
-                pc.ontrack = (event) => {
-                    if (event.streams[0]) {
-                        remoteVideo.srcObject = event.streams[0];
-                        remoteVideoWrapper.style.display = 'block';
-                    }
-                };
-
-                pc.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        socket.emit('ice_candidate', { room, userId, candidate: event.candidate });
-                    }
-                };
-
-                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-                try {
-                    const offer = await pc.createOffer();
-                    await pc.setLocalDescription(offer);
-                    socket.emit('offer', { room, userId, offer: pc.localDescription });
-                } catch (error) {
-                    console.error('Error creating WebRTC offer:', error);
-                    showNotification('Failed to establish WebRTC connection.', 'error');
+        // Only show participants list if more than two users
+        if (connectedUsers.length > 2) {
+            guests.forEach(guest => {
+                const isConnected = connectedUsers.some(u => u.userId === guest._id);
+                const isInGreenroom = greenroomUsers.some(u => u.userId === guest._id);
+                if (isConnected) {
+                    const card = document.createElement('div');
+                    card.className = 'participant-card';
+                    card.innerHTML = `
+                        <h5>${guest.name}</h5>
+                        <p>Status: ${isConnected ? 'In Studio' : isInGreenroom ? 'Awaiting Approval' : 'Not Connected'}</p>
+                        <video id="video-${guest._id}" class="participant-video" autoplay playsinline></video>
+                        <div class="audio-controls">
+                            <input type="range" class="volume-slider" data-user-id="${guest._id}" min="0" max="1" step="0.1" value="1">
+                            <span class="audio-indicator"></span>
+                        </div>
+                    `;
+                    participantsContainer.appendChild(card);
                 }
-            }
+            });
+            participantsContainer.style.display = 'block';
         } else {
-            const videoElement = document.getElementById(`video-${userId}`);
-            if (videoElement) {
-                const pc = new RTCPeerConnection({
-                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-                });
-                peerConnections.set(userId, pc);
-
-                pc.ontrack = (event) => {
-                    if (event.streams[0]) {
-                        videoElement.srcObject = event.streams[0];
-                    }
-                };
-
-                pc.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        socket.emit('ice_candidate', { room, userId, candidate: event.candidate });
-                    }
-                };
-
-                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-                try {
-                    const offer = await pc.createOffer();
-                    await pc.setLocalDescription(offer);
-                    socket.emit('offer', { room, userId, offer: pc.localDescription });
-                } catch (error) {
-                    console.error('Error creating WebRTC offer for participant:', error);
-                    showNotification('Failed to establish WebRTC connection.', 'error');
-                }
-            }
+            participantsContainer.style.display = 'none';
         }
     }
 
@@ -754,28 +792,44 @@ function showJoinRequest(guestId, guestName, episodeId, roomId) {
         });
 
         socket.on('participant_joined', (data) => {
-            console.log('Participant joined:', data);
-            connectedUsers = connectedUsers.filter(u => u.userId !== data.userId);
-            connectedUsers.push({ userId: data.userId, streamId: data.streamId, guestName: data.guestName });
-            greenroomUsers = greenroomUsers.filter(u => u.userId !== data.userId);
-            addParticipantStream(data.userId, data.streamId, data.guestName);
-            loadGuestsForEpisode();
-        });
+        console.log('Participant joined:', data);
+        connectedUsers = connectedUsers.filter(u => u.userId !== data.userId);
+        connectedUsers.push({ userId: data.userId, streamId: data.streamId, guestName: data.guestName });
+        greenroomUsers = greenroomUsers.filter(u => u.userId !== data.userId);
+        addParticipantStream(data.userId, data.streamId, data.guestName);
+        loadGuestsForEpisode();
+        // Ensure remote video is visible for both host and guest
+        remoteVideoWrapper.style.display = 'block';
+    });
 
-        socket.on('participant_left', (data) => {
-            console.log('Participant left:', data);
-            connectedUsers = connectedUsers.filter(u => u.userId !== data.userId);
-            const pc = peerConnections.get(data.userId);
-            if (pc) {
-                pc.close();
-                peerConnections.delete(data.userId);
-            }
-            if (connectedUsers.length <= 1) {
-                remoteVideoWrapper.style.display = 'none';
-                remoteVideo.srcObject = null;
-            }
-            loadGuestsForEpisode();
+        // Handle participant left
+    socket.on('participant_left', (data) => {
+        console.log('Participant left:', data);
+        connectedUsers = connectedUsers.filter(u => u.userId !== data.userId);
+        const pc = peerConnections.get(data.userId);
+        if (pc) {
+            pc.close();
+            peerConnections.delete(data.userId);
+        }
+        remoteVideoWrapper.style.display = 'none'; // Hide remote video if no other participants
+        remoteVideo.srcObject = null;
+        loadGuestsForEpisode();
+    });
+
+
+    socket.on('join_studio_approved', (data) => {
+        console.log('Join studio approved:', data);
+        room = data.room;
+        episodeId = data.episodeId;
+        // Initialize guest stream and join the room
+        socket.emit('participant_stream', {
+            room,
+            userId: guestId,
+            streamId: `stream-${guestId}`,
+            guestName: 'Guest'
         });
+        remoteVideoWrapper.style.display = 'block'; // Ensure guest sees host's video
+    });
 
         socket.on('participant_stream', (data) => {
             console.log('Received participant stream:', data);
@@ -893,7 +947,7 @@ function showJoinRequest(guestId, guestName, episodeId, roomId) {
     toggleMicBtn?.addEventListener('click', toggleMicrophone);
 
     // Initialize
-    if (episodeId) {
+if (episodeId) {
         console.log('Starting studio initialization');
         if (guestId && token) {
             initializeGuest();

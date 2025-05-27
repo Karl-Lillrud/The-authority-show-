@@ -162,6 +162,8 @@ def register_socketio_events(socketio: SocketIO):
             logger.error(f"Studio room not found: {room}")
             emit('error', {'error': 'room_not_found', 'message': 'Studio room not found'}, to=request.sid)
 
+    # ... (previous imports and setup remain unchanged)
+
     @socketio.on('approve_join_studio')
     def handle_approve_join_studio(data):
         guest_id = data.get('guestId')
@@ -183,7 +185,7 @@ def register_socketio_events(socketio: SocketIO):
             emit('error', {'error': 'unauthorized', 'message': 'Only host can approve join requests'}, to=request.sid)
             return
 
-        greenroom_users = recording_studio_service.get_users_in_greenroom(room)  # Fixed method name
+        greenroom_users = recording_studio_service.get_users_in_greenroom(room)
         guest = next((u for u in greenroom_users if u['id'] == guest_id), None)
         if not guest:
             logger.error(f"Guest {guest_id} not found in greenroom: {room}")
@@ -204,11 +206,18 @@ def register_socketio_events(socketio: SocketIO):
         })
 
         logger.info(f"Approved join for Guest {guest_id}: {room}, Episode {episode_id}")
+        # Emit to the guest to join the studio
         emit('join_studio_approved', {
             'room': room,
             'episodeId': episode_id,
             'guestId': guest_id
         }, to=guest['socketId'])
+        # Notify all participants of the new join
+        emit('participant_joined', {
+            'userId': guest_id,
+            'streamId': f"stream-{guest_id}",
+            'guestName': guest.get('name', 'Guest')
+        }, room=room)
 
     @socketio.on('deny_join_studio')
     def handle_deny_join_studio(data):
