@@ -85,11 +85,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Show/hide controls based on role
-    if (isHost) {
-        if (hostControls) hostControls.style.display = 'flex';
-    } else {
-        if (hostControls) hostControls.style.display = 'none';
-    }
+if (isHost) {
+    if (hostControls) hostControls.style.display = 'flex'; // Host-specific controls
+} else {
+    // Ensure guest has access to device controls
+    if (cameraSelect) cameraSelect.style.display = 'block';
+    if (microphoneSelect) microphoneSelect.style.display = 'block';
+    if (speakerSelect) speakerSelect.style.display = 'block';
+    if (toggleCameraBtn) toggleCameraBtn.style.display = 'block';
+    if (toggleMicBtn) toggleMicBtn.style.display = 'block';
+}
 
     // Validate URL parameters
     if (!episodeId || (guestId && !token)) {
@@ -114,76 +119,86 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Update recording time
-    function updateRecordingTime() {
-        if (isRecording && !isPaused && recordingStartTime) {
-            const elapsed = Date.now() - recordingStartTime - totalPausedTime;
-            const hours = Math.floor(elapsed / 3600000);
-            const minutes = Math.floor((elapsed % 3600000) / 60000);
-            const seconds = Math.floor((elapsed % 60000) / 1000);
-            recordingTime.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
+function updateRecordingTime() {
+    if (!recordingTime) {
+        console.error(`[${isHost ? 'Host' : 'Guest'}] recordingTime DOM element not found in updateRecordingTime`);
+        return;
     }
+    if (isRecording && !isPaused && recordingStartTime) {
+        const elapsed = Date.now() - recordingStartTime - totalPausedTime;
+        const hours = Math.floor(elapsed / 3600000);
+        const minutes = Math.floor((elapsed % 3600000) / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        recordingTime.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        console.log(`[${isHost ? 'Host' : 'Guest'}] Updated recordingTime: ${recordingTime.textContent}`);
+    } else {
+        console.warn(`[${isHost ? 'Host' : 'Guest'}] Skipped timer update: isRecording=${isRecording}, isPaused=${isPaused}, recordingStartTime=${recordingStartTime}`);
+    }
+}
 
     async function initializeDevices() {
-        try {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-                throw new Error('MediaDevices API not supported');
-            }
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            console.log('Available devices:', devices.map(d => ({ kind: d.kind, label: d.label, deviceId: d.deviceId })));
+    try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            throw new Error('MediaDevices API not supported');
+        }
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        console.log('Available devices:', devices.map(d => ({ kind: d.kind, label: d.label, deviceId: d.deviceId })));
 
-            // Populate device selects
-            const videoDevices = devices.filter(device => device.kind === 'videoinput');
-            cameraSelect.innerHTML = '<option value="">Select Camera</option>';
+        // Populate camera select
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        cameraSelect.innerHTML = '<option value="">Select Camera</option>';
+        if (videoDevices.length > 0) {
+            cameraSelect.innerHTML += videoDevices.map(device => 
+                `<option value="${device.deviceId}">${device.label || `Camera ${videoDevices.indexOf(device) + 1}`}</option>`
+            ).join('');
+        } else {
+            cameraSelect.innerHTML += '<option value="" disabled>No cameras detected</option>';
+            showNotification('No camera detected. Video features will be limited.', 'warning');
+        }
+
+        // Populate microphone select
+        const audioDevices = devices.filter(device => device.kind === 'audioinput');
+        microphoneSelect.innerHTML = '<option value="">Select Microphone</option>';
+        if (audioDevices.length > 0) {
+            microphoneSelect.innerHTML += audioDevices.map(device => 
+                `<option value="${device.deviceId}">${device.label || `Microphone ${audioDevices.indexOf(device) + 1}`}</option>`
+            ).join('');
+        } else {
+            microphoneSelect.innerHTML += '<option value="" disabled>No microphones detected</option>';
+            showNotification('No microphone detected. Please connect a microphone.', 'error');
+        }
+
+        // Populate speaker select (for both host and guest)
+        const speakerDevices = devices.filter(device => device.kind === 'audiooutput');
+        speakerSelect.innerHTML = '<option value="">Select Speaker</option>';
+        if (speakerDevices.length > 0) {
+            speakerDevices.forEach(device => {
+                speakerSelect.innerHTML += `<option value="${device.deviceId}">${device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}</option>`;
+            });
+        } else {
+            speakerSelect.innerHTML += '<option value="" disabled>No speakers detected</option>';
+            showNotification('No speakers detected. Audio output may be limited.', 'warning');
+        }
+
+        // Try to initialize microphone and camera if available
+        if (audioDevices.length > 0) {
+            await tryInitializeMicrophone(audioDevices[0].deviceId);
             if (videoDevices.length > 0) {
-                cameraSelect.innerHTML += videoDevices.map(device => 
-                    `<option value="${device.deviceId}">${device.label || `Camera ${videoDevices.indexOf(device) + 1}`}</option>`
-                ).join('');
-            } else {
-                cameraSelect.innerHTML += '<option value="" disabled>No cameras detected</option>';
-                showNotification('No camera detected. Video features will be limited.', 'warning');
+                await startCamera(videoDevices[0].deviceId); // Automatically start camera
+                isCameraActive = true;
             }
-
-            const audioDevices = devices.filter(device => device.kind === 'audioinput');
-            microphoneSelect.innerHTML = '<option value="">Select Microphone</option>';
-            if (audioDevices.length > 0) {
-                microphoneSelect.innerHTML += audioDevices.map(device => 
-                    `<option value="${device.deviceId}">${device.label || `Microphone ${audioDevices.indexOf(device) + 1}`}</option>`
-                ).join('');
-            } else {
-                microphoneSelect.innerHTML += '<option value="" disabled>No microphones detected</option>';
-                showNotification('No microphone detected. Please connect a microphone.', 'error');
-            }
-
-            // Only populate speakerSelect for host
-            if (isHost) {
-                const speakerDevices = devices.filter(device => device.kind === 'audiooutput');
-                speakerSelect.innerHTML = '<option value="">Select Speaker</option>';
-                if (speakerDevices.length > 0) {
-                    speakerSelect.innerHTML += speakerDevices.map(device => 
-                        `<option value="${device.deviceId}">${device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}</option>`
-                    ).join('');
-                } else {
-                    speakerSelect.innerHTML += '<option value="" disabled>No speakers detected</option>';
-                    showNotification('No speakers detected. Audio output may be limited.', 'warning');
-                }
-            }
-
-            // Try to initialize microphone if available
-            if (audioDevices.length > 0) {
-                await tryInitializeMicrophone(audioDevices[0].deviceId);
-                return true;
-            } else {
-                await retryMicrophoneInitialization();
-                return localStream !== null;
-            }
-        } catch (error) {
-            console.error('Error initializing devices:', error);
-            showNotification(`Failed to initialize devices: ${error.message}`, 'error');
+            return true;
+        } else {
             await retryMicrophoneInitialization();
             return localStream !== null;
         }
+    } catch (error) {
+        console.error('Error initializing devices:', error);
+        showNotification(`Failed to initialize devices: ${error.message}`, 'error');
+        await retryMicrophoneInitialization();
+        return localStream !== null;
     }
+}
 
     // Retry microphone initialization
     async function retryMicrophoneInitialization() {
@@ -212,28 +227,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize microphone
     async function tryInitializeMicrophone(deviceId) {
-        try {
-            const audioStream = await navigator.mediaDevices.getUserMedia({
-                audio: { typeId: deviceId ? { exact: deviceId } : undefined }
-            });
-            localStream = audioStream;
-            isMicActive = true;
-            videoPreview.srcObject = null; // No video initially
-            const userId = guestId || 'host';
-            const streamId = guestId ? `stream-${userId}` : 'stream-host';
-            const guestName = guestId ? 'Guest' : 'Host';
-            socket.emit('participant_stream', { room, userId, streamId, guestName });
-            updateIndicators();
-            updateLocalControls();
-            micRetryCount = 0; // Reset retry count on success
-            showNotification('Audio devices initialized.', 'success');
-        } catch (error) {
-            console.error('Error initializing microphone:', error);
-            localStream = null;
-            showNotification(`Microphone error: ${error.message}. Retrying...`, 'error');
-            await retryMicrophoneRegistration();
-        }
+    try {
+        const audioStream = await navigator.mediaDevices.getUserMedia({
+            audio: { deviceId: deviceId ? { exact: deviceId } : undefined }
+        });
+        localStream = audioStream;
+        console.log('[Microphone] Initialized stream with tracks:', audioStream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled })));
+        isMicActive = true;
+        videoPreview.srcObject = null;
+        const userId = guestId || 'host';
+        const streamId = guestId ? `stream-${userId}` : 'stream-host';
+        const guestName = guestId ? 'Guest' : 'Host';
+        socket.emit('participant_stream', { room, userId, streamId, guestName });
+        socket.emit('update_stream_state', { room, userId, isMicActive: true, isCameraActive });
+        updateIndicators();
+        updateLocalControls();
+        micRetryCount = 0;
+        showNotification('Microphone initialized successfully.', 'success');
+    } catch (error) {
+        console.error('[Microphone] Error initializing microphone:', error);
+        localStream = null;
+        showNotification(`Microphone error: ${error.message}. Retrying...`, 'error');
+        await retryMicrophone();
     }
+}
 
     // Start camera
     async function startCamera(deviceId) {
@@ -345,22 +362,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initialize guest
-    async function initializeGuest() {
-        console.log('Guest initializing devices...');
-        if (!room) {
-            room = episodeId; // Fallback to episodeId
-            console.warn('Guest: No room parameter, using episodeId:', room);
-        }
-        const success = await initializeDevices();
-        console.log('Device initialization success:', success);
-        if (success) {
-            const joinPayload = { room, episodeId, isHost: false, user: { id: guestId, name: 'Guest' }, token };
-            console.log('Emitting join_studio with payload:', joinPayload);
-            socket.emit('join_studio', joinPayload);
-        } else {
-            showNotification('Failed to initialize devices for guest. Please check microphone.', 'error');
-        }
+async function initializeGuest() {
+    console.log('Guest initializing devices...');
+    if (!room) {
+        room = episodeId; // Fallback to episodeId
+        console.warn('Guest: No room parameter, using episodeId:', room);
     }
+    const success = await initializeDevices();
+    console.log('Device initialization success:', success);
+    if (success) {
+        const joinPayload = { room, episodeId, isHost: false, user: { id: guestId, name: 'Guest' }, token };
+        console.log('Emitting join_studio with payload:', joinPayload);
+        socket.emit('join_studio', joinPayload);
+        showNotification('Devices initialized successfully. Joined studio.', 'success');
+        updateIndicators();
+        updateLocalControls();
+    } else {
+        showNotification('Failed to initialize devices for guest. Please check microphone and camera.', 'error');
+    }
+}
 
     // Load episode details
     async function loadEpisodeDetails() {
@@ -851,6 +871,68 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        socket.on('recording_started', (data) => {
+            console.log('Received recording_started event:', data);
+            if (!recordingTime) {
+                console.error('recordingTime DOM element not found for guest');
+                showNotification('Error: Timer display not available.', 'error');
+                return;
+            }
+            isRecording = true;
+            recordingStartTime = data.recordingStartTime || Date.now();
+            totalPausedTime = 0;
+            isPaused = false;
+            console.log('Timer state initialized:', { isRecording, recordingStartTime, totalPausedTime, isPaused });
+            if (timerInterval) {
+                clearInterval(timerInterval); // Clear any existing interval
+            }
+            timerInterval = setInterval(() => {
+                updateRecordingTime();
+                console.log('Timer updated, recordingTime.textContent:', recordingTime.textContent);
+            }, 1000);
+            if (!isHost) {
+                showNotification('Recording started by host.', 'success');
+                pauseButton.disabled = true;
+                stopRecordingBtn.disabled = true;
+                saveRecordingBtn.disabled = true;
+                discardRecordingBtn.disabled = true;
+            }
+        });
+
+
+        socket.on('recording_paused', (data) => {
+            console.log('Recording pause state changed:', data);
+            isPaused = data.isPaused;
+            if (isPaused) {
+                pauseStartTime = Date.now();
+            } else {
+                if (pauseStartTime) {
+                    totalPausedTime += Date.now() - pauseStartTime;
+                    pauseStartTime = null;
+                }
+            }
+            if (pauseButton) {
+                pauseButton.innerHTML = `<i class="fas fa-${isPaused ? 'play' : 'pause'}"></i> ${isPaused ? 'Resume' : 'Pause'}`;
+            }
+            showNotification(isPaused ? 'Recording paused by host' : 'Recording resumed by host.', 'success');
+        });
+
+
+        socket.on('recording_stopped', (data) => {
+            console.log('Recording stopped by host:', data);
+            isRecording = false;
+            isPaused = false;
+            clearInterval(timerInterval);
+            recordingTime.textContent = '00:00:00';
+            showNotification('Recording stopped by host.', 'success');
+            if (!isHost) {
+                pauseButton.disabled = true;
+                stopRecordingBtn.disabled = true;
+                saveRecordingBtn.disabled = true;
+                discardRecordingBtn.disabled = true;
+            }
+        });
+
         socket.on('error', (data) => {
             console.error('Server error:', data);
             showNotification(`Error: ${data.message}`, 'error');
@@ -858,43 +940,65 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Event Listeners
-    startRecordingBtn?.addEventListener('click', () => {
-        if (!localStream) {
-            showNotification('Cannot start recording: No audio stream available.', 'error');
-            return;
-        }
-        recordedChunks = []; // Clear previous chunks
-        try {
-            let options = { mimeType: 'audio/webm' }; // Default MIME type
-            if (!MediaRecorder.isTypeSupported('audio/webm')) {
-                if (MediaRecorder.isTypeSupported('audio/ogg')) {
-                    options.mimeType = 'audio/ogg';
-                } else {
-                    console.warn('No supported audio MIME type found for MediaRecorder.');
-                    options = {}; // Fallback to browser default
-                }
+ startRecordingBtn?.addEventListener('click', () => {
+    if (!localStream) {
+        showNotification('Cannot start recording: No audio stream available.', 'error');
+        return;
+    }
+    recordedChunks = [];
+    try {
+        // Define supported MIME types in order of preference
+        const supportedMimeTypes = [
+            'audio/webm;codecs=opus',
+            'audio/ogg;codecs=opus',
+            'audio/mp4',
+            'audio/webm',
+            'audio/ogg'
+        ];
+
+        let selectedMimeType = '';
+        for (const mimeType of supportedMimeTypes) {
+            if (MediaRecorder.isTypeSupported(mimeType)) {
+                selectedMimeType = mimeType;
+                console.log(`[Host] Selected MIME type: ${mimeType}`);
+                break;
             }
-            mediaRecorder = new MediaRecorder(localStream, options);
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    recordedChunks.push(e.data);
-                }
-            };
-            mediaRecorder.start(1000); // Collect data every second
-            isRecording = true;
-            recordingStartTime = Date.now();
-            timerInterval = setInterval(updateRecordingTime, 1000);
-            socket.emit('recording_started', { room, user: { id: 'host' } });
-            showNotification('Recording started successfully.', 'success');
-            pauseButton.disabled = false;
-            stopRecordingBtn.disabled = false;
-            saveRecordingBtn.disabled = true;
-            discardRecordingBtn.disabled = true;
-        } catch (error) {
-            console.error('Error starting MediaRecorder:', error);
-            showNotification(`Failed to start recording: ${error.message}`, 'error');
         }
-    });
+
+        if (!selectedMimeType) {
+            throw new Error('No supported audio MIME type found for MediaRecorder.');
+        }
+
+        const options = { mimeType: selectedMimeType };
+        mediaRecorder = new MediaRecorder(localStream, options);
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                recordedChunks.push(e.data);
+            }
+        };
+        mediaRecorder.start(1000); // Collect data every second
+        isRecording = true;
+        recordingStartTime = Date.now(); // Removed await
+        timerInterval = setInterval(updateRecordingTime, 1000);
+        socket.emit('recording_started', { 
+            room, // Fixed roomId to room as per original code
+            user: { id: 'host' }, 
+            recordingStartTime
+        });
+        console.log('[Host] Emitting recording_started event');
+        if (isHost) {
+            console.log('[Host] Showing host-specific notification');
+            showNotification('Recording started successfully.', 'success');
+        }
+        pauseButton.disabled = false;
+        stopRecordingBtn.disabled = false;
+        saveRecordingBtn.disabled = true;
+        discardRecordingBtn.disabled = true;
+    } catch (error) {
+        console.error('[Host] Error starting MediaRecorder:', error);
+        showNotification(`Failed to start recording: ${error.message}`, 'error');
+    }
+});
 
     pauseButton?.addEventListener('click', () => {
         isPaused = !isPaused;
@@ -966,7 +1070,7 @@ saveRecordingBtn?.addEventListener('click', async () => {
 
     discardRecordingBtn?.addEventListener('click', () => {
         socket.emit('discard_recording', { room, episodeId });
-        showNotification('Recording discarded successfully.', 'info');
+        showNotification('Recording discarded successfully.');
         saveRecordingBtn.disabled = true;
         discardRecordingBtn.disabled = false;
         recordedChunks = []; // Clear chunks
@@ -995,6 +1099,20 @@ saveRecordingBtn?.addEventListener('click', async () => {
             }
         });
     }
+
+
+    speakerSelect?.addEventListener('change', (e) => {
+    showNotification('Speaker selection changed. Note: Browser support for speaker selection may be limited.', 'info');
+    // Attempt to set audio output (browser support varies)
+    if (remoteVideo && typeof remoteVideo.setSinkId === 'function') {
+        remoteVideo.setSinkId(e.target.value).catch(error => {
+            console.error('Error setting audio output device:', error);
+            showNotification('Failed to set speaker: Not supported by browser.', 'warning');
+        });
+    } else {
+        console.warn('Audio output selection not supported by browser.');
+    }
+});
 
     toggleCameraBtn?.addEventListener('click', toggleCamera);
     toggleMicBtn?.addEventListener('click', toggleMicrophone);

@@ -303,6 +303,7 @@ def register_socketio_events(socketio: SocketIO):
     def handle_recording_started(data):
         room = data.get('room')
         user = data.get('user')
+        recording_start_time = data.get('recordingStartTime', int(datetime.now(timezone.utc).timestamp() * 1000))  # Fallback to server time
         if not room:
             logger.error(f"Invalid recording_started data: {data}")
             emit('error', {'error': 'missing_fields', 'message': 'Room required'}, to=request.sid)
@@ -314,7 +315,11 @@ def register_socketio_events(socketio: SocketIO):
             return
 
         logger.info(f"Recording started: {room}")
-        emit('recording_started', {'room': room, 'user': user}, room=room)
+        emit('recording_started', {
+            'room': room,
+            'user': user,
+            'recordingStartTime': recording_start_time
+        }, room=room)
 
     @socketio.on('recording_stopped')
     def handle_recording_stopped(data):
@@ -384,16 +389,16 @@ def register_socketio_events(socketio: SocketIO):
                 emit('error', {'message': 'Invalid stream state data'}, to=request.sid)
                 
                 
-                @socketio.on('recording_paused')
-                def handle_recording_paused(data):
-                    room = data.get('room')
-                    is_paused = data.get('isPaused')
-                    if room and isinstance(is_paused, bool):
-                        logger.info(f"Recording {'paused' if is_paused else 'resumed'} for room: {room}")
-                        emit('recording_paused', {'isPaused': is_paused}, room=room, include_self=False)
-                    else:
-                        logger.error(f"Invalid recording_paused data: {data}")
-                        emit('error', {'message': 'Invalid recording pause data'}, to=request.sid)
+        @socketio.on('recording_paused')
+        def handle_recording_paused(data):
+            room = data.get('room')
+            is_paused = data.get('isPaused')
+            if room and isinstance(is_paused, bool):
+                logger.info(f"Recording {'paused' if is_paused else 'resumed'} for room: {room}")
+                emit('recording_paused', {'isPaused': is_paused}, room=room, include_self=False)
+            else:
+                logger.error(f"Invalid recording_paused data: {data}")
+                emit('error', {'message': 'Invalid recording pause data'}, to=request.sid)
 
                 @socketio.on('save_recording')
                 def handle_save_recording(data):
