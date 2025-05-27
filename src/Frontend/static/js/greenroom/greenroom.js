@@ -1,5 +1,5 @@
-
 import { fetchGuestsByEpisode } from '../../../static/requests/guestRequests.js';
+import { fetchEpisode } from '../../../static/requests/episodeRequest.js'; // Import fetchEpisode
 
 // Initialize Socket.IO
 const socket = io();
@@ -27,6 +27,17 @@ const urlParams = new URLSearchParams(window.location.search);
 const episodeId = urlParams.get('episodeId');
 const guestId = urlParams.get('guestId');
 const token = urlParams.get('token');
+
+// Fetch podcast ID
+async function getPodcastId(episodeId) {
+    try {
+        const episode = await fetchEpisode(episodeId);
+        return episode.podcast_id || 'default-podcast-id'; // Fallback if podcast_id is not available
+    } catch (error) {
+        console.error('Error fetching podcast ID:', error);
+        return 'default-podcast-id'; // Fallback ID
+    }
+}
 
 // Initialize devices
 async function initializeDevices() {
@@ -236,7 +247,8 @@ socket.on('connect', () => {
     if (currentRoom) {
         socket.emit('join_greenroom', { 
             room: currentRoom, 
-            user: { id: guestId, socketId: socket.id, name: 'Guest' }
+            user: { id: guestId, socketId: socket.id, name: 'Guest' },
+            token
         });
         console.log('Emitted join_greenroom:', currentRoom);
     } else {
@@ -271,9 +283,10 @@ socket.on('host_ready', (data) => {
     roomStatus.querySelector('.status-indicator').classList.add('active');
 });
 
-socket.on('join_studio_approved', (data) => {
+socket.on('join_studio_approved', async (data) => {
     showNotification('Join request approved! Joining studio...', 'success');
-    window.location.href = `/studio?podcastId=4782487e-0305-439e-812e-879f91ac1f1b&episodeId=${data.episodeId}&room=${data.room}&guestId=${guestId}`;
+    const podcastId = await getPodcastId(data.episodeId);
+    window.location.href = `/studio?podcastId=${podcastId}&episodeId=${data.episodeId}&room=${data.room}&guestId=${guestId}&token=${token}`;
 });
 
 socket.on('join_studio_denied', (data) => {

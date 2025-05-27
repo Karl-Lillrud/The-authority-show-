@@ -183,20 +183,17 @@ def register_socketio_events(socketio: SocketIO):
             emit('error', {'error': 'unauthorized', 'message': 'Only host can approve join requests'}, to=request.sid)
             return
 
-        greenroom_users = recording_studio_service.get_greenroom_users(room)
+        greenroom_users = recording_studio_service.get_users_in_greenroom(room)  # Fixed method name
         guest = next((u for u in greenroom_users if u['id'] == guest_id), None)
         if not guest:
             logger.error(f"Guest {guest_id} not found in greenroom: {room}")
             emit('error', {'error': 'guest_not_found', 'message': 'Guest not in greenroom'}, to=request.sid)
             return
 
-        logger.info(f"Approved join for Guest {guest_id}: {room}, Episode {episode_id}")
-        emit('join_studio_approved', {
-            'room': room,
-            'episodeId': episode_id,
-            'guestId': guest_id
-        }, to=guest['socketId'])
+        # Remove from greenroom first
+        recording_studio_service.leave_greenroom(room, {'id': guest_id})
 
+        # Add to studio participants
         if room not in studio_participants:
             studio_participants[room] = []
         studio_participants[room].append({
@@ -205,7 +202,13 @@ def register_socketio_events(socketio: SocketIO):
             'name': guest.get('name', 'Guest'),
             'isHost': False
         })
-        recording_studio_service.leave_greenroom(room, {'id': guest_id})
+
+        logger.info(f"Approved join for Guest {guest_id}: {room}, Episode {episode_id}")
+        emit('join_studio_approved', {
+            'room': room,
+            'episodeId': episode_id,
+            'guestId': guest_id
+        }, to=guest['socketId'])
 
     @socketio.on('deny_join_studio')
     def handle_deny_join_studio(data):

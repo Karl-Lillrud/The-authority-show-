@@ -11,6 +11,7 @@ const socket = io({
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
     const participantsContainer = document.getElementById('participantsContainer');
     const startRecordingBtn = document.getElementById('startRecordingBtn');
     const stopRecordingBtn = document.getElementById('stopRecordingBtn');
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoPreview = document.getElementById('videoPreview');
     const joinRequestModal = document.getElementById('joinRequestModal');
 
+    // Variables
     let localStream = null;
     let episode = null;
     let isRecording = false;
@@ -30,18 +32,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const podcastId = urlParams.get('podcastId');
     const episodeId = urlParams.get('episodeId');
+    const guestId = urlParams.get('guestId');
+    const token = urlParams.get('token');
     let room = urlParams.get('room');
 
-    console.log('Studio initialized with params:', { podcastId, episodeId, room });
+    console.log('Studio initialized with params:', { podcastId, episodeId, room, guestId, token });
 
     // Validate DOM elements
     if (!participantsContainer) {
         console.error('participantsContainer element not found in DOM');
         showNotification('Error: Guest list container not found.', 'error');
+        return;
     }
     if (!joinRequestModal) {
         console.error('joinRequestModal element not found in DOM');
         showNotification('Error: Join request modal not found.', 'error');
+        return;
+    }
+
+    // Validate URL parameters
+    if (!episodeId || !room || (guestId && !token)) {
+        console.error('Missing required URL parameters:', { episodeId, room, guestId, token });
+        showNotification('Error: Missing required parameters (episodeId, room, or token).', 'error');
+        return;
     }
 
     // Initialize devices
@@ -80,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Start camera
     async function startCamera(deviceId) {
         try {
             if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
@@ -93,11 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 audio: false
             });
             videoPreview.srcObject = localStream;
+            const userId = guestId || 'host';
+            const streamId = guestId ? `stream-${guestId}` : 'stream-host';
+            const guestName = guestId ? 'Guest' : 'Host';
             socket.emit('participant_stream', {
                 room,
-                userId: 'host',
-                streamId: 'stream-host',
-                guestName: 'Host'
+                userId,
+                streamId,
+                guestName
             });
         } catch (error) {
             console.error('Error starting camera:', error.name, error.message);
@@ -105,6 +122,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Initialize guest
+    async function initializeGuest() {
+        await initializeDevices();
+        const joinPayload = {
+            room,
+            episodeId,
+            isHost: false,
+            user: { id: guestId, name: 'Guest' },
+            token
+        };
+        socket.emit('join_studio', joinPayload);
+        console.log('Emitted join_studio as guest:', joinPayload);
+    }
+
+    // Load episode details
     async function loadEpisodeDetails() {
         try {
             console.log('Fetching episode details for:', episodeId);
@@ -159,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Load guests for episode
     async function loadGuestsForEpisode() {
         try {
             const guests = await fetchGuestsByEpisode(episodeId);
@@ -174,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Update participant list
     function updateParticipantsList(guests, connectedUsers, greenroomUsers) {
         if (!participantsContainer) {
             console.error('participantsContainer is null, cannot update guest list');
@@ -201,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Add participant stream
     function addParticipantStream(userId, streamId, guestName) {
         const videoElement = document.getElementById(`video-${userId}`);
         if (videoElement) {
@@ -208,6 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Show join request modal
     function showJoinRequest(guestId, guestName, episodeId, room) {
         greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
         greenroomUsers.push({ userId: guestId, guestName });
@@ -260,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
         denyBtn.addEventListener('click', handleDeny);
     }
 
+    // Initialize Socket.IO listeners
     function initializeSocket() {
         console.log('Initializing Socket.IO listeners');
 
@@ -333,8 +370,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize
     if (episodeId) {
         console.log('Starting studio initialization');
-        initializeDevices();
-        loadEpisodeDetails();
+        if (guestId && token) {
+            initializeGuest();
+        } else {
+            initializeDevices();
+            loadEpisodeDetails();
+        }
     } else {
         console.error('No episodeId provided in URL');
         showNotification('Error: No episode specified.', 'error');
