@@ -4,7 +4,6 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/recordingstudio/recording_studio.css') }}">
-
 {% endblock %}
 
 {% block content %}
@@ -44,15 +43,6 @@
                     </button>
                 </div>
                 <div class="media-settings">
-                    <select id="cameraSelect" class="device-select" title="Select Camera">
-                        <option value="">Camera</option>
-                    </select>
-                    <select id="microphoneSelect" class="device-select" title="Select Microphone">
-                        <option value="">Microphone</option>
-                    </select>
-                    <select id="speakerSelect" class="device-select" title="Select Speaker">
-                        <option value="">Speaker</option>
-                    </select>
                     <select id="videoQuality" class="device-select" title="Select Video Quality">
                         <option value="1080p">1080p</option>
                         <option value="720p">720p</option>
@@ -61,6 +51,15 @@
                 </div>
             </div>
             <div class="shared-controls">
+                <select id="cameraSelect" class="device-select" title="Select Camera">
+                    <option value="">Camera</option>
+                </select>
+                <select id="microphoneSelect" class="device-select" title="Select Microphone">
+                    <option value="">Microphone</option>
+                </select>
+                <select id="speakerSelect" class="device-select" title="Select Speaker">
+                    <option value="">Speaker</option>
+                </select>
                 <button id="toggle-camera" class="control-button toggle-camera" title="Toggle Camera">
                     <i class="fas fa-video"></i>
                 </button>
