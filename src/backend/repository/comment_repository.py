@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple, Any, Optional
 from marshmallow import ValidationError
 
 from backend.database.mongo_connection import collection
-from backend.models.comments import Comment  # Changed from CommentSchema to Comment
+from backend.models.comments import CommentSchema  # Changed from CommentSchema to Comment
 
 logger = logging.getLogger(__name__)
 

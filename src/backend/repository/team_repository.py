@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timezone
 from marshmallow import ValidationError
 from backend.database.mongo_connection import collection
-from backend.models.teams import Team  # Changed from TeamSchema to Team
+from backend.models.teams import TeamSchema  # Changed from TeamSchema to Team
 from backend.services.activity_service import ActivityService  # Add this import
 
 logger = logging.getLogger(__name__)
