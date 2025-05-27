@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let micRetryCount = 0;
     const micRetryDelay = 10000; // 10 seconds
     let currentJoinRequest = null;
+    let pauseStartTime = null;
+   let totalPausedTime = 0;
 
     // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -936,11 +938,20 @@ function showJoinRequest(guestId, guestName, episodeId, roomId) {
     });
 
     pauseButton?.addEventListener('click', () => {
-        isPaused = !isPaused;
-        pauseButton.innerHTML = `<i class="fas fa-${isPaused ? 'play' : 'pause'}"></i> ${isPaused ? 'Resume' : 'Pause'}`;
-        socket.emit('recording_paused', { room, isPaused, user: { id: 'host' } });
-        showNotification(isPaused ? 'Recording paused' : 'Recording resumed.', 'success');
-    });
+    isPaused = !isPaused;
+
+    if (isPaused) {
+        pauseStartTime = Date.now();
+    } else {
+        // Add the paused duration to totalPausedTime
+        totalPausedTime += Date.now() - pauseStartTime;
+        pauseStartTime = null;
+    }
+
+    pauseButton.innerHTML = `<i class="fas fa-${isPaused ? 'play' : 'pause'}"></i> ${isPaused ? 'Resume' : 'Pause'}`;
+    socket.emit('recording_paused', { room, isPaused, user: { id: 'host' } });
+    showNotification(isPaused ? 'Recording paused' : 'Recording resumed.', 'success');
+});
 
     stopRecordingBtn?.addEventListener('click', () => {
         isRecording = false;
