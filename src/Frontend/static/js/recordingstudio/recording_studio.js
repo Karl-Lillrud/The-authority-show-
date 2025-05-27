@@ -120,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Initialize devices
     async function initializeDevices() {
         try {
             if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
@@ -131,23 +130,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Populate device selects
             const videoDevices = devices.filter(device => device.kind === 'videoinput');
-            cameraSelect.innerHTML = '<option value="">Select Camera</option>' +
-                videoDevices.map(device => `<option value="${device.deviceId}">${device.label || `Camera ${videoDevices.indexOf(device) + 1}`}</option>`).join('');
+            cameraSelect.innerHTML = '<option value="">Select Camera</option>';
+            if (videoDevices.length > 0) {
+                cameraSelect.innerHTML += videoDevices.map(device => 
+                    `<option value="${device.deviceId}">${device.label || `Camera ${videoDevices.indexOf(device) + 1}`}</option>`
+                ).join('');
+            } else {
+                cameraSelect.innerHTML += '<option value="" disabled>No cameras detected</option>';
+                showNotification('No camera detected. Video features will be limited.', 'warning');
+            }
 
             const audioDevices = devices.filter(device => device.kind === 'audioinput');
-            microphoneSelect.innerHTML = '<option value="">Select Microphone</option>' +
-                audioDevices.map(device => `<option value="${device.deviceId}">${device.label || `Microphone ${audioDevices.indexOf(device) + 1}`}</option>`).join('');
+            microphoneSelect.innerHTML = '<option value="">Select Microphone</option>';
+            if (audioDevices.length > 0) {
+                microphoneSelect.innerHTML += audioDevices.map(device => 
+                    `<option value="${device.deviceId}">${device.label || `Microphone ${audioDevices.indexOf(device) + 1}`}</option>`
+                ).join('');
+            } else {
+                microphoneSelect.innerHTML += '<option value="" disabled>No microphones detected</option>';
+                showNotification('No microphone detected. Please connect a microphone.', 'error');
+            }
 
-            const speakerDevices = devices.filter(device => device.kind === 'audiooutput');
-            speakerSelect.innerHTML = '<option value="">Select Speaker</option>' +
-                speakerDevices.map(device => `<option value="${device.deviceId}">${device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}</option>`).join('');
+            // Only populate speakerSelect for host
+            if (isHost) {
+                const speakerDevices = devices.filter(device => device.kind === 'audiooutput');
+                speakerSelect.innerHTML = '<option value="">Select Speaker</option>';
+                if (speakerDevices.length > 0) {
+                    speakerSelect.innerHTML += speakerDevices.map(device => 
+                        `<option value="${device.deviceId}">${device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}</option>`
+                    ).join('');
+                } else {
+                    speakerSelect.innerHTML += '<option value="" disabled>No speakers detected</option>';
+                    showNotification('No speakers detected. Audio output may be limited.', 'warning');
+                }
+            }
 
-            // Try to initialize microphone
+            // Try to initialize microphone if available
             if (audioDevices.length > 0) {
                 await tryInitializeMicrophone(audioDevices[0].deviceId);
                 return true;
             } else {
-                showNotification('No microphone detected. Please connect a microphone and retry.', 'warning');
                 await retryMicrophoneInitialization();
                 return localStream !== null;
             }
@@ -158,9 +180,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return localStream !== null;
         }
     }
-
     // Retry microphone initialization
-    async function retryMicrophoneInitialization() {
+   async function retryMicrophoneInitialization() {
         if (micRetryCount >= maxMicRetries) {
             showNotification('Max microphone initialization attempts reached. Please select a microphone manually.', 'error');
             return false;
@@ -181,6 +202,31 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Retry failed:', error);
             setTimeout(retryMicrophoneInitialization, micRetryDelay);
             return false;
+        }
+    }
+
+    // Initialize microphone
+    async function tryInitializeMicrophone(deviceId) {
+        try {
+            const audioStream = await navigator.mediaDevices.getUserMedia({
+                audio: { deviceId: deviceId ? { exact: deviceId } : undefined }
+            });
+            localStream = audioStream;
+            isMicActive = true;
+            videoPreview.srcObject = null; // No video initially
+            const userId = guestId || 'host';
+            const streamId = guestId ? `stream-${userId}` : 'stream-host';
+            const guestName = guestId ? 'Guest' : 'Host';
+            socket.emit('participant_stream', { room, userId, streamId, guestName });
+            updateIndicators();
+            updateLocalControls();
+            micRetryCount = 0; // Reset retry count on success
+            showNotification('Audio devices initialized.', 'success');
+        } catch (error) {
+            console.error('Error initializing microphone:', error);
+            localStream = null;
+            showNotification(`Microphone error: ${error.message}. Retrying...`, 'error');
+            await retryMicrophoneInitialization();
         }
     }
 
@@ -222,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 video: { deviceId: deviceId ? { exact: deviceId } : undefined },
                 audio: isMicActive ? { deviceId: microphoneSelect?.value || undefined } : false
             };
-            if (videoQualitySelect?.value) {
+            if (isHost && videoQualitySelect?.value) {
                 const quality = videoQualitySelect.value;
                 constraints.video.width = quality === '1080p' ? 1920 : quality === '720p' ? 1280 : 640;
                 constraints.video.height = quality === '1080p' ? 1080 : quality === '720p' ? 720 : 480;
@@ -246,9 +292,8 @@ document.addEventListener('DOMContentLoaded', () => {
             updateLocalControls();
         }
     }
-
     // Toggle camera
-    async function toggleCamera() {
+   async function toggleCamera() {
         if (isCameraActive) {
             // Turn off camera
             if (localStream) {
@@ -274,9 +319,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-
     // Toggle microphone
-    function toggleMicrophone() {
+   function toggleMicrophone() {
         if (localStream) {
             const audioTrack = localStream.getAudioTracks()[0];
             if (audioTrack) {
@@ -289,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tryInitializeMicrophone(microphoneSelect.value);
             }
         } else {
-            showNotification('No audio stream available. Please ensure a microphone is connected.', 'error');
+            showNotification('No audio stream available. Please select a microphone.', 'error');
         }
     }
 
@@ -937,11 +981,18 @@ function showJoinRequest(guestId, guestName, episodeId, roomId) {
         }
     });
 
-    videoQualitySelect?.addEventListener('change', () => {
-        if (isCameraActive) {
-            startCamera(cameraSelect?.value);
-        }
-    });
+    if (isHost) {
+        speakerSelect?.addEventListener('change', (e) => {
+            // Implement speaker change if supported by browser
+            showNotification('Speaker selection changed. Note: Browser support for speaker selection may be limited.', 'info');
+        });
+
+        videoQualitySelect?.addEventListener('change', () => {
+            if (isCameraActive) {
+                startCamera(cameraSelect?.value);
+            }
+        });
+    }
 
     toggleCameraBtn?.addEventListener('click', toggleCamera);
     toggleMicBtn?.addEventListener('click', toggleMicrophone);
