@@ -18,10 +18,10 @@
   <nav class="header-nav">
     <!-- New Credits Display Field -->
     <!-- Credits & Buy Button -->
-    <div class="credits-wrapper">
+    <!--<div class="credits-wrapper">
       <span class="credit-text"><span id="user-credits">Loading...</span></span>
       <button id="buy-credits-btn">Buy Credits</button>
-    </div>
+    </div>-->
 
     <div class="store-wrapper">
       <a href="{{ url_for('dashboard_bp.store') }}">
@@ -46,6 +46,10 @@
     const currentUserID = "{{ session['user_id'] or '' }}";
   </script>
     <div class="menu" id="menu">
+      <div class="credits-wrapper">
+        <span class="credit-text"><span id="user-credits">Loading...</span></span>
+        <button id="buy-credits-btn">Buy Credits</button>
+      </div>
       <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
       <a href="{{ url_for('dashboard_bp.team') }}">Team Management</a>
     
