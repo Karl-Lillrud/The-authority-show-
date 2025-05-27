@@ -4,121 +4,189 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/recordingstudio/recording_studio.css') }}">
-
+<style>
+.studio-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+.control-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: var(--header-bg, #f8f9fa);
+    border-bottom: 1px solid #dee2e6;
+}
+.header-left, .header-right {
+    display: flex;
+    align-items: center;
+}
+.timer {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--text-primary, #212529);
+}
+.host-controls {
+    display: flex;
+    gap: 10px;
+}
+.shared-controls {
+    display: flex;
+    gap: 10px;
+}
+.video-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.split-screen {
+    display: flex;
+    flex: 1;
+    gap: 10px;
+    padding: 10px;
+}
+.video-wrapper {
+    flex: 1;
+    position: relative;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.local-video, .remote-video {
+    display: block !important; /* Ensure both videos are always visible after join */
+}
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.status-indicators {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    display: flex;
+    gap: 5px;
+}
+.indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #dc3545;
+}
+.indicator.active {
+    background: #28a745;
+}
+.participants-list {
+    display: none; /* Hide participants list unless needed for more than two users */
+}
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal.visible {
+    display: flex !important;
+}
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 100%;
+}
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="studio-container">
-    <div class="studio-header">
-        <h1>Recording Studio</h1>
-        <div class="episode-info">
-            <div id="episode-id-display" style="display:none;">
-                {{ request.args.get('episode_id') or episode_id or request.args.get('episodeId') }}
-            </div>
-            <div class="recording-status">
-                <span class="status-indicator"></span>
-                <span class="status-text">Ready to Record</span>
+    <div class="control-header">
+        <div class="header-left">
+            <div class="episode-info">
+                <div id="episode-id-display" style="display:none;">
+                    {{ request.args.get('episode_id') or episode_id or request.args.get('episodeId') }}
+                </div>
+                <div class="recording-status">
+                    <span class="status-indicator"></span>
+                    <span class="status-text">Ready to Record</span>
+                </div>
             </div>
         </div>
-    </div>
-
-    <div class="studio-main">
-        <div class="controls-panel">
-            <div class="media-preview">
-                <div class="video-container">
-                    <video id="videoPreview" autoplay muted playsinline></video>
-                    <div class="video-overlay">
-                        <div class="recording-indicator"></div>
-                    </div>
-                </div>
-                <div class="audio-visualizer">
-                    <canvas id="audio-visualizer"></canvas>
-                </div>
+        <div class="header-right">
+            <div class="timer">
+                <span id="recordingTime">00:00:00</span>
             </div>
-            
-            <div class="recording-controls">
-                <button id="startRecordingBtn" class="control-button record">
-                    <i class="fas fa-microphone"></i>
-                    <span>Start Recording</span>
-                </button>
-                <button id="pauseButton" class="control-button pause" disabled>
-                    <i class="fas fa-pause"></i>
-                    <span>Pause</span>
-                </button>
-                <button id="stopRecordingBtn" class="control-button stop" disabled>
-                    <i class="fas fa-stop"></i>
-                    <span>Stop</span>
-                </button>
-            </div>
-
-            <div class="media-settings">
-                <div class="setting-group">
-                    <label for="microphoneSelect">Audio Input</label>
-                    <select id="microphoneSelect" class="device-select"></select>
+            <div class="host-controls" id="hostControls" style="display: none;">
+                <div class="recording-controls">
+                    <button id="startRecordingBtn" class="control-button record">
+                        <i class="fas fa-microphone"></i> Start
+                    </button>
+                    <button id="pauseButton" class="control-button pause" disabled>
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    <button id="stopRecordingBtn" class="control-button stop" disabled>
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                    <button id="saveRecording" class="control-button save" disabled>
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <button id="discardRecording" class="control-button discard" disabled>
+                        <i class="fas fa-trash"></i> Discard
+                    </button>
                 </div>
-                <div class="setting-group">
-                    <label for="speakerSelect">Audio Output</label>
-                    <select id="speakerSelect" class="device-select"></select>
-                </div>
-                <div class="setting-group">
-                    <label for="cameraSelect">Video Input</label>
-                    <select id="cameraSelect" class="device-select"></select>
-                </div>
-                <div class="setting-group">
-                    <label for="videoQuality">Video Quality</label>
-                    <select id="videoQuality" class="device-select">
+                <div class="media-settings">
+                    <select id="cameraSelect" class="device-select" title="Select Camera">
+                        <option value="">Camera</option>
+                    </select>
+                    <select id="microphoneSelect" class="device-select" title="Select Microphone">
+                        <option value="">Microphone</option>
+                    </select>
+                    <select id="speakerSelect" class="device-select" title="Select Speaker">
+                        <option value="">Speaker</option>
+                    </select>
+                    <select id="videoQuality" class="device-select" title="Select Video Quality">
                         <option value="1080p">1080p</option>
                         <option value="720p">720p</option>
                         <option value="480p">480p</option>
                     </select>
                 </div>
             </div>
-        </div>
-
-        <div class="recording-info">
-            <div class="timer">
-                <span id="recordingTime">00:00:00</span>
-            </div>
-            <div class="recording-levels">
-                <div class="level-meter">
-                    <div class="level-bar"></div>
-                </div>
-                <span class="level-value">-∞ dB</span>
-            </div>
-            <div class="recording-stats">
-                <div class="stat-item">
-                    <span class="stat-label">Resolution:</span>
-                    <span id="resolution" class="stat-value">-</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">FPS:</span>
-                    <span id="fps" class="stat-value">-</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Bitrate:</span>
-                    <span id="bitrate" class="stat-value">-</span>
-                </div>
+            <div class="shared-controls">
+                <button id="toggle-camera" class="control-button toggle-camera" title="Toggle Camera">
+                    <i class="fas fa-video"></i>
+                </button>
+                <button id="toggle-mic" class="control-button toggle-mic" title="Toggle Microphone">
+                    <i class="fas fa-microphone"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="participantsContainer"></div>
+    <div class="video-container">
+        <div class="split-screen" id="splitScreen">
+            <div class="video-wrapper local-video">
+                <video id="videoPreview" autoplay muted playsinline></video>
+                <div class="status-indicators">
+                    <span id="videoIndicator" class="indicator video-indicator" title="Video Status"></span>
+                    <span id="audioIndicator" class="indicator audio-indicator" title="Audio Status"></span>
+                </div>
+            </div>
+            <div class="video-wrapper remote-video" id="remoteVideoWrapper">
+                <video id="remoteVideo" autoplay playsinline></video>
+            </div>
+        </div>
+        <div class="participants-list" id="participantsContainer"></div>
+    </div>
 
-    <div id="joinRequestModal" style="display:none;">
+    <div id="joinRequestModal" class="modal">
         <div class="modal-content"></div>
-    </div>
-
-    <div class="studio-footer">
-        <div class="recording-actions">
-            <button id="saveRecording" class="action-button save" disabled>
-                <i class="fas fa-save"></i>
-                Save Recording
-            </button>
-            <button id="discardRecording" class="action-button discard" disabled>
-                <i class="fas fa-trash"></i>
-                Discard
-            </button>
-        </div>
     </div>
 </div>
 {% endblock %}

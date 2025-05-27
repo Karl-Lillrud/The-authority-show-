@@ -398,7 +398,7 @@ if (studioButton && !studioButton.disabled) {
                 try {
                   console.log("Sending invitation for episode:", episode._id, "guest:", guestId);
                   const result = await createGuestInvitation(episode._id, guestId);
-                  showNotification(`Invitation sent! Link:`, "success");
+                  showNotification(`Invitation sent to ${guest.name || "Guest"}!`, "success");
                 } catch (error) {
                   console.error("Error sending invitation:", error);
                   showNotification(`Failed to send invitation: ${error.message}`, "error");
