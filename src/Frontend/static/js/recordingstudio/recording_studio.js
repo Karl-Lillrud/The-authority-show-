@@ -49,6 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let micRetryCount = 0;
     const micRetryDelay = 10000; // 10 seconds
     let currentJoinRequest = null;
+    let pauseStartTime = null;
+    let totalPausedTime = 0;
+    let mediaRecorder = null;
+    let recordedChunks = [];
 
     // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -112,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update recording time
     function updateRecordingTime() {
         if (isRecording && !isPaused && recordingStartTime) {
-            const elapsed = Date.now() - recordingStartTime;
+            const elapsed = Date.now() - recordingStartTime - totalPausedTime;
             const hours = Math.floor(elapsed / 3600000);
             const minutes = Math.floor((elapsed % 3600000) / 60000);
             const seconds = Math.floor((elapsed % 60000) / 1000);
@@ -120,7 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Initialize devices
     async function initializeDevices() {
         try {
             if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
@@ -131,23 +134,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Populate device selects
             const videoDevices = devices.filter(device => device.kind === 'videoinput');
-            cameraSelect.innerHTML = '<option value="">Select Camera</option>' +
-                videoDevices.map(device => `<option value="${device.deviceId}">${device.label || `Camera ${videoDevices.indexOf(device) + 1}`}</option>`).join('');
+            cameraSelect.innerHTML = '<option value="">Select Camera</option>';
+            if (videoDevices.length > 0) {
+                cameraSelect.innerHTML += videoDevices.map(device => 
+                    `<option value="${device.deviceId}">${device.label || `Camera ${videoDevices.indexOf(device) + 1}`}</option>`
+                ).join('');
+            } else {
+                cameraSelect.innerHTML += '<option value="" disabled>No cameras detected</option>';
+                showNotification('No camera detected. Video features will be limited.', 'warning');
+            }
 
             const audioDevices = devices.filter(device => device.kind === 'audioinput');
-            microphoneSelect.innerHTML = '<option value="">Select Microphone</option>' +
-                audioDevices.map(device => `<option value="${device.deviceId}">${device.label || `Microphone ${audioDevices.indexOf(device) + 1}`}</option>`).join('');
+            microphoneSelect.innerHTML = '<option value="">Select Microphone</option>';
+            if (audioDevices.length > 0) {
+                microphoneSelect.innerHTML += audioDevices.map(device => 
+                    `<option value="${device.deviceId}">${device.label || `Microphone ${audioDevices.indexOf(device) + 1}`}</option>`
+                ).join('');
+            } else {
+                microphoneSelect.innerHTML += '<option value="" disabled>No microphones detected</option>';
+                showNotification('No microphone detected. Please connect a microphone.', 'error');
+            }
 
-            const speakerDevices = devices.filter(device => device.kind === 'audiooutput');
-            speakerSelect.innerHTML = '<option value="">Select Speaker</option>' +
-                speakerDevices.map(device => `<option value="${device.deviceId}">${device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}</option>`).join('');
+            // Only populate speakerSelect for host
+            if (isHost) {
+                const speakerDevices = devices.filter(device => device.kind === 'audiooutput');
+                speakerSelect.innerHTML = '<option value="">Select Speaker</option>';
+                if (speakerDevices.length > 0) {
+                    speakerSelect.innerHTML += speakerDevices.map(device => 
+                        `<option value="${device.deviceId}">${device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}</option>`
+                    ).join('');
+                } else {
+                    speakerSelect.innerHTML += '<option value="" disabled>No speakers detected</option>';
+                    showNotification('No speakers detected. Audio output may be limited.', 'warning');
+                }
+            }
 
-            // Try to initialize microphone
+            // Try to initialize microphone if available
             if (audioDevices.length > 0) {
                 await tryInitializeMicrophone(audioDevices[0].deviceId);
                 return true;
             } else {
-                showNotification('No microphone detected. Please connect a microphone and retry.', 'warning');
                 await retryMicrophoneInitialization();
                 return localStream !== null;
             }
@@ -174,12 +200,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 await tryInitializeMicrophone(audioDevices[0].deviceId);
                 return true;
             } else {
-                setTimeout(retryMicrophoneInitialization, micRetryDelay);
+                setTimeout(retryMicrophoneInitialization, 1000);
                 return false;
             }
         } catch (error) {
             console.error('Retry failed:', error);
-            setTimeout(retryMicrophoneInitialization, micRetryDelay);
+            setTimeout(retryMicrophoneInitialization, 1000);
             return false;
         }
     }
@@ -188,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function tryInitializeMicrophone(deviceId) {
         try {
             const audioStream = await navigator.mediaDevices.getUserMedia({
-                audio: { deviceId: deviceId ? { exact: deviceId } : undefined }
+                audio: { typeId: deviceId ? { exact: deviceId } : undefined }
             });
             localStream = audioStream;
             isMicActive = true;
@@ -200,12 +226,12 @@ document.addEventListener('DOMContentLoaded', () => {
             updateIndicators();
             updateLocalControls();
             micRetryCount = 0; // Reset retry count on success
-            showNotification('Audio devices initialized.');
+            showNotification('Audio devices initialized.', 'success');
         } catch (error) {
             console.error('Error initializing microphone:', error);
-            localStream = null; // Ensure localStream is null on failure
+            localStream = null;
             showNotification(`Microphone error: ${error.message}. Retrying...`, 'error');
-            await retryMicrophoneInitialization();
+            await retryMicrophoneRegistration();
         }
     }
 
@@ -222,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 video: { deviceId: deviceId ? { exact: deviceId } : undefined },
                 audio: isMicActive ? { deviceId: microphoneSelect?.value || undefined } : false
             };
-            if (videoQualitySelect?.value) {
+            if (isHost && videoQualitySelect?.value) {
                 const quality = videoQualitySelect.value;
                 constraints.video.width = quality === '1080p' ? 1920 : quality === '720p' ? 1280 : 640;
                 constraints.video.height = quality === '1080p' ? 1080 : quality === '720p' ? 720 : 480;
@@ -289,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tryInitializeMicrophone(microphoneSelect.value);
             }
         } else {
-            showNotification('No audio stream available. Please ensure a microphone is connected.', 'error');
+            showNotification('No audio stream available. Please select a microphone.', 'error');
         }
     }
 
@@ -367,81 +393,81 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function addParticipantStream(userId, streamId, guestName) {
-    if (!localStream) {
-        console.warn('Local stream not initialized. Delaying participant stream setup for user:', userId);
-        showNotification('Local stream not ready. Please ensure microphone is initialized.', 'warning');
-        await new Promise(resolve => {
-            const checkStream = setInterval(() => {
-                if (localStream) {
-                    clearInterval(checkStream);
-                    resolve();
-                }
-            }, 1000);
-        });
-    }
-
-    if (connectedUsers.length <= 1) {
-        if (remoteVideo) {
-            const pc = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        if (!localStream) {
+            console.warn('Local stream not initialized. Delaying participant stream setup for user:', userId);
+            showNotification('Local stream not ready. Please ensure microphone is initialized.', 'warning');
+            await new Promise(resolve => {
+                const checkStream = setInterval(() => {
+                    if (localStream) {
+                        clearInterval(checkStream);
+                        resolve();
+                    }
+                }, 1000);
             });
-            peerConnections.set(userId, pc);
+        }
 
-            pc.ontrack = (event) => {
-                if (event.streams[0]) {
-                    remoteVideo.srcObject = event.streams[0];
-                    remoteVideoWrapper.style.display = 'block';
+        if (connectedUsers.length <= 1) {
+            if (remoteVideo) {
+                const pc = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+                peerConnections.set(userId, pc);
+
+                pc.ontrack = (event) => {
+                    if (event.streams[0]) {
+                        remoteVideo.srcObject = event.streams[0];
+                        remoteVideoWrapper.style.display = 'block';
+                    }
+                };
+
+                pc.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        socket.emit('ice_candidate', { room, userId, candidate: event.candidate });
+                    }
+                };
+
+                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+                try {
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    socket.emit('offer', { room, userId, offer: pc.localDescription });
+                } catch (error) {
+                    console.error('Error creating WebRTC offer:', error);
+                    showNotification('Failed to establish WebRTC connection.', 'error');
                 }
-            };
+            }
+        } else {
+            const videoElement = document.getElementById(`video-${userId}`);
+            if (videoElement) {
+                const pc = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+                peerConnections.set(userId, pc);
 
-            pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('ice_candidate', { room, userId, candidate: event.candidate });
+                pc.ontrack = (event) => {
+                    if (event.streams[0]) {
+                        videoElement.srcObject = event.streams[0];
+                    }
+                };
+
+                pc.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        socket.emit('ice_candidate', { room, userId, candidate: event.candidate });
+                    }
+                };
+
+                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+                try {
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    socket.emit('offer', { room, userId, offer: pc.localDescription });
+                } catch (error) {
+                    console.error('Error creating WebRTC offer for participant:', error);
+                    showNotification('Failed to establish WebRTC connection.', 'error');
                 }
-            };
-
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-            try {
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                socket.emit('offer', { room, userId, offer: pc.localDescription });
-            } catch (error) {
-                console.error('Error creating WebRTC offer:', error);
-                showNotification('Failed to establish WebRTC connection.', 'error');
             }
         }
-    } else {
-        const videoElement = document.getElementById(`video-${userId}`);
-        if (videoElement) {
-            const pc = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-            });
-            peerConnections.set(userId, pc);
-
-            pc.ontrack = (event) => {
-                if (event.streams[0]) {
-                    videoElement.srcObject = event.streams[0];
-                }
-            };
-
-            pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('ice_candidate', { room, userId, candidate: event.candidate });
-                }
-            };
-
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-            try {
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                socket.emit('offer', { room, userId, offer: pc.localDescription });
-            } catch (error) {
-                console.error('Error creating WebRTC offer for participant:', error);
-                showNotification('Failed to establish WebRTC connection.', 'error');
-            }
-        }
     }
-}
 
     // Load guests for episode
     async function loadGuestsForEpisode() {
@@ -455,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Update participant list
+    // Update participants list
     function updateParticipantsList(guests) {
         if (!participantsContainer) {
             showNotification('Error: Guest list container not found.', 'error');
@@ -488,46 +514,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         participantsContainer.style.display = connectedUsers.length > 1 ? 'block' : 'none';
-    }
-
-    // Add participant stream
-    // Update participants list (only for more than two users)
-    function updateParticipantsList(guests) {
-        if (!participantsContainer) {
-            showNotification('Error: Guest list container not found.', 'error');
-            return;
-        }
-        participantsContainer.innerHTML = '';
-
-        if (!guests.length) {
-            participantsContainer.innerHTML = '<p>No guests found for this episode.</p>';
-            return;
-        }
-
-        // Only show participants list if more than two users
-        if (connectedUsers.length > 2) {
-            guests.forEach(guest => {
-                const isConnected = connectedUsers.some(u => u.userId === guest._id);
-                const isInGreenroom = greenroomUsers.some(u => u.userId === guest._id);
-                if (isConnected) {
-                    const card = document.createElement('div');
-                    card.className = 'participant-card';
-                    card.innerHTML = `
-                        <h5>${guest.name}</h5>
-                        <p>Status: ${isConnected ? 'In Studio' : isInGreenroom ? 'Awaiting Approval' : 'Not Connected'}</p>
-                        <video id="video-${guest._id}" class="participant-video" autoplay playsinline></video>
-                        <div class="audio-controls">
-                            <input type="range" class="volume-slider" data-user-id="${guest._id}" min="0" max="1" step="0.1" value="1">
-                            <span class="audio-indicator"></span>
-                        </div>
-                    `;
-                    participantsContainer.appendChild(card);
-                }
-            });
-            participantsContainer.style.display = 'block';
-        } else {
-            participantsContainer.style.display = 'none';
-        }
     }
 
     // Handle WebRTC signaling
@@ -586,180 +572,179 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Show join request modal with proper cleanup
-   // Show join request modal with proper cleanup
-function showJoinRequest(guestId, guestName, episodeId, roomId) {
-    console.log('Showing join request for:', { guestId, guestName, episodeId, roomId });
-    if (!joinRequestModal) {
-        console.error('joinRequestModal is null');
-        showNotification(`Join request from ${guestName} received, but modal is unavailable.`, 'error');
-        return;
-    }
-
-    // Only abort previous request if it’s for a different guest
-    if (currentJoinRequest && currentJoinRequest.guestId !== guestId) {
-        console.log('Cancelling previous join request for guest:', currentJoinRequest.guestId);
-        currentJoinRequest.abort();
-        currentJoinRequest = null;
-    }
-
-    // Create new AbortController
-    currentJoinRequest = new AbortController();
-    currentJoinRequest.guestId = guestId;
-    const signal = currentJoinRequest.signal;
-
-    // Update greenroom users
-    greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
-    greenroomUsers.push({ userId: guestId, guestName });
-    loadGuestsForEpisode();
-
-    const modalContent = joinRequestModal.querySelector('.modal-content');
-    if (!modalContent) {
-        console.error('modal-content element not found');
-        showNotification(`Join request from ${guestName} received, but modal content is missing.`, 'error');
-        return;
-    }
-
-    // Create modal content
-    modalContent.innerHTML = `
-        <div class="modal-header">
-            <h3>Join Request</h3>
-            <button class="modal-close" style="float: right; background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text-primary);" aria-label="Close">×</button>
-        </div>
-        <div class="modal-body">
-            <p><strong>Guest:</strong> ${guestName}</p>
-            <p><strong>Episode ID:</strong> ${episodeId}</p>
-            <p><strong>Room:</strong> ${roomId}</p>
-        </div>
-        <div class="modal-footer">
-            <button id="acceptJoinBtn" class="btn btn-success">Accept</button>
-            <button id="denyJoinBtn" class="btn btn-danger">Deny</button>
-        </div>
-    `;
-
-    // Force modal display
-    console.log('Modal display before:', joinRequestModal.style.display);
-    joinRequestModal.style.cssText = 'display: block !important; opacity: 1 !important; visibility: visible !important;';
-    joinRequestModal.classList.add('visible');
-    setTimeout(() => {
-        if (joinRequestModal.style.display !== 'block') {
-            console.warn('Modal display reset to none, reapplying');
-            showNotification('Modal display issue detected, retrying.', 'warning');
-            joinRequestModal.style.cssText = 'display: block !important; opacity: 1 !important; visibility: visible !important;';
-            joinRequestModal.classList.add('visible');
-        }
-        console.log('Modal display after timeout:', joinRequestModal.style.display);
-    }, 100);
-
-    // Get button elements
-    const acceptBtn = document.getElementById('acceptJoinBtn');
-    const denyBtn = document.getElementById('denyJoinBtn');
-    const closeBtn = modalContent.querySelector('.modal-close');
-
-    if (!acceptBtn || !denyBtn || !closeBtn) {
-        console.error('Modal buttons not found after creation');
-        showNotification('Error: Modal buttons not available.', 'error');
-        joinRequestModal.style.display = 'none';
-        joinRequestModal.classList.remove('visible');
-        return;
-    }
-
-    // Close modal function
-    const closeModal = () => {
-        console.log('Closing modal for guest:', guestId);
-        try {
-            joinRequestModal.style.display = 'none';
-            joinRequestModal.classList.remove('visible');
-            if (currentJoinRequest) {
-                currentJoinRequest.abort();
-                currentJoinRequest = null;
-            }
-            greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
-            loadGuestsForEpisode();
-        } catch (error) {
-            console.error('Error closing modal:', error);
-        }
-    };
-
-    const handleAccept = () => {
-        console.log('Accepting join request for guest:', guestId);
-        // Use episodeId as fallback if roomId is undefined
-        const effectiveRoomId = roomId || episodeId;
-        if (!guestId || !episodeId || !effectiveRoomId) {
-            console.error('Missing fields in approve_join_studio payload:', { guestId, episodeId, roomId: effectiveRoomId });
-            showNotification('Error: Missing required fields for join approval.', 'error');
-            closeModal();
+    function showJoinRequest(guestId, guestName, episodeId, roomId) {
+        console.log('Showing join request for:', { guestId, guestName, episodeId, roomId });
+        if (!joinRequestModal) {
+            console.error('joinRequestModal is null');
+            showNotification(`Join request from ${guestName} received, but modal is unavailable.`, 'error');
             return;
         }
-        try {
-            const payload = { guestId, episodeId, roomId: effectiveRoomId, room: effectiveRoomId }; // Include both roomId and room
-            console.log('Emitting approve_join_studio with payload:', JSON.stringify(payload, null, 2));
-            socket.emit('approve_join_studio', payload, (response) => {
-                if (response && response.error) {
-                    console.error('Server rejected approve_join_studio:', response);
-                    showNotification(`Error: ${response.message}`, 'error');
-                } else {
-                    console.log('Approve join acknowledged by server:', response);
-                    showNotification(`Approved join for ${guestName}`, 'success');
-                    closeModal();
-                }
-            });
-        } catch (error) {
-            console.error('Error accepting join request:', error);
-            showNotification('Error processing accept request.', 'error');
+
+        // Only abort previous request if it’s for a different guest
+        if (currentJoinRequest && currentJoinRequest.guestId !== guestId) {
+            console.log('Cancelling previous join request for guest:', currentJoinRequest.guestId);
+            currentJoinRequest.abort();
+            currentJoinRequest = null;
         }
-    };
 
-    // Handle Deny
-    const handleDeny = () => {
-        console.log('Denying join request for guest:', guestId);
-        try {
-            socket.emit('deny_join_studio', { guestId, reason: 'Denied by host', roomId: roomId || episodeId });
-            showNotification(`Denied join for ${guestName}`, 'info');
-            closeModal();
-        } catch (error) {
-            console.error('Error denying join request:', error);
-            showNotification('Error processing deny request.', 'error');
+        // Create new AbortController
+        currentJoinRequest = new AbortController();
+        currentJoinRequest.guestId = guestId;
+        const signal = currentJoinRequest.signal;
+
+        // Update greenroom users
+        greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
+        greenroomUsers.push({ userId: guestId, guestName });
+        loadGuestsForEpisode();
+
+        const modalContent = joinRequestModal.querySelector('.modal-content');
+        if (!modalContent) {
+            console.error('modal-content element not found');
+            showNotification(`Join request from ${guestName} received, but modal content is missing.`, 'error');
+            return;
         }
-    };
 
-    // Add event listeners with AbortController
-    acceptBtn.addEventListener('click', handleAccept, { signal });
-    denyBtn.addEventListener('click', handleDeny, { signal });
-    closeBtn.addEventListener('click', handleDeny, { signal });
+        // Create modal content
+        modalContent.innerHTML = `
+            <div class="modal-header">
+                <h3>Join Request</h3>
+                <button class="modal-close" style="float: right; background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text-primary);" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Guest:</strong> ${guestName}</p>
+                <p><strong>Episode ID:</strong> ${episodeId}</p>
+                <p><strong>Room:</strong> ${roomId}</p>
+            </div>
+            <div class="modal-footer">
+                <button id="acceptJoinBtn" class="btn btn-success">Accept</button>
+                <button id="denyJoinBtn" class="btn btn-danger">Deny</button>
+            </div>
+        `;
 
-    // Handle escape key
-    const handleEscape = (e) => {
-        if (e.key === 'Escape') {
-            console.log('Escape key pressed, closing modal');
-            handleDeny();
+        // Force modal display
+        console.log('Modal display before:', joinRequestModal.style.display);
+        joinRequestModal.style.cssText = 'display: block !important; opacity: 1 !important; visibility: visible !important;';
+        joinRequestModal.classList.add('visible');
+        setTimeout(() => {
+            if (joinRequestModal.style.display !== 'block') {
+                console.warn('Modal display reset to none, reapplying');
+                showNotification('Modal display issue detected, retrying.', 'warning');
+                joinRequestModal.style.cssText = 'display: block !important; opacity: 1 !important; visibility: visible !important;';
+                joinRequestModal.classList.add('visible');
+            }
+            console.log('Modal display after timeout:', joinRequestModal.style.display);
+        }, 100);
+
+        // Get button elements
+        const acceptBtn = document.getElementById('acceptJoinBtn');
+        const denyBtn = document.getElementById('denyJoinBtn');
+        const closeBtn = modalContent.querySelector('.modal-close');
+
+        if (!acceptBtn || !denyBtn || !closeBtn) {
+            console.error('Modal buttons not found after creation');
+            showNotification('Error: Modal buttons not available.', 'error');
+            joinRequestModal.style.display = 'none';
+            joinRequestModal.classList.remove('visible');
+            return;
         }
-    };
-    document.addEventListener('keydown', handleEscape, { signal });
 
-    // Handle click outside modal
-    const handleClickOutside = (e) => {
-        if (e.target === joinRequestModal) {
-            console.log('Clicked outside modal, closing');
-            handleDeny();
-        }
-    };
-    joinRequestModal.addEventListener('click', handleClickOutside, { signal });
-
-    // Handle abort
-    signal.addEventListener('abort', () => {
-        console.log('Join request aborted for guest:', guestId);
-        try {
-            if (joinRequestModal.style.display === 'block') {
+        // Close modal function
+        const closeModal = () => {
+            console.log('Closing modal for guest:', guestId);
+            try {
                 joinRequestModal.style.display = 'none';
                 joinRequestModal.classList.remove('visible');
+                if (currentJoinRequest) {
+                    currentJoinRequest.abort();
+                    currentJoinRequest = null;
+                }
+                greenroomUsers = greenroomUsers.filter(u => u.userId !== guestId);
+                loadGuestsForEpisode();
+            } catch (error) {
+                console.error('Error closing modal:', error);
             }
-        } catch (error) {
-            console.error('Error during abort cleanup:', error);
-        }
-    });
+        };
 
-    console.log(`Join request modal shown for guest: ${guestName} (ID: ${guestId})`);
-}
+        const handleAccept = () => {
+            console.log('Accepting join request for guest:', guestId);
+            // Use episodeId as fallback if roomId is undefined
+            const effectiveRoomId = roomId || episodeId;
+            if (!guestId || !episodeId || !effectiveRoomId) {
+                console.error('Missing fields in approve_join_studio payload:', { guestId, episodeId, roomId: effectiveRoomId });
+                showNotification('Error: Missing required fields for join approval.', 'error');
+                closeModal();
+                return;
+            }
+            try {
+                const payload = { guestId, episodeId, roomId: effectiveRoomId, room: effectiveRoomId }; // Include both roomId and room
+                console.log('Emitting approve_join_studio with payload:', JSON.stringify(payload, null, 2));
+                socket.emit('approve_join_studio', payload, (response) => {
+                    if (response && response.error) {
+                        console.error('Server rejected approve_join_studio:', response);
+                        showNotification(`Error: ${response.message}`, 'error');
+                    } else {
+                        console.log('Approve join acknowledged by server:', response);
+                        showNotification(`Approved join for ${guestName}`, 'success');
+                        closeModal();
+                    }
+                });
+            } catch (error) {
+                console.error('Error accepting join request:', error);
+                showNotification('Error processing accept request.', 'error');
+            }
+        };
+
+        // Handle Deny
+        const handleDeny = () => {
+            console.log('Denying join request for guest:', guestId);
+            try {
+                socket.emit('deny_join_studio', { guestId, reason: 'Denied by host', roomId: roomId || episodeId });
+                showNotification(`Denied join for ${guestName}`, 'info');
+                closeModal();
+            } catch (error) {
+                console.error('Error denying join request:', error);
+                showNotification('Error processing deny request.', 'error');
+            }
+        };
+
+        // Add event listeners with AbortController
+        acceptBtn.addEventListener('click', handleAccept, { signal });
+        denyBtn.addEventListener('click', handleDeny, { signal });
+        closeBtn.addEventListener('click', handleDeny, { signal });
+
+        // Handle escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                console.log('Escape key pressed, closing modal');
+                handleDeny();
+            }
+        };
+        document.addEventListener('keydown', handleEscape, { signal });
+
+        // Handle click outside modal
+        const handleClickOutside = (e) => {
+            if (e.target === joinRequestModal) {
+                console.log('Clicked outside modal, closing');
+                handleDeny();
+            }
+        };
+        joinRequestModal.addEventListener('click', handleClickOutside, { signal });
+
+        // Handle abort
+        signal.addEventListener('abort', () => {
+            console.log('Join request aborted for guest:', guestId);
+            try {
+                if (joinRequestModal.style.display === 'block') {
+                    joinRequestModal.style.display = 'none';
+                    joinRequestModal.classList.remove('visible');
+                }
+            } catch (error) {
+                console.error('Error during abort cleanup:', error);
+            }
+        });
+
+        console.log(`Join request modal shown for guest: ${guestName} (ID: ${guestId})`);
+    }
 
     // Helper function to close any open join request modal
     function closeJoinRequestModal() {
@@ -792,44 +777,42 @@ function showJoinRequest(guestId, guestName, episodeId, roomId) {
         });
 
         socket.on('participant_joined', (data) => {
-        console.log('Participant joined:', data);
-        connectedUsers = connectedUsers.filter(u => u.userId !== data.userId);
-        connectedUsers.push({ userId: data.userId, streamId: data.streamId, guestName: data.guestName });
-        greenroomUsers = greenroomUsers.filter(u => u.userId !== data.userId);
-        addParticipantStream(data.userId, data.streamId, data.guestName);
-        loadGuestsForEpisode();
-        // Ensure remote video is visible for both host and guest
-        remoteVideoWrapper.style.display = 'block';
-    });
-
-        // Handle participant left
-    socket.on('participant_left', (data) => {
-        console.log('Participant left:', data);
-        connectedUsers = connectedUsers.filter(u => u.userId !== data.userId);
-        const pc = peerConnections.get(data.userId);
-        if (pc) {
-            pc.close();
-            peerConnections.delete(data.userId);
-        }
-        remoteVideoWrapper.style.display = 'none'; // Hide remote video if no other participants
-        remoteVideo.srcObject = null;
-        loadGuestsForEpisode();
-    });
-
-
-    socket.on('join_studio_approved', (data) => {
-        console.log('Join studio approved:', data);
-        room = data.room;
-        episodeId = data.episodeId;
-        // Initialize guest stream and join the room
-        socket.emit('participant_stream', {
-            room,
-            userId: guestId,
-            streamId: `stream-${guestId}`,
-            guestName: 'Guest'
+            console.log('Participant joined:', data);
+            connectedUsers = connectedUsers.filter(u => u.userId !== data.userId);
+            connectedUsers.push({ userId: data.userId, streamId: data.streamId, guestName: data.guestName });
+            greenroomUsers = greenroomUsers.filter(u => u.userId !== data.userId);
+            addParticipantStream(data.userId, data.streamId, data.guestName);
+            loadGuestsForEpisode();
+            // Ensure remote video is visible for both host and guest
+            remoteVideoWrapper.style.display = 'block';
         });
-        remoteVideoWrapper.style.display = 'block'; // Ensure guest sees host's video
-    });
+
+        socket.on('participant_left', (data) => {
+            console.log('Participant left:', data);
+            connectedUsers = connectedUsers.filter(u => u.userId !== data.userId);
+            const pc = peerConnections.get(data.userId);
+            if (pc) {
+                pc.close();
+                peerConnections.delete(data.userId);
+            }
+            remoteVideoWrapper.style.display = 'none'; // Hide remote video if no other participants
+            remoteVideo.srcObject = null;
+            loadGuestsForEpisode();
+        });
+
+        socket.on('join_studio_approved', (data) => {
+            console.log('Join studio approved:', data);
+            room = data.room;
+            episodeId = data.episodeId;
+            // Initialize guest stream and join the room
+            socket.emit('participant_stream', {
+                room,
+                userId: guestId,
+                streamId: `stream-${guestId}`,
+                guestName: 'Guest'
+            });
+            remoteVideoWrapper.style.display = 'block'; // Ensure guest sees host's video
+        });
 
         socket.on('participant_stream', (data) => {
             console.log('Received participant stream:', data);
@@ -880,25 +863,62 @@ function showJoinRequest(guestId, guestName, episodeId, roomId) {
             showNotification('Cannot start recording: No audio stream available.', 'error');
             return;
         }
-        isRecording = true;
-        recordingStartTime = Date.now();
-        timerInterval = setInterval(updateRecordingTime, 1000);
-        socket.emit('recording_started', { room, user: { id: 'host' } });
-        showNotification('Recording started successfully.', 'success');
-        pauseButton.disabled = false;
-        stopRecordingBtn.disabled = false;
-        saveRecordingBtn.disabled = true;
-        discardRecordingBtn.disabled = true;
+        recordedChunks = []; // Clear previous chunks
+        try {
+            let options = { mimeType: 'audio/webm' }; // Default MIME type
+            if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                if (MediaRecorder.isTypeSupported('audio/ogg')) {
+                    options.mimeType = 'audio/ogg';
+                } else {
+                    console.warn('No supported audio MIME type found for MediaRecorder.');
+                    options = {}; // Fallback to browser default
+                }
+            }
+            mediaRecorder = new MediaRecorder(localStream, options);
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+            mediaRecorder.start(1000); // Collect data every second
+            isRecording = true;
+            recordingStartTime = Date.now();
+            timerInterval = setInterval(updateRecordingTime, 1000);
+            socket.emit('recording_started', { room, user: { id: 'host' } });
+            showNotification('Recording started successfully.', 'success');
+            pauseButton.disabled = false;
+            stopRecordingBtn.disabled = false;
+            saveRecordingBtn.disabled = true;
+            discardRecordingBtn.disabled = true;
+        } catch (error) {
+            console.error('Error starting MediaRecorder:', error);
+            showNotification(`Failed to start recording: ${error.message}`, 'error');
+        }
     });
 
     pauseButton?.addEventListener('click', () => {
         isPaused = !isPaused;
+        if (isPaused) {
+            pauseStartTime = Date.now();
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.pause();
+            }
+        } else {
+            totalPausedTime += Date.now() - pauseStartTime;
+            pauseStartTime = null;
+            if (mediaRecorder && mediaRecorder.state === 'paused') {
+                mediaRecorder.resume();
+            }
+        }
         pauseButton.innerHTML = `<i class="fas fa-${isPaused ? 'play' : 'pause'}"></i> ${isPaused ? 'Resume' : 'Pause'}`;
         socket.emit('recording_paused', { room, isPaused, user: { id: 'host' } });
         showNotification(isPaused ? 'Recording paused' : 'Recording resumed.', 'success');
     });
 
     stopRecordingBtn?.addEventListener('click', () => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+        }
         isRecording = false;
         isPaused = false;
         clearInterval(timerInterval);
@@ -911,18 +931,45 @@ function showJoinRequest(guestId, guestName, episodeId, roomId) {
         discardRecordingBtn.disabled = false;
     });
 
-    saveRecordingBtn?.addEventListener('click', () => {
-        socket.emit('save_recording', { room, episodeId });
-        showNotification('Recording saved successfully.', 'success');
-        saveRecordingBtn.disabled = true;
-        discardRecordingBtn.disabled = true;
-    });
+saveRecordingBtn?.addEventListener('click', async () => {
+    try {
+        if (recordedChunks.length === 0) {
+            throw new Error('No recorded audio available');
+        }
+
+        const mimeType = mediaRecorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(recordedChunks, { type: mimeType });
+
+        const formData = new FormData();
+        formData.append('audioFile', audioBlob, `recording.${mimeType.split('/')[1] || 'webm'}`);
+        formData.append('status', 'Recorded');
+
+        if (!episodeId) throw new Error('Invalid episode ID');
+
+        const response = await updateEpisode(episodeId, formData);
+
+        if (response && !response.error) {
+            socket.emit('save_recording', { room, episodeId });
+            showNotification('Recording saved successfully.', 'success');
+            saveRecordingBtn.disabled = true;
+            discardRecordingBtn.disabled = true;
+            recordedChunks = [];
+        } else {
+            throw new Error(response?.error || 'Failed to update episode');
+        }
+    } catch (error) {
+        console.error('Error saving recording:', error);
+        showNotification(`Failed to save recording: ${error.message}`, 'error');
+    }
+});
+
 
     discardRecordingBtn?.addEventListener('click', () => {
         socket.emit('discard_recording', { room, episodeId });
         showNotification('Recording discarded successfully.', 'info');
         saveRecordingBtn.disabled = true;
-        discardRecordingBtn.disabled = true;
+        discardRecordingBtn.disabled = false;
+        recordedChunks = []; // Clear chunks
     });
 
     cameraSelect?.addEventListener('change', (e) => {
@@ -937,17 +984,23 @@ function showJoinRequest(guestId, guestName, episodeId, roomId) {
         }
     });
 
-    videoQualitySelect?.addEventListener('change', () => {
-        if (isCameraActive) {
-            startCamera(cameraSelect?.value);
-        }
-    });
+    if (isHost) {
+        speakerSelect?.addEventListener('change', (e) => {
+            showNotification('Speaker selection changed. Note: Browser support for speaker selection may be limited.', 'info');
+        });
+
+        videoQualitySelect?.addEventListener('change', () => {
+            if (isCameraActive) {
+                startCamera(cameraSelect?.value);
+            }
+        });
+    }
 
     toggleCameraBtn?.addEventListener('click', toggleCamera);
     toggleMicBtn?.addEventListener('click', toggleMicrophone);
 
     // Initialize
-if (episodeId) {
+    if (episodeId) {
         console.log('Starting studio initialization');
         if (guestId && token) {
             initializeGuest();
