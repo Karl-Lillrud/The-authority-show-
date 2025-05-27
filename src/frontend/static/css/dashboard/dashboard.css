@@ -1066,7 +1066,6 @@
 
   .dashboard {
     padding: 0 var(--spacing-sm);
-    margin-top: -30px; /* Adjust for smaller decorative header */
   }
 
   .decorative-header {
