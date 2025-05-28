@@ -380,9 +380,9 @@ for (const payload of episodePayloads) {
         .then((data) => {
           if (data.message) {
             console.log("Google refresh token saved successfully.");
-
-              if (connectCalendarButton) {
-            connectCalendarButton.textContent = "Calendar Connected";
+ 
+              if (connectCalendarButton) {  // if the calandar is connected
+            connectCalendarButton.textContent = "Calendar Conn ected";
             connectCalendarButton.disabled = true;
             connectCalendarButton.style.backgroundColor = "#ccc";
             connectCalendarButton.style.cursor = "not-allowed";
