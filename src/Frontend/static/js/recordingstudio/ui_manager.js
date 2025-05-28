@@ -66,12 +66,17 @@ export function setupUI({
     });
 
     speakerSelect?.addEventListener('change', (e) => {
-        showNotification('Speaker selection changed. Note: Browser support for speaker selection may be limited.', 'info');
         if (remoteVideo && typeof remoteVideo.setSinkId === 'function') {
-            remoteVideo.setSinkId(e.target.value).catch(error => {
-                console.error('Error setting audio output device:', error);
-                showNotification('Failed to set speaker: Not supported by browser.', 'warning');
-            });
+            remoteVideo.setSinkId(e.target.value)
+                .then(() => {
+                    showNotification('Speaker set successfully.');
+                })
+                .catch(error => {
+                    console.error('Error setting audio output device:', error);
+                    showNotification('Failed to set speaker: Not supported by browser.');
+                });
+        } else {
+            showNotification('Failed to set speaker: Browser does not support speaker selection.');
         }
     });
 

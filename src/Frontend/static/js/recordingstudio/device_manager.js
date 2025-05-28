@@ -7,6 +7,9 @@ export async function initializeDevices(domElements, isHost, onMicrophoneInitial
     let micRetryCount = 0;
 
     try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            throw new Error('MediaDevices API not supported');
+        }
         const devices = await navigator.mediaDevices.enumerateDevices();
         console.log('Available devices:', devices.map(d => ({ kind: d.kind, label: d.label, deviceId: d.deviceId })));
 
@@ -31,8 +34,19 @@ export async function initializeDevices(domElements, isHost, onMicrophoneInitial
             await onMicrophoneInitialized(audioDevices[0].deviceId);
             if (videoDevices.length > 0) {
                 await startCamera(videoDevices[0].deviceId, domElements, isHost);
-                return true;
             }
+
+            // Populate speaker select
+            const audioOutputDevices = devices.filter(device => device.kind === 'audiooutput');
+            speakerSelect.innerHTML = '<option value="">Select Speaker</option>';
+            if (audioOutputDevices.length > 0) {
+                speakerSelect.innerHTML += audioOutputDevices.map(device =>
+                    `<option value="${device.deviceId}">${device.label || `Speaker ${audioOutputDevices.indexOf(device) + 1}`}</option>`
+                ).join('');
+            } else {
+                showNotification('No speaker devices detected. Audio output features may be limited.', 'warning');
+            }
+
             return true;
         } else {
             showNotification('No microphone detected. Please connect a microphone.', 'error');
@@ -139,7 +153,21 @@ export async function toggleCamera(localStream, domElements, isCameraActive, soc
     }
 }
 
-export function toggleMicrophone(localStream, domElements, isMicActive, socket, room, guestId) {
+export async function setAudioOutput(deviceId, audioElement) {
+    if (!audioElement.setSinkId) {
+        showNotification('Your browser does not support selecting audio output device.', 'error');
+        return;
+    }
+    try {
+        await audioElement.setSinkId(deviceId);
+        showNotification('Audio output device set successfully.', 'success');
+    } catch (error) {
+        console.error('Error setting audio output device:', error);
+        showNotification('Failed to set audio output device.', 'error');
+    }
+}
+
+export function toggleMicrophone(localStream, domElements, isMicActive, socket, room) {
     const { microphoneSelect } = domElements;
     if (localStream) {
         const audioTrack = localStream.getAudioTracks()[0];
