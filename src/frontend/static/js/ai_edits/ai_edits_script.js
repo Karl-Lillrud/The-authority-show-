@@ -6,8 +6,9 @@
 // Global variables
 let activeAudioBlob = null;
 // Ensure CURRENT_EPISODE_ID is loaded from session
-const storedEpisodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
-let CURRENT_EPISODE_ID = storedEpisodeId || `episode_${Date.now()}`;
+const storedId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+let CURRENT_EPISODE_ID = (storedId && storedId !== "null") ? storedId : `episode_${Date.now()}`;
+let CURRENT_EPISODE_DATA = {}; // <-- New global for episode info
 
 // AI processing options with dependencies
 const aiOptions = [
@@ -157,19 +158,84 @@ const aiOptions = [
 
 
 // Initialize the page when DOM is loaded
-document.addEventListener("DOMContentLoaded", function() {
-  // Generate a random episode ID if not already set
+document.addEventListener("DOMContentLoaded", async function() {
   CURRENT_EPISODE_ID = CURRENT_EPISODE_ID || `episode_${Date.now()}`;
-  
-  // Populate the options list
+
+  // Fetch episode data
+  try {
+    const res = await fetch(`/get_episodes/${CURRENT_EPISODE_ID}`);
+    if (res.ok) {
+      CURRENT_EPISODE_DATA = await res.json();
+      preloadAudioOrRequestUpload();
+    } else {
+      console.warn("❌ Failed to load episode data");
+    }
+  } catch (e) {
+    console.error("❌ Error loading episode:", e);
+  }
+
   populateOptionsList();
-  
-  // Set up event listeners
   setupEventListeners();
-  
-  // Update UI state
   updateUIState();
 });
+
+function extractCloudfrontUrl(redirectedUrl) {
+  try {
+    const parts = redirectedUrl.split("/podcast/play/");
+    if (parts.length < 2) return redirectedUrl;
+    const encodedCloudfrontPart = parts[1].split("/https%3A%2F%2F")[1];
+    if (!encodedCloudfrontPart) return redirectedUrl;
+    return decodeURIComponent("https://" + encodedCloudfrontPart);
+  } catch (e) {
+    console.warn("Failed to extract Cloudfront URL:", e);
+    return redirectedUrl;
+  }
+}
+
+async function preloadAudioOrRequestUpload() {
+  const rawAudioUrl = CURRENT_EPISODE_DATA.rawAudio || null;
+  const fallbackAudioUrl = CURRENT_EPISODE_DATA.audioUrl || null;
+  const preferredUrl = rawAudioUrl || fallbackAudioUrl;
+  const cleanedUrl = extractCloudfrontUrl(preferredUrl);
+  const fileInput = document.getElementById("audio-file");
+
+  if (preferredUrl) {
+    try {
+      console.log("🔊 Loading audio from:", preferredUrl);
+
+      // 👉 Använd proxy för att kringgå CORS om du inte redan gör det
+      const proxyUrl = `/proxy_audio?url=${encodeURIComponent(cleanedUrl)}`;
+      const response = await fetch(proxyUrl);
+
+      if (!response.ok) throw new Error(`Failed to fetch audio. Status ${response.status}`);
+
+      const contentType = response.headers.get("Content-Type") || "audio/mpeg";
+      const blob = await response.blob();
+
+      // 💡 Viktigt: sätt korrekt extension
+      const extension = contentType.includes("wav") ? ".wav" : ".mp3";
+      const filename = `downloaded_audio${extension}`;
+
+      // ✅ Skapa File med rätt typ
+      activeAudioBlob = new File([blob], filename, { type: contentType });
+
+      updateFileInfo(`Loaded from: ${preferredUrl}`);
+      updateUIState();
+    } catch (err) {
+      console.warn("⚠️ Failed to preload audio:", err);
+      requestManualUpload(fileInput);
+    }
+  } else {
+    requestManualUpload(fileInput);
+  }
+}
+
+function requestManualUpload(fileInput) {
+  if (!fileInput) return;
+  fileInput.classList.add("highlight");
+  fileInput.scrollIntoView({ behavior: "smooth", block: "center" });
+  updateFileInfo("Please upload an audio file.");
+}
 
 /**
  * Populates the options list with AI processing options

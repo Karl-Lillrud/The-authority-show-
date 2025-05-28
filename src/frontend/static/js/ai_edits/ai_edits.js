@@ -6,6 +6,14 @@ let isolatedAudioId = null;
 let activeAudioBlob = null;
 let activeAudioId = null;
 
+// Helper function to get audio file from input or fallback to rawAudioBlob
+function getAudioFileFromInputOrBlob(inputId = "audioUploader") {
+    const input = document.getElementById(inputId);
+    const file = input?.files?.[0];
+    if (file) return file;
+    return rawAudioBlob;
+}
+
 // Expose all functions to the global scope
 window.showTab = showTab;
 window.transcribe = transcribe;
@@ -490,7 +498,7 @@ function showTab(tabName) {
   }
 
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     // Workspace tab switching
     const workspaceButtons = document.querySelectorAll('.workspace-tab-btn');
     workspaceButtons.forEach(button => {
@@ -536,6 +544,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // ✅ Flyttad hit: preload audio when DOM is ready
+    await preloadAudioIfAvailable();
 });
 
 let waveformCut = null;
@@ -625,9 +636,9 @@ async function transcribe() {
     const resultContainer = document.getElementById('transcriptionResult');
     const wrapper = resultContainer.parentElement;
 
-    const file = fileInput.files[0];
+    const file = getAudioFileFromInputOrBlob('fileUploader');
     if (!file) {
-        alert('Please upload a file.');
+        alert('No audio available.');
         return;
     }
 
@@ -1034,9 +1045,8 @@ async function enhanceAudio() {
     const containerId = "audioControls";
     const container = document.getElementById(containerId);
 
-    const input = document.getElementById('audioUploader');
-    const file = input.files[0];
-    if (!file) return alert("Upload an audio file first.");
+    const file = getAudioFileFromInputOrBlob();
+    if (!file) return alert("No audio available.");
 
     const episodeId = getSelectedEpisodeId(); // Use the utility function
     if (!episodeId) return alert("No episode selected.");
@@ -1102,9 +1112,8 @@ async function runVoiceIsolation() {
     const containerId = "isolatedVoiceResult";
     const container = document.getElementById(containerId);
 
-    const input = document.getElementById('audioUploader');
-    const file = input.files[0];
-    if (!file) return alert("Upload an audio file first.");
+    const file = getAudioFileFromInputOrBlob();
+    if (!file) return alert("No audio available.");
 
     const episodeId = getSelectedEpisodeId();
     if (!episodeId) return alert("No episode selected.");
@@ -1768,6 +1777,97 @@ async function enhanceVideo() {
 
 let rawAudioBlob = null;
 
+function updateFileInfo(text) {
+    const fileInput = document.getElementById("audioUploader");
+    if (!fileInput) return;
+
+    let infoBox = document.getElementById("fileInfoBox");
+    if (!infoBox) {
+        infoBox = document.createElement("div");
+        infoBox.id = "fileInfoBox";
+        infoBox.style.margin = "10px 0";
+        infoBox.style.fontSize = "0.9rem";
+        fileInput.parentElement.insertBefore(infoBox, fileInput.nextSibling);
+    }
+
+    infoBox.innerText = text;
+}
+
+function updateUIState() {
+  const cuttingSection = document.getElementById("audioCuttingSection");
+  if (cuttingSection && rawAudioBlob) {
+    cuttingSection.style.display = "block";
+  }
+
+  const analysisSection = document.getElementById("audioAnalysisSection");
+  if (analysisSection && rawAudioBlob) {
+    analysisSection.style.display = "block";
+  }
+
+  console.log("✅ UI updated based on loaded audio");
+}
+
+// CloudFront-hantering (samma som du redan har)
+function extractCloudfrontUrl(redirectedUrl) {
+    try {
+        const parts = redirectedUrl.split("/podcast/play/");
+        if (parts.length < 2) return redirectedUrl;
+        const encodedPart = parts[1].split("/https%3A%2F%2F")[1];
+        return decodeURIComponent("https://" + encodedPart);
+    } catch (e) {
+        console.warn("Failed to extract CloudFront URL:", e);
+        return redirectedUrl;
+    }
+}
+
+// Automatisk förhandsladdning från backend
+async function preloadAudioIfAvailable() {
+    const episodeId = getSelectedEpisodeId();
+    if (!episodeId) {
+        console.warn("❌ No episode ID found.");
+        return;
+    }
+
+    try {
+        const res = await fetch(`/get_episodes/${episodeId}`);
+        if (!res.ok) throw new Error("Failed to load episode metadata.");
+        const data = await res.json();
+
+        const preferredUrl = data.rawAudio || data.audioUrl;
+        if (!preferredUrl) {
+            console.warn("❌ No audioUrl or rawAudio in episode data.");
+            return;
+        }
+
+        const cleanedUrl = extractCloudfrontUrl(preferredUrl);
+        const proxyUrl = `/proxy_audio?url=${encodeURIComponent(cleanedUrl)}`;
+
+        const audioRes = await fetch(proxyUrl);
+        if (!audioRes.ok) throw new Error(`Proxy fetch failed: ${audioRes.status}`);
+
+        const contentType = audioRes.headers.get("Content-Type") || "audio/mpeg";
+        const extension = contentType.includes("wav") ? ".wav" : ".mp3";
+        const blob = await audioRes.blob();
+        const filename = `downloaded_audio${extension}`;
+
+        // ✅ This sets the actual usable file
+        rawAudioBlob = new File([blob], filename, { type: contentType });
+        activeAudioBlob = rawAudioBlob;
+        activeAudioId = "external";
+
+        // Optional: preview directly
+        if (document.getElementById("originalAudioContainer")) {
+            document.getElementById("originalAudioContainer").style.display = "block";
+            renderAudioPlayer("originalAudioContainer", rawAudioBlob, "originalAudioPlayer");
+        }
+
+        console.log("✅ Audio auto-loaded successfully from:", preferredUrl);
+    } catch (err) {
+        console.warn("⚠️ Could not auto-load audio:", err.message);
+    }
+}
+
+
 function previewOriginalAudio() {
     const audioInput = document.getElementById('audioUploader');
     const transcriptionInput = document.getElementById('fileUploader');
@@ -1976,4 +2076,3 @@ function renderAudioPlayer(containerId, audioBlob, playerId, options = {}) {
         wavesurfer.on("click", options.onWaveformClick);
     }
 }
-
