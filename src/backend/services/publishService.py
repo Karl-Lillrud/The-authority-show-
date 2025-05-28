@@ -39,17 +39,11 @@ class PublishService:
             podcast = podcast_data_tuple[0].get('podcast')
             log_messages.append(f"Fetched podcast: {podcast.get('podName', podcast_id)}")
 
-            # 2. Generate and upload RSS feed to Azure Blob Storage
-            rss_xml = self._generate_rss_feed_xml(podcast_id, podcast, user_id)
-            rss_blob_url = self._upload_rss_to_blob(podcast_id, rss_xml, user_id)
-            log_messages.append(f"RSS feed uploaded to {rss_blob_url}")
-
             published_to = []
             for platform in platforms:
                 platform_lower = platform.lower()
                 log_messages.append(f"Processing platform: {platform}")
                 if platform_lower == "spotify":
-                    # No direct API for upload; Spotify polls RSS feed
                     log_messages.append("Spotify: RSS feed updated, Spotify will poll automatically.")
                 elif platform_lower in ["apple", "google", "amazon", "stitcher", "pocketcasts"]:
                     log_messages.append(f"{platform.capitalize()}: RSS feed updated, platform will poll.")
@@ -58,23 +52,38 @@ class PublishService:
                 published_to.append(platform)
                 time.sleep(0.2)
 
-            # 4. Status Updates
+            # 2. Status Updates
+            intended_status_for_published_episode = "published"  # <-- lowercase
             update_payload = {
-                "status": "Published",
+                "status": intended_status_for_published_episode,
                 "publishedToPlatforms": published_to,
                 "lastPublishedAt": datetime.datetime.utcnow()
             }
             update_result, update_status = self.episode_repo.update_episode(episode_id, user_id, update_payload)
+            
+            rss_xml = ""
             if update_status == 200:
-                log_messages.append("Episode status updated to 'Published'.")
+                log_messages.append(f"Episode status update to '{intended_status_for_published_episode}' initiated for episode {episode_id}.")
+                rss_xml = self._generate_rss_feed_xml(
+                    podcast_id, 
+                    podcast, 
+                    user_id, 
+                    episode_id_being_published=episode_id,
+                    status_of_episode_being_published=intended_status_for_published_episode
+                )
             else:
-                log_messages.append("Warning: Failed to update episode status after publishing.")
+                log_messages.append(f"Warning: Failed to update episode status for {episode_id} to '{intended_status_for_published_episode}'. RSS feed may not include it as published.")
+                rss_xml = self._generate_rss_feed_xml(podcast_id, podcast, user_id) 
+
+            # 3. Upload RSS feed
+            rss_blob_url = self._upload_rss_to_blob(podcast_id, rss_xml, user_id)
+            log_messages.append(f"RSS feed uploaded to {rss_blob_url}")
 
             return {
                 "success": True,
                 "message": f"Episode '{episode.get('title', episode_id)}' processed for publishing.",
                 "details": log_messages,
-                "rssFeedUrl": rss_blob_url  # Add this line if it's not already there
+                "rssFeedUrl": rss_blob_url
             }
         except Exception as e:
             log_messages.append(f"Exception: {str(e)}")
@@ -84,8 +93,8 @@ class PublishService:
                 "details": log_messages
             }
 
-    def _generate_rss_feed_xml(self, podcast_id, podcast, user_id):
-        # Fetch all published episodes for this podcast
+    def _generate_rss_feed_xml(self, podcast_id, podcast, user_id, episode_id_being_published=None, status_of_episode_being_published=None):
+        # Fetch all episodes for this podcast
         episodes_data, _ = self.episode_repo.get_episodes_by_podcast(podcast_id, user_id)
         episodes = episodes_data.get("episodes", [])
 
@@ -106,7 +115,21 @@ class PublishService:
 
         items_xml = ""
         for ep in episodes:
-            if ep.get("status", "").lower() == "published":
+            ep_status_from_list = ep.get("status", "").lower()
+            final_status_for_rss = ep_status_from_list
+
+            # If this is the episode we just published, and we have an intended status for it, use that.
+            # This ensures the currently published episode is correctly marked as "Published" in the RSS feed,
+            # even if the general list fetch (`get_episodes_by_podcast`) is momentarily stale for this item.
+            if episode_id_being_published and ep.get("_id") == episode_id_being_published and status_of_episode_being_published:
+                final_status_for_rss = status_of_episode_being_published.lower()
+                ep['status'] = final_status_for_rss  # <-- force in-memory status to lowercase
+                # Log if we are overriding the status from the list for the currently published episode
+                if ep_status_from_list != final_status_for_rss:
+                    current_app.logger.info(f"RSS Generation: Overriding status for episode {episode_id_being_published}. List status: '{ep_status_from_list}', Forced status: '{final_status_for_rss}'.")
+
+
+            if final_status_for_rss == "published":
                 pub_date_str = ""
                 try:
                     pub_date_obj = ep.get('publishDate')

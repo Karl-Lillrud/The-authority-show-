@@ -278,6 +278,36 @@ body {
   /* Add other button styles if needed */
 }
 
+/* New styles for orange platform links and "Copy RSS" button */
+.copy-rss-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff3e0;
+  border: 1px solid #ff9800;
+  color: #ff9800;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.copy-rss-btn:hover, .copy-rss-btn:focus {
+  background: #ffe0b2;
+  color: #e65100;
+  border-color: #e65100;
+}
+.copy-rss-btn svg {
+  margin-right: 2px;
+  flex-shrink: 0;
+}
+
+.rss-platform-link {
+  color: #ff9800 !important;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .publish-container {

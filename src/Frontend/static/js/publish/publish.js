@@ -521,19 +521,30 @@ document.addEventListener("DOMContentLoaded", () => {
       
       <div class="field-group">
         <label for="rss-feed-url-display">RSS Feed URL:</label>
-        <input type="text" id="rss-feed-url-display" value="${rssFeedUrl}" readonly style="width: calc(100% - 16px); padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;">
-        <button id="copy-rss-url-btn" class="action-btn" style="padding: 8px 12px; margin-left: 5px;">Copy URL</button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="text" id="rss-feed-url-display" value="${rssFeedUrl}" readonly style="width: calc(100% - 56px); padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;">
+          <button id="copy-rss-url-btn" class="copy-rss-btn" style="display: flex; align-items: center; gap: 6px; background: #fff3e0; border: 1px solid #ff9800; color: #ff9800; border-radius: 6px; padding: 8px 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="margin-right: 2px;" xmlns="http://www.w3.org/2000/svg">
+              <rect x="6" y="4" width="12" height="16" rx="2" fill="#fff" stroke="#ff9800" stroke-width="2"/>
+              <rect x="10" y="8" width="4" height="1.5" rx="0.75" fill="#ff9800"/>
+              <rect x="10" y="11" width="4" height="1.5" rx="0.75" fill="#ff9800"/>
+              <rect x="10" y="14" width="4" height="1.5" rx="0.75" fill="#ff9800"/>
+              <rect x="4" y="2" width="12" height="16" rx="2" fill="none" stroke="#ff9800" stroke-width="1" opacity="0.2"/>
+            </svg>
+            Copy RSS
+          </button>
+        </div>
       </div>
 
       <h3>Submit to Directories:</h3>
       <ul style="list-style: none; padding-left: 0;">
-        <li style="margin-bottom: 8px;"><a href="https://podcasters.spotify.com/" target="_blank" rel="noopener noreferrer">Spotify for Podcasters</a> (Usually polls automatically, but you can check status)</li>
-        <li style="margin-bottom: 8px;"><a href="https://podcastsconnect.apple.com/" target="_blank" rel="noopener noreferrer">Apple Podcasts Connect</a></li>
-        <li style="margin-bottom: 8px;"><a href="https://podcastsmanager.google.com/" target="_blank" rel="noopener noreferrer">Google Podcasts Manager</a></li>
-        <li style="margin-bottom: 8px;"><a href="https://podcasters.amazon.com/podcasts" target="_blank" rel="noopener noreferrer">Amazon Music for Podcasters</a></li>
-        <li style="margin-bottom: 8px;"><a href="https://www.pocketcasts.com/submit/" target="_blank" rel="noopener noreferrer">Pocket Casts</a></li>
-        <li style="margin-bottom: 8px;"><a href="https://castbox.fm/creator/" target="_blank" rel="noopener noreferrer">Castbox Creator Studio</a></li>
-        <li style="margin-bottom: 8px;"><a href="https://podcastaddict.com/submit" target="_blank" rel="noopener noreferrer">Podcast Addict</a></li>
+        <li style="margin-bottom: 8px;"><a href="https://podcasters.spotify.com/" target="_blank" rel="noopener noreferrer" style="color: #ff9800; font-weight: 600;">Spotify for Podcasters</a> (Usually polls automatically, but you can check status)</li>
+        <li style="margin-bottom: 8px;"><a href="https://podcastsconnect.apple.com/" target="_blank" rel="noopener noreferrer" style="color: #ff9800; font-weight: 600;">Apple Podcasts Connect</a></li>
+        <li style="margin-bottom: 8px;"><a href="https://www.youtube.com/podcasts" target="_blank" rel="noopener noreferrer" style="color: #ff9800; font-weight: 600;">YouTube Podcasts</a></li>
+        <li style="margin-bottom: 8px;"><a href="https://podcasters.amazon.com/podcasts" target="_blank" rel="noopener noreferrer" style="color: #ff9800; font-weight: 600;">Amazon Music for Podcasters</a></li>
+        <li style="margin-bottom: 8px;"><a href="https://www.pocketcasts.com/submit/" target="_blank" rel="noopener noreferrer" style="color: #ff9800; font-weight: 600;">Pocket Casts</a></li>
+        <li style="margin-bottom: 8px;"><a href="https://castbox.fm/creator/" target="_blank" rel="noopener noreferrer" style="color: #ff9800; font-weight: 600;">Castbox Creator Studio</a></li>
+        <li style="margin-bottom: 8px;"><a href="https://podcastaddict.com/submit" target="_blank" rel="noopener noreferrer" style="color: #ff9800; font-weight: 600;">Podcast Addict</a></li>
         <!-- Add more platform links as needed -->
       </ul>
       <div class="form-actions" style="text-align: right; margin-top: 20px;">
