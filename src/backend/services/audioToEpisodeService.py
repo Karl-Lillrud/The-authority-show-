@@ -26,7 +26,7 @@ class AudioToEpisodeService:
                 return None
 
             logger.debug(f"Audio file: filename={getattr(audio_file, 'filename', 'unknown')}, "
-                         f"content_type={mime_type}, readable={audio_file.stream.readable()}")
+                         f"content_type={mime_type}, readable={audio_file.readable()}") # Changed audio_file.stream.readable() to audio_file.readable()
 
             buffer = BytesIO()
             audio_file.seek(0)
@@ -38,23 +38,16 @@ class AudioToEpisodeService:
             file_size_bytes = buffer.tell()
             buffer.seek(0)
 
-            file_size_mb = file_size_bytes / (1024 * 1024)
-            if file_size_mb < 1:
-                file_size = file_size_bytes / 1024
-                size_unit = "KB"
-            else:
-                file_size = file_size_mb
-                size_unit = "MB"
+            logger.debug(f"Calculated file size: {file_size_bytes} bytes")
 
-            logger.debug(f"Calculated file size: {file_size_bytes} bytes ({file_size:.2f} {size_unit})")
 
             if file_size_bytes == 0:
                 logger.error("File size is 0 bytes, invalid or empty file")
                 return None
 
-            max_size_mb = 500
-            if file_size_mb > max_size_mb:
-                logger.warning(f"File size exceeds limit: {file_size_mb:.2f} MB")
+            max_size_bytes = 500 * 1024 * 1024 # 500MB
+            if file_size_bytes > max_size_bytes:
+                logger.warning(f"File size {file_size_bytes} bytes exceeds limit of {max_size_bytes} bytes")
                 return None
 
             # Extract duration using mutagen
@@ -62,33 +55,40 @@ class AudioToEpisodeService:
             audio_info = MutagenFile(buffer)
             duration_seconds = None
             if audio_info is not None and hasattr(audio_info.info, 'length'):
-                duration_seconds = round(audio_info.info.length, 2)
+                duration_seconds = round(audio_info.info.length) # Round to nearest second
                 logger.debug(f"Audio duration: {duration_seconds} seconds")
             else:
                 logger.warning("Could not determine audio duration")
 
             # Prepare blob path
-            file_name = os.path.basename(audio_file.filename) if hasattr(audio_file, 'filename') else f"{episode_id}.{mime_type.split('/')[-1]}"
-            blob_path = f"users/{account_id}/podcasts/{podcast_id}/episodes/{episode_id}/{file_name}"
+            file_extension = mime_type.split('/')[-1]
+            if file_extension == "mpeg": # common for mp3
+                file_extension = "mp3"
+            # Use a consistent and safe file name structure
+            safe_file_name = f"{episode_id}_audio.{file_extension}"
+            blob_path = f"users/{account_id}/podcasts/{podcast_id}/episodes/{episode_id}/{safe_file_name}"
+
 
             # Upload to Azure Blob Storage
             buffer.seek(0)  # Reset again before upload
             blob_url = upload_file_to_blob(
                 container_name=self.audio_container_name,
                 blob_path=blob_path,
-                file=buffer
+                file=buffer,
+                content_type=mime_type # Pass mime_type as content_type
             )
 
             if not blob_url or not blob_url.startswith("https://"):
                 logger.error(f"Invalid or missing blob URL: {blob_url}")
                 return None
 
-            logger.info(f"Audio file uploaded to blob storage: {blob_url}, size: {file_size:.2f} {size_unit}")
+            logger.info(f"Audio file uploaded to blob storage: {blob_url}, size: {file_size_bytes} bytes")
+
 
             return {
                 "blob_url": blob_url,
-                "file_size": round(file_size, 2),
-                "size_unit": size_unit,
+                "file_size_bytes": file_size_bytes, # Return size in bytes
+                "file_type": mime_type, # Return the original mime_type
                 "duration_seconds": duration_seconds
             }
 

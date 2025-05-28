@@ -7,6 +7,7 @@ import logging
 from backend.services.activity_service import ActivityService
 from dateutil.parser import parse as parse_date
 from backend.utils.subscription_access import PLAN_BENEFITS
+from backend.services.audioToEpisodeService import AudioToEpisodeService # Added import
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ class EpisodeRepository:
         self.accounts_collection = collection.database.Accounts
         self.subscription_service = SubscriptionService()
         self.activity_service = ActivityService()
+        self.audio_service = AudioToEpisodeService() # Instantiate AudioToEpisodeService
 
     @staticmethod
     def get_episodes_by_user_id(user_id):
@@ -155,7 +157,7 @@ class EpisodeRepository:
         except Exception as e:
             return {"error": f"Failed to delete episode: {str(e)}"}, 500
 
-    def update_episode(self, episode_id, user_id, data):
+    def update_episode(self, episode_id, user_id, data, audio_file=None): # Added audio_file=None
         """Update an episode if it belongs to the user."""
         try:
             ep = self.collection.find_one({"_id": episode_id})
@@ -164,7 +166,31 @@ class EpisodeRepository:
             if ep["userid"] != str(user_id):
                 return {"error": "Permission denied"}, 403
 
+            # Handle audio file upload first if provided
+            if audio_file:
+                account_id = ep.get("accountId") # Use accountId from the episode document
+                podcast_id = ep.get("podcast_id")
 
+                if not account_id or not podcast_id:
+                    logger.error(f"Cannot process audio upload for episode {episode_id}: missing accountId or podcast_id in episode document.")
+                    return {"error": "Internal configuration error: cannot determine path for audio upload."}, 500
+
+                logger.info(f"Processing audio file upload for episode {episode_id}")
+                audio_meta = self.audio_service.upload_episode_audio(account_id, episode_id, audio_file, podcast_id)
+
+                if audio_meta:
+                    data["audioUrl"] = audio_meta.get("blob_url")
+                    data["fileSize"] = audio_meta.get("file_size_bytes") # Use file_size_bytes
+                    data["fileType"] = audio_meta.get("file_type")       # Use file_type
+                    data["duration"] = audio_meta.get("duration_seconds")
+                    # Optionally update status if a new audio file is uploaded
+                    data["status"] = data.get("status", "Recorded") # Update status, or keep if already set
+                    logger.info(f"Audio metadata populated for episode {episode_id}: {data['audioUrl']}")
+                else:
+                    logger.error(f"Audio upload failed for episode {episode_id}.")
+                    return {"error": "Failed to upload and process audio file."}, 500
+            
+            # Continue with schema validation and field updates
             schema = EpisodeSchema(partial=True)
 
             validation_data = data.copy()
