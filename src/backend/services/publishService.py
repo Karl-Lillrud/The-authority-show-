@@ -17,7 +17,8 @@ class PublishService:
         self.spotify_refresh_token = os.getenv("SPOTIFY_REFRESH_TOKEN")
         self.rss_feed_base_url = os.getenv("RSS_FEED_BASE_URL")  
         self.azure_conn_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-        self.rss_blob_container = os.getenv("AZURE_STORAGE_CONTAINER_NAME") # Changed from AZURE_STORAGE_ACCOUNT_NAME
+        # Use a default if env var is missing
+        self.rss_blob_container = os.getenv("AZURE_STORAGE_CONTAINER_NAME") or "podmanagerfiles"
 
     def publish_episode(self, episode_id, user_id, platforms):
         log_messages = []
@@ -200,11 +201,12 @@ class PublishService:
             raise Exception("user_id is required to build the RSS blob path.")
         
         # The blob_path should be relative to the container.
-        # Example: "users/{user_id}/podcasts/{podcast_id}/rss/feed.xml"
-        # The container name itself is 'podmanagerfiles'.
-        blob_path = f"users/{user_id}/podcasts/{podcast_id}/rss/feed.xml" # Path within the container
-        
-        container_name = self.rss_blob_container # This should now correctly be "podmanagerfiles"
+        blob_path = f"users/{user_id}/podcasts/{podcast_id}/rss/feed.xml"
+        container_name = self.rss_blob_container
+
+        # ADD: Check for missing container name
+        if not container_name:
+            raise Exception("AZURE_STORAGE_CONTAINER_NAME is not set in environment variables.")
 
         current_app.logger.info(f"Attempting to upload RSS to container: '{container_name}', blob path: '{blob_path}'")
 

@@ -279,26 +279,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Helper: Check for missing required RSS fields for selected platforms
   function getMissingRequiredFields(podcast, episode, selectedPlatforms) {
-    // Always required for all platforms:
+    // Required for RSS feed compatibility (Apple/Spotify/Google/etc.)
     const requiredPodcastFields = [
-      { key: "podName", label: "Podcast Title" },
-      { key: "description", label: "Podcast Description" },
-      { key: "logoUrl", label: "Podcast Artwork (logoUrl)" },
-      { key: "ownerName", label: "Podcast Owner Name" },
-      { key: "email", label: "Podcast Owner Email" },
-      { key: "language", label: "Podcast Language" },
-      { key: "author", label: "Podcast Author" }
+      { key: "podName", label: "Podcast Title", required: true },
+      { key: "description", label: "Podcast Description", required: true },
+      { key: "logoUrl", label: "Podcast Artwork (logoUrl)", required: true },
+      { key: "ownerName", label: "Podcast Owner Name", required: true },
+      { key: "email", label: "Podcast Owner Email", required: true },
+      { key: "language", label: "Podcast Language", required: true },
+      { key: "author", label: "Podcast Author", required: true },
+      { key: "category", label: "Podcast Category", required: true }
     ];
     const requiredEpisodeFields = [
-      { key: "title", label: "Episode Title" },
-      { key: "description", label: "Episode Description" },
-      { key: "audioUrl", label: "Episode Audio URL" },
-      { key: "pubDate", label: "Episode Publish Date" }, // May be publishDate
-      { key: "explicit", label: "Explicit (yes/no)" }
+      { key: "title", label: "Episode Title", required: true },
+      { key: "description", label: "Episode Description", required: true },
+      { key: "audioUrl", label: "Episode Audio URL", required: true },
+      { key: "pubDate", label: "Episode Publish Date", required: true }, // May be publishDate
+      { key: "explicit", label: "Explicit (yes/no)", required: true },
+      { key: "author", label: "Episode Author", required: true }
     ];
 
-    // Add more strict requirements for Apple/Spotify if needed
-    // e.g., Apple requires itunes:category, etc.
+    // Optional but recommended for RSS
+    const optionalPodcastFields = [
+      { key: "rssFeed", label: "Podcast RSS Feed", required: false },
+      { key: "itunes_type", label: "Podcast Type (episodic/serial)", required: false },
+      { key: "copyright_info", label: "Podcast Copyright", required: false },
+      { key: "tagline", label: "Podcast Tagline", required: false }
+    ];
+    const optionalEpisodeFields = [
+      { key: "subtitle", label: "Episode Subtitle", required: false },
+      { key: "summary", label: "Episode Summary", required: false },
+      { key: "season", label: "Season Number", required: false },
+      { key: "episode", label: "Episode Number", required: false },
+      { key: "episodeType", label: "Episode Type (full/trailer/bonus)", required: false },
+      { key: "imageUrl", label: "Episode Artwork", required: false },
+      { key: "keywords", label: "Episode Keywords", required: false }
+    ];
 
     let missing = [];
     requiredPodcastFields.forEach(f => {
@@ -307,12 +323,18 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
     requiredEpisodeFields.forEach(f => {
-      // pubDate may be publishDate in your model
       let val = episode ? (f.key === "pubDate" ? (episode.publishDate || episode.pubDate) : episode[f.key]) : null;
       if (!val || val.toString().trim() === "") {
         missing.push({ type: "episode", ...f });
       }
     });
+    // Optionally, prompt for optional fields if missing (not required)
+    // optionalPodcastFields.concat(optionalEpisodeFields).forEach(f => {
+    //   let val = f.type === "podcast" ? podcast?.[f.key] : episode?.[f.key];
+    //   if (!val || val.toString().trim() === "") {
+    //     missing.push({ type: f.type || (f.key in podcast ? "podcast" : "episode"), ...f });
+    //   }
+    // });
     return missing;
   }
 
@@ -341,26 +363,90 @@ document.addEventListener("DOMContentLoaded", () => {
     formBox.style.borderRadius = "8px";
     formBox.style.maxWidth = "400px";
     formBox.style.width = "100%";
-    formBox.innerHTML = `<h2>Fill Required Details</h2>
+    formBox.innerHTML = `<h2>Fill Required Details for RSS Feed</h2>
       <form id="missing-fields-form">
         ${missingFields.map(f => {
           let inputValue = "";
           let inputType = "text";
-          if (f.type === "episode" && f.key === "pubDate") {
+          let customInput = "";
+          let requiredAttr = f.required ? "required" : "";
+
+          // Render explicit (yes/no) as radio buttons side by side
+          if (f.key === "explicit") {
+            customInput = `
+              <div style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.3rem;">
+                  <input type="radio" name="${f.type}_${f.key}" value="true" ${requiredAttr}>
+                  Yes
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.3rem;">
+                  <input type="radio" name="${f.type}_${f.key}" value="false" ${requiredAttr}>
+                  No
+                </label>
+              </div>
+            `;
+          } else if (f.type === "episode" && f.key === "pubDate") {
             // Pre-fill with current date-time if publishDate is missing
             const now = new Date();
-            // Adjust for local timezone offset to get correct ISO string for datetime-local
-            const timezoneOffset = now.getTimezoneOffset() * 60000; //offset in milliseconds
+            const timezoneOffset = now.getTimezoneOffset() * 60000;
             const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 16);
             inputValue = localISOTime;
             inputType = "datetime-local";
+            customInput = `<input type="${inputType}" name="${f.type}_${f.key}" value="${inputValue}" ${requiredAttr} />`;
+          } else if (f.key === "language") {
+            // Language dropdown for common podcast languages
+            customInput = `
+              <select name="${f.type}_${f.key}" ${requiredAttr}>
+                <option value="">-- Select Language --</option>
+                <option value="en">English</option>
+                <option value="sv">Swedish</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+                <option value="pt">Portuguese</option>
+                <option value="zh">Chinese</option>
+                <option value="ja">Japanese</option>
+                <option value="ru">Russian</option>
+                <option value="ar">Arabic</option>
+                <option value="hi">Hindi</option>
+                <option value="other">Other</option>
+              </select>
+            `;
+          } else if (f.key === "category") {
+            // Category dropdown for common podcast categories
+            customInput = `
+              <select name="${f.type}_${f.key}" ${requiredAttr}>
+                <option value="">-- Select Category --</option>
+                <option value="Arts">Arts</option>
+                <option value="Business">Business</option>
+                <option value="Comedy">Comedy</option>
+                <option value="Education">Education</option>
+                <option value="Health">Health</option>
+                <option value="Kids & Family">Kids & Family</option>
+                <option value="Music">Music</option>
+                <option value="News">News</option>
+                <option value="Religion & Spirituality">Religion & Spirituality</option>
+                <option value="Science">Science</option>
+                <option value="Society & Culture">Society & Culture</option>
+                <option value="Sports">Sports</option>
+                <option value="Technology">Technology</option>
+                <option value="TV & Film">TV & Film</option>
+                <option value="True Crime">True Crime</option>
+                <option value="Other">Other</option>
+              </select>
+            `;
+          } else {
+            customInput = `<input type="${inputType}" name="${f.type}_${f.key}" value="${inputValue}" ${requiredAttr} />`;
           }
+
           return `
-          <div class="field-group">
-            <label>${f.label} (${f.type})</label>
-            <input type="${inputType}" name="${f.type}_${f.key}" value="${inputValue}" required />
-          </div>
-        `}).join("")}
+            <div class="field-group">
+              <label>${f.label}${f.required ? ' <span style="color:red">*</span>' : ''}</label>
+              ${customInput}
+            </div>
+          `;
+        }).join("")}
         <div style="margin-top:1rem;display:flex;gap:1rem;">
           <button type="submit" class="save-btn">Save & Continue</button>
           <button type="button" id="cancel-missing-fields" class="cancel-btn">Cancel</button>
@@ -377,20 +463,28 @@ document.addEventListener("DOMContentLoaded", () => {
     formBox.querySelector("#missing-fields-form").onsubmit = (e) => {
       e.preventDefault();
       // Update podcast/episode objects with new values
+      let allValid = true;
       missingFields.forEach(f => {
-        const inputElement = formBox.querySelector(`[name='${f.type}_${f.key}']`);
-        let val = inputElement.value.trim();
-        if (f.type === "episode" && f.key === "pubDate" && inputElement.type === "datetime-local") {
-          // Ensure the datetime-local value is converted to ISO string UTC for backend
-          val = new Date(val).toISOString();
+        let val;
+        if (f.key === "explicit") {
+          const checked = formBox.querySelector(`[name='${f.type}_${f.key}']:checked`);
+          val = checked ? checked.value : "";
+          if (f.required && !checked) allValid = false;
+        } else {
+          const inputElement = formBox.querySelector(`[name='${f.type}_${f.key}']`);
+          val = inputElement ? inputElement.value.trim() : "";
+          if (f.required && (!val || val === "")) allValid = false;
         }
-        
         if (f.type === "podcast") podcast[f.key] = val;
         else if (f.type === "episode") {
-          if (f.key === "pubDate") episode.publishDate = val; // Ensure your episode model uses publishDate
+          if (f.key === "pubDate") episode.publishDate = val;
           else episode[f.key] = val;
         }
       });
+      if (!allValid) {
+        alert("Please fill in all required fields.");
+        return;
+      }
       document.body.removeChild(modal);
       onSave();
     };
