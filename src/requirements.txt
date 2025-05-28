@@ -13,6 +13,7 @@ flask_mail
 Flask_SocketIO
 google_api_python_client
 google_auth_oauthlib
+gunicorn
 itsdangerous
 marshmallow
 matplotlib
