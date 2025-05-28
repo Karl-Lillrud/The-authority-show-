@@ -20,7 +20,8 @@ logger = logging.getLogger(__name__)
 studio_participants = {}  
 
 def is_host(room, socket_id):
-    return any(p['isHost'] and p['socketId'] == socket_id for p in studio_participants.get(room, []))
+    return any(p.get('isHost') and p.get('socketId') == socket_id for p in studio_participants.get(room, []))
+
 
 def register_socketio_events(socketio: SocketIO):
     @socketio.on('connect')
@@ -349,4 +350,22 @@ def register_socketio_events(socketio: SocketIO):
     def handle_discard_recording(data):
         room = data.get('room')
         emit('discard_recording', data, room=room)
+
+
+    @socketio.on('recording_started')
+    def handle_recording_started(data):
+        room = data.get('room')
+        user_id = data.get('user', {}).get('id')
+
+        if not room or not user_id:
+            emit('error', {'error': 'missing_fields', 'message': 'Room and user ID required'}, to=request.sid)
+            return
+
+        if not is_host(room, request.sid):
+            emit('error', {'error': 'unauthorized', 'message': 'Only host can start recording'}, to=request.sid)
+            return
+
+        emit('recording_started', {'startedBy': user_id}, room=room)
+
+
 
