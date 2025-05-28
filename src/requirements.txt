@@ -1,5 +1,5 @@
 APScheduler
-azure_storage
+azure-storage-blob
 beautifulsoup4
 colorama
 dnspython
