@@ -3,6 +3,7 @@ from backend.services.publishService import PublishService  # Only import the cl
 from backend.repository.podcast_repository import PodcastRepository # Import PodcastRepository
 from bson.objectid import ObjectId
 import datetime
+from backend.utils.episode_helpers import force_episode_published_status  # Add this import
 
 publish_bp = Blueprint('publish_bp', __name__, url_prefix='/publish')
 
@@ -124,8 +125,17 @@ def api_publish_episode(episode_id):
         
         publish_service = PublishService()
         result = publish_service.publish_episode(episode_id, g.user_id, platforms)
-
+        
+        # Add a failsafe to ensure published status
         if result.get("success"):
+            # Double-check episode status after successful publish
+            episode_data, _ = publish_service.episode_repo.get_episode(episode_id, g.user_id)
+            if episode_data and episode_data.get("status", "").lower() != "published":
+                current_app.logger.warning(f"Episode {episode_id} status is not 'published' after successful publish. Forcing status update.")
+                force_published = force_episode_published_status(episode_id, g.user_id)
+                current_app.logger.info(f"Force update result: {force_published}")
+                result["details"].append(f"Status force-updated: {force_published}")
+                
             return jsonify(result), 200
         else:
             return jsonify(result), 500 

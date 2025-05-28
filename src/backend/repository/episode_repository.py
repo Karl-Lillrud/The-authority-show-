@@ -224,6 +224,10 @@ class EpisodeRepository:
                     "details": errors,
                 }, 400
 
+            # Add debug logging for status field specifically
+            if "status" in data:
+                logger.info(f"Episode {episode_id} status update requested: '{data['status']}'")
+            
             # Start building the fields to update in MongoDB
             update_fields = {"updated_at": datetime.now(timezone.utc)}
 
@@ -294,26 +298,39 @@ class EpisodeRepository:
                 if not has_non_timestamp_update:
                     return {"message": "No valid changes detected"}, 200
 
-            # Perform the MongoDB update
-            logger.debug(
-                f"Performing MongoDB update for {episode_id} with fields: {update_fields}"
-            )
+            # Perform the MongoDB update with additional logging
+            logger.info(f"Performing MongoDB update for {episode_id} with fields: {update_fields}")
+            
+            # Ensure status field is properly included
+            if "status" in data:
+                update_fields["status"] = data["status"]
+                logger.info(f"Status field explicitly set to '{data['status']}' in update for episode {episode_id}")
+            
+            # Execute the update with priority on status field
             result = self.collection.update_one(
                 {"_id": episode_id}, {"$set": update_fields}
             )
 
             if result.matched_count == 0:
                 # Should not happen due to earlier check, but good safeguard
-                logger.error(
-                    f"Failed to find episode {episode_id} during MongoDB update operation."
-                )
+                logger.error(f"Failed to find episode {episode_id} during MongoDB update operation.")
                 return {"error": "Failed to update episode, document not found."}, 404
-            if result.modified_count == 0 and result.matched_count == 1:
-                logger.info(
-                    f"Episode {episode_id} found but no fields were modified by the update operation."
-                )
-                # This might happen if the data sent was identical to existing data. Return success.
-
+            
+            # Additional logging to confirm update
+            if result.modified_count > 0:
+                logger.info(f"Successfully modified {result.modified_count} document(s) for episode {episode_id}")
+                
+                # Double-check the update by fetching the document again
+                updated_doc = self.collection.find_one({"_id": episode_id})
+                if updated_doc:
+                    logger.info(f"Episode {episode_id} after update - status: '{updated_doc.get('status')}'")
+                    
+                    # If status was part of the update, verify it matches
+                    if "status" in data and updated_doc.get('status') != data['status']:
+                        logger.warning(f"Status mismatch after update: expected '{data['status']}', got '{updated_doc.get('status')}'")
+            else:
+                logger.warning(f"Episode {episode_id} matched but not modified by update")
+            
             # Fetch the updated document to return or confirm changes
             updated_ep = self.collection.find_one({"_id": episode_id})
             if updated_ep and "_id" in updated_ep:
