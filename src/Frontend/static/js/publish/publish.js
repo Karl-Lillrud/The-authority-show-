@@ -128,7 +128,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Load episodes for the selected podcast
   async function loadEpisodesForPodcast(podcastId) {
     console.log(`[publish.js] loadEpisodesForPodcast called with podcastId: ${podcastId}`);
-    // Use the correct ID for the episode select element from publish.html
     const episodeSelectElement = document.getElementById("episode-select"); 
     
     episodeSelectElement.innerHTML = '<option value="">Loading episodes...</option>';
@@ -142,15 +141,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       console.log(`[publish.js] Fetching episodes for podcast ID ${podcastId} via fetchEpisodesByPodcast()...`);
-      const episodesData = await fetchEpisodesByPodcast(podcastId); // Uses /episodes/by_podcast/<podcast_id>
-      // Note: fetchEpisodesByPodcast in episodeRequest.js already returns data.episodes if successful
-      // So, episodesData should be the array of episodes directly.
-      // If it returns { episodes: [...] }, then const episodes = episodesData.episodes;
+      const episodesData = await fetchEpisodesByPodcast(podcastId);
       const episodes = Array.isArray(episodesData) ? episodesData : (episodesData && Array.isArray(episodesData.episodes) ? episodesData.episodes : []);
 
       console.log(`[publish.js] fetchEpisodesByPodcast() raw response for podcast ${podcastId}:`, JSON.stringify(episodes, null, 2));
       
-      episodeSelectElement.innerHTML = ''; // Clear previous options
+      episodeSelectElement.innerHTML = '';
       episodeSelectElement.disabled = false;
 
       if (episodes && episodes.length > 0) {
@@ -184,6 +180,19 @@ document.addEventListener("DOMContentLoaded", () => {
               option.className = "published";
             } else {
               option.className = "non-published"; // Or a more generic class
+            }
+
+            // Grey out and disable if title contains [Published] (case-insensitive)
+            if (episode.title.toLowerCase().includes("[published]")) {
+              option.disabled = true;
+              option.style.color = "grey";
+              option.title = "This episode is marked as published by name";
+            }
+
+            // Optionally, also grey out if status is published (for extra clarity)
+            if (episode.status && episode.status.toLowerCase() === "published") {
+              option.style.fontStyle = "italic";
+              option.style.color = "grey";
             }
 
             episodeSelectElement.appendChild(option);

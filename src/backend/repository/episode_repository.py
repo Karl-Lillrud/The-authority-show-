@@ -349,17 +349,51 @@ class EpisodeRepository:
             )
             return {"error": f"Failed to update episode: {str(e)}"}, 500
 
-    def get_episodes_by_podcast(self, podcast_id, user_id):
-        """Get all episodes under a specific podcast owned by the user."""
+    def get_episodes_by_podcast(self, podcast_id, user_id, exclude_statuses=None):
+        """Get all episodes under a specific podcast owned by the user.
+           Optionally excludes episodes with statuses specified in exclude_statuses (case-insensitive).
+        """
         try:
-            episodes = list(
-                self.collection.find({"podcast_id": podcast_id, "userid": str(user_id)})
-            )
+            query = {
+                "podcast_id": podcast_id,
+                "userid": str(user_id)
+            }
+
+            if exclude_statuses and isinstance(exclude_statuses, list) and len(exclude_statuses) > 0:
+                if len(exclude_statuses) == 1:
+                    query["status"] = {"$not": {"$regex": f"^{exclude_statuses[0].strip()}$", "$options": "i"}}
+                elif len(exclude_statuses) > 1:
+                    nor_conditions = []
+                    for status_val in exclude_statuses:
+                        if isinstance(status_val, str) and status_val.strip():
+                            nor_conditions.append({"status": {"$regex": f"^{status_val.strip()}$", "$options": "i"}})
+                    if nor_conditions:
+                        query["$nor"] = nor_conditions
+                        if "status" in query and len(exclude_statuses) > 1: 
+                             del query["status"]
+            
+            episodes_cursor = self.collection.find(query)
+            episodes = list(episodes_cursor) # Convert cursor to list to iterate multiple times if needed for logging
+            
+            # ADDED: Detailed logging of episodes found by the query
+            if exclude_statuses: # Log only when filtering is active
+                logger.info(f"--- Episodes found by query for podcast {podcast_id} (before _id conversion, with exclude_statuses: {exclude_statuses}) ---")
+                if not episodes:
+                    logger.info("No episodes matched the query.")
+                for ep_doc_idx, ep_doc in enumerate(episodes):
+                    logger.info(f"Episode [{ep_doc_idx}]: ID: {ep_doc.get('_id')}, Status: '{ep_doc.get('status')}', Title: '{ep_doc.get('title', 'N/A')}'")
+                logger.info(f"--- End of raw episode list from DB ({len(episodes)} episodes) ---")
+            
+            processed_episodes = []
             for ep in episodes:
                 ep["_id"] = str(ep["_id"])
-            return {"episodes": episodes}, 200
+                processed_episodes.append(ep)
+            
+            excluded_status_str = ", ".join(exclude_statuses) if exclude_statuses else "none"
+            logger.info(f"Fetched {len(processed_episodes)} episodes for podcast {podcast_id} by user {user_id}, excluding statuses: [{excluded_status_str}]. Query: {query}")
+            return {"episodes": processed_episodes}, 200
         except Exception as e:
-            logger.error("❌ ERROR: %s", e)
+            logger.error(f"❌ ERROR fetching episodes for podcast {podcast_id} (exclude_statuses: {exclude_statuses}): {str(e)}", exc_info=True)
             return {"error": f"Failed to fetch episodes by podcast: {str(e)}"}, 500
 
     def delete_by_user(self, user_id):
