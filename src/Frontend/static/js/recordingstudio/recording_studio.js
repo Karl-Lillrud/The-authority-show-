@@ -981,22 +981,29 @@ function initializeSocket() {
     }
 
     function onRecordingPaused(data) {
-        console.log('Recording pause state changed:', data);
-
-        isPaused = data.isPaused;
-        if (isPaused) {
-            pauseStartTime = Date.now();
-        } else if (pauseStartTime) {
-            totalPausedTime += Date.now() - pauseStartTime;
-            pauseStartTime = null;
-        }
-
-        if (pauseButton) {
-            pauseButton.innerHTML = `<i class="fas fa-${isPaused ? 'play' : 'pause'}"></i> ${isPaused ? 'Resume' : 'Pause'}`;
-        }
-
-        showNotification(isPaused ? 'Recording paused by host' : 'Recording resumed by host.', 'success');
+    console.log(`[${isHost ? 'Host' : 'Guest'}] Recording pause state changed:`, data);
+    isPaused = data.isPaused;
+    if (isPaused) {
+        pauseStartTime = Date.now();
+    } else if (pauseStartTime) {
+        totalPausedTime += Date.now() - pauseStartTime;
+        pauseStartTime = null;
     }
+    if (pauseButton) {
+        pauseButton.innerHTML = `<i class="fas fa-${isPaused ? 'play' : 'pause'}"></i> ${isPaused ? 'Resume' : 'Pause'}`;
+    }
+    const notificationMessage = isPaused ? 'Recording paused by host' : 'Recording resumed by host.';
+    try {
+        if (!notificationArea) {
+            console.warn('notificationArea DOM element not found for pause/resume notification');
+            console.log(`[${isHost ? 'Host' : 'Guest'}] ${notificationMessage}`);
+        }
+        showNotification(notificationMessage, 'success');
+    } catch (error) {
+        console.error('Error displaying pause/resume notification:', error);
+        console.log(`[${isHost ? 'Host' : 'Guest'}] ${notificationMessage}`);
+    }
+}
 
     function onRecordingStopped(data) {
         console.log('Recording stopped by host:', data);

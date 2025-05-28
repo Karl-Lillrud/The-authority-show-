@@ -17,9 +17,8 @@ guests_collection = database.Guests
 logger = logging.getLogger(__name__)
 
 # Store active studio participants
-studio_participants = {}  # {room: [{userId, socketId, name, isHost}]}
+studio_participants = {}  
 
-# Helper function to check if a client is the host
 def is_host(room, socket_id):
     return any(p['isHost'] and p['socketId'] == socket_id for p in studio_participants.get(room, []))
 
@@ -325,7 +324,21 @@ def register_socketio_events(socketio: SocketIO):
     @socketio.on('recording_paused')
     def handle_recording_paused(data):
         room = data.get('room')
-        emit('recording_paused', data, room=room)
+        is_paused = data.get('isPaused')
+        user_id = data.get('user', {}).get('id')
+
+        if not room or is_paused is None or not user_id:
+            logger.error(f"Invalid recording_paused data: {data}")
+            emit('error', {'error': 'missing_fields', 'message': 'Room, isPaused, and user ID required'}, to=request.sid)
+            return
+
+        if not is_host(room, request.sid):
+            logger.error(f"Unauthorized recording_paused attempt by {request.sid}")
+            emit('error', {'error': 'unauthorized', 'message': 'Only host can pause/resume recording'}, to=request.sid)
+            return
+
+        logger.info(f"Recording {'paused' if is_paused else 'resumed'} by host {user_id} in room {room}")
+        emit('recording_paused', {'isPaused': is_paused}, room=room)
 
     @socketio.on('save_recording')
     def handle_save_recording(data):
