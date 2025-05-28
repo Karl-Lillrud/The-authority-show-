@@ -2,6 +2,7 @@
 
 import { updateTask } from "/static/requests/podtaskRequest.js"
 import { formatDueDate } from "/static/js/episode-to-do/utils.js"
+import { showTaskDetailsModal } from "/static/js/episode-to-do/task-page.js"
 
 // Kanban board functionality
 export function renderKanbanBoard(state, updateUI) {
@@ -132,6 +133,11 @@ export function setupKanbanDragDrop(state, updateUI) {
 
     draggable.addEventListener("dragend", () => {
       draggable.classList.remove("dragging")
+    })
+
+    draggable.addEventListener("click", () => {
+      const taskId = draggable.getAttribute("data-task-id")
+      showTaskDetailsModal(taskId, state, updateUI)
     })
   })
 

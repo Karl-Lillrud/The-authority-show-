@@ -1285,6 +1285,13 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
     closePopup(popup)
   })
 
+  // Edit Task button event
+  const editTaskBtn = document.getElementById("edit-task-details-btn")
+  editTaskBtn.addEventListener("click", () => {
+    closePopup(popup)
+    showEditTaskPopup(taskId, state, updateUI)
+  })
+
   // Workspace button event
   if (task.aiTool) {
     const workspaceBtn = document.getElementById("open-workspace-btn")
