@@ -105,29 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
  
   // Initialize module functions
   initPodcastFunctions()
-  // DEV_NOTE: Within initPodcastFunctions (or the functions it calls for adding a podcast):
-  // Ensure that when calling `addPodcast` from `podcastRequests.js`,
-  // you catch the specific error for incomplete account setup.
-  // Example:
-  // try {
-  //   await addPodcast(podcastData);
-  //   // ... success logic
-  // } catch (error) {
-  //   if (error.code === "ACCOUNT_NOT_FOUND") {
-  //     showNotification(
-  //       "Account Incomplete",
-  //       "Your account setup is incomplete. Please go to your profile to finalize your account before adding a podcast.",
-  //       "warning", // or "error"
-  //       {
-  //         duration: 7000, // Longer duration for important messages
-  //         // Optional: Add a button to redirect to profile
-  //         // actions: [{ text: "Go to Profile", onClick: () => window.location.href = '/profile' }]
-  //       }
-  //     );
-  //   } else {
-  //     showNotification("Error", error.message || "Failed to add podcast.", "error");
-  //   }
-  // }
+ 
  
   initEpisodeFunctions()
   initGuestFunctions()

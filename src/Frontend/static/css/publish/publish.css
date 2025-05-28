@@ -1,0 +1,311 @@
+body {
+  font-family: "Inter", sans-serif;
+  background-color: var(--background-color, #f4f7f6);
+  color: var(--text-color-dark, #333);
+  line-height: 1.6;
+}
+
+.publish-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: var(--border-radius-md, 20px);
+  box-shadow: var(--card-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-color-dark, #2c3e50);
+  text-align: left;
+  position: relative;
+  padding-bottom: 0; /* Remove bottom padding */
+  margin-bottom: 0.7rem; /* Less margin below text, more below line */
+}
+
+.dashboard-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text-color-dark, #2c3e50);
+  text-align: left;
+  margin-bottom: 0.7rem;
+  display: block;
+  /* No orange line, no ::after */
+}
+
+.page-title::after {
+  display: none !important;
+}
+
+.dashboard-header {
+  margin-bottom: 2.2rem; /* More space below the line and the next section */
+}
+
+.publish-form-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color-light, #e0e0e0);
+  border-radius: var(--radius-medium, 8px);
+  background-color: var(--background-color-soft, #fdfdfd);
+}
+
+.publish-form-section h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.publish-form-section h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-color-medium, #34495e);
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color-light, #eee);
+  padding-bottom: 0.5rem;
+}
+
+.field-group {
+  margin-bottom: 1rem;
+}
+
+.field-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-color-medium, #555);
+}
+
+.field-group select,
+.field-group textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: var(--radius-small, 6px);
+  background-color: #fff;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.field-group select:focus,
+.field-group textarea:focus {
+  outline: none;
+  border-color: var(--highlight-color, #ff7f3f);
+  box-shadow: 0 0 0 3px rgba(255, 127, 63, 0.15);
+}
+
+.episode-details-preview {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: var(--background-color-soft, #f9f9f9);
+  border-radius: var(--radius-medium, 8px);
+  border: 1px solid var(--border-color-light, #e0e0e0);
+}
+
+.episode-details-preview h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-color-dark, #333);
+}
+
+.episode-details-preview p {
+  font-size: 0.9rem;
+  color: var(--text-color-light, #666);
+  margin-bottom: 0.75rem;
+}
+
+.episode-details-preview img {
+  max-width: 150px;
+  height: auto;
+  border-radius: var(--radius-small, 6px);
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border-color-light, #e0e0e0);
+}
+
+.episode-details-preview audio {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.platform-toggles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.platform-toggle {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #fff;
+  border: 1px solid var(--border-color-light, #e0e0e0);
+  border-radius: var(--radius-medium, 8px);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.platform-toggle:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+
+.platform-toggle input[type="checkbox"] {
+  margin-right: 0.75rem;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--highlight-color, #ff7f3f);
+}
+
+.platform-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-color-medium, #444);
+  cursor: pointer;
+}
+
+.platform-toggle img {
+  width: 24px;
+  height: 24px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+/* Using existing .save-btn styles from podcastmanagement.css, ensure it's loaded or replicate here */
+#publish-now-btn {
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.publish-status {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: var(--background-color-dark-soft, #2c3e50);
+  color: #ecf0f1;
+  border-radius: var(--radius-medium, 8px);
+}
+
+.publish-status h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+  color: #fff;
+}
+
+#publish-log {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-radius: var(--radius-small, 6px);
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Styles for the RSS Feed Popup */
+.popup.rss-feed-popup .form-box {
+  background-color: #fff;
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  text-align: left;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.popup.rss-feed-popup h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.5em;
+  color: #333;
+}
+
+.popup.rss-feed-popup p {
+  margin-bottom: 15px;
+  line-height: 1.6;
+  color: #555;
+}
+
+.popup.rss-feed-popup .field-group {
+  margin-bottom: 20px;
+}
+
+.popup.rss-feed-popup .field-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #444;
+}
+
+.popup.rss-feed-popup #rss-feed-url-display {
+  background-color: #f8f8f8;
+}
+
+.popup.rss-feed-popup h3 {
+  margin-top: 25px;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.popup.rss-feed-popup ul a {
+  color: var(--primary-color); /* Or your link color */
+  text-decoration: none;
+}
+
+.popup.rss-feed-popup ul a:hover {
+  text-decoration: underline;
+}
+
+.popup.rss-feed-popup .action-btn,
+.popup.rss-feed-popup .save-btn { /* Assuming .save-btn is your primary button style */
+  padding: 10px 18px;
+  font-size: 1em;
+  /* Add other button styles if needed */
+}
+
+/* Style for platform links in the RSS feed popup */
+#rss-feed-popup a {
+    color: orange;
+    text-decoration: none;
+}
+
+#rss-feed-popup a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .publish-container {
+    margin: 1rem;
+    padding: 1.5rem;
+    margin-top: 30px;
+  }
+
+  .page-title {
+    font-size: 1.6rem;
+  }
+
+  .platform-toggles {
+    grid-template-columns: 1fr; /* Stack platforms on smaller screens */
+  }
+
+  #publish-now-btn {
+    width: 100%;
+    text-align: center;
+  }
+}

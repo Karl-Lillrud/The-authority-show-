@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Room - Pod Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/greenroom/greenroom.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Left Panel - Device Settings -->
+            <div class="col-md-4 device-settings-panel">
+                <h3>Device Settings</h3>
+                <div class="device-settings">
+                    <!-- Camera Settings -->
+                    <div class="setting-group">
+                        <h4>Camera</h4>
+                        <select id="cameraSelect" class="form-select">
+                            <option value="">Select Camera</option>
+                        </select>
+                        <div class="camera-preview">
+                            <video id="cameraPreview" autoplay muted playsinline></video>
+                        </div>
+                    </div>
+
+                    <!-- Microphone Settings -->
+                    <div class="setting-group">
+                        <h4>Microphone</h4>
+                        <select id="microphoneSelect" class="form-select">
+                            <option value="">Select Microphone</option>
+                        </select>
+                        <div class="audio-level">
+                            <div class="audio-meter"></div>
+                        </div>
+                    </div>
+
+                    <!-- Speaker Settings -->
+                    <div class="setting-group">
+                        <h4>Speaker</h4>
+                        <select id="speakerSelect" class="form-select">
+                            <option value="">Select Speaker</option>
+                        </select>
+                        <button id="testSpeaker" class="btn btn-secondary">Test Speaker</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Waiting Room -->
+            <div class="col-md-8 waiting-room-panel">
+                <div class="waiting-room-header">
+                    <h2>Waiting Room</h2>
+                    <div id="roomStatus" class="room-status">
+                        <span class="status-indicator"></span>
+                        <span class="status-text">Waiting for host...</span>
+                    </div>
+                </div>
+
+                <!-- Notification Area -->
+                <div id="notification-area" class="notification-area"></div>
+
+                <div class="participants-list">
+                    <h3>Guests</h3>
+                    <div id="participantsContainer" class="participants-grid">
+                        <!-- Guests will be inserted here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script type="module" src="{{ url_for('static', filename='js/greenroom/greenroom.js') }}"></script>
+</body>
+</html>

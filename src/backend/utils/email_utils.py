@@ -19,6 +19,8 @@ from pymongo import MongoClient
 from backend.database.mongo_connection import collection
 import dns.resolver
 import re
+import logging
+
 
 # Load environment variables once
 load_dotenv(override=True)
@@ -597,3 +599,49 @@ def send_lia_inquiry_email(name, email, phone, school_and_study):
             f"❌ Error while sending LIA inquiry email: {e}", exc_info=True
         )
         return {"error": f"Error while sending LIA inquiry email: {str(e)}"}
+
+
+def send_booking_email(recipient_email, recipient_name, recording_at, pod_name, invite_url=None):
+    try:
+        subject = "Booking Confirmation"
+        recording_at_str = recording_at if recording_at else "To be confirmed"
+        invite_link_html = (
+            f'<p><a href="{invite_url}">Join the Greenroom</a></p>'
+            if invite_url else ""
+        )
+
+        body = f"""
+        <html>
+            <head><meta charset="UTF-8"><title>Booking Information</title></head>
+            <body>
+                <h2>Hello {recipient_name},</h2>
+                <p>Thank you for booking your recording session with us. Your session details are confirmed.</p>
+                <p>Your session is scheduled for: {recording_at_str}.</p>
+                {invite_link_html}
+                <p>If you have any questions, feel free to reach out.</p>
+                <p>Best regards,<br>{pod_name}</p>
+            </body>
+        </html>
+        """
+
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = formataddr((pod_name, EMAIL_USER))  # Friendly sender name + email
+        msg['To'] = recipient_email
+
+        part = MIMEText(body, 'html')
+        msg.attach(part)
+
+        # Send email using environment variables for SMTP config
+        server = smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT))
+        server.starttls()
+        server.login(EMAIL_USER, EMAIL_PASSWORD)
+        server.sendmail(EMAIL_USER, recipient_email, msg.as_string())
+        server.quit()
+
+        logger.info(f"✅ Booking email sent to {recipient_email}")
+        return {"message": "Booking email sent successfully"}
+
+    except Exception as e:
+        logger.error(f"❌ Error sending booking email to {recipient_email}: {e}", exc_info=True)
+        return {"error": f"Failed to send booking email: {str(e)}"}

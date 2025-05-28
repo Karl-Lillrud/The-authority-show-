@@ -22,9 +22,8 @@ from backend.services.videoService import VideoService
 from backend.services.creditService import consume_credits
 from backend.repository.edit_repository import save_transcription_edit
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
-from backend.utils.transcription_utils import check_audio_duration
 from backend.utils.subscription_access import get_max_duration_limit
-from backend.utils.text_utils import get_osint_info, create_podcast_scripts_paid, text_to_speech_with_elevenlabs
+from backend.utils.ai_utils import get_osint_info, create_podcast_scripts_paid, text_to_speech_with_elevenlabs,check_audio_duration
 
 
 transcription_bp = Blueprint("transcription", __name__)
@@ -221,6 +220,8 @@ def quote_images():
 
     data = request.json
     quotes_text = data.get("quotes", "")
+    method = data.get("method", "dalle")  # NEW — can be "dalle" or "local"
+
     if not quotes_text.strip():
         return jsonify({"error": "No quotes provided"}), 400
 
@@ -233,7 +234,7 @@ def quote_images():
         }), 403
 
     quotes_list = [q.strip() for q in quotes_text.split("\n\n") if q.strip()]
-    image_urls = transcription_service.get_quote_images(quotes_list)
+    image_urls = transcription_service.get_quote_images(quotes_list, method=method)
     return jsonify({"quote_images": image_urls})
 
 @transcription_bp.route("/translate", methods=["POST"])
@@ -362,51 +363,15 @@ def get_audio_info():
         logger.error(f"ERROR: Failed to process audio - {str(e)}")
         return jsonify({"error": f"Failed to process audio: {str(e)}"}), 500
 
-@transcription_bp.route("/voice_isolate", methods=["POST"])
-def isolate_voice():
-    if "audio" not in request.files or "episode_id" not in request.form:
-        return jsonify({"error": "Audio file and episode_id are required"}), 400
 
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Authentication required"}), 401
+@transcription_bp.route("/ai_edits_index", methods=["GET"])
+def render_ai_edits_index():
+    episode_id = request.args.get("episodeId")
+    if not episode_id:
+        return "Missing episodeId", 400
+    return render_template("ai_edits/ai_edits_index.html", episode_id=episode_id)
 
-    # Consume credits BEFORE processing
-    try:
-        consume_credits(user_id, "voice_isolation")
-    except ValueError as e:
-        logger.warning(f"User {user_id} has insufficient credits for voice isolation.")
-        return jsonify({
-            "error": str(e),
-            "redirect": "/store"
-        }), 403
-
-    audio_file = request.files["audio"]
-    episode_id = request.form["episode_id"]
-    filename = audio_file.filename
-    audio_bytes = audio_file.read()
-
-    try:
-        blob_url = audio_service.isolate_voice(audio_bytes, filename, episode_id)
-        return jsonify({"isolated_blob_url": blob_url})  
-    except Exception as e:
-        logger.error(f"Error during voice isolation: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-    
-@transcription_bp.route("/get_isolated_audio", methods=["GET"])
-def get_isolated_audio():
-    url = request.args.get("url")
-    if not url:
-        return jsonify({"error": "Missing URL"}), 400
-    
-    try:
-        response = requests.get(url)
-        return Response(response.content, content_type="audio/wav")
-    
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+# Full AI edit workspace
 @transcription_bp.route("/ai_edits", methods=["GET"])
 def render_ai_edits():
     episode_id = request.args.get("episodeId")
@@ -415,14 +380,10 @@ def render_ai_edits():
         return jsonify({"error": "Invalid or missing episode ID"}), 400
 
     logger.info(f"Rendering AI Edits page for episode ID: {episode_id}")
-    try:
-        return render_template("ai_edits/ai_edits.html", 
-                               episode_id=episode_id, 
-                               user_id=session.get("user_id"))
-    except Exception as e:
-        logger.error(f"Error rendering ai_edits.html: {e}")
-        return jsonify({"error": "Failed to render AI Edits page"}), 500
-    
+    return render_template("ai_edits/ai_edits.html", 
+                           episode_id=episode_id, 
+                           user_id=session.get("user_id"))
+
 @transcription_bp.route("/analyze_sentiment_sfx", methods=["POST"])
 def analyze_sentiment_sfx():
     data = request.json

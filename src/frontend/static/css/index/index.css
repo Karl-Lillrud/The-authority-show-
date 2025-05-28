@@ -1,8 +1,11 @@
 /* * * * * * * * * * * * * */
 /*  Index General Styling  */
 /* * * * * * * * * * * * * */
+
 body {
   background-color: var(--index-background-light);
+  overflow: hidden;
+  height: 100%;
 }
 
 h1 {
@@ -107,14 +110,13 @@ header.index-header nav ul.nav-links {
 /* * * * * * * * * * * * * */
 
 main {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  flex: 1;
 }
 
 main section {
-  min-height: 90vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -167,8 +169,8 @@ section#index-banner .hero-content {
   margin-bottom: 40px;
   color: white;
   position: absolute;
-  left: 6vw;
-  top: 30%;
+  left: 3vw;
+  top: 22%;
   text-align: left;
   max-width: 600px;
   z-index: 3;
@@ -200,9 +202,12 @@ section#index-banner .hero-content p.subheading {
   font-size: 20px;
   font-weight: 400;
   max-width: 700px;
-  margin: 0 auto 30px auto;
   line-height: 1.6;
   text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+section#index-banner .hero-content p.last-subheading {
+  margin: 0 0 30px 0;
 }
 
 section#index-banner .hero-content a.button.hero-cta {
@@ -230,7 +235,6 @@ section#index-banner #logo img {
   width: auto;
   min-height: 250px;
   max-height: 300px;
-  margin-top: 200px;
 }
 
 /* About Section */

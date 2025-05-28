@@ -160,6 +160,20 @@ class PodcastRepository:
             )
             for podcast in podcasts:
                 podcast["_id"] = str(podcast["_id"])
+                # Set image URL from RSS feed if available
+                if podcast.get("rssFeed"):
+                    try:
+                        rss_data, status_code = self.rss_service.fetch_rss_feed(podcast["rssFeed"])
+                        if status_code == 200 and rss_data and rss_data.get("imageUrl"):
+                            # Update the podcast in the database with the RSS image URL
+                            self.collection.update_one(
+                                {"_id": podcast["_id"]},
+                                {"$set": {"rssImage": rss_data["imageUrl"]}}
+                            )
+                            podcast["rssImage"] = rss_data["imageUrl"]
+                            logger.info(f"Updated podcast {podcast['_id']} with RSS image URL: {rss_data['imageUrl']}")
+                    except Exception as e:
+                        logger.error(f"Failed to fetch RSS data for podcast {podcast['_id']}: {e}")
                 # Ensure logoUrl is set (for frontend image display)
                 if not podcast.get("logoUrl") and podcast.get("imageUrl"):
                     podcast["logoUrl"] = podcast["imageUrl"]
@@ -190,6 +204,18 @@ class PodcastRepository:
                 return {"error": "Podcast not found or unauthorized"}, 404
 
             podcast["_id"] = str(podcast["_id"])
+            
+            # Set image URL from RSS feed if available
+            if podcast.get("rssFeed"):
+                try:
+                    rss_data, status_code = self.rss_service.fetch_rss_feed(podcast["rssFeed"])
+                    if status_code == 200 and rss_data and rss_data.get("imageUrl"):
+                        # Use the RSS image URL directly
+                        podcast["imageUrl"] = rss_data["imageUrl"]
+                        logger.info(f"Using RSS image URL for podcast {podcast_id}: {rss_data['imageUrl']}")
+                except Exception as e:
+                    logger.error(f"Failed to fetch RSS data for podcast {podcast_id}: {e}")
+            
             # Ensure logoUrl is set (for frontend image display)
             if not podcast.get("logoUrl") and podcast.get("imageUrl"):
                 podcast["logoUrl"] = podcast["imageUrl"]
@@ -344,27 +370,22 @@ class PodcastRepository:
         Fetch RSS data using RSSService and add a podcast to the repository.
         """
         try:
-            # Fetch RSS data using the instance
+      
             rss_data, status_code = self.rss_service.fetch_rss_feed(rss_url)
             if status_code != 200:
                 return {"error": "Failed to fetch RSS feed", "details": rss_data}, 400
 
-            # Prepare data for add_podcast based on rss_data
-            # This part needs to be adapted based on what add_podcast expects
-            # and what rss_data provides. For example:
             podcast_data_for_add = {
                 "podName": rss_data.get("title", "Untitled Podcast from RSS"),
                 "rssFeed": rss_url,
                 "description": rss_data.get("description"),
                 "logoUrl": rss_data.get("imageUrl"),
-                # Add other necessary fields extracted from rss_data
-                # or default values as required by PodcastSchema
+          
             }
             
-            # Call existing add_podcast method
+    
             return self.add_podcast(user_id, podcast_data_for_add)
 
         except Exception as e:
             logger.error("Error in addPodcastWithRss: %s", e, exc_info=True)
             return {"error": "Failed to add podcast with RSS", "details": str(e)}, 500
-

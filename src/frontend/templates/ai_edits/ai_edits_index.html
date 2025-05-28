@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Editing Options</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ai_edits/ai_edits_styles.css') }}">
+  <style>
+    /* Additional styles for better visibility of results */
+    .output-section {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #eaeaea;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+    
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .status-message {
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+      margin-bottom: 15px;
+    }
+    
+    /* Improved spinner */
+    .spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 115, 0, 0.2);
+      border-top-color: #FF7300;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
+    /* Dependency visualization */
+    .dependency-info {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f0f7ff;
+      border-radius: 8px;
+      border: 1px solid #bee3f8;
+    }
+    
+    .dependency-info h3 {
+      margin-top: 0;
+      color: #2b6cb0;
+    }
+    
+    .dependency-chain {
+      margin: 10px 0;
+      padding: 10px;
+      background-color: white;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    /* Styles for disabled options */
+    .disabled-option {
+      opacity: 0.6;
+      background-color: #f5f5f5;
+      cursor: not-allowed !important;
+    }
+    
+    .disabled-option:hover {
+      border-color: #eaeaea !important;
+      box-shadow: none !important;
+    }
+    
+    /* Tooltip styling */
+    .dependency-tooltip {
+      position: absolute;
+      top: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      z-index: 100;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      animation: fadeIn 0.2s forwards;
+    }
+    
+    .dependency-tooltip::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 5px 5px 0;
+      border-style: solid;
+      border-color: rgba(0, 0, 0, 0.8) transparent transparent;
+    }
+    
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+    
+    /* Execution order indicator */
+    .execution-order {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      width: 24px;
+      height: 24px;
+      background-color: #4299e1;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    /* Highlight newly available functions */
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(66, 153, 225, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(66, 153, 225, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(66, 153, 225, 0); }
+    }
+    
+    .highlighted-available {
+      animation: pulse 1.5s infinite;
+      border-color: #4299e1 !important;
+      background-color: rgba(66, 153, 225, 0.05);
+    }
+    
+    /* Status message types */
+    .status-warning {
+      background-color: #fffbeb !important;
+      color: #b45309 !important;
+      border-left: 4px solid #f59e0b;
+    }
+    
+    .status-info {
+      background-color: #f0f7ff !important;
+      color: #2c5282 !important;
+      border-left: 4px solid #4299e1;
+    }
+    
+    .status-error {
+      background-color: #fff5f5 !important;
+      color: #c53030 !important;
+      border-left: 4px solid #f56565;
+    }
+    
+    /* Option item positioning */
+    .option-item {
+      position: relative;
+    }
+    
+    /* Auto-select dependencies toggle */
+    .auto-select-container {
+      display: flex;
+      align-items: center;
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #f0f7ff;
+      border-radius: 8px;
+      border: 1px solid #bee3f8;
+    }
+    
+    .auto-select-container label {
+      margin-left: 10px;
+      font-weight: 500;
+      color: #2c5282;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Select the AI modules to run</h1>
+
+    <!-- Dependency info section -->
+    <div class="dependency-info">
+      <h3>Function Dependencies</h3>
+      <p>Some AI functions require others to be run first. Disabled options will become available once their requirements are met.</p>
+      <button id="show-dependency-details" class="btn">Show Dependency Details</button>
+      <div id="dependency-details" style="display: none; margin-top: 10px;">
+        <!-- This will be populated by JavaScript -->
+      </div>
+    </div>
+
+    <div class="auto-select-container">
+      <input type="checkbox" id="auto-select-dependencies" checked>
+      <label for="auto-select-dependencies">Automatically select required dependencies</label>
+    </div>
+
+    <div class="execution-info" style="margin-top: 20px; padding: 15px; background-color: #f0fff4; border-radius: 8px; border: 1px solid #c6f6d5;">
+      <h3 style="margin-top: 0; color: #276749;">Execution Order</h3>
+      <p>Selected functions will be executed in the optimal order based on their dependencies. Numbers indicate execution sequence.</p>
+      <div id="execution-preview" style="margin-top: 10px; padding: 10px; background-color: white; border-radius: 6px; border: 1px solid #e2e8f0; min-height: 30px;">
+        <em>Select functions to see execution order</em>
+      </div>
+    </div>
+
+    <div class="option-list" id="option-list"></div>
+
+    <input type="file" id="audio-file" accept="audio/*,video/*" />
+    <div id="file-info" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
+    <button class="run-button" id="run-button">Run Selected Edits</button>
+
+    <div style="margin-top: 10px; font-size: 14px; color: #666;">
+      Upload a file and select AI functions to run. Results will appear below.
+    </div>
+
+    <div class="status-message" id="status-message"></div>
+
+    <hr>
+
+
+
+  <!-- Output Areas (initially hidden) -->
+
+  <div class="output-section" id="transcribe-result" style="display: none;">
+    <h2>Transcript</h2>
+    <pre id="transcriptionResult">Transcript will appear here...</pre>
+  </div>
+
+  <div class="output-section" id="cleanTranscript-result" style="display: none;">
+    <h2>Cleaned Transcript</h2>
+    <pre id="cleanTranscriptResult">Cleaned transcript will appear here...</pre>
+  </div>
+
+  <div class="output-section" id="generateShowNotes-result" style="display: none;">
+    <h2>Show Notes</h2>
+    <pre id="show-notes-output">Show notes will appear here...</pre>
+  </div>
+
+  <div class="output-section" id="aiSuggestions-result" style="display: none;">
+    <h2>AI Suggestions</h2>
+    <pre id="ai-suggestions-output">AI suggestions will appear here...</pre>
+  </div>
+
+  <div class="output-section" id="generateQuotes-result" style="display: none;">
+    <h2>Quotes</h2>
+    <pre id="quotes-output">Generated quotes will appear here...</pre>
+  </div>
+
+  <!-- OSINT input should be visible when checkbox is checked -->
+  <div id="osint-query-wrapper" style="display: none; margin: 15px 0;">
+    <label for="osint-query" style="display: block; font-weight: bold; margin-bottom: 5px;">Guest name for OSINT:</label>
+    <input type="text" id="osint-query" placeholder="Enter guest name..." style="width: 100%; max-width: 300px; padding: 8px; border-radius: 5px; border: 1px solid #ccc;" />
+  </div>
+
+  <!-- OSINT result output -->
+  <div class="output-section" id="osintLookup-result" style="display: none;">
+    <h2>OSINT Lookup</h2>
+    <pre id="osint-output">OSINT results will appear here...</pre>
+  </div>
+
+  <div class="output-section" id="enhanceAudio-result" style="display: none;">
+    <h2>Enhanced Audio</h2>
+    <div id="audioControls" class="result-field">
+      <p>Enhanced audio will appear here...</p>
+    </div>
+  </div>
+
+  <div class="output-section" id="aiCut-result" style="display: none;">
+    <h2>AI Cut Suggestions</h2>
+    <!-- Cut suggestions will be populated via JS -->
+  </div>
+
+  <div class="output-section" id="planAndMixSfx-result" style="display: none;">
+    <h2>Sound Effects</h2>
+    <!-- Sound effect timeline and clips will be populated via JS -->
+  </div>
+
+  <div class="output-section" id="generateQuoteImages-result" style="display: none;">
+  <h2>Quote Images</h2>
+  <div id="quoteImagesResult">Quote images will appear here...</div>
+  </div>
+
+  <div class="output-section" id="generateIntroOutro-result" style="display: none;">
+    <h2>Intro/Outro Script</h2>
+    <pre id="introOutroScriptResult">Generated intro/outro will appear here...</pre>
+  </div>
+
+  <div class="output-section" id="introOutroToSpeech-result" style="display: none;">
+    <h2>Intro/Outro Audio</h2>
+    <div id="introOutroAudioResult">Converted audio will appear here...</div>
+  </div>
+
+  <div class="output-section" id="generateAudioClip-result" style="display: none;">
+    <h2>Translated Podcast Clip</h2>
+    <div id="audioClipResult">Generated audio will appear here...</div>
+  </div>
+
+  <div class="output-section" id="finalAudioResult" style="display: none;">
+    <h2>Final Processed Audio</h2>
+    <!-- Audio player and download link will be inserted here -->
+  </div>
+
+  <script src="{{ url_for('static', filename='js/ai_edits/ai_edits_script.js') }}"></script>
+  
+  <script>
+    // Add dependency details toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const showDetailsBtn = document.getElementById('show-dependency-details');
+      const detailsContainer = document.getElementById('dependency-details');
+      
+      if (showDetailsBtn && detailsContainer) {
+        showDetailsBtn.addEventListener('click', function() {
+          if (detailsContainer.style.display === 'none') {
+            // Generate dependency details
+            let html = '<h4>Function Dependencies:</h4>';
+            html += '<ul>';
+            
+            aiOptions.forEach(option => {
+              if (option.dependencies && Object.keys(option.dependencies).length > 0) {
+                html += `<li><strong>${option.title}</strong> requires: `;
+                const deps = [];
+                for (const [dep, message] of Object.entries(option.dependencies)) {
+                  deps.push(message);
+                }
+                html += deps.join(', ');
+                html += '</li>';
+              }
+            });
+            
+            html += '</ul>';
+            
+            detailsContainer.innerHTML = html;
+            detailsContainer.style.display = 'block';
+            showDetailsBtn.textContent = 'Hide Dependency Details';
+          } else {
+            detailsContainer.style.display = 'none';
+            showDetailsBtn.textContent = 'Show Dependency Details';
+          }
+        });
+      }
+    });
+  </script>
+
+  <script>
+    // Update execution preview when checkboxes change
+    document.addEventListener('DOMContentLoaded', function() {
+      function updateExecutionPreview() {
+        const previewContainer = document.getElementById('execution-preview');
+        if (!previewContainer) return;
+        
+        const checkedBoxes = Array.from(document.querySelectorAll('.option-checkbox:checked'));
+        
+        if (checkedBoxes.length === 0) {
+          previewContainer.innerHTML = '<em>Select functions to see execution order</em>';
+          return;
+        }
+        
+        const functionIds = checkedBoxes.map(cb => cb.dataset.function);
+        const sortedFunctions = sortFunctionsByDependencies(functionIds);
+        
+        let html = '<ol style="margin: 0; padding-left: 20px;">';
+        sortedFunctions.forEach(funcId => {
+          const option = aiOptions.find(opt => opt.id === funcId);
+          if (option) {
+            html += `<li><strong>${option.title}</strong></li>`;
+          }
+        });
+        html += '</ol>';
+        
+        previewContainer.innerHTML = html;
+      }
+      
+      // Add event listeners to all checkboxes
+      document.querySelectorAll('.option-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateExecutionPreview);
+      });
+      
+      // Initial update
+      updateExecutionPreview();
+    });
+  </script>
+
+  <script>
+    // Toggle auto-selection of dependencies
+    document.addEventListener('DOMContentLoaded', function() {
+      const autoSelectCheckbox = document.getElementById('auto-select-dependencies');
+      
+      if (autoSelectCheckbox) {
+        autoSelectCheckbox.addEventListener('change', function() {
+          window.autoSelectDependencies = this.checked;
+        });
+        
+        // Initialize the global variable
+        window.autoSelectDependencies = autoSelectCheckbox.checked;
+      }
+    });
+  </script>
+</body>
+</html>

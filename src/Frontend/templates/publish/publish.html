@@ -1,0 +1,104 @@
+{% extends "/components/base.html" %}
+
+{% block title %}Publish Episode{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/publish/publish.css') }}">
+{% endblock %}
+
+{% block sidebar %}
+<!-- Sidebar is intentionally overridden and left empty for the publish page -->
+{% endblock %}
+
+{% block content %}
+<div class="publish-container">
+    <!-- Header with just the word "Publish" (no orange line) -->
+    <div class="dashboard-header">
+        <span id="page-title" class="dashboard-title">Publish</span>
+    </div>
+
+    <div class="publish-form-section">
+        <div class="field-group">
+            <label for="podcast-select">Select Podcast:</label>
+            <select id="podcast-select" name="podcast-select">
+                <option value="">Loading podcasts...</option>
+            </select>
+        </div>
+        <div class="field-group">
+            <label for="episode-select">Select Episode to Publish:</label>
+            <select id="episode-select" name="episode-select" disabled>
+                <option value="">Select a podcast first...</option>
+            </select>
+        </div>
+
+        <div id="episode-details-preview" class="episode-details-preview hidden">
+            <h3 id="preview-title"></h3>
+            <p id="preview-description"></p>
+            <img id="preview-image" src="" alt="Episode Image" class="hidden"/>
+            <audio id="preview-audio" controls class="hidden"></audio>
+        </div>
+    </div>
+
+    <div class="publish-form-section">
+        <h2>Publishing Platforms</h2>
+        <div class="platform-toggles">
+            <div class="platform-toggle">
+                <input type="checkbox" id="platform-spotify" name="platform-spotify" data-platform="spotify" checked>
+                <label for="platform-spotify">
+                    <img src="{{ url_for('static', filename='images/platform-icons/spotify.svg') }}" alt="Spotify">
+                    Spotify
+                </label>
+            </div>
+            <div class="platform-toggle">
+                <input type="checkbox" id="platform-apple" name="platform-apple" data-platform="apple" checked>
+                <label for="platform-apple">
+                    <img src="{{ url_for('static', filename='images/platform-icons/applepodcasts.svg') }}" alt="Apple Podcasts">
+                    Apple Podcasts
+                </label>
+            </div>
+            <div class="platform-toggle">
+                <input type="checkbox" id="platform-google" name="platform-google" data-platform="google" checked>
+                <label for="platform-google">
+                    <img src="{{ url_for('static', filename='images/platform-icons/googlepodcasts.svg') }}" alt="Google Podcasts">
+                    Google Podcasts
+                </label>
+            </div>
+            <div class="platform-toggle">
+                <input type="checkbox" id="platform-amazon" name="platform-amazon" data-platform="amazon" checked>
+                <label for="platform-amazon">
+                    <img src="{{ url_for('static', filename='images/platform-icons/amazonmusic.svg') }}" alt="Amazon Music">
+                    Amazon Music
+                </label>
+            </div>
+            <div class="platform-toggle">
+                <input type="checkbox" id="platform-stitcher" name="platform-stitcher" data-platform="stitcher" checked>
+                <label for="platform-stitcher">
+                    <img src="{{ url_for('static', filename='images/platform-icons/stitcher.svg') }}" alt="Stitcher">
+                    Stitcher
+                </label>
+            </div>
+            <div class="platform-toggle">
+                <input type="checkbox" id="platform-pocketcasts" name="platform-pocketcasts" data-platform="pocketcasts" checked>
+                <label for="platform-pocketcasts">
+                    <img src="{{ url_for('static', filename='images/platform-icons/pocketcasts.svg') }}" alt="Pocket Casts">
+                    Pocket Casts
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button id="publish-now-btn" class="save-btn">Publish Now</button>
+    </div>
+
+    <div id="publish-status" class="publish-status hidden">
+        <h3>Publishing Status:</h3>
+        <pre id="publish-log"></pre>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_specific_scripts %}
+<script type="module" src="{{ url_for('static', filename='requests/publishRequests.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/publish/publish.js') }}"></script>
+{% endblock %}

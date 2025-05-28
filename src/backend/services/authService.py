@@ -99,7 +99,6 @@ class AuthService:
 
             account_data = {
                 "ownerId": user["_id"],
-                "email": email,
                 "isFirstLogin": True,
             }
             account_result, status_code = self.account_repository.create_account(
@@ -139,7 +138,6 @@ class AuthService:
 
             account_data = {
                 "ownerId": user["_id"],
-                "email": email,
                 "isFirstLogin": True,
             }
             account_result, status_code = self.account_repository.create_account(
@@ -319,7 +317,7 @@ class AuthService:
             }, 500
 
     def upload_profile_picture(self, user_id, file):
-        """Upload a profile picture to Azure Blob Storage and update the account."""
+        """Upload a profile picture to Azure Blob Storage and update the user profile."""
         try:
             if not file or not file.filename:
                 return {"error": "Invalid file provided"}, 400
@@ -333,10 +331,17 @@ class AuthService:
             if not file_url:
                 return {"error": "Failed to upload profile picture"}, 500
 
-            update_data = {"profilePicUrl": file_url}
-            response, status_code = self.edit_account(user_id, update_data)
-
+            # Update the user's profile picture URL in the Users collection
+            response, status_code = self.user_repo.update_profile_picture(user_id, file_url)
+            
             if status_code == 200:
+                # Log the activity
+                self.activity_service.log_activity(
+                    user_id=user_id,
+                    activity_type="profile_picture_updated",
+                    description="Updated profile picture",
+                    details={"profile_pic_url": file_url}
+                )
                 return {
                     "message": "Profile picture updated successfully",
                     "profilePicUrl": file_url,
@@ -418,7 +423,6 @@ class AuthService:
             # 3. Ensure Account Exists
             account_data_for_creation = {
                 "ownerId": user_id,
-                "email": email,
                 "isFirstLogin": False, 
             }
             account_result, status_code = self.account_repository.create_account(account_data_for_creation)

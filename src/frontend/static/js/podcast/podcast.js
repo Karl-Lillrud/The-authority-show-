@@ -27,13 +27,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Display podcast details
     const podcastContainer = document.getElementById("podcast-container");
     podcastContainer.innerHTML = `
-      <img src="${podcast.logoUrl || '/static/images/default-podcast.jpg'}" alt="${podcast.podName}" class="podcast-logo">
-      <div class="podcast-info">
-        <h1>${podcast.podName}</h1>
-        <p class="podcast-category">${podcast.category || 'No category available'}</p>
-        <p class="podcast-host">Hosted by ${podcast.hostName || 'No host available'}</p>
-        <p class="podcast-description">${podcast.description || 'No description available'}</p>
-      </div>
+      <div class="podcast-image" style="background-image: url('${podcast.imageUrl || podcast.logoUrl}')" data-id="${podcast._id}"></div>
+      <h1>${podcast.podName}</h1>
+      <p class="category">${podcast.category || "Uncategorized"}</p>
+      <p class="host">Hosted by ${podcast.hostName || podcast.ownerName || "Unknown"}</p>
+      <p class="description">${podcast.description || "No description available."}</p>
     `;
 
     // Fetch episodes and display with Transcript button
@@ -45,7 +43,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Update episode template
     const episodeTemplate = episode => {
-      const episodeId = episode.id || episode._id || "unknown";
+      // Hantera olika format på _id (t.ex. MongoDB ObjectId)
+      let episodeId = "unknown";
+      if (episode._id && typeof episode._id === "object" && episode._id.$oid) {
+        episodeId = episode._id.$oid;
+      } else if (typeof episode._id === "string") {
+        episodeId = episode._id;
+      } else if (episode.id) {
+        episodeId = episode.id;
+      }
+      console.log("EPISODE DATA:", episode);
+      console.log("EpisodeId for studio link:", episodeId);
       const audioUrl = episode.audioUrl || '';
       
       return `
@@ -64,6 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </audio>
               ` : ''}
               <button class="ai-edit-btn" data-episode-id="${episodeId}">Edit</button>
+              <a href="/studio?episode_id=${episodeId}" class="btn btn-success" style="margin-left:8px;">🎙️ Studio</a>
             </div>
           </div>
         </div>

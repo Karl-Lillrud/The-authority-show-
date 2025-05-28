@@ -49,7 +49,6 @@ class AuthRepository:
                 # Ensure account exists using AccountRepository
                 account_data_for_creation = {
                     "ownerId": user_data["_id"],
-                    "email": user_data["email"],
                     "isFirstLogin": True,
                 }
                 account_result, status_code = self.account_repository.create_account(account_data_for_creation)
