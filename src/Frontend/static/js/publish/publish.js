@@ -22,6 +22,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const platformToggles = document.querySelectorAll('.platform-toggle input[type="checkbox"]');
   // const publishNotes = document.getElementById("publish-notes"); // Removed
 
+  // Log the raw data received from the template
+  console.log('[Publish Page] Raw window.publishPageData:', JSON.stringify(window.publishPageData, null, 2));
+
+  const { podcasts, singlePodcastId } = window.publishPageData || { podcasts: [], singlePodcastId: null };
+
+  // Log parsed data
+  console.log('[Publish Page] Parsed podcasts:', JSON.stringify(podcasts, null, 2));
+  console.log('[Publish Page] Parsed singlePodcastId:', singlePodcastId, '(type:', typeof singlePodcastId, ')');
+
   // Load podcasts into the dropdown
   async function loadPodcasts() {
     console.log("[publish.js] loadPodcasts() function called.");
@@ -70,6 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       podcastSelect.innerHTML = '<option value="">-- Select a Podcast --</option>';
       console.log(`[publish.js] Populating podcast dropdown. Number of podcasts: ${podcasts.length}`);
+      let preSelected = false;
       podcasts.forEach((podcast, index) => {
         console.log(`[publish.js] Processing podcast at index ${index}:`, JSON.stringify(podcast, null, 2));
         if (podcast && podcast._id && podcast.podName && typeof podcast.podName === 'string' && podcast.podName.trim() !== '') {
@@ -78,6 +88,13 @@ document.addEventListener("DOMContentLoaded", () => {
           option.value = podcast._id;
           option.textContent = podcast.podName;
           podcastSelect.appendChild(option);
+
+          // Pre-select the podcast if it matches singlePodcastId
+          if (singlePodcastId && podcast._id === singlePodcastId) {
+            console.log(`[publish.js] Match found! Pre-selecting podcast: ID="${podcast._id}", Name="${option.textContent}"`);
+            option.selected = true;
+            preSelected = true;
+          }
         } else {
           console.warn(
             `[publish.js] Skipping invalid podcast object at index ${index}.`,
@@ -88,6 +105,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
       console.log("[publish.js] Finished populating podcast dropdown.");
+
+      if (preSelected) {
+        // Explicitly set the select's value as well, though option.selected should suffice
+        podcastSelect.value = singlePodcastId;
+        console.log(`[Publish Page] Podcast ID "${singlePodcastId}" was pre-selected. Dispatching change event.`);
+        // Ensure the change event triggers episode loading
+        podcastSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (singlePodcastId) {
+        console.warn(`[Publish Page] singlePodcastId ("${singlePodcastId}") was provided, but no matching podcast._id was found in the podcasts list.`);
+      }
     } catch (error) {
       podcastSelect.innerHTML = '<option value="">Error loading podcasts</option>';
       podcastSelect.disabled = true;

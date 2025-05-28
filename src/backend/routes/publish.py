@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, current_app, Response, send_file, g
 from backend.services.publishService import PublishService  # Only import the class
+from backend.repository.podcast_repository import PodcastRepository # Import PodcastRepository
 from bson.objectid import ObjectId
 import datetime
 
@@ -9,7 +10,30 @@ publish_bp = Blueprint('publish_bp', __name__, url_prefix='/publish')
 @publish_bp.route('/', methods=['GET'])
 def publish_page():
     """Renders the main publishing page."""
-    return render_template('publish/publish.html')
+    podcasts_for_template = []
+    single_podcast_details = None
+
+    if hasattr(g, "user_id") and g.user_id:
+        try:
+            podcast_repo = PodcastRepository()
+            response, status_code = podcast_repo.get_podcasts(g.user_id)
+            if status_code == 200 and response.get("podcast"):
+                podcasts_for_template = response["podcast"]
+                if len(podcasts_for_template) == 1:
+                    single_podcast = podcasts_for_template[0]
+                    single_podcast_details = {
+                        "id": single_podcast.get("_id"),
+                        "name": single_podcast.get("podName")
+                    }
+        except Exception as e:
+            current_app.logger.error(f"Error fetching podcasts for publish page: {e}", exc_info=True)
+            # Continue without podcast data if an error occurs
+
+    return render_template(
+        'publish/publish.html',
+        podcasts=podcasts_for_template, # Pass all podcasts
+        single_podcast=single_podcast_details # Pass single podcast details if applicable
+    )
 
 
 @publish_bp.route('/get_sas_url', methods=['POST'])
