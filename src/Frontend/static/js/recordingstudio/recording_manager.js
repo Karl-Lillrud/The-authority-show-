@@ -14,8 +14,12 @@ export function updateRecordingTime(domElements, isRecording, isPaused, recordin
         const minutes = Math.floor((elapsed % 3600000) / 60000);
         const seconds = Math.floor((elapsed % 60000) / 1000);
         recordingTime.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+        // Reset timer display when not recording
+        recordingTime.textContent = '00:00:00';
     }
 }
+
 
 export function startRecording(localStream, domElements, socket, room) {
     const { pauseButton, stopRecordingBtn, saveRecordingBtn, discardRecordingBtn } = domElements;

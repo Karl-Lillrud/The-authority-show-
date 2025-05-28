@@ -1,5 +1,5 @@
-// src/Frontend/static/js/recordingstudio/ui_manager.js
 import { showNotification } from '../components/notifications.js';
+import { fetchGuestsByEpisode } from '../../../static/requests/guestRequests.js';
 
 export function setupUI({
     domElements,
@@ -113,16 +113,17 @@ export function updateLocalControls(domElements, isCameraActive, isMicActive) {
 }
 
 export function updateParticipantsList(guests, domElements, connectedUsers, greenroomUsers) {
-    const { participantsContainer } = domElements;
-    if (!participantsContainer) {
+    if (!domElements.participantsContainer) {
         showNotification('Error: Guest list container not found.', 'error');
         return;
     }
-    participantsContainer.innerHTML = '';
+    domElements.participantsContainer.innerHTML = '';
+
     if (!guests.length) {
-        participantsContainer.innerHTML = '<p>No guests found for this episode.</p>';
+        domElements.participantsContainer.innerHTML = '<p>No guests found for this episode.</p>';
         return;
     }
+
     guests.forEach(guest => {
         const isConnected = connectedUsers.some(u => u.userId === guest._id);
         const isInGreenroom = greenroomUsers.some(u => u.userId === guest._id);
@@ -138,67 +139,113 @@ export function updateParticipantsList(guests, domElements, connectedUsers, gree
                     <span class="audio-indicator"></span>
                 </div>
             `;
-            participantsContainer.appendChild(card);
+            domElements.participantsContainer.appendChild(card);
         }
     });
-    participantsContainer.style.display = connectedUsers.length > 1 ? 'block' : 'none';
+
+    domElements.participantsContainer.style.display = connectedUsers.length > 1 ? 'block' : 'none';
 }
 
-export function showJoinRequest(guestId, guestName, episodeId, roomId, domElements, socket, greenroomUsers, updateParticipantsList) {
-    const { joinRequestModal } = domElements;
-    if (!joinRequestModal) {
+export async function showJoinRequest(guestId, guestName, episodeId, roomId, domElements, socket, greenroomUsers, updateCallback) {
+    if (!domElements.joinRequestModal) {
+        console.error('joinRequestModal is null');
         showNotification(`Join request from ${guestName} received, but modal is unavailable.`, 'error');
         return;
     }
-    greenroomUsers.push({ userId: guestId, guestName });
-    updateParticipantsList();
 
-    const modalContent = joinRequestModal.querySelector('.modal-content');
+    // Fetch guest name and ID
+    let effectiveGuestName = guestName;
+    let effectiveGuestId = guestId;
+    try {
+        const guests = await fetchGuestsByEpisode(episodeId);
+        const guest = guests.find(g => g.id === guestId);
+        effectiveGuestName = guest?.name || guestName || 'Guest';
+        effectiveGuestId = guest?.id || guestId;
+    } catch (error) {
+        console.error('Error fetching guest name:', error);
+        showNotification('Warning: Could not fetch guest name.', 'warning');
+    }
+
+    let currentJoinRequest = new AbortController();
+    const signal = currentJoinRequest.signal;
+
+    greenroomUsers = greenroomUsers.filter(u => u.userId !== effectiveGuestId);
+    greenroomUsers.push({ userId: effectiveGuestId, guestName: effectiveGuestName });
+    try {
+        await updateCallback();
+    } catch (error) {
+        console.error('Error updating participants:', error);
+        showNotification('Error updating participants.', 'error');
+    }
+
+    const modalContent = domElements.joinRequestModal.querySelector('.modal-content');
+    if (!modalContent) {
+        console.error('modal-content element not found');
+        showNotification(`Join request from ${effectiveGuestName} received, but modal content is missing.`, 'error');
+        return;
+    }
+
     modalContent.innerHTML = `
         <div class="modal-header">
             <h3>Join Request</h3>
-            <button class="modal-close">×</button>
+            <button class="modal-close" style="float: right; background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text-primary);" aria-label="Close">×</button>
         </div>
         <div class="modal-body">
-            <p><strong>Guest:</strong> ${guestName}</p>
+            <p><strong>Guest:</strong> ${effectiveGuestName}</p>
             <p><strong>Episode ID:</strong> ${episodeId}</p>
-            <p><strong>Room:</strong> ${roomId}</p>
+            <p><strong>Room:</strong> ${roomId || episodeId}</p>
         </div>
         <div class="modal-footer">
             <button id="acceptJoinBtn" class="btn btn-success">Accept</button>
             <button id="denyJoinBtn" class="btn btn-danger">Deny</button>
         </div>
     `;
-    joinRequestModal.style.display = 'block';
-    joinRequestModal.classList.add('visible');
 
-    const acceptBtn = document.getElementById('acceptJoinBtn');
-    const denyBtn = document.getElementById('denyJoinBtn');
+    domElements.joinRequestModal.style.display = 'block';
+
+    const acceptBtn = modalContent.querySelector('#acceptJoinBtn');
+    const denyBtn = modalContent.querySelector('#denyJoinBtn');
     const closeBtn = modalContent.querySelector('.modal-close');
 
     const closeModal = () => {
-        joinRequestModal.style.display = 'none';
-        joinRequestModal.classList.remove('visible');
+        domElements.joinRequestModal.style.display = 'none';
+        currentJoinRequest.abort();
+        currentJoinRequest = null;
     };
 
     const handleAccept = () => {
-        socket.emit('approve_join_studio', { guestId, episodeId, roomId: roomId || episodeId }, (response) => {
+        const effectiveRoom = roomId || episodeId;
+        socket.emit('approve_join_studio', {
+            guestId: effectiveGuestId,
+            episodeId,
+            room: effectiveRoom, // ✅ Fixed: renamed from roomId to room
+            guestName: effectiveGuestName
+        }, (response) => {
             if (response && response.error) {
                 showNotification(`Error: ${response.message}`, 'error');
             } else {
-                showNotification(`Approved join for ${guestName}`, 'success');
+                showNotification(`Approved join for ${effectiveGuestName}`, 'success');
                 closeModal();
             }
         });
     };
 
     const handleDeny = () => {
-        socket.emit('deny_join_studio', { guestId, reason: 'Denied by host', roomId: roomId || episodeId });
-        showNotification(`Denied join for ${guestName}`, 'info');
+        socket.emit('deny_join_studio', {
+            guestId: effectiveGuestId,
+            reason: 'Denied by host',
+            room: roomId || episodeId // ✅ Also changed to "room" for consistency
+        });
+        showNotification(`Denied join for ${effectiveGuestName}`, 'info');
         closeModal();
     };
 
-    acceptBtn.addEventListener('click', handleAccept);
-    denyBtn.addEventListener('click', handleDeny);
-    closeBtn.addEventListener('click', handleDeny);
+    acceptBtn.addEventListener('click', handleAccept, { signal });
+    denyBtn.addEventListener('click', handleDeny, { signal });
+    closeBtn.addEventListener('click', handleDeny, { signal });
+
+    signal.addEventListener('abort', () => {
+        greenroomUsers = greenroomUsers.filter(u => u.userId !== effectiveGuestId);
+        updateCallback();
+    });
 }

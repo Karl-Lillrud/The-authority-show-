@@ -1,6 +1,8 @@
 // src/Frontend/static/js/recordingstudio/webrtc_manager.js
 import { showNotification } from '../components/notifications.js';
 
+const candidateQueue = new Map();
+
 export function setupWebRTC(socket, room, localStream, domElements, connectedUsers, peerConnections, addParticipantStream) {
     const { remoteVideo, remoteVideoWrapper } = domElements;
     const pendingAnswers = new Map();
@@ -11,6 +13,18 @@ export function setupWebRTC(socket, room, localStream, domElements, connectedUse
         if (pc) {
             try {
                 await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+                // Add queued candidates after setting remote description
+                const queued = candidateQueue.get(userId) || [];
+                for (const c of queued) {
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(c));
+                    } catch (error) {
+                        console.error('Error adding queued ICE candidate:', error);
+                    }
+                }
+                candidateQueue.delete(userId);
+
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
                 socket.emit('answer', { room, userId, answer: pc.localDescription });
@@ -28,6 +42,18 @@ export function setupWebRTC(socket, room, localStream, domElements, connectedUse
             if (pc.signalingState === 'have-local-offer') {
                 try {
                     await pc.setRemoteDescription(new RTCSessionDescription(answer));
+
+                    // Add queued candidates after setting remote description
+                    const queued = candidateQueue.get(userId) || [];
+                    for (const c of queued) {
+                        try {
+                            await pc.addIceCandidate(new RTCIceCandidate(c));
+                        } catch (error) {
+                            console.error('Error adding queued ICE candidate:', error);
+                        }
+                    }
+                    candidateQueue.delete(userId);
+
                 } catch (error) {
                     console.error('Error handling WebRTC answer:', error);
                 }
@@ -41,11 +67,19 @@ export function setupWebRTC(socket, room, localStream, domElements, connectedUse
         const { userId, candidate } = data;
         const pc = peerConnections.get(userId);
         if (pc) {
-            try {
-                await pc.addIceCandidate(new RTCIceCandidate(candidate));
-            } catch (error) {
-                console.error('Error handling ICE candidate:', error);
-                showNotification('WebRTC ICE candidate error.', 'error');
+            if (pc.remoteDescription && pc.remoteDescription.type) {
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                } catch (error) {
+                    console.error('Error handling ICE candidate:', error);
+                    showNotification('WebRTC ICE candidate error.', 'error');
+                }
+            } else {
+                // Queue the candidate until remoteDescription is set
+                if (!candidateQueue.has(userId)) {
+                    candidateQueue.set(userId, []);
+                }
+                candidateQueue.get(userId).push(candidate);
             }
         }
     });

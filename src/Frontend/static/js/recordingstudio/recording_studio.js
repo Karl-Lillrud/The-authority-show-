@@ -55,10 +55,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Studio initialized with params:', { podcastId, episodeId, room, guestId, token, isHost });
 
     // Validate URL parameters
-    if (!episodeId || (guestId && !token)) {
-        console.error('Missing required URL parameters:', { episodeId, guestId, token });
-        showNotification('Error: Missing required parameters.', 'error');
+    if (!episodeId) {
+        console.error('Missing required URL parameter: episodeId');
+        showNotification('Error: Episode ID is required.', 'error');
         return;
+    }
+    if (!isHost && (!guestId || !token)) {
+        console.error('Missing required URL parameters for guest:', { guestId, token });
+        showNotification('Error: Guest ID and token are required for guests.', 'error');
+        return;
+    }
+    if (!room) {
+        room = episodeId; // Ensure room is always set
     }
 
     // Initialize Socket.IO
@@ -101,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         socket,
         room,
         episodeId,
-        guestId,
+        guestId: guestId || 'host', // Ensure guestId is always defined
         isHost,
         domElements,
         connectedUsers,
@@ -120,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupUI({
         domElements,
         isHost,
-        guestId, // Pass guestId
+        guestId: guestId || 'host', // Pass guestId
         startCamera,
         toggleCamera,
         toggleMicrophone,
@@ -154,7 +162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             recordedChunks = [];
         },
         localStream,
-        tryInitializeMicrophone, // Pass tryInitializeMicrophone
+        tryInitializeMicrophone,
         episodeId,
         room,
         socket,
@@ -179,8 +187,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             episode = await fetchEpisode(episodeId);
             if (!episode || !episode._id) throw new Error('No episode data returned');
-            if (!room) room = episodeId;
-            socket.emit('join_studio', { room, episodeId, isHost: true, user: { id: 'host', name: 'Host' } });
+            socket.emit('join_studio', {
+                room,
+                episodeId,
+                isHost: true,
+                user: { id: 'host', name: 'Host' },
+                guestId: 'host' // Add guestId for server compatibility
+            });
         } catch (error) {
             console.error('Error loading episode:', error);
             showNotification(`Error loading episode: ${error.message}`, 'error');
@@ -195,6 +208,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error fetching guest name:', error);
         }
         window.guestName = guestName;
-        socket.emit('join_studio', { room: room || episodeId, episodeId, isHost: false, user: { id: guestId, name: guestName }, token });
+        socket.emit('join_studio', {
+            room,
+            episodeId,
+            isHost: false,
+            user: { id: guestId, name: guestName },
+            guestId, // Explicitly include guestId
+            token
+        });
     }
 });
