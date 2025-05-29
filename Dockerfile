@@ -13,7 +13,8 @@ COPY src/requirements.txt /app/src/requirements.txt
 
 # Install dependencies
 RUN pip install --no-cache-dir -r /app/src/requirements.txt
-RUN pip install gunicorn
+# explicit install of gunicorn
+RUN pip install --no-cache-dir gunicorn
 
 # Ensure .env file is in the build context (project root) and not listed in .dockerignore
 # Copy the .env file from the root directory of the build context to /app/.env in the image
