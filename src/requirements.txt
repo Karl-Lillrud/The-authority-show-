@@ -37,6 +37,7 @@ slug
 stripe
 textblob
 textstat
+tf-keras
 tiktoken
 torch
 torchvision
