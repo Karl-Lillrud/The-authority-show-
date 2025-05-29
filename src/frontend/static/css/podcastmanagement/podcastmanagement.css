@@ -2172,6 +2172,7 @@ select#episode-id {
   border: 1px solid #ddd;
   border-radius: var(--radius-small);
   margin-bottom: 16px;
+  color: #000; /* Ensure text is black, not grey */
 }
 
 /* Hide published episodes in the dropdown */
@@ -2183,5 +2184,13 @@ select option.published {
 select option.non-published {
   color: #000000;
   background-color: white;
+}
+
+/* Remove any greyed-out styling for the episode dropdown specifically */
+#episode-id, 
+select#episode-id option {
+  background-color: white !important;
+  color: #000000 !important; 
+  opacity: 1 !important;
 }
 

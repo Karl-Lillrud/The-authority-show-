@@ -141,11 +141,18 @@ document.addEventListener("DOMContentLoaded", function() {
       const description = document.getElementById("guest-description-input").value.trim();
       const tags = document.getElementById("guest-tags-input").value.split(",").map(tag => tag.trim()).filter(Boolean);
       const areasOfInterest = document.getElementById("guest-areas-input").value.split(",").map(area => area.trim()).filter(Boolean);
+      const podcastId = document.getElementById("guest-podcastid-input").value.trim();
 
       if (!name || !email) {
         alert("Name and Email are required fields.");
         return;
       }
+
+      // Show loading state
+      const submitButton = popupForm.querySelector("button[type='submit']");
+      const originalButtonText = submitButton.textContent;
+      submitButton.textContent = "Adding Guest...";
+      submitButton.disabled = true;
 
       const payload = {
         name,
@@ -154,26 +161,30 @@ document.addEventListener("DOMContentLoaded", function() {
         tags,
         areasOfInterest,
         googleCal: sessionStorage.getItem("googleCal") || "", // Include googleCal token if available
+        podcastId,
+        sendInvitation: true // Flag to indicate we want to send an invitation email
       };
 
       try {
-        const response = await fetch("/add_guest", { // Corrected endpoint
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to add guest: ${response.statusText}`);
+        const response = await addGuestRequest(payload);
+        
+        if (response.message) {
+          // Success notification
+          alert(`Guest added successfully. ${response.invitationSent ? "Invitation email sent!" : ""}`);
+          
+          // Refresh the guest list to show the newly added guest
+          await renderGuestList();
+          closePopup();
+        } else {
+          throw new Error(response.error || "Unknown error occurred");
         }
-
-        const result = await response.json();
-        alert(result.message);
-        renderGuestList();
-        closePopup();
       } catch (error) {
         console.error("Error adding guest:", error);
-        alert("An error occurred while adding the guest.");
+        alert(`Error: ${error.message || "Failed to add guest"}`);
+      } finally {
+        // Restore button state
+        submitButton.textContent = originalButtonText;
+        submitButton.disabled = false;
       }
     };
   }
@@ -280,26 +291,49 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
-  // Render Guest List
-  function renderGuestList(filterText = "") {
+  // Render Guest List - make it async to properly handle awaiting
+  async function renderGuestList(filterText = "") {
     const guestListEl = document.getElementById("guest-list");
     if (!guestListEl) return;
-    guestListEl.innerHTML = "";
-    // Call fetchGuestsRequest from guestRequests.js
-    fetchGuestsRequest().then(guests => {
+    
+    // Show loading state
+    guestListEl.innerHTML = '<div class="loading-spinner">Loading guests...</div>';
+    
+    try {
+      // Call fetchGuestsRequest from guestRequests.js
+      const guests = await fetchGuestsRequest();
+      
+      // Clear the list
+      guestListEl.innerHTML = "";
+      
       const searchTerms = filterText.split(",").map(term => term.trim().toLowerCase()).filter(Boolean);
-      guests.filter(guest => {
+      const filteredGuests = guests.filter(guest => {
         const combinedText = (guest.name + " " + guest.description + " " + guest.tags.join(" ") + " " + (guest.areasOfInterest ? guest.areasOfInterest.join(" ") : "")).toLowerCase();
         return searchTerms.length === 0 || searchTerms.every(term => combinedText.includes(term));
-      }).forEach(guest => {
+      });
+
+      // Display message if no guests are found
+      if (filteredGuests.length === 0 && searchTerms.length > 0) {
+        const noResults = document.createElement("div");
+        noResults.classList.add("no-results");
+        noResults.textContent = "No guests match your search criteria.";
+        guestListEl.appendChild(noResults);
+      }
+
+      filteredGuests.forEach(guest => {
         const card = document.createElement("div");
         card.classList.add("guest-card");
+        // Add a highlight class for newly added guests
+        if (guest.recentlyAdded) {
+          card.classList.add("newly-added");
+        }
         card.innerHTML = `
-          <img src="${guest.image}" alt="${guest.name}">
+          <img src="${guest.image || '/static/images/default-guest.png'}" alt="${guest.name}">
           <h3>${guest.name}</h3>
           <div class="tags">
             ${guest.tags.map(tag => `<span>${tag}</span>`).join("")}
           </div>
+          ${guest.invitationSent ? '<span class="invitation-badge">Invited</span>' : ''}
         `;
         card.addEventListener("click", function() {
           openProfilePopup(guest);
@@ -316,7 +350,10 @@ document.addEventListener("DOMContentLoaded", function() {
       `;
       addCard.addEventListener("click", openAddGuestPopup);
       guestListEl.appendChild(addCard);
-    });
+    } catch (error) {
+      console.error("Error loading guests:", error);
+      guestListEl.innerHTML = '<div class="error-message">Error loading guests. Please try again.</div>';
+    }
   }
 
   const searchBar = document.getElementById("search-bar");
