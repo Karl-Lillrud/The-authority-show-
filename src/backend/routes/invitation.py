@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, url_for, g
-from backend.utils.email_utils import send_email, send_team_invite_email
+from backend.utils.email_utils import send_email, send_team_invite_email, send_beta_invite_email
 from backend.database.mongo_connection import collection
-from backend.models.podcasts import PodcastSchema
+from backend.models.podcasts import PodcastSchema 
 from backend.services.TeamInviteService import TeamInviteService
 from datetime import datetime, timezone
 import uuid
@@ -31,35 +31,42 @@ def send_invitation():
             logger.warning("User ID not found in g context for send_invitation.")
             return jsonify({"error": "User not authenticated"}), 401
 
-        # Fetch the account document from MongoDB for the logged-in user
-        # Query Accounts collection using ownerId which corresponds to Users._id
-        user_account = collection.database.Accounts.find_one({"ownerId": g.user_id})
-
-        if not user_account:
-            logger.error(f"No account associated with this user ID (ownerId): {g.user_id}")
-            return jsonify({"error": "No account associated with this user"}), 403
-
-        user_email = user_account.get("email")
-        if not user_email:
-            logger.error(f"User account {user_account.get('_id')} found but has no email address.")
-            return jsonify({"error": "User account has no email address"}), 400
+        # First try to get user from Users collection
+        user = collection.database.Users.find_one({"_id": g.user_id})
         
-        # Assuming send_email is a generic email sending utility
-        # You might want a more specific template or subject for this beta invitation
-        subject = "Your PodManager Beta Access"
-        # Render an HTML template for the email body
-        # Example: html_body = render_template('emails/beta_invitation_email.html', user_name=user_account.get('name'))
-        # For now, using a simple text body
-        body = "Thank you for your interest! Here's your access to the PodManager beta." # Replace with actual content or template
+        if not user:
+            logger.warning(f"User not found with ID: {g.user_id}, falling back to Accounts collection")
+            # Fall back to Accounts collection if user not found
+            user_account = collection.database.Accounts.find_one({"ownerId": g.user_id})
+            
+            if not user_account:
+                logger.error(f"No account associated with this user ID (ownerId): {g.user_id}")
+                return jsonify({"error": "No account associated with this user"}), 400
+                
+            user_email = user_account.get("email")
+            user_name = user_account.get("fullName") or user_account.get("name")
+        else:
+            user_email = user.get("email")
+            user_name = user.get("fullName") or user.get("name")
 
-        email_sent = send_email(user_email, subject, body) # Assuming send_email returns a boolean or throws an exception
+        if not user_email:
+            logger.error(f"User found but has no email address - user ID: {g.user_id}")
+            return jsonify({"error": "User has no email address"}), 400
+        
+        logger.info(f"Sending beta invitation email to {user_email}")
+        
+        # Use the dedicated function for sending beta invitation emails
+        result = send_beta_invite_email(
+            email=user_email, 
+            user_name=user_name or user_email.split('@')[0]
+        )
 
-        if email_sent: # Adjust based on what send_email returns
+        if not result.get("error"):
             logger.info(f"Beta invitation email successfully sent to {user_email}")
             return jsonify({"message": "Invitation email sent successfully!"}), 200
         else:
-            logger.error(f"Failed to send beta invitation email to {user_email}")
-            return jsonify({"error": "Failed to send invitation email"}), 500
+            logger.error(f"Failed to send beta invitation email to {user_email}: {result.get('error')}")
+            return jsonify({"error": f"Failed to send invitation email: {result.get('error')}"}), 500
 
     except Exception as e:
         logger.error(f"Error sending invitation: {e}", exc_info=True)

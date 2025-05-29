@@ -32,6 +32,8 @@ python_dateutil
 soundfile
 spotipy
 streamlit
+tensorflow
+slug
 stripe
 textblob
 textstat

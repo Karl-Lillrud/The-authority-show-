@@ -323,6 +323,7 @@ for (const payload of episodePayloads) {
   }
 }
 
+
         loadingBar.processStep(3);
 
         try {
@@ -376,13 +377,16 @@ for (const payload of episodePayloads) {
             console.log("Google refresh token saved successfully.");
  
               if (connectCalendarButton) {  // if the calandar is connected
-            connectCalendarButton.textContent = "Calendar Conn ected";
+            connectCalendarButton.textContent = "Calendar Connected"; // Corrected typo
             connectCalendarButton.disabled = true;
             connectCalendarButton.style.backgroundColor = "#ccc";
             connectCalendarButton.style.cursor = "not-allowed";
           } else {
-            console.error("Error saving Google refresh token:", data.error);
+            console.error("Error saving Google refresh token (connectCalendarButton not found, but data.message was true):", data.error);
           }
+        } else { // This is an example if you have an else for 'if (data.message)'
+            console.error("Error saving Google refresh token (data.message was false):", data.error);
+        } // Closing brace for the 'else' block
         });
     } catch (error) {
       console.error("Error saving Google refresh token:", error);

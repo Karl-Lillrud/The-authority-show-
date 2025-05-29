@@ -33,3 +33,17 @@ class EpisodeSchema(Schema):
     updatedAt = fields.DateTime(dump_only=True, data_key="updated_at")
     highlights = fields.List(fields.Str(), allow_none=True)
     audioEdits = fields.List(fields.Dict(), allow_none=True)
+
+    @validates("duration")
+    def validate_duration(self, value):
+        if value is not None:
+            if not isinstance(value, int):
+                raise ValidationError("Duration must be an integer.")
+            if value < 0:
+                raise ValidationError("Duration cannot be negative.")
+        return value
+
+    @validates("publishDate")
+    def validate_publish_date(self, value):
+        if not isinstance(value, (datetime, type(None))):
+            raise ValidationError("publishDate must be a datetime object or null.")

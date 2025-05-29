@@ -7,9 +7,7 @@ import logging
 from backend.services.activity_service import ActivityService
 from dateutil.parser import parse as parse_date
 from backend.utils.subscription_access import PLAN_BENEFITS
-import os
-from backend.utils.blob_storage import upload_file_to_blob, download_blob_to_tempfile
-from backend.services.audioToEpisodeService import AudioToEpisodeService  # Assuming this is where AudioToEpisodeService is defined
+from backend.services.audioToEpisodeService import AudioToEpisodeService # Added import
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +18,12 @@ class EpisodeRepository:
         self.accounts_collection = collection.database.Accounts
         self.subscription_service = SubscriptionService()
         self.activity_service = ActivityService()
-        self.audio_service = AudioToEpisodeService()
+        self.audio_service = AudioToEpisodeService() # Instantiate AudioToEpisodeService
 
     @staticmethod
     def get_episodes_by_user_id(user_id):
         """Fetch episodes for a specific user."""
-        episodes = list(collection.Episodes.find({"ownerId": user_id}))
-        for ep in episodes:
-            ep["_id"] = str(ep["_id"])
-        return episodes
+        return list(collection.Episodes.find({"ownerId": user_id}))
 
     def register_episode(self, data, user_id):
         try:
@@ -114,7 +109,6 @@ class EpisodeRepository:
             )
             if not result:
                 return {"error": "Episode not found"}, 404
-            result["_id"] = str(result["_id"])
             return result, 200
         except Exception as e:
             return {"error": f"Failed to fetch episode: {str(e)}"}, 500
@@ -164,9 +158,8 @@ class EpisodeRepository:
         except Exception as e:
             return {"error": f"Failed to delete episode: {str(e)}"}, 500
 
-
-    def update_episode(self, episode_id, user_id, data, audio_file=None):
-        """Update an episode if it belongs to the user, including handling audio file uploads."""
+    def update_episode(self, episode_id, user_id, data, audio_file=None): # Added audio_file=None
+        """Update an episode if it belongs to the user."""
         try:
             ep = self.collection.find_one({"_id": episode_id})
             if not ep:
@@ -174,18 +167,44 @@ class EpisodeRepository:
             if ep["userid"] != str(user_id):
                 return {"error": "Permission denied"}, 403
 
-            # Initialize the schema for validation
+            # Handle audio file upload first if provided
+            if audio_file:
+                account_id = ep.get("accountId") # Use accountId from the episode document
+                podcast_id = ep.get("podcast_id")
+
+                if not account_id or not podcast_id:
+                    logger.error(f"Cannot process audio upload for episode {episode_id}: missing accountId or podcast_id in episode document.")
+                    return {"error": "Internal configuration error: cannot determine path for audio upload."}, 500
+
+                logger.info(f"Processing audio file upload for episode {episode_id}")
+                audio_meta = self.audio_service.upload_episode_audio(account_id, episode_id, audio_file, podcast_id)
+
+                if audio_meta:
+                    data["audioUrl"] = audio_meta.get("blob_url")
+                    data["fileSize"] = audio_meta.get("file_size_bytes") # Use file_size_bytes
+                    data["fileType"] = audio_meta.get("file_type")       # Use file_type
+                    data["duration"] = audio_meta.get("duration_seconds")
+                    # Optionally update status if a new audio file is uploaded
+                    data["status"] = data.get("status", "Recorded") # Update status, or keep if already set
+                    logger.info(f"Audio metadata populated for episode {episode_id}: {data['audioUrl']}")
+                else:
+                    logger.error(f"Audio upload failed for episode {episode_id}.")
+                    return {"error": "Failed to upload and process audio file."}, 500
+            
+            # Continue with schema validation and field updates
             schema = EpisodeSchema(partial=True)
+
             validation_data = data.copy()
 
-            # Remove file-related fields from validation (to be handled separately)
             file_related_fields = ["audioUrl", "fileSize", "fileType"]
             for field in file_related_fields:
                 if field in validation_data:
                     del validation_data[field]
 
-            # Validate duration if present
-            if "duration" in validation_data and validation_data["duration"] is not None:
+            if (
+                "duration" in validation_data
+                and validation_data["duration"] is not None
+            ):
                 try:
                     validation_data["duration"] = int(validation_data["duration"])
                 except (ValueError, TypeError):
@@ -197,25 +216,53 @@ class EpisodeRepository:
             # Validate the remaining data
             errors = schema.validate(validation_data)
             if errors:
-                logger.error("Schema validation errors during update (excluding file fields): %s", errors)
+                logger.error(
+                    "Schema validation errors during update (excluding file fields): %s",
+                    errors,
+                )
                 return {
                     "error": "Invalid data provided for update",
                     "details": errors,
                 }, 400
 
+            # Add debug logging for status field specifically
+            if "status" in data:
+                logger.info(f"Episode {episode_id} status update requested: '{data['status']}'")
+            
             # Start building the fields to update in MongoDB
             update_fields = {"updated_at": datetime.now(timezone.utc)}
 
-            # Define all possible fields that can be updated
+            # Define all possible fields that can be updated (including file fields)
             allowed_fields = [
-                "title", "description", "publishDate", "duration", "status",
-                "audioUrl", "fileSize", "fileType", "guid", "season", "episode",
-                "episodeType", "explicit", "imageUrl", "keywords", "chapters",
-                "link", "subtitle", "summary", "author", "isHidden", "recordingAt",
+                "title",
+                "description",
+                "publishDate",
+                "duration",
+                "status",
+                "audioUrl",
+                "fileSize",
+                "fileType",  # File fields included here
+                "guid",
+                "season",
+                "episode",
+                "episodeType",
+                "explicit",
+                "imageUrl",
+                "keywords",
+                "chapters",
+                "link",
+                "subtitle",
+                "summary",
+                "author",
+                "isHidden",
+                "recordingAt",
             ]
 
+            # Populate update_fields from the original 'data' dictionary
             for field in allowed_fields:
-                if field in data:
+                if (
+                    field in data
+                ):  # Check against the original 'data' containing file info
                     value = data[field]
                     if isinstance(value, str):
                         update_fields[field] = value.strip()
@@ -224,108 +271,147 @@ class EpisodeRepository:
                     else:
                         update_fields[field] = value
 
-            if audio_file:
-                try:
-                    account_id = ep.get("accountId")
-                    if not account_id:
-                        logger.error(f"No accountId found for episode {episode_id}")
-                        return {"error": "Account ID not found for episode"}, 500
-
-                    podcast_id = ep.get("podcast_id")
-                    if not podcast_id:
-                        logger.error(f"No podcast_id found for episode {episode_id}")
-                        return {"error": "Podcast ID not found for episode"}, 500
-
-                    logger.warning(f"DEBUG: account_id={account_id}, podcast_id={podcast_id}, episode_id={episode_id}, audio_file={audio_file}, filename={getattr(audio_file, 'filename', None)}, content_type={getattr(audio_file, 'content_type', None)}")
-                    upload_result = self.audio_service.upload_episode_audio(
-                        account_id=account_id,
-                        podcast_id=podcast_id,
-                        episode_id=episode_id,
-                        audio_file=audio_file
-                    )
-
-                    if not upload_result or not upload_result.get("blob_url"):
-                        logger.error(f"Failed to upload audio file for episode {episode_id}")
-                        return {"error": "Failed to upload audio file"}, 500
-
-                    # Update audio-related fields
-                    update_fields["audioUrl"] = upload_result["blob_url"]
-                    update_fields["fileSize"] = upload_result["file_size"]
-                    update_fields["fileType"] = audio_file.content_type if hasattr(audio_file, 'content_type') else "audio/mpeg"
-
-                    # Update duration if available from audio file
-                    if upload_result.get("duration_seconds") is not None:
-                        update_fields["duration"] = int(upload_result["duration_seconds"])
-
-                    logger.info(
-                        f"Audio file uploaded for episode {episode_id}: "
-                        f"URL={upload_result['blob_url']}, Size={upload_result['file_size']} {upload_result.get('size_unit', '')}"
-                    )
-                except Exception as e:
-                    logger.error(f"Error handling audio file upload for episode {episode_id}: {e}", exc_info=True)
-                    return {"error": f"Failed to upload audio file: {str(e)}"}, 500
-
-            # Ensure duration is correctly typed
+            # Ensure duration is correctly typed (already handled partially, but double-check)
             if "duration" in update_fields and update_fields["duration"] is not None:
                 try:
                     update_fields["duration"] = int(update_fields["duration"])
                 except (ValueError, TypeError):
-                    logger.error(f"Invalid duration value '{update_fields['duration']}' during final update prep. Removing from update.")
-                    del update_fields["duration"]
+                    logger.error(
+                        f"Invalid duration value '{update_fields['duration']}' during final update prep. Removing from update."
+                    )
+                    if (
+                        "duration" in update_fields
+                    ):  # Check if still exists before deleting
+                        del update_fields["duration"]
             elif "duration" in update_fields and update_fields["duration"] is None:
+                # Ensure it's explicitly None if it was an empty string or invalid
                 update_fields["duration"] = None
 
+            # Check if there's anything to update besides 'updated_at'
             if len(update_fields) <= 1:
-                logger.info(f"No valid fields to update for episode {episode_id} besides timestamp.")
-                return {"message": "No valid changes detected"}, 200
+                logger.info(
+                    f"No valid fields to update for episode {episode_id} besides timestamp."
+                )
+                # Decide if this is an error or just means no changes were made
+                # If only file fields were sent, this might be expected.
+                # Let's proceed if file fields were the only change.
+                has_non_timestamp_update = any(k != "updated_at" for k in update_fields)
+                if not has_non_timestamp_update:
+                    return {"message": "No valid changes detected"}, 200
 
-            result = self.collection.update_one({"_id": episode_id}, {"$set": update_fields})
+            # Perform the MongoDB update with additional logging
+            logger.info(f"Performing MongoDB update for {episode_id} with fields: {update_fields}")
+            
+            # Ensure status field is properly included
+            if "status" in data:
+                update_fields["status"] = data["status"]
+                logger.info(f"Status field explicitly set to '{data['status']}' in update for episode {episode_id}")
+            
+            # Execute the update with priority on status field
+            result = self.collection.update_one(
+                {"_id": episode_id}, {"$set": update_fields}
+            )
 
             if result.matched_count == 0:
+                # Should not happen due to earlier check, but good safeguard
                 logger.error(f"Failed to find episode {episode_id} during MongoDB update operation.")
                 return {"error": "Failed to update episode, document not found."}, 404
-            if result.modified_count == 0 and result.matched_count == 1:
-                logger.info(f"Episode {episode_id} found but no fields were modified by the update operation.")
-
+            
+            # Additional logging to confirm update
+            if result.modified_count > 0:
+                logger.info(f"Successfully modified {result.modified_count} document(s) for episode {episode_id}")
+                
+                # Double-check the update by fetching the document again
+                updated_doc = self.collection.find_one({"_id": episode_id})
+                if updated_doc:
+                    logger.info(f"Episode {episode_id} after update - status: '{updated_doc.get('status')}'")
+                    
+                    # If status was part of the update, verify it matches
+                    if "status" in data and updated_doc.get('status') != data['status']:
+                        logger.warning(f"Status mismatch after update: expected '{data['status']}', got '{updated_doc.get('status')}'")
+            else:
+                logger.warning(f"Episode {episode_id} matched but not modified by update")
+            
+            # Fetch the updated document to return or confirm changes
             updated_ep = self.collection.find_one({"_id": episode_id})
             if updated_ep and "_id" in updated_ep:
                 updated_ep["_id"] = str(updated_ep["_id"])
 
+            # Determine the title to use in the log (new title if updated, otherwise old title)
             log_title = updated_ep.get("title", ep.get("title", "Unknown Title"))
 
+            # Log activity
             try:
                 self.activity_service.log_activity(
                     user_id=str(user_id),
                     activity_type="episode_updated",
-                    description=f"Updated episode '{log_title}'",
+                    description=f"Updated episode '{log_title}'",  # Use determined title
                     details={
                         "episodeId": episode_id,
-                        "title": log_title,
-                        "updatedFields": [k for k in update_fields.keys() if k != "updated_at"],
+                        "title": log_title,  # Include title in details
+                        "updatedFields": [
+                            k for k in update_fields.keys() if k != "updated_at"
+                        ],
                     },
                 )
             except Exception as act_err:
-                logger.error(f"Failed to log episode_updated activity: {act_err}", exc_info=True)
+                logger.error(
+                    f"Failed to log episode_updated activity: {act_err}", exc_info=True
+                )
 
             return {"message": "Episode updated successfully"}, 200
 
         except Exception as e:
-            logger.error(f"Failed to update episode {episode_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Failed to update episode {episode_id}: {str(e)}", exc_info=True
+            )
             return {"error": f"Failed to update episode: {str(e)}"}, 500
 
-
-
-    def get_episodes_by_podcast(self, podcast_id, user_id):
-        """Get all episodes under a specific podcast owned by the user."""
+    def get_episodes_by_podcast(self, podcast_id, user_id, exclude_statuses=None):
+        """Get all episodes under a specific podcast owned by the user.
+           Optionally excludes episodes with statuses specified in exclude_statuses (case-insensitive).
+        """
         try:
-            episodes = list(
-                self.collection.find({"podcast_id": podcast_id, "userid": str(user_id)})
-            )
+            query = {
+                "podcast_id": podcast_id,
+                "userid": str(user_id)
+            }
+
+            if exclude_statuses and isinstance(exclude_statuses, list) and len(exclude_statuses) > 0:
+                if len(exclude_statuses) == 1:
+                    query["status"] = {"$not": {"$regex": f"^{exclude_statuses[0].strip()}$", "$options": "i"}}
+                elif len(exclude_statuses) > 1:
+                    nor_conditions = []
+                    for status_val in exclude_statuses:
+                        if isinstance(status_val, str) and status_val.strip():
+                            nor_conditions.append({"status": {"$regex": f"^{status_val.strip()}$", "$options": "i"}})
+                    if nor_conditions:
+                        query["$nor"] = nor_conditions
+                        if "status" in query and len(exclude_statuses) > 1: 
+                             del query["status"]
+            
+            episodes_cursor = self.collection.find(query)
+            episodes = list(episodes_cursor) # Convert cursor to list to iterate multiple times if needed for logging
+            
+            # ADDED: Detailed logging of episodes found by the query
+            if exclude_statuses: # Log only when filtering is active
+                logger.info(f"--- Episodes found by query for podcast {podcast_id} (before _id conversion, with exclude_statuses: {exclude_statuses}) ---")
+                if not episodes:
+                    logger.info("No episodes matched the query.")
+                for ep_doc_idx, ep_doc in enumerate(episodes):
+                    logger.info(f"Episode [{ep_doc_idx}]: ID: {ep_doc.get('_id')}, Status: '{ep_doc.get('status')}', Title: '{ep_doc.get('title', 'N/A')}'")
+                logger.info(f"--- End of raw episode list from DB ({len(episodes)} episodes) ---")
+            
+            processed_episodes = []
             for ep in episodes:
                 ep["_id"] = str(ep["_id"])
-            return {"episodes": episodes}, 200
+                processed_episodes.append(ep)
+            
+            excluded_status_str = ", ".join(exclude_statuses) if exclude_statuses else "none"
+            logger.info(f"Fetched {len(processed_episodes)} episodes for podcast {podcast_id} by user {user_id}, excluding statuses: [{excluded_status_str}]. Query: {query}")
+            return {"episodes": processed_episodes}, 200
         except Exception as e:
-            logger.error("❌ ERROR: %s", e)
+            logger.error(f"❌ ERROR fetching episodes for podcast {podcast_id} (exclude_statuses: {exclude_statuses}): {str(e)}", exc_info=True)
             return {"error": f"Failed to fetch episodes by podcast: {str(e)}"}, 500
 
     def delete_by_user(self, user_id):
@@ -346,7 +432,6 @@ class EpisodeRepository:
             episode = self.collection.find_one({"_id": episode_id})
             if not episode:
                 return None, None
-            episode["_id"] = str(episode["_id"])
             podcast = (
                 collection.database.Podcasts.find_one(
                     {"_id": episode.get("podcast_id")}

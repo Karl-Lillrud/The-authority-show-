@@ -96,6 +96,14 @@
         <pre id="publish-log"></pre>
     </div>
 </div>
+
+<!-- Data for JavaScript -->
+<script>
+  window.publishPageData = {
+    podcasts: {{ podcasts|tojson|safe if podcasts else [] }},
+    singlePodcastId: {% if single_podcast and single_podcast.id %}"{{ single_podcast.id }}"{% else %}null{% endif %}
+  };
+</script>
 {% endblock %}
 
 {% block page_specific_scripts %}

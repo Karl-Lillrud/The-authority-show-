@@ -54,7 +54,7 @@ class AuthRepository:
                 account_result, status_code = self.account_repository.create_account(account_data_for_creation)
                 if status_code not in [200, 201]:
                     logger.error(
-                        f"Failed to create or retrieve account for user {user_data['_id']}: {account_result.get('error')}"
+                        f"Failed to create or retrieve account for user {user_data['id']}: {account_result.get('error')}"
                     )
                     self.user_collection.delete_one({"_id": result.inserted_id})
                     return None
