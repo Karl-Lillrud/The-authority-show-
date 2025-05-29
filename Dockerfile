@@ -28,4 +28,5 @@ EXPOSE 8000
 ENV GUNICORN_SEND_FILE=0
 
 # Run Gunicorn to serve the Flask app
-CMD ["gunicorn","--bind", "0.0.0.0:8000","--worker-class=sync","--workers=1","--threads=2","--timeout=120","--keep-alive=5","--graceful-timeout=30","--worker-tmp-dir=/dev/shm","src.app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--worker-class=eventlet", "--workers=1", "--timeout=120", "src.app:app"]
+
