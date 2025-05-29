@@ -181,80 +181,60 @@ function validateSelectedDevices() {
     }
 }
 
-/**
- * Main device initialization function
- */
+
 export async function initializeDevices(domElements, isHost, onMicrophoneInitialized) {
     try {
-        // Validate inputs
+        // Request permissions to populate device IDs
+        await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         validateDOMElements(domElements);
         checkMediaDevicesSupport();
         checkSecureContext();
         
-        // Reset retry count
         deviceState.retryCount = 0;
-        
-        // Get available devices
         const devices = await navigator.mediaDevices.enumerateDevices();
         console.log('Available devices:', devices.map(d => ({ kind: d.kind, label: d.label, deviceId: d.deviceId })));
         
         deviceState.updateDevices(devices);
         
-        // Populate device selects
         populateDeviceSelect(domElements.cameraSelect, deviceState.devices.video, 'Camera', 'Select Camera');
         populateDeviceSelect(domElements.microphoneSelect, deviceState.devices.audio, 'Microphone', 'Select Microphone');
         populateDeviceSelect(domElements.speakerSelect, deviceState.devices.audioOutput, 'Speaker', 'Select Speaker');
         
-        // Show warnings for missing device types
         if (deviceState.devices.video.length === 0) {
             showNotification('No camera detected. Video features will be limited.', 'warning');
         }
-        
         if (deviceState.devices.audioOutput.length === 0) {
             showNotification('No speaker devices detected. Audio output features may be limited.', 'warning');
         }
         
-        // Setup device change listeners
         setupDeviceChangeListeners(domElements, isHost, onMicrophoneInitialized);
         
-        // Initialize microphone if available
-        if (deviceState.devices.audio.length > 0) {
+        if (deviceState.devices.audio.length > 0 && deviceState.devices.audio[0].deviceId) {
             const defaultMic = deviceState.devices.audio[0].deviceId;
             deviceState.setSelectedDevice('microphone', defaultMic);
-            
             if (onMicrophoneInitialized) {
                 await onMicrophoneInitialized(defaultMic);
             }
-            
-            // Initialize camera if available
-            if (deviceState.devices.video.length > 0) {
+            if (deviceState.devices.video.length > 0 && deviceState.devices.video[0].deviceId) {
                 const defaultCamera = deviceState.devices.video[0].deviceId;
                 deviceState.setSelectedDevice('camera', defaultCamera);
                 await startCamera(defaultCamera, domElements, isHost);
             }
-            
             return true;
         } else {
-            showNotification('No microphone detected. Please connect a microphone.', 'error');
+            showNotification('No valid microphone detected. Please check permissions or connect a device.', 'error');
             return await retryMicrophoneInitialization(domElements, isHost, onMicrophoneInitialized);
         }
-        
     } catch (error) {
         console.error('Error initializing devices:', error);
         showNotification(`Failed to initialize devices: ${error.message}`, 'error');
-        
-        // Only retry for certain types of errors
         if (error.message.includes('microphone') || error.message.includes('Permission')) {
             return await retryMicrophoneInitialization(domElements, isHost, onMicrophoneInitialized);
         }
-        
         return false;
     }
 }
 
-/**
- * Retry microphone initialization with exponential backoff
- */
 async function retryMicrophoneInitialization(domElements, isHost, onMicrophoneInitialized) {
     while (deviceState.retryCount < RETRY_CONFIG.MAX_MIC_RETRIES) {
         deviceState.retryCount++;
