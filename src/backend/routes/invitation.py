@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, url_for, g
 from backend.utils.email_utils import send_email, send_team_invite_email
 from backend.database.mongo_connection import collection
-from backend.models.podcasts import PodcastSchema  # Changed from PodcastSchema to Podcast
+from backend.models.podcasts import PodcastSchema 
 from backend.services.TeamInviteService import TeamInviteService
 from datetime import datetime, timezone
 import uuid
@@ -44,17 +44,29 @@ def send_invitation():
             logger.error(f"User account {user_account.get('_id')} found but has no email address.")
             return jsonify({"error": "User account has no email address"}), 400
         
-        # Assuming send_email is a generic email sending utility
-        # You might want a more specific template or subject for this beta invitation
-        subject = "Your PodManager Beta Access"
-        # Render an HTML template for the email body
-        # Example: html_body = render_template('emails/beta_invitation_email.html', user_name=user_account.get('name'))
-        # For now, using a simple text body
-        body = "Thank you for your interest! Here's your access to the PodManager beta." # Replace with actual content or template
+        # Use the existing beta-email/podmanager-beta-invite.html template
+        subject = "Welcome to PodManager Beta!"
+        user_name = user_account.get('name') or user_account.get('fullName') or user_email.split('@')[0]
+        
+        # Render the existing beta invitation HTML template
+        html_body = render_template(
+            'beta-email/podmanager-beta-invite.html',
+            user_name=user_name,
+            app_url=API_BASE_URL,
+            current_year=datetime.now().year
+        )
+        
+        logger.info(f"Sending beta invitation email using template 'beta-email/podmanager-beta-invite.html' to {user_email}")
+        
+        # Send the email with HTML content
+        email_sent = send_email(
+            user_email, 
+            subject, 
+            html_body,
+            is_html=True
+        )
 
-        email_sent = send_email(user_email, subject, body) # Assuming send_email returns a boolean or throws an exception
-
-        if email_sent: # Adjust based on what send_email returns
+        if email_sent:
             logger.info(f"Beta invitation email successfully sent to {user_email}")
             return jsonify({"message": "Invitation email sent successfully!"}), 200
         else:

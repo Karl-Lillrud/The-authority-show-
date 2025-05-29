@@ -81,6 +81,7 @@ function initializeSvgIcons() {
     { selector: ".tasks-added-icon", svg: svgdashboard.tasksAddedIcon },
     { selector: ".podcast-created-icon", svg: svgdashboard.podcastCreatedIcon },
     { selector: ".podcast-deleted-icon", svg: svgdashboard.podcastDeletedIcon }
+    { selector: ".team-leaderboard-trophy", svg: svgdashboard.trophyIcon }
   ];
 
   iconSelectors.forEach(({ selector, svg }) => {
