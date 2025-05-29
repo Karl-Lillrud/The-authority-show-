@@ -20,9 +20,9 @@ class CommentRepository:
     
     def add_comment(self, user_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         try:
-            # Validate data using Pydantic model
-            validated_comment = Comment(**data)
-            validated_data = validated_comment.dict()
+            # Validate data through schema
+            schema = CommentSchema()
+            validated_data = schema.load(data)
             
             # Verify the podtask exists
             podtask_id = validated_data.get("podtaskId")
