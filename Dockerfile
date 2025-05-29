@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.10-slim
 
 WORKDIR /app
 
@@ -27,4 +27,4 @@ COPY src/ /app/src/
 EXPOSE 8000
 
 # Run Gunicorn to serve the Flask app
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "src.app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--worker-class=gthread", "--workers=4", "--threads=2", "--disable-sendfile=True", "src:app:app"]
