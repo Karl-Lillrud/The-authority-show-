@@ -157,6 +157,11 @@ def configure_logging():
 
 
 app = create_app()
+
+@app.route("/health")
+def health():
+    return "OK", 200
+
 configure_logging()
 init_extensions(app)
 initialize_background_jobs(app)
