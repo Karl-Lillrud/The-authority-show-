@@ -213,16 +213,8 @@
   border-top-right-radius: var(--podcastmanagement-radius-large);
   
   border: 2px solid rgb(255 255 255 / 50%);
-  background-color: var(--highlight-color);
-  background-size: 10px 10px;
-  background-image: repeating-linear-gradient(45deg, #ffc399 0, #ff5500 1px, var(--highlight-color) 0, var(--highlight-color) 50%);
-
-  /* Alternative background styling (white/lightgray)
-  border: 2px solid rgb(237 237 237 / 50%);
-  background-color: white;
-  background-size: 10px 10px;
-  background-image: repeating-linear-gradient(45deg, #fff6ef 0, #dbdbdb 1px, white 0, white 50%);*/
-
+  background-color: var(--highlight-color); /* Keep the orange background */
+  /* Remove the patterned background */
 }
 
 .top-right-actions {
