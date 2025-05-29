@@ -80,7 +80,7 @@ function initializeSvgIcons() {
     { selector: ".team-deleted-icon", svg: svgdashboard.teamDeletedIcon },
     { selector: ".tasks-added-icon", svg: svgdashboard.tasksAddedIcon },
     { selector: ".podcast-created-icon", svg: svgdashboard.podcastCreatedIcon },
-    { selector: ".podcast-deleted-icon", svg: svgdashboard.podcastDeletedIcon }, // Added comma here
+    { selector: ".podcast-deleted-icon", svg: svgdashboard.podcastDeletedIcon }
     { selector: ".team-leaderboard-trophy", svg: svgdashboard.trophyIcon }
   ];
 
@@ -471,87 +471,69 @@ async function fetchAndDisplayActivities() {
       console.error(
         "Activity timeline container not found. Ensure .activity-timeline exists in the DOM."
       );
-      
-      // Create the container if it doesn't exist
-      const activitiesSection = document.querySelector(".activities-section");
-      if (activitiesSection) {
-        const newTimelineContainer = document.createElement("div");
-        newTimelineContainer.className = "activity-timeline";
-        activitiesSection.appendChild(newTimelineContainer);
-        console.log("Created missing activity-timeline container");
-        
-        // Now use the newly created container
-        const activities = await getActivitiesRequest();
-        populateActivityTimeline(newTimelineContainer, activities);
-      } else {
-        console.error("Activities section not found in the DOM either. Cannot create timeline container.");
-      }
       return;
     }
 
     const activities = await getActivitiesRequest();
-    populateActivityTimeline(timelineContainer, activities);
+    timelineContainer.innerHTML = "";
+
+    if (activities.length === 0) {
+      timelineContainer.innerHTML = `<p class="no-activities-message">No recent activities found.</p>`;
+      return;
+    }
+
+    // Only show the first 5 activities, but allow scroll for more
+    activities.slice(0, 5).forEach((activity) => {
+      const iconClass = getActivityIconClass(activity.type);
+      const timelineItem = `
+                <div class="timeline-item">
+                    <div class="timeline-icon ${iconClass}">
+                        <span class="svg-placeholder ${iconClass}-icon"></span>
+                    </div>
+                    <div class="timeline-content">
+                        <h4>${formatActivityType(activity.type)}</h4>
+                        <p>${activity.description}</p>
+                        <span class="timeline-time">${formatDate(
+                          activity.createdAt
+                        )}</span>
+                    </div>
+                </div>
+            `;
+      timelineContainer.insertAdjacentHTML("beforeend", timelineItem);
+    });
+
+    // If there are more than 5, show the rest (hidden by scroll)
+    if (activities.length > 5) {
+      activities.slice(5).forEach((activity) => {
+        const iconClass = getActivityIconClass(activity.type);
+        const timelineItem = `
+                  <div class="timeline-item">
+                      <div class="timeline-icon ${iconClass}">
+                          <span class="svg-placeholder ${iconClass}-icon"></span>
+                      </div>
+                      <div class="timeline-content">
+                          <h4>${formatActivityType(activity.type)}</h4>
+                          <p>${activity.description}</p>
+                          <span class="timeline-time">${formatDate(
+                            activity.createdAt
+                          )}</span>
+                      </div>
+                  </div>
+              `;
+        timelineContainer.insertAdjacentHTML("beforeend", timelineItem);
+      });
+    }
+
+    initializeSvgIcons();
   } catch (error) {
     console.error("Error fetching activities:", error);
     const timelineContainer = document.querySelector(".activity-timeline");
     if (timelineContainer) {
       timelineContainer.innerHTML = `<p class="error-message">Error loading activities. Please try again later.</p>`;
+    } else {
+      console.error("Activity timeline container not found in error handler.");
     }
   }
-}
-
-// Extract the activity population logic to a separate function
-function populateActivityTimeline(container, activities) {
-  if (activities.length === 0) {
-    container.innerHTML = `<p class="no-activities-message">No recent activities found.</p>`;
-    return;
-  }
-
-  container.innerHTML = "";
-
-  // Only show the first 5 activities, but allow scroll for more
-  activities.slice(0, 5).forEach((activity) => {
-    const iconClass = getActivityIconClass(activity.type);
-    const timelineItem = `
-            <div class="timeline-item">
-                <div class="timeline-icon ${iconClass}">
-                    <span class="svg-placeholder ${iconClass}-icon"></span>
-                </div>
-                <div class="timeline-content">
-                    <h4>${formatActivityType(activity.type)}</h4>
-                    <p>${activity.description}</p>
-                    <span class="timeline-time">${formatDate(
-                      activity.createdAt
-                    )}</span>
-                </div>
-            </div>
-        `;
-    container.insertAdjacentHTML("beforeend", timelineItem);
-  });
-
-  // If there are more than 5, show the rest (hidden by scroll)
-  if (activities.length > 5) {
-    activities.slice(5).forEach((activity) => {
-      const iconClass = getActivityIconClass(activity.type);
-      const timelineItem = `
-              <div class="timeline-item">
-                  <div class="timeline-icon ${iconClass}">
-                      <span class="svg-placeholder ${iconClass}-icon"></span>
-                  </div>
-                  <div class="timeline-content">
-                      <h4>${formatActivityType(activity.type)}</h4>
-                      <p>${activity.description}</p>
-                      <span class="timeline-time">${formatDate(
-                        activity.createdAt
-                      )}</span>
-                  </div>
-              </div>
-          `;
-      container.insertAdjacentHTML("beforeend", timelineItem);
-    });
-  }
-
-  initializeSvgIcons();
 }
 
 function getActivityIconClass(activityType) {
