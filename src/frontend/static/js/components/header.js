@@ -76,41 +76,55 @@ async function populateLandingPageDropdown() {
 
 // 🔽 Header Dropdown for `/podcast/:id`
 async function populateHeaderPodcastDropdown() {
-  const dropdownContainer = document.getElementById("headerPodcastDropdown");
-  const dropdownSelected =
-    dropdownContainer.querySelector(".dropdown-selected");
-  const dropdownOptions = dropdownContainer.querySelector(".dropdown-options");
-
   try {
-    const data = await fetchPodcasts();
-    const podcasts = data.podcast || [];
+    const response = await fetchPodcasts();
+    const podcasts = response.podcast || [];
+    const podcastDropdownMenu = document.getElementById("podcast-dropdown-menu");
+    
+    // Add null check before using querySelector
+    if (!podcastDropdownMenu) {
+      console.warn("Podcast dropdown menu element not found in the DOM");
+      return;
+    }
+    
+    const podcastList = podcastDropdownMenu.querySelector(".dropdown-menu");
+    if (!podcastList) {
+      console.warn("Dropdown menu list element not found inside podcast dropdown");
+      return;
+    }
 
+    // Clear existing content
+    podcastList.innerHTML = "";
+
+    if (!podcasts.length) {
+      const emptyItem = document.createElement("div");
+      emptyItem.className = "dropdown-item disabled";
+      emptyItem.textContent = "No podcasts found";
+      podcastList.appendChild(emptyItem);
+      return;
+    }
+
+    // Add each podcast to the dropdown
     podcasts.forEach((podcast) => {
-      const option = document.createElement("div");
-      option.classList.add("dropdown-option");
-      option.textContent = podcast.podName;
-      option.dataset.id = podcast._id;
-
-      option.addEventListener("click", () => {
-        localStorage.setItem("selectedPodcastId", podcast._id);
-        window.location.href = `/podcast/${podcast._id}`;
-      });
-
-      dropdownOptions.appendChild(option);
+      const item = document.createElement("a");
+      item.className = "dropdown-item";
+      item.href = `/podcasts/${podcast._id}`;
+      item.textContent = podcast.podName || "Untitled Podcast";
+      podcastList.appendChild(item);
     });
 
-    dropdownContainer.addEventListener("click", () => {
-      dropdownOptions.style.display =
-        dropdownOptions.style.display === "block" ? "none" : "block";
-    });
+    // Add a divider and link to manage podcasts
+    const divider = document.createElement("div");
+    divider.className = "dropdown-divider";
+    podcastList.appendChild(divider);
 
-    document.addEventListener("click", (e) => {
-      if (!dropdownContainer.contains(e.target)) {
-        dropdownOptions.style.display = "none";
-      }
-    });
-  } catch (err) {
-    console.error("Error populating header podcast dropdown:", err);
+    const manageLink = document.createElement("a");
+    manageLink.className = "dropdown-item";
+    manageLink.href = "/podcastmanagement";
+    manageLink.textContent = "Manage Podcasts";
+    podcastList.appendChild(manageLink);
+  } catch (error) {
+    console.error("Error populating podcast dropdown:", error);
   }
 }
 
