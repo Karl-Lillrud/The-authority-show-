@@ -25,6 +25,7 @@ COPY src/ /app/src/
 # Expose the port Flask will run on
 EXPOSE 8000
 
-# Run Gunicorn to serve the Flask app
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--worker-class=sync", "--workers=4", "--threads=2", "--timeout=120", "--keep-alive=5", "--worker-tmp-dir=/dev/shm", "--enable-sendfile=False", "src.app:app"]
+ENV GUNICORN_SEND_FILE=0
 
+# Run Gunicorn to serve the Flask app
+CMD ["gunicorn","--bind", "0.0.0.0:8000","--worker-class=sync","--workers=4","--threads=2","--timeout=120","--keep-alive=5","--graceful-timeout=30","--worker-tmp-dir=/dev/shm","src.app:app"]
