@@ -102,14 +102,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Initialize WebRTC
-    setupWebRTC(socket, room, localStream, domElements, connectedUsers, peerConnections, addParticipantStream);
-
+    // In recording_studio.js
+    if (!localStream) {
+        console.error('Local stream not initialized before WebRTC setup');
+        showNotification('Error: Microphone initialization failed.', 'error');
+        return;
+    }
+    setupWebRTC(socket, {
+        room,
+        localStream,
+        domElements,
+        connectedUsers,
+        peerConnections,
+        addParticipantStream,
+        guestId: guestId || 'host'
+    });
     // Initialize Socket
     const cleanupSocket = initializeSocket({
         socket,
         room,
         episodeId,
-        guestId: guestId || 'host', // Ensure guestId is always defined
+        guestId: guestId || 'host',
         isHost,
         domElements,
         connectedUsers,
@@ -118,7 +131,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStream,
         updateParticipantsList,
         showJoinRequest,
-        addParticipantStream,
+        addParticipantStream: (userId, streamId, guestName, localStream, domElements, connectedUsers, peerConnections, socket, room) =>
+            addParticipantStream(userId, streamId, guestName, localStream, domElements, connectedUsers, peerConnections, socket, room, guestId || 'host'),
         updateIndicators,
         updateLocalControls,
         fetchGuestsByEpisode
