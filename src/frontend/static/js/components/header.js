@@ -76,56 +76,89 @@ async function populateLandingPageDropdown() {
 
 // 🔽 Header Dropdown for `/podcast/:id`
 async function populateHeaderPodcastDropdown() {
+  const dropdownContainer = document.getElementById("headerPodcastDropdown");
+  
+  // Exit early if the dropdown container doesn't exist in the current page
+  if (!dropdownContainer) {
+    return;
+  }
+  
+  const dropdownSelected = dropdownContainer.querySelector(".dropdown-selected");
+  const dropdownOptions = dropdownContainer.querySelector(".dropdown-options");
+  
+  // Make sure the DOM elements exist before proceeding
+  if (!dropdownSelected || !dropdownOptions) {
+    console.warn("Dropdown elements not found in the DOM");
+    return;
+  }
+
   try {
-    const response = await fetchPodcasts();
-    const podcasts = response.podcast || [];
-    const podcastDropdownMenu = document.getElementById("podcast-dropdown-menu");
+    const data = await fetchPodcasts();
+    const podcasts = data.podcast || [];
     
-    // Add null check before using querySelector
-    if (!podcastDropdownMenu) {
-      console.warn("Podcast dropdown menu element not found in the DOM");
+    // Only display and populate the dropdown if user has more than two podcasts
+    if (podcasts.length <= 2) {
+      dropdownContainer.style.display = 'none';
       return;
     }
     
-    const podcastList = podcastDropdownMenu.querySelector(".dropdown-menu");
-    if (!podcastList) {
-      console.warn("Dropdown menu list element not found inside podcast dropdown");
-      return;
+    // User has more than two podcasts, show the dropdown container
+    dropdownContainer.style.display = 'block';
+    
+    // Clear existing options before adding new ones
+    dropdownOptions.innerHTML = '';
+    
+    // Add current podcast name to selected dropdown if available
+    const currentPodcastId = getCurrentPodcastIdFromUrl();
+    if (currentPodcastId) {
+      const currentPodcast = podcasts.find(p => p._id === currentPodcastId);
+      if (currentPodcast && dropdownSelected) {
+        dropdownSelected.textContent = currentPodcast.podName;
+      }
     }
 
-    // Clear existing content
-    podcastList.innerHTML = "";
-
-    if (!podcasts.length) {
-      const emptyItem = document.createElement("div");
-      emptyItem.className = "dropdown-item disabled";
-      emptyItem.textContent = "No podcasts found";
-      podcastList.appendChild(emptyItem);
-      return;
-    }
-
-    // Add each podcast to the dropdown
     podcasts.forEach((podcast) => {
-      const item = document.createElement("a");
-      item.className = "dropdown-item";
-      item.href = `/podcasts/${podcast._id}`;
-      item.textContent = podcast.podName || "Untitled Podcast";
-      podcastList.appendChild(item);
+      const option = document.createElement("div");
+      option.classList.add("dropdown-option");
+      option.textContent = podcast.podName;
+      option.dataset.id = podcast._id;
+
+      option.addEventListener("click", () => {
+        localStorage.setItem("selectedPodcastId", podcast._id);
+        window.location.href = `/podcast/${podcast._id}`;
+      });
+
+      dropdownOptions.appendChild(option);
     });
 
-    // Add a divider and link to manage podcasts
-    const divider = document.createElement("div");
-    divider.className = "dropdown-divider";
-    podcastList.appendChild(divider);
+    dropdownContainer.addEventListener("click", () => {
+      dropdownOptions.style.display =
+        dropdownOptions.style.display === "block" ? "none" : "block";
+    });
 
-    const manageLink = document.createElement("a");
-    manageLink.className = "dropdown-item";
-    manageLink.href = "/podcastmanagement";
-    manageLink.textContent = "Manage Podcasts";
-    podcastList.appendChild(manageLink);
-  } catch (error) {
-    console.error("Error populating podcast dropdown:", error);
+    document.addEventListener("click", (e) => {
+      if (!dropdownContainer.contains(e.target)) {
+        dropdownOptions.style.display = "none";
+      }
+    });
+  } catch (err) {
+    console.error("Error populating header podcast dropdown:", err);
   }
+}
+
+/**
+ * Helper function to extract the current podcast ID from the URL
+ * @returns {string|null} The podcast ID if found in the URL, null otherwise
+ */
+function getCurrentPodcastIdFromUrl() {
+  const pathParts = window.location.pathname.split('/');
+  const podcastIndex = pathParts.indexOf('podcast');
+  
+  if (podcastIndex !== -1 && pathParts.length > podcastIndex + 1) {
+    return pathParts[podcastIndex + 1];
+  }
+  
+  return localStorage.getItem("selectedPodcastId") || null;
 }
 
 // Function to fetch and display user credits
