@@ -13,7 +13,6 @@ COPY src/requirements.txt /app/src/requirements.txt
 
 # Install dependencies
 RUN pip install --no-cache-dir -r /app/src/requirements.txt
-# explicit install of gunicorn
 RUN pip install --no-cache-dir gunicorn
 
 # Ensure .env file is in the build context (project root) and not listed in .dockerignore
@@ -27,4 +26,5 @@ COPY src/ /app/src/
 EXPOSE 8000
 
 # Run Gunicorn to serve the Flask app
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--worker-class=gthread", "--workers=4", "--threads=2", "--disable-sendfile=True", "src:app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--worker-class=sync", "--workers=4", "--threads=2", "--timeout=120", "--keep-alive=5", "--worker-tmp-dir=/dev/shm", "--enable-sendfile=False", "src.app:app"]
+
