@@ -20,6 +20,7 @@ from backend.database.mongo_connection import collection
 import dns.resolver
 import re
 import logging
+from datetime import datetime  # Import datetime
 
 
 # Load environment variables once
@@ -245,17 +246,13 @@ def send_login_email(email, login_link):
     """
     try:
         subject = "Your login link for PodManager"
-        body = f"""
-        <html>
-            <body>
-                <p>Hello,</p>
-                <p>Click the link below to log in to your PodManager account:</p>
-                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Log in</a>
-                <p>This link is valid for 10 minutes. If you did not request this, please ignore this email.</p>
-                <p>Best regards,<br>The PodManager.ai Team</p>
-            </body>
-        </html>
-        """
+        
+        # Use the login.html template instead of inline HTML
+        body = render_template(
+            "emails/login.html",
+            login_link=login_link,
+            current_year=datetime.now().year  # Add current year for the footer
+        )
 
         print(f"Login link for {email}: {login_link}", flush=True)
 
