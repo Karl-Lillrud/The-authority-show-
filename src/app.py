@@ -1,7 +1,8 @@
-import os
-import logging
 import eventlet  
 eventlet.monkey_patch() 
+
+import os
+import logging
 
 from colorama import init
 from flask import Flask, request, session, g
