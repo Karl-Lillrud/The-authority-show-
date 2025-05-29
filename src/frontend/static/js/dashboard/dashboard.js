@@ -9,6 +9,8 @@ import { svgdashboard } from "./svgdashboard.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
 import { getActivitiesRequest } from "/static/requests/activityRequests.js";
 
+import { fetchGuestsRequest } from "/static/requests/guestRequests.js";
+
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {

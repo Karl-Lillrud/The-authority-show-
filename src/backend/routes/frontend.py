@@ -37,6 +37,10 @@ def privacy_policy_page():
 def about_page():
     return render_template("about/about.html")
 
+@frontend_bp.route("/faq")
+def faq_page():
+    return render_template("components/FAQ.html")
+
 @frontend_bp.route("/")
 def root():
     if "user_id" in session and session.get("user_id"):

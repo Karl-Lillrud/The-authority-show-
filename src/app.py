@@ -44,6 +44,9 @@ from backend.routes.index import index_bp
 from backend.routes.recording_studio import register_socketio_events  # <- updated import
 from backend.routes.recording_studio import recording_studio_bp
 from backend.routes.audio_pipeline import audio_pipeline_bp
+
+
+
 # Utils
 from backend.utils.scheduler import start_scheduler
 from backend.utils.credit_scheduler import init_credit_scheduler
