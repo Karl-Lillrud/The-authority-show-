@@ -23,11 +23,31 @@ export function initializeSocket({
 }) {
     const leaveTimeouts = new Map();
 
-    socket.on('connect', () => {
-        console.log('Socket.IO connected:', socket.id);
-        showNotification('Connected to server', 'success');
-        socket.emit('log_connection', { userId: guestId, socketId: socket.id, role: isHost ? 'host' : 'guest' });
+        socket.on('connect', () => {
+    console.log('Socket.IO connected:', socket.id);
+    showNotification('Connected to server', 'success');
+
+    socket.emit('log_connection', {
+        userId: guestId,
+        socketId: socket.id,
+        role: isHost ? 'host' : 'guest'
     });
+
+    const waitForStream = setInterval(() => {
+        if (localStream && !hasJoinedRoom) {
+            clearInterval(waitForStream);
+            hasJoinedRoom = true;
+            socket.emit('join_room', {
+                room: room,
+                userId: guestId || 'host',
+                videoEnabled: localStream?.getVideoTracks()?.[0]?.enabled ?? true,
+                audioEnabled: localStream?.getAudioTracks()?.[0]?.enabled ?? true
+            });
+            console.log('✅ Emitted join_room with all fields');
+        }
+    }, 200);
+});
+
 
     socket.on('reconnect_attempt', (attempt) => {
         console.log(`Socket.IO reconnect attempt: ${attempt}`);
@@ -73,52 +93,79 @@ export function initializeSocket({
         }, 6000));
     });
 
-    socket.on('participant_joined', async (data) => {
-        console.log('Participant joined:', data);
-        if (leaveTimeouts.has(data.userId)) {
-            clearTimeout(leaveTimeouts.get(data.userId));
-            leaveTimeouts.delete(data.userId);
-        }
-        const existingUser = connectedUsers.find(u => u.userId === data.userId);
-        if (existingUser) {
-            connectedUsers = connectedUsers.map(u =>
-                u.userId === data.userId
-                    ? { ...u, streamId: data.streamId, guestName: data.guestName }
-                    : u
-            );
-        } else {
-            connectedUsers.push({
-                userId: data.userId,
-                streamId: data.streamId,
-                guestName: data.guestName
-            });
-        }
 
-        for (let i = greenroomUsers.length - 1; i >= 0; i--) {
+socket.on('ice_candidate', async (data) => {
+    console.log('Received ICE candidate:', data);
+    if (!data.room || !data.targetUserId || !data.fromUserId || !data.candidate) {
+        console.error('Invalid ICE candidate data:', data);
+        showNotification('Error: Invalid ICE candidate received.', 'error');
+        return;
+    }
+    if (data.targetUserId === guestId || (isHost && data.targetUserId === 'host')) {
+        const pc = peerConnections.get(data.fromUserId);
+        if (pc) {
+            try {
+                await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                console.log('Added ICE candidate from:', data.fromUserId);
+            } catch (error) {
+                console.error('Error adding ICE candidate:', error);
+                showNotification('Error: Failed to add ICE candidate.', 'error');
+            }
+        } else {
+            console.warn('No peer connection found for user:', data.fromUserId);
+            showNotification('Warning: No peer connection for incoming ICE candidate.', 'warning');
+        }
+    }
+});
+
+   // In socket_manager.js
+socket.on('participant_joined', async (data) => {
+    console.log('Participant joined:', data);
+    if (leaveTimeouts.has(data.userId)) {
+        clearTimeout(leaveTimeouts.get(data.userId));
+        leaveTimeouts.delete(data.userId);
+    }
+    const existingUser = connectedUsers.find(u => u.userId === data.userId);
+    if (existingUser) {
+        connectedUsers = connectedUsers.map(u =>
+            u.userId === data.userId
+                ? { ...u, streamId: data.streamId, guestName: data.guestName }
+                : u
+        );
+    } else {
+        connectedUsers.push({
+            userId: data.userId,
+            streamId: data.streamId,
+            guestName: data.guestName
+        });
+    }
+
+    for (let i = greenroomUsers.length - 1; i >= 0; i--) {
         if (greenroomUsers[i].userId === data.userId) {
             greenroomUsers.splice(i, 1);
-            }
         }
+    }
 
-        addParticipantStream(
-            data.userId,
-            data.streamId,
-            data.guestName,
-            localStream,
-            domElements,
-            connectedUsers,
-            peerConnections,
-            socket,
-            room
-        );
-        try {
-            const guests = await fetchGuests(episodeId);
-            updateParticipantsList(guests, domElements, connectedUsers, greenroomUsers);
-        } catch (error) {
-            showNotification('Error: Failed to load guests.', 'error');
-        }
-        domElements.remoteVideoWrapper.style.display = 'block';
-    });
+    addParticipantStream(
+        data.userId,
+        data.streamId,
+        data.guestName,
+        localStream,
+        domElements,
+        connectedUsers,
+        peerConnections,
+        socket,
+        room,
+        guestId // Pass guestId
+    );
+    try {
+        const guests = await fetchGuests(episodeId);
+        updateParticipantsList(guests, domElements, connectedUsers, greenroomUsers);
+    } catch (error) {
+        showNotification('Error: Failed to load guests.', 'error');
+    }
+    domElements.remoteVideoWrapper.style.display = 'block';
+});
 
     socket.on('join_studio_approved', async (data) => {
         console.log('Join studio approved:', data);
@@ -227,6 +274,8 @@ export function initializeSocket({
             console.log('Guest recording timer started with start time:', recordingStartTime);
         }
     });
+
+
 
     // IMPROVED: Recording paused event handler (was missing from cleanup)
     socket.on('recording_paused', (data) => {
