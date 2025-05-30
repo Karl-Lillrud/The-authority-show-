@@ -158,7 +158,7 @@ class EpisodeRepository:
         except Exception as e:
             return {"error": f"Failed to delete episode: {str(e)}"}, 500
 
-    def update_episode(self, episode_id, user_id, data, audio_file=None): # Added audio_file=None
+    def update_episode(self, episode_id, user_id, data, audio_file=None):
         """Update an episode if it belongs to the user."""
         try:
             ep = self.collection.find_one({"_id": episode_id})
