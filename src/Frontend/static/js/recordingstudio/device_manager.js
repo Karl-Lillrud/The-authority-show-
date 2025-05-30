@@ -181,80 +181,60 @@ function validateSelectedDevices() {
     }
 }
 
-/**
- * Main device initialization function
- */
+
 export async function initializeDevices(domElements, isHost, onMicrophoneInitialized) {
     try {
-        // Validate inputs
+        // Request permissions to populate device IDs
+        await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         validateDOMElements(domElements);
         checkMediaDevicesSupport();
         checkSecureContext();
         
-        // Reset retry count
         deviceState.retryCount = 0;
-        
-        // Get available devices
         const devices = await navigator.mediaDevices.enumerateDevices();
         console.log('Available devices:', devices.map(d => ({ kind: d.kind, label: d.label, deviceId: d.deviceId })));
         
         deviceState.updateDevices(devices);
         
-        // Populate device selects
         populateDeviceSelect(domElements.cameraSelect, deviceState.devices.video, 'Camera', 'Select Camera');
         populateDeviceSelect(domElements.microphoneSelect, deviceState.devices.audio, 'Microphone', 'Select Microphone');
         populateDeviceSelect(domElements.speakerSelect, deviceState.devices.audioOutput, 'Speaker', 'Select Speaker');
         
-        // Show warnings for missing device types
         if (deviceState.devices.video.length === 0) {
             showNotification('No camera detected. Video features will be limited.', 'warning');
         }
-        
         if (deviceState.devices.audioOutput.length === 0) {
             showNotification('No speaker devices detected. Audio output features may be limited.', 'warning');
         }
         
-        // Setup device change listeners
         setupDeviceChangeListeners(domElements, isHost, onMicrophoneInitialized);
         
-        // Initialize microphone if available
-        if (deviceState.devices.audio.length > 0) {
+        if (deviceState.devices.audio.length > 0 && deviceState.devices.audio[0].deviceId) {
             const defaultMic = deviceState.devices.audio[0].deviceId;
             deviceState.setSelectedDevice('microphone', defaultMic);
-            
             if (onMicrophoneInitialized) {
                 await onMicrophoneInitialized(defaultMic);
             }
-            
-            // Initialize camera if available
-            if (deviceState.devices.video.length > 0) {
+            if (deviceState.devices.video.length > 0 && deviceState.devices.video[0].deviceId) {
                 const defaultCamera = deviceState.devices.video[0].deviceId;
                 deviceState.setSelectedDevice('camera', defaultCamera);
                 await startCamera(defaultCamera, domElements, isHost);
             }
-            
             return true;
         } else {
-            showNotification('No microphone detected. Please connect a microphone.', 'error');
+            showNotification('No valid microphone detected. Please check permissions or connect a device.', 'error');
             return await retryMicrophoneInitialization(domElements, isHost, onMicrophoneInitialized);
         }
-        
     } catch (error) {
         console.error('Error initializing devices:', error);
         showNotification(`Failed to initialize devices: ${error.message}`, 'error');
-        
-        // Only retry for certain types of errors
         if (error.message.includes('microphone') || error.message.includes('Permission')) {
             return await retryMicrophoneInitialization(domElements, isHost, onMicrophoneInitialized);
         }
-        
         return false;
     }
 }
 
-/**
- * Retry microphone initialization with exponential backoff
- */
 async function retryMicrophoneInitialization(domElements, isHost, onMicrophoneInitialized) {
     while (deviceState.retryCount < RETRY_CONFIG.MAX_MIC_RETRIES) {
         deviceState.retryCount++;
@@ -340,7 +320,7 @@ export async function tryInitializeMicrophone(deviceId, localStream, socket, roo
             }
             
             if (peerConnections) {
-                await updatePeerConnections(localStream, peerConnections, socket, room, guestId);
+                await updatePeerConnections(localStream, peerConnections, socket, room, guestId || 'host');
             }
         } else {
             deviceState.localStream = audioStream;
@@ -450,7 +430,7 @@ export async function startCamera(deviceId, domElements, isHost, socket, room, g
         }
         
         if (peerConnections) {
-            await updatePeerConnections(localStream, peerConnections, socket, room, guestId);
+            await updatePeerConnections(localStream, peerConnections, socket, room, guestId || 'host');
         }
         
         showNotification('Camera started successfully.', 'success');
@@ -511,7 +491,7 @@ export async function toggleCamera(localStream, domElements, isCameraActive, soc
             }
             
             if (peerConnections) {
-                await updatePeerConnections(localStream, peerConnections, socket, room, guestId);
+                await updatePeerConnections(localStream, peerConnections, socket, room, guestId || 'host');
             }
             
             showNotification('Camera turned off.', 'info');
@@ -577,109 +557,91 @@ export async function setAudioOutput(deviceId, audioElement) {
 
 export async function toggleMicrophone(localStream, domElements, isMicActive, socket, room, guestId, peerConnections) {
     const { microphoneSelect } = domElements;
-    
+
     try {
         if (!localStream) {
             showNotification('No audio stream available. Please select a microphone.', 'error');
             return isMicActive;
         }
-        
-        if (isMicActive) {
 
+        if (isMicActive) {
             const audioTracks = localStream.getAudioTracks();
             audioTracks.forEach(track => {
                 track.enabled = false;
             });
-            
+
             deviceState.updateStreamState({ isMicActive: false });
-            
+
             if (socket && room) {
-                socket.emit('update_stream_state', { 
-                    room, 
-                    userId: guestId || 'host', 
-                    isMicActive: false 
+                socket.emit('update_stream_state', {
+                    room,
+                    userId: guestId || 'host',
+                    videoEnabled: localStream.getVideoTracks().some(track => track.enabled) || false,
+                    audioEnabled: false
                 });
             }
-            
+
+            if (peerConnections) {
+                await updatePeerConnections(localStream, peerConnections, socket, room, guestId || 'host');
+                console.log('Updated peer connections with audio tracks:', localStream.getAudioTracks());
+            }
+
             showNotification('Microphone muted.', 'info');
             return false;
-            
         } else {
-      
-            const audioTracks = localStream.getAudioTracks();
-            
+            const audioTracks = localStream.getAudioTracks().filter(track => track.readyState === 'live');
+
             if (audioTracks.length > 0) {
- 
                 audioTracks.forEach(track => {
                     track.enabled = true;
                 });
-                
+
                 deviceState.updateStreamState({ isMicActive: true });
-                
+
                 if (socket && room) {
-                    socket.emit('update_stream_state', { 
-                        room, 
-                        userId: guestId || 'host', 
-                        isMicActive: true 
+                    socket.emit('update_stream_state', {
+                        room,
+                        userId: guestId || 'host',
+                        videoEnabled: localStream.getVideoTracks().some(track => track.enabled) || false,
+                        audioEnabled: true
                     });
                 }
-                
+
+                if (peerConnections) {
+                    await updatePeerConnections(localStream, peerConnections, socket, room, guestId || 'host');
+                    console.log('Updated peer connections with audio tracks:', localStream.getAudioTracks());
+                }
+
                 showNotification('Microphone unmuted.', 'success');
                 return true;
-                
             } else {
-
                 const deviceId = microphoneSelect?.value || deviceState.getSelectedDevice('microphone');
-                
+
                 if (!deviceId) {
                     showNotification('Please select a microphone first.', 'warning');
                     return false;
                 }
-                
+
                 const newStream = await tryInitializeMicrophone(deviceId, localStream, socket, room, guestId, peerConnections);
-                
+
                 if (newStream) {
+                    deviceState.updateStreamState({ isMicActive: true });
+                    showNotification('Microphone initialized.', 'success');
                     return true;
                 }
-                
+
                 return false;
             }
         }
     } catch (error) {
         console.error('Error toggling microphone:', error);
         showNotification(`Error toggling microphone: ${error.message}`, 'error');
-        return isMicActive; 
+        return isMicActive;
     }
 }
 
-async function updatePeerConnections(localStream, peerConnections, socket, room, guestId) {
-    if (!peerConnections || !socket || !room) {
-        console.warn('Missing required parameters for updating peer connections');
-        return;
-    }
-    
-    try {
-        const promises = [];
-        
-        for (const [userId, pc] of peerConnections) {
-            if (pc.signalingState === 'closed') {
-                console.warn(`Peer connection for ${userId} is closed, skipping update`);
-                continue;
-            }
-            
-            const promise = updateSinglePeerConnection(pc, localStream, socket, room, userId);
-            promises.push(promise);
-        }
-        
-        await Promise.allSettled(promises);
-        
-    } catch (error) {
-        console.error('Error updating peer connections:', error);
-        showNotification('Failed to update stream for some participants.', 'warning');
-    }
-}
-
-async function updateSinglePeerConnection(pc, localStream, socket, room, userId) {
+// In device_manager.js
+async function updateSinglePeerConnection(pc, localStream, socket, room, userId, guestId) {
     try {
         const senders = pc.getSenders();
         const streamTracks = localStream.getTracks();
@@ -693,7 +655,7 @@ async function updateSinglePeerConnection(pc, localStream, socket, room, userId)
                 }
             }
         }
-        
+
         for (const track of streamTracks) {
             const existingSender = senders.find(sender => sender.track && sender.track.kind === track.kind);
             if (!existingSender) {
@@ -705,13 +667,43 @@ async function updateSinglePeerConnection(pc, localStream, socket, room, userId)
         if (pc.signalingState === 'stable') {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            socket.emit('offer', { room, userId, offer: pc.localDescription });
+            socket.emit('offer', {
+                room,
+                targetUserId: userId,
+                fromUserId: guestId || 'host',
+                offer: pc.localDescription
+            });
             console.log(`Sent new offer to ${userId}`);
         }
-        
     } catch (error) {
         console.error(`Error updating peer connection for ${userId}:`, error);
         throw error;
+    }
+}
+
+async function updatePeerConnections(localStream, peerConnections, socket, room, guestId) {
+    if (!peerConnections || !socket || !room) {
+        console.warn('Missing required parameters for updating peer connections');
+        return;
+    }
+
+    try {
+        const promises = [];
+
+        for (const [userId, pc] of peerConnections) {
+            if (pc.signalingState === 'closed') {
+                console.warn(`Peer connection for ${userId} is closed, skipping update`);
+                continue;
+            }
+
+            const promise = updateSinglePeerConnection(pc, localStream, socket, room, userId, guestId);
+            promises.push(promise);
+        }
+
+        await Promise.allSettled(promises);
+    } catch (error) {
+        console.error('Error updating peer connections:', error);
+        showNotification('Failed to update stream for some participants.', 'warning');
     }
 }
 

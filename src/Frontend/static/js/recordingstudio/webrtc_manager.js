@@ -1,50 +1,33 @@
-// src/Frontend/static/js/recordingstudio/webrtc_manager.js
 import { showNotification } from '../components/notifications.js';
 
 const candidateQueue = new Map();
 
-export function setupWebRTC(socket, room, localStream, domElements, connectedUsers, peerConnections, addParticipantStream) {
+export function setupWebRTC(socket, config) {
+    const {
+        room,
+        localStream,
+        domElements,
+        connectedUsers,
+        peerConnections,
+        addParticipantStream,
+        guestId
+    } = config;
     const { remoteVideo, remoteVideoWrapper } = domElements;
     const pendingAnswers = new Map();
 
     socket.on('offer', async (data) => {
-        const { userId, offer } = data;
-        const pc = peerConnections.get(userId);
-        if (pc) {
-            try {
-                await pc.setRemoteDescription(new RTCSessionDescription(offer));
-
-                // Add queued candidates after setting remote description
-                const queued = candidateQueue.get(userId) || [];
-                for (const c of queued) {
-                    try {
-                        await pc.addIceCandidate(new RTCIceCandidate(c));
-                    } catch (error) {
-                        console.error('Error adding queued ICE candidate:', error);
-                    }
-                }
-                candidateQueue.delete(userId);
-
-                const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
-                socket.emit('answer', { room, userId, answer: pc.localDescription });
-            } catch (error) {
-                console.error('Error handling WebRTC offer:', error);
-                showNotification('WebRTC signaling error.', 'error');
-            }
+        console.log('Received offer:', data);
+        if (!data.room || !data.targetUserId || !data.fromUserId || !data.offer) {
+            console.error('Invalid offer data:', data);
+            showNotification('Error: Invalid WebRTC offer received.', 'error');
+            return;
         }
-    });
-
-    socket.on('answer', async (data) => {
-        const { userId, answer } = data;
-        const pc = peerConnections.get(userId);
-        if (pc) {
-            if (pc.signalingState === 'have-local-offer') {
+        if (data.targetUserId === (guestId || 'host')) {
+            const pc = peerConnections.get(data.fromUserId);
+            if (pc) {
                 try {
-                    await pc.setRemoteDescription(new RTCSessionDescription(answer));
-
-                    // Add queued candidates after setting remote description
-                    const queued = candidateQueue.get(userId) || [];
+                    await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+                    const queued = candidateQueue.get(data.fromUserId) || [];
                     for (const c of queued) {
                         try {
                             await pc.addIceCandidate(new RTCIceCandidate(c));
@@ -52,51 +35,90 @@ export function setupWebRTC(socket, room, localStream, domElements, connectedUse
                             console.error('Error adding queued ICE candidate:', error);
                         }
                     }
-                    candidateQueue.delete(userId);
-
+                    candidateQueue.delete(data.fromUserId);
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    socket.emit('answer', {
+                        room,
+                        targetUserId: data.fromUserId,
+                        fromUserId: guestId || 'host',
+                        answer: pc.localDescription
+                    });
+                    console.log('Sent answer to:', data.fromUserId);
                 } catch (error) {
-                    console.error('Error handling WebRTC answer:', error);
+                    console.error('Error handling WebRTC offer:', error);
+                    showNotification('WebRTC signaling error.', 'error');
                 }
-            } else {
-                pendingAnswers.set(userId, answer);
+            }
+        }
+    });
+
+    socket.on('answer', async (data) => {
+        console.log('Received answer:', data);
+        if (!data.room || !data.targetUserId || !data.fromUserId || !data.answer) {
+            console.error('Invalid answer data:', data);
+            showNotification('Error: Invalid WebRTC answer received.', 'error');
+            return;
+        }
+        if (data.targetUserId === (guestId || 'host')) {
+            const pc = peerConnections.get(data.fromUserId);
+            if (pc) {
+                if (pc.signalingState === 'have-local-offer') {
+                    try {
+                        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+                        const queued = candidateQueue.get(data.fromUserId) || [];
+                        for (const c of queued) {
+                            try {
+                                await pc.addIceCandidate(new RTCIceCandidate(c));
+                            } catch (error) {
+                                console.error('Error adding queued ICE candidate:', error);
+                            }
+                        }
+                        candidateQueue.delete(data.fromUserId);
+                    } catch (error) {
+                        console.error('Error handling WebRTC answer:', error);
+                    }
+                } else {
+                    pendingAnswers.set(data.fromUserId, data.answer);
+                }
             }
         }
     });
 
     socket.on('ice_candidate', async (data) => {
-        const { userId, candidate } = data;
-        const pc = peerConnections.get(userId);
-        if (pc) {
-            if (pc.remoteDescription && pc.remoteDescription.type) {
-                try {
-                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
-                } catch (error) {
-                    console.error('Error handling ICE candidate:', error);
-                    showNotification('WebRTC ICE candidate error.', 'error');
+        console.log('Received ICE candidate:', data);
+        if (!data.room || !data.targetUserId || !data.fromUserId || !data.candidate) {
+            console.error('Invalid ICE data:', data);
+            showNotification('Error: Invalid ICE candidate received.', 'error');
+            return;
+        }
+        if (data.targetUserId === (guestId || 'host')) {
+            const pc = peerConnections.get(data.fromUserId);
+            if (pc) {
+                if (pc.remoteDescription && pc.remoteDescription.type) {
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                    } catch (error) {
+                        console.error('Error handling ICE candidate:', error);
+                        showNotification('WebRTC ICE candidate error.', 'error');
+                    }
+                } else {
+                    if (!candidateQueue.has(data.fromUserId)) {
+                        candidateQueue.set(data.fromUserId, []);
+                    }
+                    candidateQueue.get(data.fromUserId).push(data.candidate);
                 }
-            } else {
-                // Queue the candidate until remoteDescription is set
-                if (!candidateQueue.has(userId)) {
-                    candidateQueue.set(userId, []);
-                }
-                candidateQueue.get(userId).push(candidate);
             }
         }
     });
 }
 
-export async function addParticipantStream(userId, streamId, guestName, localStream, domElements, connectedUsers, peerConnections, socket, room) {
+// In webrtc_manager.js
+export async function addParticipantStream(userId, streamId, guestName, localStream, domElements, connectedUsers, peerConnections, socket, room, guestId) {
     const { remoteVideo, remoteVideoWrapper } = domElements;
     if (!localStream) {
         showNotification('Local stream not ready. Please ensure microphone is initialized.', 'warning');
-        await new Promise(resolve => {
-            const checkStream = setInterval(() => {
-                if (localStream) {
-                    clearInterval(checkStream);
-                    resolve();
-                }
-            }, 1000);
-        });
+        return;
     }
 
     const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
@@ -105,22 +127,53 @@ export async function addParticipantStream(userId, streamId, guestName, localStr
     pc.ontrack = (event) => {
         if (event.streams[0]) {
             const videoElement = connectedUsers.length <= 1 ? remoteVideo : document.getElementById(`video-${userId}`);
-            if (videoElement) videoElement.srcObject = event.streams[0];
+            if (videoElement) {
+                videoElement.srcObject = event.streams[0];
+                // Ensure audio is enabled
+                event.streams[0].getAudioTracks().forEach(track => {
+                    track.enabled = true;
+                    console.log('Remote audio track enabled:', track);
+                });
+            }
             if (connectedUsers.length <= 1) remoteVideoWrapper.style.display = 'block';
         }
     };
 
     pc.onicecandidate = (event) => {
         if (event.candidate) {
-            socket.emit('ice_candidate', { room, userId, candidate: event.candidate });
+            console.log('Emitting ICE candidate:', {
+                room,
+                targetUserId: userId,
+                fromUserId: guestId || 'host',
+                candidate: event.candidate
+            });
+            socket.emit('ice_candidate', {
+                room,
+                targetUserId: userId,
+                fromUserId: guestId || 'host',
+                candidate: event.candidate
+            });
         }
     };
 
-    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    localStream.getTracks().forEach(track => {
+        pc.addTrack(track, localStream);
+        if (track.kind === 'audio') {
+            track.enabled = true; 
+            console.log('Local audio track enabled:', track);
+        }
+    });
+
     try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        socket.emit('offer', { room, userId, offer: pc.localDescription });
+        socket.emit('offer', {
+            room,
+            targetUserId: userId,
+            fromUserId: guestId || 'host',
+            offer: pc.localDescription
+        });
+        console.log('Sent offer to:', userId);
     } catch (error) {
         console.error('Error creating WebRTC offer:', error);
         showNotification('Failed to establish WebRTC connection.', 'error');
