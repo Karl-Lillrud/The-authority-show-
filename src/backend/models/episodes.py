@@ -36,6 +36,9 @@ class EpisodeSchema(Schema):
 
     @validates("duration")
     def validate_duration(self, value):
+        """
+        Validate that duration is a positive integer or None.
+        """
         if value is not None:
             if not isinstance(value, int):
                 raise ValidationError("Duration must be an integer.")
@@ -45,5 +48,9 @@ class EpisodeSchema(Schema):
 
     @validates("publishDate")
     def validate_publish_date(self, value):
-        if not isinstance(value, (datetime, type(None))):
-            raise ValidationError("publishDate must be a datetime object or null.")
+        """
+        Validate that publishDate is a datetime object or None.
+        """
+        if value is not None and not isinstance(value, (datetime, str)):
+            raise ValidationError("publishDate must be a datetime object, string, or null.")
+        return value
