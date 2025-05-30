@@ -77,29 +77,4 @@ class InvitationService:
             logger.error(f"Failed to send guest invitation: {e}", exc_info=True)
             return {"error": f"Failed to send guest invitation: {str(e)}"}, 500
 
-    @staticmethod
-    def send_session_invitation(email, episode_id, guest_id):
-        """
-        Assigns guest to episode and sends booking email via /invite-guest.
-        """
-        try:
-            invite_url = "http://127.0.0.1:8000/invite-guest"
-            payload = {"episode_id": episode_id, "guest_id": guest_id}
-            response = requests.post(invite_url, json=payload)
-
-            data = response.json()
-            logger.info(f"Response from /invite-guest: {data}")
-
-            if response.status_code != 201:
-                logger.error(f"Failed to create invite: {data}")
-                return {"error": data.get("error", "Failed to create invite")}, 500
-
-            return {
-                "message": "Guest assigned and invitation sent successfully",
-                "greenroom_url": data.get("invite_url")
-            }, 201
-
-        except Exception as e:
-            logger.error(f"Failed to send session invitation: {e}", exc_info=True)
-            return {"error": f"Failed to send session invitation: {str(e)}"}, 500
-
+    

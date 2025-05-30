@@ -15,6 +15,18 @@ logger = logging.getLogger(__name__)
 # Initialize guest_repo
 guest_repo = GuestRepository()
 
+import os
+from urllib.parse import urlencode
+
+def generate_invite_url(endpoint: str, query_params: dict) -> str:
+    """
+    Generate a full invite URL with the correct scheme and domain based on environment.
+    """
+    API_BASE_URL =  os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
+    query_string = urlencode(query_params)
+    return f"{API_BASE_URL}/{endpoint}?{query_string}"
+
+
 @guesttoepisode_bp.route("/invite-guest", methods=["POST"])
 def create_invitation():
     try:
@@ -74,14 +86,13 @@ def create_invitation():
         logger.info(f"Invitation created for guest {guest_id} to episode {episode_id}")
 
         # Generate invite URL
-        invite_url = url_for(
-            'recording_studio_bp.greenroom',
-            episodeId=episode_id,
-            guestId=guest_id,
-            token=invite_token,
-            room=episode_id,
-            _external=True
-        )
+        invite_url = generate_invite_url("greenroom", {
+            "episodeId": episode_id,
+            "guestId": guest_id,
+            "token": invite_token,
+            "room": episode_id
+        })
+
 
         # Send booking email
         try:
