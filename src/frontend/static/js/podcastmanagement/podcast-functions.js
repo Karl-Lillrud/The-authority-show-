@@ -1005,7 +1005,7 @@ export function initPodcastFunctions() {
     resetForm();
     shared.selectedPodcastId = null;
     document.getElementById("form-popup").style.display = "flex";
-    document.querySelector(".form-title").textContent = "Add New Podcast";
+    document.querySelector(".form-title").textContent = "Create Podcast";
     document.querySelector(".save-btn").textContent = "Save Podcast";
   });
 
