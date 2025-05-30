@@ -79,7 +79,6 @@ def delete_episode(episode_id):
 
 @episode_bp.route("/episodes/<episode_id>", methods=["PUT"])
 def update_episode(episode_id):
-    logger.warning(f"BACKEND: update_episode called with episode_id={episode_id}")
     # --- Debug Logging ---
     logger.debug(f"Update request received for episode {episode_id}")
     logger.debug(f"Request Headers: {dict(request.headers)}")
@@ -161,7 +160,17 @@ def get_episodes_by_podcast(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
         logger.warning(f"Unauthorized attempt to get episodes for podcast {podcast_id}: No user_id in g")
         return jsonify({"error": "User not authenticated"}), 401
-    return episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
+    
+    # Get 'exclude_statuses' query parameter, e.g., ?exclude_statuses=published,archived
+    exclude_statuses_str = request.args.get('exclude_statuses')
+    statuses_to_exclude = [] # Default to empty list (no exclusion)
+    if exclude_statuses_str:
+        statuses_to_exclude = [status.strip() for status in exclude_statuses_str.split(',') if status.strip()]
+        logger.info(f"Request to fetch episodes for podcast {podcast_id}, excluding statuses: {statuses_to_exclude}")
+
+    # Pass the list of statuses to exclude to the repository method
+    # If statuses_to_exclude is empty, the repository method will fetch all episodes.
+    return episode_repo.get_episodes_by_podcast(podcast_id, g.user_id, exclude_statuses=statuses_to_exclude)
 
 
 @episode_bp.route("/episode/new", methods=["GET"])

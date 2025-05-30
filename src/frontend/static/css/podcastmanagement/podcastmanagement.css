@@ -208,19 +208,129 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  background-color: rgba(0, 0, 0, 0.01);
+  padding: var(--spacing-xl) var(--spacing-xl);
+  border-top-left-radius: var(--podcastmanagement-radius-large);
+  border-top-right-radius: var(--podcastmanagement-radius-large);
+  
+  border: 2px solid rgb(255 255 255 / 50%);
+  background-color: var(--highlight-color); /* Keep the orange background */
+  /* Remove the patterned background */
 }
 
 .top-right-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-lg);
 }
+
+.detail-header button {
+  border-radius: var(--radius-small);
+}
+
+.detail-header .studio-btn, .detail-header .save-btn, .detail-header .edit-btn, .detail-header .delete-btn {
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255,255,255,0.9);
+  position: relative;
+}
+
+.detail-header .studio-btn-off {
+  background-color: rgba(200,200,200,0.9);
+}
+
+.detail-header .studio-btn-on:hover, .detail-header .save-btn:hover, .detail-header .edit-btn:hover, .detail-header .delete-btn:hover {
+  background-color: rgba(225,225,225,0.8);
+}
+
+.detail-header .top-right-actions .save-btn {
+  border: 1px solid rgb(0, 145, 255);
+}
+
+.detail-header .top-right-actions .save-btn svg g path {
+  fill: rgb(0, 145, 255);
+}
+
+.detail-header .top-right-actions .edit-btn {
+  border: 1px solid var(--highlight-color);
+}
+
+.detail-header .top-right-actions .edit-btn svg {
+  stroke: var(--highlight-color);
+}
+
+.detail-header .top-right-actions .delete-btn {
+  border: 1px solid var(--danger-color);
+}
+
+.detail-header .top-right-actions .delete-btn svg {
+  stroke: var(--danger-color);
+}
+
+/* Studio button styling */
+.top-right-actions .studio-btn-on:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1)
+}
+
+/* AI Edit button styling */
+.top-right-actions .studio-btn::after {
+  content: "Studio";
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.top-right-actions .studio-btn-off::after {
+  content: "Studio (Unavailable)";
+}
+
+.top-right-actions .studio-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* AI Edit button styling */
+.top-right-actions .save-btn::after {
+  content: "AI Edit";
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.top-right-actions .save-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
 
 /* Edit button styling */
 .top-right-actions .edit-btn::after {
-  content: "Edit";
+  content: "Edit Info";
   position: absolute;
   bottom: -25px;
   left: 50%;
@@ -1128,19 +1238,7 @@ select option:disabled {
   transform: translateY(-1px);
 }
 
-.save-btn {
-  position: relative;
-  background-color: var(--highlight-color, #ff7f3f);
-  color: #ffffff;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 600;
-  overflow: hidden;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
+
 
 /* Remove the default ::before pseudo-element for the buy credits button */
 #buy-credits-btn-popup::before {
@@ -1148,8 +1246,8 @@ select option:disabled {
 }
 
 .save-btn:hover {
-  background-color: var(--highlight-hover, #e66b2e);
-  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 /* Responsive Adjustments */
@@ -1411,6 +1509,10 @@ select option:disabled {
 .section-title {
   position: relative;
   padding-bottom: var(--spacing-sm);
+}
+
+.section-title.section-description-title {
+  padding-top: var(--spacing-lg);
 }
 
 .section-title::after {
@@ -2070,6 +2172,7 @@ select#episode-id {
   border: 1px solid #ddd;
   border-radius: var(--radius-small);
   margin-bottom: 16px;
+  color: #000; /* Ensure text is black, not grey */
 }
 
 /* Hide published episodes in the dropdown */
@@ -2081,5 +2184,13 @@ select option.published {
 select option.non-published {
   color: #000000;
   background-color: white;
+}
+
+/* Remove any greyed-out styling for the episode dropdown specifically */
+#episode-id, 
+select#episode-id option {
+  background-color: white !important;
+  color: #000000 !important; 
+  opacity: 1 !important;
 }
 

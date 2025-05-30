@@ -488,6 +488,12 @@ section {
   text-align: center;
 }
 
+.exclusive-episodes-section span,
+.episodes-subtext {
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+
 /* Glass Card Container – centrerad med auto marginal */
 .episodes-glass-card {
   max-width: 700px;
@@ -500,6 +506,7 @@ section {
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
   text-align: center;
+  
 }
 
 /* Rubriker och undertext */
@@ -524,6 +531,8 @@ section {
   background: rgba(255, 255, 255, 0.2);
   margin: 20px auto;
 }
+
+
 
 /* Feature-listen: grid med två kolumner för symmetri */
 .episodes-feature-list {
