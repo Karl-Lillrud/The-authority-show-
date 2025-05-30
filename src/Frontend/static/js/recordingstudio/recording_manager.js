@@ -93,11 +93,19 @@ export async function saveRecording(recordedChunks, episodeId, socket, room) {
         showNotification('No recorded audio available', 'error');
         return;
     }
+
     const mimeType = recordedChunks[0].type || 'audio/webm';
     const audioBlob = new Blob(recordedChunks, { type: mimeType });
+
+    // 📏 Nytt: Visa storlek i MB
+    const fileSizeMB = (audioBlob.size / (1024 * 1024)).toFixed(2);
+    console.log(`Audio blob size: ${audioBlob.size} bytes (${fileSizeMB} MB)`);
+    showNotification(`Recording size: ${fileSizeMB} MB`, 'info');
+
     const formData = new FormData();
     formData.append('audioFile', audioBlob, `recording.${mimeType.split('/')[1] || 'webm'}`);
     formData.append('status', 'Recorded');
+
     try {
         const response = await updateEpisode(episodeId, formData);
         if (response && !response.error) {
@@ -110,6 +118,7 @@ export async function saveRecording(recordedChunks, episodeId, socket, room) {
         showNotification(`Failed to save recording: ${error.message}`, 'error');
     }
 }
+
 
 export function discardRecording(recordedChunks, episodeId, socket, room) {
     socket.emit('discard_recording', { room, episodeId });
