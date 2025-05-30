@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 episodeId,
                 isHost: true,
                 user: { id: 'host', name: 'Host' },
-                guestId: 'host' // Add guestId for server compatibility
+                guestId: guestId || 'Host' // Add guestId for server compatibility
             });
         } catch (error) {
             console.error('Error loading episode:', error);
