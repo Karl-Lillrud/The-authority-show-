@@ -2194,3 +2194,14 @@ select#episode-id option {
   opacity: 1 !important;
 }
 
+/* Styles for invalid social media links */
+.social-media-input.is-invalid {
+  border-color: red !important;
+}
+
+.social-media-error {
+  color: red;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+

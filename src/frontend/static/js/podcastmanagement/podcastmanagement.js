@@ -95,6 +95,58 @@ function enablePopupCloseOnOutsideClick() {
  
   observer.observe(document.body, { childList: true, subtree: true })
 }
+
+const form = document.getElementById("register-podcast-form");
+const saveButton = form.querySelector(".save-btn");
+
+  form.addEventListener("input", function () {
+    validateSocialMediaLinks();
+  });
+
+  form.addEventListener("submit", function (event) {
+    if (!validateSocialMediaLinks()) {
+      event.preventDefault();
+    }
+  });
+
+  function validateSocialMediaLinks() {
+    const socialMediaInputs = [
+      { id: "facebook", domain: "facebook.com" },
+      { id: "instagram", domain: "instagram.com" },
+      { id: "linkedin", domain: "linkedin.com" },
+      { id: "twitter", domain: "twitter.com" },
+      { id: "tiktok", domain: "tiktok.com" },
+      { id: "pinterest", domain: "pinterest.com" },
+      { id: "youtube", domain: "youtube.com" },
+    ];
+
+    let isValid = true;
+
+    for (const input of socialMediaInputs) {
+      const element = document.getElementById(input.id);
+      const errorElementId = `${input.id}-error`;
+      let errorElement = document.getElementById(errorElementId);
+
+      if (!errorElement) {
+        errorElement = document.createElement("div");
+        errorElement.id = errorElementId;
+        errorElement.className = "social-media-error";
+        element.parentNode.appendChild(errorElement);
+      }
+
+      if (element && element.value && !element.value.includes(input.domain)) {
+        element.classList.add("is-invalid");
+        errorElement.textContent = `Please add a valid ${input.domain} link.`;
+        isValid = false;
+      } else {
+        element.classList.remove("is-invalid");
+        errorElement.textContent = "";
+      }
+    }
+
+    saveButton.disabled = !isValid;
+    return isValid;
+  }
  
 // Main initialization
 document.addEventListener("DOMContentLoaded", () => {
@@ -366,4 +418,3 @@ export const shared = {
 document.getElementById("guests-link").addEventListener("click", (event) => {
   event.preventDefault()
 })
- 
