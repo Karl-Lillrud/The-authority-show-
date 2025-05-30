@@ -1,0 +1,49 @@
+.faq-search-outer {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2rem;
+}
+
+.faq-search-container {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-right: 20px;
+}
+
+#faq-search {
+  padding: 0.5rem 1rem;
+  border: 2px solid, black;
+  border-radius: 10px;
+  width: 250px;
+  font-size: 1rem;
+}
+
+
+#faq-search-btn {
+  padding: 0.5rem 1.2rem;
+  background: orange;
+  color: black;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#faq-search-btn:hover {
+  background: #7fa0e7;
+  box-shadow: 2px -2px 8px 2px orange;
+  transition: background 0.5s, box-shadow 0.5s;
+}
+
+#faq-search:hover {
+  box-shadow: 2px -2px 8px 2px orange;
+  transition: background 0.5s, box-shadow 0.5s;
+}
+
+mark {
+  background: orange;
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 3px;
+}

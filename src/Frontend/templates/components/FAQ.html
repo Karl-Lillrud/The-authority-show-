@@ -21,13 +21,17 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/components/typography.css') }}"
     />
-    <link
+    <link 
+     rel="stylesheet" 
+     href="{{ url_for('static', filename='css/dashboard/FAQ.css') }}"
+    />
+    
+      <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/privacy-policy/privacy-policy.css') }}"
-    />
+      />
 
-  
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/privacy-policy/privacy-policy.css') }}" />
+
   <style>
     .faq-question {
       font-weight: 700;
@@ -52,6 +56,18 @@
 
 <div class="faq-container">
   <h1>Frequently Asked Questions (FAQ) </h1>
+  <!-- Sök fält -->
+<div class="faq-search-outer">
+  <div class="faq-search-container">
+    <input
+      type="text"
+      id="faq-search"
+      placeholder="Search FAQ..."
+    />
+    <button id="faq-search-btn">Search</button>
+  </div>
+</div>
+
   <div class="faq-list">
 
     <div class="faq-item">
@@ -154,3 +170,6 @@
 
   </div>
 </div>
+<script src="{{ url_for('static', filename='js/dashboard/FAQ.js') }}"></script>
+</body>
+</html>
