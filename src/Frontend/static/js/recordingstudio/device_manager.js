@@ -313,7 +313,7 @@ export async function tryInitializeMicrophone(deviceId, localStream, socket, roo
             // Notify peers and update connections
             socket.emit('update_stream_state', {
             room,
-            userId: guestId || 'host',
+            userId: isHost ? 'host' : guestId,
             videoEnabled: deviceState.streamState.isCameraActive,
             audioEnabled: deviceState.streamState.isMicActive
         });
@@ -356,14 +356,20 @@ export async function tryInitializeMicrophone(deviceId, localStream, socket, roo
 export async function startCamera(deviceId, domElements, isHost, socket, room, guestId, peerConnections) {
     const { videoPreview, microphoneSelect, videoQualitySelect } = domElements;
     let localStream = deviceState.localStream || videoPreview?.srcObject || null;
-    
+
     try {
         if (!deviceId) {
             throw new Error('No camera device ID provided');
         }
-        
+
+        if (!isHost && !guestId) {
+            console.error('Guest is missing guestId');
+            showNotification('Fel: Gäst-ID saknas. Kontrollera länken.', 'error');
+            return;
+        }
+
         checkSecureContext();
-        
+
         // Stop existing video tracks
         if (localStream) {
             const existingVideoTracks = localStream.getVideoTracks();
@@ -372,22 +378,22 @@ export async function startCamera(deviceId, domElements, isHost, socket, room, g
                 localStream.removeTrack(track);
             });
         }
-        
+
         // Build constraints
         const constraints = {
-            video: { 
+            video: {
                 deviceId: { exact: deviceId },
                 facingMode: 'user'
             },
             audio: false // We'll handle audio separately
         };
-        
+
         // Apply quality settings for hosts
         if (isHost && videoQualitySelect?.value && VIDEO_QUALITY_PRESETS[videoQualitySelect.value]) {
             const quality = VIDEO_QUALITY_PRESETS[videoQualitySelect.value];
             Object.assign(constraints.video, quality);
         }
-        
+
         // Add audio if microphone is selected
         if (microphoneSelect?.value) {
             constraints.audio = {
@@ -397,9 +403,9 @@ export async function startCamera(deviceId, domElements, isHost, socket, room, g
                 autoGainControl: true
             };
         }
-        
+
         const videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-        
+
         // Create or update local stream
         if (!localStream) {
             localStream = videoStream;
@@ -409,36 +415,39 @@ export async function startCamera(deviceId, domElements, isHost, socket, room, g
                 localStream.addTrack(track);
             });
         }
-        
+
         // Update video preview
         if (videoPreview) {
             videoPreview.srcObject = localStream;
         }
-        
+
         // Update device state
         deviceState.setSelectedDevice('camera', deviceId);
         deviceState.updateStreamState({ isCameraActive: true });
         deviceState.localStream = localStream;
-        
-        // Notify peers and update connections
-           socket.emit('update_stream_state', {
-            room,
-            userId: guestId || 'host',
-            videoEnabled: deviceState.streamState.isCameraActive,
-            audioEnabled: deviceState.streamState.isMicActive
-        });
 
-        
+        // Notify peers and update connections
+        if (socket && typeof socket.emit === 'function') {
+            socket.emit('update_stream_state', {
+                room,
+                userId: isHost ? 'host' : guestId,
+                videoEnabled: deviceState.streamState.isCameraActive,
+                audioEnabled: deviceState.streamState.isMicActive
+            });
+        } else {
+            console.warn('Socket is undefined or not ready – skipping update_stream_state emit.');
+        }
+
         if (peerConnections) {
             await updatePeerConnections(localStream, peerConnections, socket, room, guestId);
         }
-        
+
         showNotification('Camera started successfully.', 'success');
         return localStream;
-        
+
     } catch (error) {
         console.error('Error starting camera:', error);
-        
+
         let errorMessage = 'Camera error: ';
         if (error.name === 'NotFoundError') {
             errorMessage += 'Camera not found or disconnected';
@@ -451,20 +460,21 @@ export async function startCamera(deviceId, domElements, isHost, socket, room, g
         } else {
             errorMessage += error.message;
         }
-        
+
         showNotification(errorMessage, 'error');
         deviceState.updateStreamState({ isCameraActive: false });
-        
+
         return localStream;
     }
 }
 
+
 /**
  * Toggle camera on/off
  */
-export async function toggleCamera(localStream, domElements, isCameraActive, socket, room, guestId, peerConnections) {
+export async function toggleCamera(localStream, domElements, isCameraActive, isHost, socket, room, guestId, peerConnections) {
     const { videoPreview, cameraSelect } = domElements;
-    
+
     try {
         if (isCameraActive) {
             // Turn off camera
@@ -475,45 +485,47 @@ export async function toggleCamera(localStream, domElements, isCameraActive, soc
                     localStream.removeTrack(track);
                 }
             });
-            
+
             if (videoPreview) {
                 videoPreview.srcObject = localStream;
             }
-            
-            deviceState.updateStreamState({ isCameraActive: false });
-            
-            socket.emit('update_stream_state', {
-            room,
-            userId: guestId || 'host',
-            videoEnabled: deviceState.streamState.isCameraActive,
-            audioEnabled: deviceState.streamState.isMicActive
-        });
 
-            
+            deviceState.updateStreamState({ isCameraActive: false });
+
+            if (socket && typeof socket.emit === 'function') {
+                socket.emit('update_stream_state', {
+                    room,
+                    userId: isHost ? 'host' : guestId,
+                    videoEnabled: deviceState.streamState.isCameraActive,
+                    audioEnabled: deviceState.streamState.isMicActive
+                });
+            } else {
+                console.warn('Socket is undefined or not ready – skipping update_stream_state emit.');
+            }
+
             if (peerConnections) {
                 await updatePeerConnections(localStream, peerConnections, socket, room, guestId);
             }
-            
+
             showNotification('Camera turned off.', 'info');
             return false;
-            
+
         } else {
-      
             const deviceId = cameraSelect?.value || deviceState.getSelectedDevice('camera');
-            
+
             if (!deviceId) {
                 showNotification('Please select a camera to enable video.', 'warning');
                 return false;
             }
-            
-            const newStream = await startCamera(deviceId, domElements, false, socket, room, guestId, peerConnections);
-            
+
+            const newStream = await startCamera(deviceId, domElements, isHost, socket, room, guestId, peerConnections);
+
             if (newStream && videoPreview) {
                 videoPreview.srcObject = newStream;
                 showNotification('Camera turned on.', 'success');
                 return true;
             }
-            
+
             return false;
         }
     } catch (error) {
@@ -522,6 +534,7 @@ export async function toggleCamera(localStream, domElements, isCameraActive, soc
         return isCameraActive; // Return current state on error
     }
 }
+
 
 export async function setAudioOutput(deviceId, audioElement) {
     try {
@@ -575,7 +588,7 @@ export async function toggleMicrophone(localStream, domElements, isMicActive, so
             
             socket.emit('update_stream_state', {
             room,
-            userId: guestId || 'host',
+            userId: isHost ? 'host' : guestId,
             videoEnabled: deviceState.streamState.isCameraActive,
             audioEnabled: deviceState.streamState.isMicActive
         });
@@ -598,7 +611,7 @@ export async function toggleMicrophone(localStream, domElements, isMicActive, so
                 
                 socket.emit('update_stream_state', {
                     room,
-                    userId: guestId || 'host',
+                    userId: isHost ? 'host' : guestId,
                     videoEnabled: deviceState.streamState.isCameraActive,
                     audioEnabled: deviceState.streamState.isMicActive
                 });

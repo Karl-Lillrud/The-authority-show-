@@ -21,36 +21,91 @@ export function updateRecordingTime(domElements, isRecording, isPaused, recordin
 }
 
 
-export function startRecording(localStream, domElements, socket, room) {
+export function startRecording(localStream, domElements, socket, room, isHost = true, guestId = null) {
     const { pauseButton, stopRecordingBtn, saveRecordingBtn, discardRecordingBtn } = domElements;
+
     if (!localStream) {
-        showNotification('Cannot start recording: No audio stream available.', 'error');
+        showNotification('Cannot start recording: No stream available.', 'error');
         return null;
     }
-    const recordedChunks = [];
-    const supportedMimeTypes = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg'];
-    const selectedMimeType = supportedMimeTypes.find(mimeType => MediaRecorder.isTypeSupported(mimeType));
+
+    const hasAudio = localStream.getAudioTracks().length > 0;
+    const hasVideo = localStream.getVideoTracks().length > 0;
+
+    if (!hasAudio && !hasVideo) {
+        showNotification('Stream has no audio or video tracks. Cannot record.', 'error');
+        return null;
+    }
+
+    // Välj MIME-typ beroende på innehåll
+    const mimeOptions = [
+        { type: 'video/webm;codecs=vp8,opus', requires: hasAudio && hasVideo },
+        { type: 'audio/webm;codecs=opus', requires: hasAudio && !hasVideo },
+        { type: 'video/webm;codecs=vp8', requires: hasVideo && !hasAudio },
+        { type: 'video/webm', requires: hasVideo },
+        { type: 'audio/webm', requires: hasAudio }
+    ];
+
+    const selectedMimeType = mimeOptions.find(opt =>
+        opt.requires && MediaRecorder.isTypeSupported(opt.type)
+    )?.type;
+
     if (!selectedMimeType) {
-        showNotification('No supported audio MIME type found.', 'error');
+        showNotification('No supported MIME type found for recording.', 'error');
         return null;
     }
-    const mediaRecorder = new MediaRecorder(localStream, { mimeType: selectedMimeType });
+
+    let mediaRecorder;
+    const recordedChunks = [];
+
+    try {
+        mediaRecorder = new MediaRecorder(localStream, { mimeType: selectedMimeType });
+    } catch (err) {
+        console.error('Failed to initialize MediaRecorder:', err);
+        showNotification('Could not start recording: ' + err.message, 'error');
+        return null;
+    }
+
     mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) recordedChunks.push(e.data);
     };
-    mediaRecorder.start(1000);
+
+    try {
+        mediaRecorder.start(1000); // Capture in 1s chunks
+    } catch (err) {
+        console.error('Failed to start MediaRecorder:', err);
+        showNotification('Could not start MediaRecorder: ' + err.message, 'error');
+        return null;
+    }
+
     const recordingStartTime = Date.now();
-    const timerInterval = setInterval(() => updateRecordingTime(domElements, true, false, recordingStartTime), 1000);
-    socket.emit('recording_started', { room, user: { id: 'host' }, recordingStartTime });
+    const timerInterval = setInterval(() => {
+        updateRecordingTime(domElements, true, false, recordingStartTime);
+    }, 1000);
+
+    if (socket && typeof socket.emit === 'function') {
+        socket.emit('recording_started', {
+            room,
+            user: { id: isHost ? 'host' : guestId },
+            recordingStartTime
+        });
+    } else {
+        console.warn('Socket is undefined or not ready – skipping recording_started emit.');
+    }
+
     showNotification('Recording started successfully.', 'success');
+
     pauseButton.disabled = false;
     stopRecordingBtn.disabled = false;
     saveRecordingBtn.disabled = true;
     discardRecordingBtn.disabled = true;
+
     return { mediaRecorder, recordedChunks, timerInterval, recordingStartTime };
 }
 
-export function pauseRecording(domElements, socket, room, mediaRecorder, isPaused, pauseStartTime, totalPausedTime) {
+
+
+export function pauseRecording(domElements, socket, room, mediaRecorder, isPaused, pauseStartTime, totalPausedTime, isHost = true, guestId = null) {
     const { pauseButton } = domElements;
     if (!mediaRecorder) {
         showNotification('Cannot pause: No active recording.', 'error');
@@ -65,51 +120,90 @@ export function pauseRecording(domElements, socket, room, mediaRecorder, isPause
         pauseStartTime = null;
         mediaRecorder.resume();
     }
+
     pauseButton.innerHTML = `<i class="fas fa-${isPaused ? 'play' : 'pause'}"></i> ${isPaused ? 'Resume' : 'Pause'}`;
-    socket.emit('recording_paused', { room, isPaused, user: { id: 'host' } });
+
+    if (socket && typeof socket.emit === 'function') {
+        socket.emit('recording_paused', {
+            room,
+            isPaused,
+            user: { id: isHost ? 'host' : guestId }
+        });
+    }
+
     showNotification(isPaused ? 'Recording paused' : 'Recording resumed.', 'success');
     return { isPaused, pauseStartTime, totalPausedTime };
 }
 
-export function stopRecording(domElements, socket, room, mediaRecorder, timerInterval) {
+
+export function stopRecording(domElements, socket, room, mediaRecorder, timerInterval, isHost = true, guestId = null) {
     const { pauseButton, stopRecordingBtn, saveRecordingBtn, discardRecordingBtn, recordingTime } = domElements;
-    if (!mediaRecorder) {
+
+    if (!mediaRecorder || mediaRecorder.state !== 'recording') {
         showNotification('Cannot stop: No active recording.', 'error');
         return;
     }
-    mediaRecorder.stop();
+
+    try {
+        mediaRecorder.stop();
+    } catch (err) {
+        console.error('Error stopping MediaRecorder:', err);
+        showNotification('Error stopping recording: ' + err.message, 'error');
+        return;
+    }
+
     clearInterval(timerInterval);
-    recordingTime.textContent = '00:00:00';
-    socket.emit('recording_stopped', { room, user: { id: 'host' } });
+    if (recordingTime) {
+        recordingTime.textContent = '00:00:00';
+    }
+
+    if (socket && typeof socket.emit === 'function') {
+        socket.emit('recording_stopped', {
+            room,
+            user: { id: isHost ? 'host' : guestId }
+        });
+    } else {
+        console.warn('Socket is undefined or not ready – skipping recording_stopped emit.');
+    }
+
     showNotification('Recording stopped successfully.', 'success');
+
     pauseButton.disabled = true;
     stopRecordingBtn.disabled = true;
     saveRecordingBtn.disabled = false;
     discardRecordingBtn.disabled = false;
 }
 
+
 export async function saveRecording(recordedChunks, episodeId, socket, room) {
-    if (recordedChunks.length === 0) {
-        showNotification('No recorded audio available', 'error');
+    if (!recordedChunks || recordedChunks.length === 0) {
+        showNotification('No recorded media available', 'error');
         return;
     }
 
-    const mimeType = recordedChunks[0].type || 'audio/webm';
+    const mimeType = recordedChunks[0]?.type || 'video/webm'; // fallback
     const audioBlob = new Blob(recordedChunks, { type: mimeType });
 
-    // 📏 Nytt: Visa storlek i MB
     const fileSizeMB = (audioBlob.size / (1024 * 1024)).toFixed(2);
-    console.log(`Audio blob size: ${audioBlob.size} bytes (${fileSizeMB} MB)`);
+    console.log(`Media blob size: ${audioBlob.size} bytes (${fileSizeMB} MB)`);
     showNotification(`Recording size: ${fileSizeMB} MB`, 'info');
 
+    // Dynamisk filändelse baserat på MIME-typ
+    const extension = mimeType.includes('webm') ? 'webm'
+                    : mimeType.includes('ogg') ? 'ogg'
+                    : mimeType.includes('mp4') ? 'mp4'
+                    : 'webm';
+
     const formData = new FormData();
-    formData.append('audioFile', audioBlob, `recording.${mimeType.split('/')[1] || 'webm'}`);
+    formData.append('audioFile', audioBlob, `recording.${extension}`);
     formData.append('status', 'Recorded');
 
     try {
         const response = await updateEpisode(episodeId, formData);
         if (response && !response.error) {
-            socket.emit('save_recording', { room, episodeId });
+            if (socket && typeof socket.emit === 'function') {
+                socket.emit('save_recording', { room, episodeId });
+            }
             showNotification('Recording saved successfully.', 'success');
         } else {
             showNotification(`Failed to save recording: ${response?.error || 'Unknown error'}`, 'error');
@@ -120,7 +214,14 @@ export async function saveRecording(recordedChunks, episodeId, socket, room) {
 }
 
 
-export function discardRecording(recordedChunks, episodeId, socket, room) {
-    socket.emit('discard_recording', { room, episodeId });
+
+export function discardRecording(recordedChunks, episodeId, socket, room, isHost = true, guestId = null) {
+    if (socket && typeof socket.emit === 'function') {
+        socket.emit('discard_recording', {
+            room,
+            episodeId,
+            user: { id: isHost ? 'host' : guestId }
+        });
+    }
     showNotification('Recording discarded successfully.', 'success');
 }

@@ -61,16 +61,16 @@ export async function fetchGuestsRequest() {
   return data.guests || [];
 }
 
-export async function fetchGuestsByEpisode(episodeId) {
+export async function fetchGuestsByEpisode(episodeId, token) {
   if (!episodeId || episodeId === "undefined") {
-    console.warn(
-      "⚠️ Invalid episodeId passed to fetchGuestsByEpisode:",
-      episodeId
-    );
+    console.warn(" Invalid episodeId passed to fetchGuestsByEpisode:", episodeId);
     return [];
   }
 
-  const res = await fetch(`/get_guests_by_episode/${episodeId}`);
+  const res = await fetch(`/get_guests_by_episode/${episodeId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+
   if (res.status === 404) {
     return [];
   }

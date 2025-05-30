@@ -114,22 +114,44 @@ export function setupWebRTC(socket, config) {
 }
 
 // In webrtc_manager.js
-export async function addParticipantStream(userId, streamId, guestName, localStream, domElements, connectedUsers, peerConnections, socket, room, guestId) {
+export async function addParticipantStream(
+    userId,
+    streamId,
+    guestName,
+    localStream,
+    domElements,
+    connectedUsers,
+    peerConnections,
+    socket,
+    room,
+    guestId
+) {
     const { remoteVideo, remoteVideoWrapper } = domElements;
     if (!localStream) {
         showNotification('Local stream not ready. Please ensure microphone is initialized.', 'warning');
         return;
     }
 
-    const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+    const pc = new RTCPeerConnection({
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            {
+                urls: 'turn:openrelay.metered.ca:80',
+                username: 'openrelayproject',
+                credential: 'openrelayproject'
+            }
+        ]
+    });
+
     peerConnections.set(userId, pc);
 
     pc.ontrack = (event) => {
         if (event.streams[0]) {
-            const videoElement = connectedUsers.length <= 1 ? remoteVideo : document.getElementById(`video-${userId}`);
+            const videoElement = connectedUsers.length <= 1
+                ? remoteVideo
+                : document.getElementById(`video-${userId}`);
             if (videoElement) {
                 videoElement.srcObject = event.streams[0];
-                // Ensure audio is enabled
                 event.streams[0].getAudioTracks().forEach(track => {
                     track.enabled = true;
                     console.log('Remote audio track enabled:', track);
@@ -159,7 +181,7 @@ export async function addParticipantStream(userId, streamId, guestName, localStr
     localStream.getTracks().forEach(track => {
         pc.addTrack(track, localStream);
         if (track.kind === 'audio') {
-            track.enabled = true; 
+            track.enabled = true;
             console.log('Local audio track enabled:', track);
         }
     });
