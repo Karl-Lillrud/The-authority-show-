@@ -23,11 +23,31 @@ export function initializeSocket({
 }) {
     const leaveTimeouts = new Map();
 
-    socket.on('connect', () => {
-        console.log('Socket.IO connected:', socket.id);
-        showNotification('Connected to server', 'success');
-        socket.emit('log_connection', { userId: guestId, socketId: socket.id, role: isHost ? 'host' : 'guest' });
+        socket.on('connect', () => {
+    console.log('Socket.IO connected:', socket.id);
+    showNotification('Connected to server', 'success');
+
+    socket.emit('log_connection', {
+        userId: guestId,
+        socketId: socket.id,
+        role: isHost ? 'host' : 'guest'
     });
+
+    const waitForStream = setInterval(() => {
+        if (localStream && !hasJoinedRoom) {
+            clearInterval(waitForStream);
+            hasJoinedRoom = true;
+            socket.emit('join_room', {
+                room: room,
+                userId: guestId || 'host',
+                videoEnabled: localStream?.getVideoTracks()?.[0]?.enabled ?? true,
+                audioEnabled: localStream?.getAudioTracks()?.[0]?.enabled ?? true
+            });
+            console.log('✅ Emitted join_room with all fields');
+        }
+    }, 200);
+});
+
 
     socket.on('reconnect_attempt', (attempt) => {
         console.log(`Socket.IO reconnect attempt: ${attempt}`);

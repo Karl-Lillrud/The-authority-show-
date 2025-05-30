@@ -311,13 +311,13 @@ export async function tryInitializeMicrophone(deviceId, localStream, socket, roo
             deviceState.localStream = localStream;
             
             // Notify peers and update connections
-            if (socket && room) {
-                socket.emit('update_stream_state', { 
-                    room, 
-                    userId: guestId || 'host', 
-                    isMicActive: true 
-                });
-            }
+            socket.emit('update_stream_state', {
+            room,
+            userId: guestId || 'host',
+            videoEnabled: deviceState.streamState.isCameraActive,
+            audioEnabled: deviceState.streamState.isMicActive
+        });
+
             
             if (peerConnections) {
                 await updatePeerConnections(localStream, peerConnections, socket, room, guestId);
@@ -421,13 +421,13 @@ export async function startCamera(deviceId, domElements, isHost, socket, room, g
         deviceState.localStream = localStream;
         
         // Notify peers and update connections
-        if (socket && room) {
-            socket.emit('update_stream_state', { 
-                room, 
-                userId: guestId || 'host', 
-                isCameraActive: true 
-            });
-        }
+           socket.emit('update_stream_state', {
+            room,
+            userId: guestId || 'host',
+            videoEnabled: deviceState.streamState.isCameraActive,
+            audioEnabled: deviceState.streamState.isMicActive
+        });
+
         
         if (peerConnections) {
             await updatePeerConnections(localStream, peerConnections, socket, room, guestId);
@@ -482,13 +482,13 @@ export async function toggleCamera(localStream, domElements, isCameraActive, soc
             
             deviceState.updateStreamState({ isCameraActive: false });
             
-            if (socket && room) {
-                socket.emit('update_stream_state', { 
-                    room, 
-                    userId: guestId || 'host', 
-                    isCameraActive: false 
-                });
-            }
+            socket.emit('update_stream_state', {
+            room,
+            userId: guestId || 'host',
+            videoEnabled: deviceState.streamState.isCameraActive,
+            audioEnabled: deviceState.streamState.isMicActive
+        });
+
             
             if (peerConnections) {
                 await updatePeerConnections(localStream, peerConnections, socket, room, guestId);
@@ -573,13 +573,13 @@ export async function toggleMicrophone(localStream, domElements, isMicActive, so
             
             deviceState.updateStreamState({ isMicActive: false });
             
-            if (socket && room) {
-                socket.emit('update_stream_state', { 
-                    room, 
-                    userId: guestId || 'host', 
-                    isMicActive: false 
-                });
-            }
+            socket.emit('update_stream_state', {
+            room,
+            userId: guestId || 'host',
+            videoEnabled: deviceState.streamState.isCameraActive,
+            audioEnabled: deviceState.streamState.isMicActive
+        });
+
             
             showNotification('Microphone muted.', 'info');
             return false;
@@ -596,14 +596,13 @@ export async function toggleMicrophone(localStream, domElements, isMicActive, so
                 
                 deviceState.updateStreamState({ isMicActive: true });
                 
-                if (socket && room) {
-                    socket.emit('update_stream_state', { 
-                        room, 
-                        userId: guestId || 'host', 
-                        isMicActive: true 
-                    });
-                }
-                
+                socket.emit('update_stream_state', {
+                    room,
+                    userId: guestId || 'host',
+                    videoEnabled: deviceState.streamState.isCameraActive,
+                    audioEnabled: deviceState.streamState.isMicActive
+                });
+
                 showNotification('Microphone unmuted.', 'success');
                 return true;
                 
