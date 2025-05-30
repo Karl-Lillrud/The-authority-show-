@@ -5,6 +5,16 @@ from dotenv import load_dotenv
 import logging
 from gridfs import GridFS
 
+import os
+from pymongo import MongoClient
+from dotenv import load_dotenv
+
+load_dotenv()  # Laddar .env-filen
+
+mongo_uri = os.getenv("MONGODB_URI","mongodb://localhost:27017/Podmanager")
+client = MongoClient(mongo_uri)
+database = client.get_default_database()  # eller client["Podmanager"] om du vill vara säker
+
 mongo_bp = Blueprint("mongo_bp", __name__)
 
 # Load environment variables

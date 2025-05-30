@@ -10,6 +10,8 @@ import { getTeamsRequest } from "/static/requests/teamRequests.js";
 import { getActivitiesRequest } from "/static/requests/activityRequests.js";
 import { updateEpisode } from "/static/requests/episodeRequest.js";
 
+import { fetchGuestsRequest } from "/static/requests/guestRequests.js";
+
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     // Kör alla asynkrona datahämtningar parallellt
@@ -80,7 +82,7 @@ function initializeSvgIcons() {
     { selector: ".team-deleted-icon", svg: svgdashboard.teamDeletedIcon },
     { selector: ".tasks-added-icon", svg: svgdashboard.tasksAddedIcon },
     { selector: ".podcast-created-icon", svg: svgdashboard.podcastCreatedIcon },
-    { selector: ".podcast-deleted-icon", svg: svgdashboard.podcastDeletedIcon }
+    { selector: ".podcast-deleted-icon", svg: svgdashboard.podcastDeletedIcon },
     { selector: ".team-leaderboard-trophy", svg: svgdashboard.trophyIcon }
   ];
 
