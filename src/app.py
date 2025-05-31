@@ -9,6 +9,7 @@ from flask import Flask, request, session, g
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from dotenv import load_dotenv
+from azure.storage.blob import BlobServiceClient
 
 # Import blueprints (unchanged)
 from backend.routes.publish import publish_bp
@@ -51,6 +52,7 @@ from backend.routes.audio_pipeline import audio_pipeline_bp
 from backend.utils.scheduler import start_scheduler
 from backend.utils.credit_scheduler import init_credit_scheduler
 from backend.utils import venvupdate
+from backend.services.activateVerification import verify_activation_file_exists
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -157,6 +159,14 @@ def configure_logging():
 
 
 app = create_app()
+
+with app.app_context():
+    activation_file_check = verify_activation_file_exists()
+    if activation_file_check:
+        app.logger.info("Activation system ready: scraped.xml file is accessible")
+    else:
+        app.logger.warning("Activation system may not work: could not access scraped.xml file")
+
 
 @app.route("/health")
 def health():
