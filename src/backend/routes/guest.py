@@ -3,6 +3,7 @@ from backend.repository.guest_repository import GuestRepository
 from backend.database.mongo_connection import collection
 from backend.utils.email_utils import send_email, send_guest_invitation_email
 from backend.services.invitation_service import InvitationService
+from backend.utils.token_utils import decode_token
 import logging
 
 # Define Blueprint
@@ -83,11 +84,23 @@ def delete_guest(guest_id):
 @guest_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
 def get_guests_by_episode(episode_id):
     """Fetch all guest profiles linked to a specific episode ID."""
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
+    user_id = getattr(g, "user_id", None)
+
+    # Om användaren inte är inloggad – kolla om ett giltigt token finns (från gäst)
+    if not user_id:
+        token = request.args.get("token") or request.headers.get("Authorization", "").replace("Bearer ", "")
+        if not token:
+            return jsonify({"error": "Unauthorized"}), 401
+        try:
+            decoded = decode_token(token)
+            guest_id = decoded.get("user_id") or decoded.get("guest_id")  # beroende på hur du kodar token
+            if not guest_id:
+                return jsonify({"error": "Invalid token"}), 403
+        except Exception as e:
+            logger.warning(f"Failed to decode guest token: {e}")
+            return jsonify({"error": "Invalid or expired token"}), 403
 
     try:
-        # Ensure the episode_id is valid and fetch guests
         response, status_code = guest_repo.get_guests_by_episode(episode_id)
         return jsonify(response), status_code
     except Exception as e:
