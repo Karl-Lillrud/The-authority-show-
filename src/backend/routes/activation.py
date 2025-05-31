@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr
 from dotenv import load_dotenv
 from backend.services.rss_Service import RSSService
-from backend.services.authService import AuthService
+from backend.utils.token_utils import create_token_24h
 import logging
 
 load_dotenv() 
@@ -33,7 +33,6 @@ if not MONGO_URI:
 client = MongoClient(MONGO_URI)
 db = client[MONGO_DB_NAME]
 podcasts_collection = db["Podcasts"]
-auth_service = AuthService()
 
 def send_activation_email(email, activation_link, podcast_name, rss_url):
     rss_service = RSSService()
@@ -63,7 +62,6 @@ def send_activation_email(email, activation_link, podcast_name, rss_url):
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = "Exclusive Access to PodManager—Activate Your Account Today! 🚀"
-    # Format the "From" header to "PodManager.ai <contact@podmanager.ai>"
     msg["From"] = formataddr(("PodManager.ai", EMAIL_SENDER))
     msg["To"] = email
 
@@ -106,11 +104,11 @@ def invite_user_via_api():
     podcast_title = data["podcast_title"]
 
     try:
-        if not current_app.config.get("SECRET_KEY"):
-            logger.error("SECRET_KEY is not configured in the application.")
-            return jsonify({"error": "Server configuration error for token generation"}), 500
-
-        token = auth_service.generate_activation_token(email, rss_url, podcast_title, current_app.config["SECRET_KEY"])
+        token = create_token_24h({
+            "email": email,
+            "rss_url": rss_url,
+            "podcast_title": podcast_title
+        })
         base_url = request.host_url.rstrip('/')
         activation_link = f"{base_url}/activate?token={token}" 
         
@@ -134,11 +132,11 @@ def invite_user_manual_test():
         return "Missing query parameters: email, rss_url, podcast_title", 400
 
     try:
-        if not current_app.config.get("SECRET_KEY"):
-            logger.error("SECRET_KEY is not configured in the application.")
-            return "Server configuration error for token generation", 500
-            
-        token = auth_service.generate_activation_token(email_param, rss_param, title_param, current_app.config["SECRET_KEY"])
+        token = create_token_24h({
+            "email": email_param,
+            "rss_url": rss_param,
+            "podcast_title": title_param
+        })
         base_url = request.host_url.rstrip('/')
         activation_link = f"{base_url}/activate?token={token}"
         
@@ -151,7 +149,7 @@ def invite_user_manual_test():
 
 @podprofile_initial_bp.route('/initial', methods=['GET'])
 def get_initial_podprofile_data():
-    user_id = g.get('user_id') # This is Users._id (ownerId for accounts)
+    user_id = g.get('user_id')
     logger.info(f"Attempting to fetch initial podprofile data for user_id (ownerId): {user_id}")
 
     initial_rss_url = None
@@ -159,7 +157,6 @@ def get_initial_podprofile_data():
     initial_podcast_title = None
 
     if user_id:
-        # Always use str(account["_id"]) for account IDs
         user_accounts = list(db["Accounts"].find({"ownerId": str(user_id)}, {"_id": 1}))
         if user_accounts:
             account_ids = [str(acc["_id"]) for acc in user_accounts]
@@ -168,20 +165,17 @@ def get_initial_podprofile_data():
             query_criteria = {
                 "accountId": {"$in": account_ids},
                 "isImported": True,
-                "rssFeed": {"$exists": True, "$ne": None, "$ne": ""} # Ensure rssFeed is valid
+                "rssFeed": {"$exists": True, "$ne": None, "$ne": ""}
             }
             logger.info(f"Querying Podcasts collection with criteria: {query_criteria}")
 
-            # Find the first imported podcast linked to any of these accounts
-            # Sort by createdAt to get the earliest one if multiple imported podcasts exist
             podcast = podcasts_collection.find_one(query_criteria, sort=[("createdAt", 1)]) 
             
             if podcast:
                 logger.info(f"Found podcast for prefill: {podcast}")
                 initial_rss_url = podcast.get("rssFeed")
                 initial_podcast_id = str(podcast.get("_id"))
-                # Prefer 'title', fallback to 'podName'
-                initial_podcast_title = podcast.get("title") or podcast.get("podName") 
+                initial_podcast_title = podcast.get("title") or podcast.get("podName")
                 if not initial_rss_url:
                     logger.warning(f"Podcast found (ID: {initial_podcast_id}) but 'rssFeed' is missing or empty.")
                 if not initial_podcast_title:
@@ -198,5 +192,5 @@ def get_initial_podprofile_data():
     return jsonify({
         "initial_rss_url": initial_rss_url,
         "initial_podcast_id": initial_podcast_id,
-        "initial_podcast_title": initial_podcast_title  # Include the title in the response
+        "initial_podcast_title": initial_podcast_title
     })

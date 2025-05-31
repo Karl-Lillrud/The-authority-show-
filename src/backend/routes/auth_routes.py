@@ -10,9 +10,6 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")  # Defines the bluepri
 auth_service = AuthService()
 logger = logging.getLogger(__name__)
 
-# ... existing routes like /signin, /verify-otp ...
-
-
 @auth_bp.route("/verify-token/<token>", methods=["GET"])
 def verify_token_route(token):
     """Endpoint called by the link in the standard login email."""
@@ -89,4 +86,4 @@ def activate_account_route():  # This is the route hit by the activation email l
         return redirect(url_for("auth_bp.signin_page", error="An unexpected error occurred during activation. Please try again."))
 
 
-# ... rest of the routes ...
+

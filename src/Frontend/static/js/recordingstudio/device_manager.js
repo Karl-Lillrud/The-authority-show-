@@ -135,91 +135,130 @@ function setupDeviceChangeListeners(domElements, isHost, onMicrophoneInitialized
     });
 }
 
-/**
- * Refreshes the device list without full re-initialization
- */
+
 async function refreshDeviceList(domElements, isHost, onMicrophoneInitialized) {
     try {
+        // Säkerställ åtkomst så att enheter kan enumreras korrekt
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+
         const devices = await navigator.mediaDevices.enumerateDevices();
         console.log('Refreshed devices:', devices.map(d => ({ kind: d.kind, label: d.label, deviceId: d.deviceId })));
-        
+
         deviceState.updateDevices(devices);
-        
-        // Update select elements
+
+        if (devices.length === 0) {
+            showNotification("No media devices found. Please check your browser or device settings.", "warning");
+        }
+
         populateDeviceSelect(domElements.cameraSelect, deviceState.devices.video, 'Camera', 'Select Camera');
         populateDeviceSelect(domElements.microphoneSelect, deviceState.devices.audio, 'Microphone', 'Select Microphone');
         populateDeviceSelect(domElements.speakerSelect, deviceState.devices.audioOutput, 'Speaker', 'Select Speaker');
-        
-        // Check if previously selected devices are still available
+
         validateSelectedDevices();
-        
+
+        // Auto-select camera if none selected
+        if (!deviceState.selectedDevices.camera && deviceState.devices.video.length > 0) {
+            const defaultCamera = deviceState.devices.video[0].deviceId;
+            deviceState.setSelectedDevice('camera', defaultCamera);
+            domElements.cameraSelect.value = defaultCamera;
+        }
+
+        // Auto-select microphone if none selected
+        if (!deviceState.selectedDevices.microphone && deviceState.devices.audio.length > 0) {
+            const defaultMic = deviceState.devices.audio[0].deviceId;
+            deviceState.setSelectedDevice('microphone', defaultMic);
+            domElements.microphoneSelect.value = defaultMic;
+
+            if (onMicrophoneInitialized) {
+                await onMicrophoneInitialized(defaultMic);
+            }
+        }
+
+        // Auto-select speaker if none selected
+        if (!deviceState.selectedDevices.speaker && deviceState.devices.audioOutput.length > 0) {
+            const defaultSpeaker = deviceState.devices.audioOutput[0].deviceId;
+            deviceState.setSelectedDevice('speaker', defaultSpeaker);
+            domElements.speakerSelect.value = defaultSpeaker;
+        }
+
     } catch (error) {
         console.error('Error refreshing device list:', error);
+        showNotification(`Could not refresh devices: ${error.message}`, 'error');
         throw error;
     }
 }
 
-/**
- * Validates that selected devices are still available
- */
 function validateSelectedDevices() {
     const { camera, microphone, speaker } = deviceState.selectedDevices;
-    
-    if (camera && !deviceState.devices.video.find(d => d.deviceId === camera)) {
-        deviceState.setSelectedDevice('camera', null);
-        showNotification('Previously selected camera is no longer available', 'warning');
-    }
-    
-    if (microphone && !deviceState.devices.audio.find(d => d.deviceId === microphone)) {
-        deviceState.setSelectedDevice('microphone', null);
-        showNotification('Previously selected microphone is no longer available', 'warning');
-    }
-    
-    if (speaker && !deviceState.devices.audioOutput.find(d => d.deviceId === speaker)) {
-        deviceState.setSelectedDevice('speaker', null);
-        showNotification('Previously selected speaker is no longer available', 'warning');
-    }
+
+    const lostDevice = (type, selectedId, availableDevices) => {
+        if (selectedId && !availableDevices.find(d => d.deviceId === selectedId)) {
+            deviceState.setSelectedDevice(type, null);
+            showNotification(`Previously selected ${type} is no longer available.`, 'warning');
+            console.warn(`Lost ${type}: ${selectedId}`);
+
+            // Try to fall back to first available device
+            if (availableDevices.length > 0) {
+                const fallback = availableDevices[0].deviceId;
+                deviceState.setSelectedDevice(type, fallback);
+                showNotification(`Switched to available ${type}: ${availableDevices[0].label}`, 'info');
+                console.info(`Switched ${type} to fallback: ${fallback}`);
+            }
+        }
+    };
+
+    lostDevice('camera', camera, deviceState.devices.video);
+    lostDevice('microphone', microphone, deviceState.devices.audio);
+    lostDevice('speaker', speaker, deviceState.devices.audioOutput);
 }
 
 
 export async function initializeDevices(domElements, isHost, onMicrophoneInitialized) {
     try {
-        // Request permissions to populate device IDs
-        await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        // Steg 1: Kontrollera säker kontext
+        checkSecureContext();
+
+        // Steg 2: Försök hämta tillstånd direkt
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        // Steg 3: DOM-validering och stöd
         validateDOMElements(domElements);
         checkMediaDevicesSupport();
-        checkSecureContext();
-        
+
         deviceState.retryCount = 0;
+
+        // Steg 4: Hämta alla enheter efter tillstånd beviljats
         const devices = await navigator.mediaDevices.enumerateDevices();
         console.log('Available devices:', devices.map(d => ({ kind: d.kind, label: d.label, deviceId: d.deviceId })));
-        
         deviceState.updateDevices(devices);
-        
+
         populateDeviceSelect(domElements.cameraSelect, deviceState.devices.video, 'Camera', 'Select Camera');
         populateDeviceSelect(domElements.microphoneSelect, deviceState.devices.audio, 'Microphone', 'Select Microphone');
         populateDeviceSelect(domElements.speakerSelect, deviceState.devices.audioOutput, 'Speaker', 'Select Speaker');
-        
+
         if (deviceState.devices.video.length === 0) {
             showNotification('No camera detected. Video features will be limited.', 'warning');
         }
         if (deviceState.devices.audioOutput.length === 0) {
             showNotification('No speaker devices detected. Audio output features may be limited.', 'warning');
         }
-        
+
         setupDeviceChangeListeners(domElements, isHost, onMicrophoneInitialized);
-        
-        if (deviceState.devices.audio.length > 0 && deviceState.devices.audio[0].deviceId) {
-            const defaultMic = deviceState.devices.audio[0].deviceId;
+
+        // Steg 5: Initiera mikrofon (och kamera)
+        const defaultMic = deviceState.devices.audio[0]?.deviceId;
+        if (defaultMic) {
             deviceState.setSelectedDevice('microphone', defaultMic);
             if (onMicrophoneInitialized) {
                 await onMicrophoneInitialized(defaultMic);
             }
-            if (deviceState.devices.video.length > 0 && deviceState.devices.video[0].deviceId) {
-                const defaultCamera = deviceState.devices.video[0].deviceId;
+
+            const defaultCamera = deviceState.devices.video[0]?.deviceId;
+            if (defaultCamera) {
                 deviceState.setSelectedDevice('camera', defaultCamera);
                 await startCamera(defaultCamera, domElements, isHost);
             }
+
             return true;
         } else {
             showNotification('No valid microphone detected. Please check permissions or connect a device.', 'error');
@@ -227,48 +266,69 @@ export async function initializeDevices(domElements, isHost, onMicrophoneInitial
         }
     } catch (error) {
         console.error('Error initializing devices:', error);
-        showNotification(`Failed to initialize devices: ${error.message}`, 'error');
-        if (error.message.includes('microphone') || error.message.includes('Permission')) {
-            return await retryMicrophoneInitialization(domElements, isHost, onMicrophoneInitialized);
+
+        // Tydligare hantering av tillståndsproblem
+        if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
+            showNotification('Mikrofon- eller kameraåtkomst nekades. Kontrollera webbläsartillstånd.', 'error');
+        } else {
+            showNotification(`Failed to initialize devices: ${error.message}`, 'error');
         }
-        return false;
+
+        return await retryMicrophoneInitialization(domElements, isHost, onMicrophoneInitialized);
     }
 }
+
 
 async function retryMicrophoneInitialization(domElements, isHost, onMicrophoneInitialized) {
     while (deviceState.retryCount < RETRY_CONFIG.MAX_MIC_RETRIES) {
         deviceState.retryCount++;
-        
-        const delay = RETRY_CONFIG.RETRY_DELAY * deviceState.retryCount; // Exponential backoff
+
+        const delay = RETRY_CONFIG.RETRY_DELAY * deviceState.retryCount;
         showNotification(
-            `Microphone not found. Retrying in ${delay / 1000} seconds (Attempt ${deviceState.retryCount}/${RETRY_CONFIG.MAX_MIC_RETRIES}).`, 
+            `Microphone not found. Retrying in ${delay / 1000} seconds (Attempt ${deviceState.retryCount}/${RETRY_CONFIG.MAX_MIC_RETRIES}).`,
             'info'
         );
-        
+
         await new Promise(resolve => setTimeout(resolve, delay));
-        
+
         try {
+            // Försök att begära tillstånd på nytt
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            // Uppdatera enhetslistan
             await refreshDeviceList(domElements, isHost, onMicrophoneInitialized);
-            
+
             if (deviceState.devices.audio.length > 0) {
                 const defaultMic = deviceState.devices.audio[0].deviceId;
                 deviceState.setSelectedDevice('microphone', defaultMic);
-                
+
                 if (onMicrophoneInitialized) {
                     await onMicrophoneInitialized(defaultMic);
                 }
-                
+
                 showNotification('Microphone detected and initialized successfully.', 'success');
                 return true;
             }
         } catch (error) {
-            console.error('Retry failed:', error);
+            console.warn(`Retry #${deviceState.retryCount} failed:`, error);
+
+            if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
+                showNotification(
+                    'Microphone access is blocked. Please allow access in your browser settings and retry.',
+                    'error'
+                );
+                break; // Avsluta om tillstånd nekas – användaren måste agera
+            }
         }
     }
-    
-    showNotification('Maximum microphone initialization attempts reached. Please check your microphone connection.', 'error');
+
+    showNotification(
+        'Maximum microphone initialization attempts reached. Please check your microphone connection and permissions.',
+        'error'
+    );
     return false;
 }
+
 
 /**
  * Initialize microphone with better error handling
@@ -313,7 +373,7 @@ export async function tryInitializeMicrophone(deviceId, localStream, socket, roo
             // Notify peers and update connections
             socket.emit('update_stream_state', {
             room,
-            userId: guestId || 'host',
+            userId: isHost ? 'host' : guestId,
             videoEnabled: deviceState.streamState.isCameraActive,
             audioEnabled: deviceState.streamState.isMicActive
         });
@@ -356,14 +416,20 @@ export async function tryInitializeMicrophone(deviceId, localStream, socket, roo
 export async function startCamera(deviceId, domElements, isHost, socket, room, guestId, peerConnections) {
     const { videoPreview, microphoneSelect, videoQualitySelect } = domElements;
     let localStream = deviceState.localStream || videoPreview?.srcObject || null;
-    
+
     try {
         if (!deviceId) {
             throw new Error('No camera device ID provided');
         }
-        
+
+        if (!isHost && !guestId) {
+            console.error('Guest is missing guestId');
+            showNotification('Fel: Gäst-ID saknas. Kontrollera länken.', 'error');
+            return;
+        }
+
         checkSecureContext();
-        
+
         // Stop existing video tracks
         if (localStream) {
             const existingVideoTracks = localStream.getVideoTracks();
@@ -372,22 +438,22 @@ export async function startCamera(deviceId, domElements, isHost, socket, room, g
                 localStream.removeTrack(track);
             });
         }
-        
+
         // Build constraints
         const constraints = {
-            video: { 
+            video: {
                 deviceId: { exact: deviceId },
                 facingMode: 'user'
             },
             audio: false // We'll handle audio separately
         };
-        
+
         // Apply quality settings for hosts
         if (isHost && videoQualitySelect?.value && VIDEO_QUALITY_PRESETS[videoQualitySelect.value]) {
             const quality = VIDEO_QUALITY_PRESETS[videoQualitySelect.value];
             Object.assign(constraints.video, quality);
         }
-        
+
         // Add audio if microphone is selected
         if (microphoneSelect?.value) {
             constraints.audio = {
@@ -397,9 +463,9 @@ export async function startCamera(deviceId, domElements, isHost, socket, room, g
                 autoGainControl: true
             };
         }
-        
+
         const videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-        
+
         // Create or update local stream
         if (!localStream) {
             localStream = videoStream;
@@ -409,36 +475,39 @@ export async function startCamera(deviceId, domElements, isHost, socket, room, g
                 localStream.addTrack(track);
             });
         }
-        
+
         // Update video preview
         if (videoPreview) {
             videoPreview.srcObject = localStream;
         }
-        
+
         // Update device state
         deviceState.setSelectedDevice('camera', deviceId);
         deviceState.updateStreamState({ isCameraActive: true });
         deviceState.localStream = localStream;
-        
-        // Notify peers and update connections
-           socket.emit('update_stream_state', {
-            room,
-            userId: guestId || 'host',
-            videoEnabled: deviceState.streamState.isCameraActive,
-            audioEnabled: deviceState.streamState.isMicActive
-        });
 
-        
+        // Notify peers and update connections
+        if (socket && typeof socket.emit === 'function') {
+            socket.emit('update_stream_state', {
+                room,
+                userId: isHost ? 'host' : guestId,
+                videoEnabled: deviceState.streamState.isCameraActive,
+                audioEnabled: deviceState.streamState.isMicActive
+            });
+        } else {
+            console.warn('Socket is undefined or not ready – skipping update_stream_state emit.');
+        }
+
         if (peerConnections) {
             await updatePeerConnections(localStream, peerConnections, socket, room, guestId);
         }
-        
+
         showNotification('Camera started successfully.', 'success');
         return localStream;
-        
+
     } catch (error) {
         console.error('Error starting camera:', error);
-        
+
         let errorMessage = 'Camera error: ';
         if (error.name === 'NotFoundError') {
             errorMessage += 'Camera not found or disconnected';
@@ -451,20 +520,21 @@ export async function startCamera(deviceId, domElements, isHost, socket, room, g
         } else {
             errorMessage += error.message;
         }
-        
+
         showNotification(errorMessage, 'error');
         deviceState.updateStreamState({ isCameraActive: false });
-        
+
         return localStream;
     }
 }
 
+
 /**
  * Toggle camera on/off
  */
-export async function toggleCamera(localStream, domElements, isCameraActive, socket, room, guestId, peerConnections) {
+export async function toggleCamera(localStream, domElements, isCameraActive, isHost, socket, room, guestId, peerConnections) {
     const { videoPreview, cameraSelect } = domElements;
-    
+
     try {
         if (isCameraActive) {
             // Turn off camera
@@ -475,45 +545,47 @@ export async function toggleCamera(localStream, domElements, isCameraActive, soc
                     localStream.removeTrack(track);
                 }
             });
-            
+
             if (videoPreview) {
                 videoPreview.srcObject = localStream;
             }
-            
-            deviceState.updateStreamState({ isCameraActive: false });
-            
-            socket.emit('update_stream_state', {
-            room,
-            userId: guestId || 'host',
-            videoEnabled: deviceState.streamState.isCameraActive,
-            audioEnabled: deviceState.streamState.isMicActive
-        });
 
-            
+            deviceState.updateStreamState({ isCameraActive: false });
+
+            if (socket && typeof socket.emit === 'function') {
+                socket.emit('update_stream_state', {
+                    room,
+                    userId: isHost ? 'host' : guestId,
+                    videoEnabled: deviceState.streamState.isCameraActive,
+                    audioEnabled: deviceState.streamState.isMicActive
+                });
+            } else {
+                console.warn('Socket is undefined or not ready – skipping update_stream_state emit.');
+            }
+
             if (peerConnections) {
                 await updatePeerConnections(localStream, peerConnections, socket, room, guestId);
             }
-            
+
             showNotification('Camera turned off.', 'info');
             return false;
-            
+
         } else {
-      
             const deviceId = cameraSelect?.value || deviceState.getSelectedDevice('camera');
-            
+
             if (!deviceId) {
                 showNotification('Please select a camera to enable video.', 'warning');
                 return false;
             }
-            
-            const newStream = await startCamera(deviceId, domElements, false, socket, room, guestId, peerConnections);
-            
+
+            const newStream = await startCamera(deviceId, domElements, isHost, socket, room, guestId, peerConnections);
+
             if (newStream && videoPreview) {
                 videoPreview.srcObject = newStream;
                 showNotification('Camera turned on.', 'success');
                 return true;
             }
-            
+
             return false;
         }
     } catch (error) {
@@ -522,6 +594,7 @@ export async function toggleCamera(localStream, domElements, isCameraActive, soc
         return isCameraActive; // Return current state on error
     }
 }
+
 
 export async function setAudioOutput(deviceId, audioElement) {
     try {
@@ -575,7 +648,7 @@ export async function toggleMicrophone(localStream, domElements, isMicActive, so
             
             socket.emit('update_stream_state', {
             room,
-            userId: guestId || 'host',
+            userId: isHost ? 'host' : guestId,
             videoEnabled: deviceState.streamState.isCameraActive,
             audioEnabled: deviceState.streamState.isMicActive
         });
@@ -598,7 +671,7 @@ export async function toggleMicrophone(localStream, domElements, isMicActive, so
                 
                 socket.emit('update_stream_state', {
                     room,
-                    userId: guestId || 'host',
+                    userId: isHost ? 'host' : guestId,
                     videoEnabled: deviceState.streamState.isCameraActive,
                     audioEnabled: deviceState.streamState.isMicActive
                 });

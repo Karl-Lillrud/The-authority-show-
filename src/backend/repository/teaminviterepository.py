@@ -2,6 +2,8 @@ import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from backend.database.mongo_connection import collection
+from backend.utils.token_utils import create_token_24h, decode_token
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +17,7 @@ class TeamInviteRepository:
 
     def save_invite(self, team_id, email, inviter_id, role):
         """
-        Create a new team invite and save it to the database.
+        Create a new team invite and save it to the database using a JWT token.
         Raises ValueError for invalid inputs or permissions.
         Returns the invite token on success.
         """
@@ -33,16 +35,14 @@ class TeamInviteRepository:
         normalized_email = email.lower().strip()
 
         # Check if an active invite already exists for this email and team
-        existing_invite = self.invites_collection.find_one(
-            {
-                "teamId": team_id,
-                "email": normalized_email,
-                "status": "pending",
-                "createdAt": {
-                    "$gt": datetime.now(timezone.utc) - timedelta(hours=24)
-                },  # Expire after 24 hours
-            }
-        )
+        existing_invite = self.invites_collection.find_one({
+            "teamId": team_id,
+            "email": normalized_email,
+            "status": "pending",
+            "createdAt": {
+                "$gt": datetime.now(timezone.utc) - timedelta(hours=24)
+            },
+        })
 
         if existing_invite:
             logger.info(
@@ -50,23 +50,26 @@ class TeamInviteRepository:
             )
             return existing_invite["_id"]
 
-        # Generate invite token
-        invite_token = str(uuid.uuid4())
+        token_payload = {
+            "email": normalized_email,
+            "teamId": str(team_id),
+            "role": role,
+            "inviterId": str(inviter_id)
+        }
+        invite_token = create_token_24h(token_payload)
 
-        # Create invite document with a 24-hour expiration
         invite_data = {
             "_id": invite_token,
             "teamId": team_id,
-            "teamName": team.get("name", "Team"),  # Include team name for email
+            "teamName": team.get("name", "Team"),
             "email": normalized_email,
             "inviterId": inviter_id,
-            "role": role,  # Include role in the invite
+            "role": role,
             "createdAt": datetime.now(timezone.utc),
             "expiresAt": datetime.now(timezone.utc) + timedelta(hours=24),
             "status": "pending",
         }
 
-        # Insert invite into database
         self.invites_collection.insert_one(invite_data)
         logger.info(
             f"Created new invite {invite_token} for {normalized_email} to team {team_id}"
@@ -74,13 +77,16 @@ class TeamInviteRepository:
 
         return invite_token
 
+
     def get_invite(self, invite_token):
-        """
-        Retrieve an invite by token.
-        Returns the invite document or None if not found.
-        """
-        invite = self.invites_collection.find_one({"_id": invite_token})
-        return invite
+        try:
+            decoded = decode_token(invite_token)
+            invite = self.invites_collection.find_one({"_id": invite_token})
+            return invite
+        except Exception as e:
+            logger.warning(f"Invalid or expired token: {e}")
+            return None
+
 
     def get_team_invites(self, team_id):
         """
