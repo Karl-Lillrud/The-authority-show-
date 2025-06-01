@@ -8,9 +8,42 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 import random
 from backend.utils.email_utils import send_email
-from backend.services.activateVerification import verify_activation_file_exists
+from backend.services.activateVerificationService import verify_activation_file_exists
+from flask import render_template
+from backend.utils.activate import process_activation_emails, get_activation_stats
 
 logger = logging.getLogger(__name__)
+
+def render_email_content(template_name, **context):
+    """
+    Renders email content from a template.
+    
+    Args:
+        template_name (str): The template name/path to render
+        **context: The context variables to pass to the template
+        
+    Returns:
+        str: The rendered HTML content
+    """
+    try:
+        from flask import current_app
+        with current_app.app_context():
+            content = render_template(f'emails/{template_name}', **context)
+            return content
+    except Exception as e:
+        logger.error(f"Error rendering email template '{template_name}': {e}", exc_info=True)
+        # Fallback simple template if rendering fails
+        fallback_content = f"""
+        <html>
+        <body>
+            <h2>{context.get('subject', 'Notification')}</h2>
+            <p>Hello {context.get('name', 'User')},</p>
+            <p>{context.get('message', 'Thank you for using our service.')}</p>
+            <p>Best regards,<br>PodManager Team</p>
+        </body>
+        </html>
+        """
+        return fallback_content
 
 class SchedulerTask:
     """Base class for scheduler tasks."""
@@ -34,94 +67,146 @@ class SchedulerTask:
         self.last_run = datetime.now()
 
 
-class ActivationEmailTask(SchedulerTask):
-    """Task for sending activation emails."""
+class TimeBasedSchedulerTask(SchedulerTask):
+    """Base class for scheduler tasks that run at a specific time of day."""
+
+    def __init__(self, name, hour, minute=0):
+        """
+        Initialize a time-based task.
+        
+        Args:
+            name (str): Name of the task
+            hour (int): Hour to run the task (24-hour format)
+            minute (int): Minute to run the task
+        """
+        super().__init__(name, interval_seconds=86400)  # 24 hours in seconds
+        self.hour = hour
+        self.minute = minute
+        self.last_run_date = datetime.now().date() - timedelta(days=1)  # Force run on first day
+
+    def should_run(self):
+        """Check if the task should run based on the current time and last run date."""
+        now = datetime.now()
+        
+        # Only run if we're in the correct hour and minute range (within 15 minutes)
+        # and we haven't already run today
+        return (now.hour == self.hour and 
+                now.minute >= self.minute and 
+                now.minute < self.minute + 15 and 
+                now.date() > self.last_run_date)
+
+    def mark_executed(self):
+        """Mark the task as executed with the current date."""
+        self.last_run_date = datetime.now().date()
+        self.last_run = datetime.now()
+
+
+class ActivationEmailTask(TimeBasedSchedulerTask):
+    """Task for sending activation emails at 5 AM."""
 
     def __init__(self, api_base_url, emails_per_batch=5):
-        super().__init__("activation_email", interval_seconds=3600)  # Run every hour
-        self.api_base_url = api_base_url
+        # Set to run at 5 AM
+        super().__init__("activation_email", hour=5, minute=0)
+        
+        # Fix: Ensure api_base_url is a valid URL with schema
+        if api_base_url and not api_base_url.startswith(('http://', 'https://')):
+            # Convert relative URL to absolute URL with proper schema
+            if os.getenv("ENVIRONMENT", "production").lower() == "local":
+                # Local development
+                self.api_base_url = f"http://localhost:{os.getenv('PORT', '8000')}"
+            else:
+                # Production environment
+                self.api_base_url = f"https://{os.getenv('API_BASE_URL', 'app.podmanager.ai')}"
+            
+            logger.info(f"Converted API base URL to: {self.api_base_url}")
+        else:
+            self.api_base_url = api_base_url
+            
         self.emails_per_batch = emails_per_batch
+        logger.info(f"ActivationEmailTask initialized with API base URL: {self.api_base_url}, scheduled for 5:00 AM")
 
     def execute(self):
-        """Send a batch of activation emails."""
+        """Send a batch of activation emails using activate.py module."""
         try:
-            logger.info("Scheduler: Starting activation email task")
+            logger.info(f"Scheduler: Starting activation email task at {datetime.now()}")
             
-            # First, verify that the activation file exists in the blob storage
-            if not verify_activation_file_exists():
-                logger.error("Scheduler: Activation file not found in blob storage")
-                return False
-                
-            # API call to send emails
-            response = requests.post(
-                f"{self.api_base_url}/send_activation_emails",
-                json={"num_emails": self.emails_per_batch},
-                timeout=30
-            )
+            # Use process_activation_emails from activate.py
+            result = process_activation_emails(self.emails_per_batch)
             
-            if response.status_code == 200:
-                data = response.json()
-                logger.info(f"Scheduler: Successfully sent {data.get('emails_sent', 0)} activation emails")
+            if result and result.get("success"):
+                logger.info(f"Scheduler: Successfully sent {result.get('emails_sent', 0)} activation emails")
                 return True
             else:
-                logger.error(f"Scheduler: Failed to send activation emails. Status: {response.status_code}, Response: {response.text}")
+                logger.error(f"Scheduler: Failed to send activation emails: {result.get('error', 'Unknown error')}")
                 return False
                 
         except Exception as e:
             logger.error(f"Scheduler: Error sending activation emails: {str(e)}", exc_info=True)
             return False
 
-    def process_from_xml(self, xml_path):
-        """Process emails from the XML file directly (legacy method)."""
+
+class SummaryEmailTask(TimeBasedSchedulerTask):
+    """Task for sending daily summary emails at 7 AM."""
+
+    def __init__(self, api_base_url):
+        # Set to run at 7 AM
+        super().__init__("summary_email", hour=7, minute=0)
+        
+        # Fix: Ensure api_base_url is a valid URL with schema
+        if api_base_url and not api_base_url.startswith(('http://', 'https://')):
+            # Convert relative URL to absolute URL with proper schema
+            if os.getenv("ENVIRONMENT", "production").lower() == "local":
+                # Local development
+                self.api_base_url = f"http://localhost:{os.getenv('PORT', '8000')}"
+            else:
+                # Production environment
+                self.api_base_url = f"https://{os.getenv('API_BASE_URL', 'app.podmanager.ai')}"
+            
+            logger.info(f"Converted API base URL to: {self.api_base_url}")
+        else:
+            self.api_base_url = api_base_url
+            
+        logger.info(f"SummaryEmailTask initialized with API base URL: {self.api_base_url}, scheduled for 7:00 AM")
+
+    def execute(self):
+        """Send a daily summary email."""
         try:
-            if not os.path.exists(xml_path):
-                logger.error(f"Scheduler: XML file not found: {xml_path}")
-                return []
-                
-            tree = ET.parse(xml_path)
-            root = tree.getroot()
-            users = []
+            logger.info(f"Scheduler: Starting summary email task at {datetime.now()}")
             
-            for user in root.findall(".//user"):
-                email = user.find("email")
-                name = user.find("name")
-                podcast = user.find("podcast")
-                
-                if email is not None and email.text:
-                    users.append({
-                        "email": email.text,
-                        "name": name.text if name is not None else "",
-                        "podcast": podcast.text if podcast is not None else "Your Podcast"
-                    })
+            # Get activation statistics
+            stats = get_activation_stats()
+            if not stats or not stats.get("success"):
+                logger.error(f"Scheduler: Failed to get activation stats: {stats.get('error', 'Unknown error')}")
+                return False
             
-            return users
+            # Send summary email to admin
+            admin_email = os.getenv("ADMIN_EMAIL", "contact@podmanager.ai")
+            subject = f"PodManager Daily Activation Summary - {datetime.now().strftime('%Y-%m-%d')}"
             
-        except Exception as e:
-            logger.error(f"Scheduler: Error processing XML file: {str(e)}", exc_info=True)
-            return []
-            
-    def send_direct_invitation(self, user_data):
-        """Send an activation invitation directly (uses API now)."""
-        try:
-            # Use the API endpoint for consistent tracking
-            response = requests.post(
-                f"{self.api_base_url}/activation/invite",
-                json={
-                    "email": user_data["email"],
-                    "name": user_data["name"],
-                    "podcast": user_data["podcast"]
-                },
-                timeout=10
+            body = render_email_content(
+                "summary_email.html",
+                subject=subject,
+                total_podcasts=stats.get("total_podcasts", 0),
+                emails_sent=stats.get("emails_sent", 0),
+                podcasts_remaining=stats.get("podcasts_remaining", 0),
+                last_sent_date=stats.get("last_sent_date", "Never"),
+                current_year=datetime.now().year
             )
             
-            if response.status_code == 200:
-                logger.info(f"Scheduler: Activation invite sent to {user_data['email']}")
+            # Debug
+            logger.info(f"Sending summary email to {admin_email}")
+            
+            result = send_email(admin_email, subject, body)
+            
+            if result.get("success", False):
+                logger.info(f"Scheduler: Successfully sent summary email to {admin_email}")
                 return True
             else:
-                logger.error(f"Scheduler: Failed to trigger activation for {user_data['email']} via API: {response.status_code} - {response.text}")
+                logger.error(f"Scheduler: Failed to send summary email: {result.get('error', 'Unknown error')}")
                 return False
+            
         except Exception as e:
-            logger.error(f"Scheduler: Error sending activation for {user_data['email']}: {str(e)}", exc_info=True)
+            logger.error(f"Scheduler: Error sending summary email: {str(e)}", exc_info=True)
             return False
 
 
@@ -141,8 +226,11 @@ class Scheduler:
 
     def initialize_default_tasks(self):
         """Initialize the default tasks for the scheduler."""
-        # Add activation email task
+        # Add activation email task (runs at 5 AM)
         self.add_task(ActivationEmailTask(self.api_base_url))
+        
+        # Add summary email task (runs at 7 AM)
+        self.add_task(SummaryEmailTask(self.api_base_url))
 
     def run_forever(self):
         """Run the scheduler in a loop."""
@@ -177,3 +265,42 @@ class Scheduler:
         """Stop the scheduler."""
         self.running = False
         logger.info("Scheduler: Stopping")
+
+# Add this function to initialize and start the scheduler
+def start_scheduler(api_base_url):
+    """
+    Initializes and starts the scheduler with the given API base URL.
+    
+    Args:
+        api_base_url (str): The base URL for API requests made by the scheduler
+        
+    Returns:
+        Scheduler: The initialized and started scheduler instance
+    """
+    try:
+        # Fix: Handle the case where api_base_url might be the Flask app object
+        if str(api_base_url).startswith('<Flask'):
+            # Use environment variables to determine the proper URL
+            if os.getenv("ENVIRONMENT", "production").lower() == "local":
+                api_base_url = f"http://localhost:{os.getenv('PORT', '8000')}"
+            else:
+                api_base_url = f"https://{os.getenv('API_BASE_URL', 'app.podmanager.ai')}"
+            logger.info(f"Converted Flask app to actual API URL: {api_base_url}")
+        
+        logger.info(f"Initializing scheduler with API base URL: {api_base_url}")
+        
+        # Create a scheduler instance
+        scheduler_instance = Scheduler(api_base_url)
+        
+        # Initialize default tasks
+        scheduler_instance.initialize_default_tasks()
+        
+        # Start the scheduler
+        thread = scheduler_instance.start()
+        
+        logger.info(f"Scheduler started successfully on thread: {thread.name}")
+        
+        return scheduler_instance
+    except Exception as e:
+        logger.error(f"Failed to start scheduler: {str(e)}", exc_info=True)
+        raise

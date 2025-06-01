@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your PodManager&zwnj;.ai Account is Ready!</title>
+    <title>PodManager Activation</title>
     <style type="text/css">
         /* Base styles */
         body, html {
@@ -23,9 +23,11 @@
         .header {
             text-align: center;
             padding: 20px 0;
+            background-color: #1e1e1e;
+            border-radius: 8px 8px 0 0;
         }
         .logo {
-            max-width: 180px;
+            max-width: 200px;
             height: auto;
         }
         /* Content styles */
@@ -39,6 +41,11 @@
             color: #FF8C00;
             margin-top: 0;
             font-size: 24px;
+        }
+        h2 {
+            color: #FF8C00;
+            margin-top: 0;
+            font-size: 20px;
         }
         p {
             margin-bottom: 20px;
@@ -116,11 +123,7 @@
 <body style="background-color: #f5f5f5; margin: 0; padding: 0;">
     <div class="container">
         <div class="header">
-            {% set fallback_artwork_url = "https://podmanager.app/static/images/default.png" %}
-            {% if not artwork_url or not artwork_url.startswith("http") %}
-                {% set artwork_url = fallback_artwork_url %}
-            {% endif %}
-            <img src="{{ artwork_url }}" alt="Podcast Artwork" class="logo">
+            <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/PodManagerLogo.png" alt="PodManager.ai Logo" class="logo">
         </div>
         
         <div class="content">

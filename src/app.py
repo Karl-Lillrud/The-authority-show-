@@ -52,7 +52,7 @@ from backend.routes.audio_pipeline import audio_pipeline_bp
 from backend.utils.scheduler import start_scheduler
 from backend.utils.credit_scheduler import init_credit_scheduler
 from backend.utils import venvupdate
-from backend.services.activateVerification import verify_activation_file_exists
+from backend.services.activateVerificationService import verify_activation_file_exists
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -91,8 +91,8 @@ def create_app():
     app.register_blueprint(google_calendar_bp)
     app.register_blueprint(episode_bp)
     app.register_blueprint(podprofile_bp)
-    app.register_blueprint(activation_bp, url_prefix='/activation')
-    app.register_blueprint(podprofile_initial_bp, url_prefix='/podprofile')
+    app.register_blueprint(activation_bp)
+    app.register_blueprint(podprofile_initial_bp)
     app.register_blueprint(frontend_bp)
     app.register_blueprint(guesttoepisode_bp)
     app.register_blueprint(transcription_bp, url_prefix="/transcription")
@@ -160,7 +160,9 @@ def configure_logging():
 
 app = create_app()
 
+# Add verification at startup
 with app.app_context():
+    from backend.services.activateVerificationService import verify_activation_file_exists
     activation_file_check = verify_activation_file_exists()
     if activation_file_check:
         app.logger.info("Activation system ready: scraped.xml file is accessible")
