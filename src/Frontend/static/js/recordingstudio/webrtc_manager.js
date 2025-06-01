@@ -200,4 +200,17 @@ export async function addParticipantStream(
         console.error('Error creating WebRTC offer:', error);
         showNotification('Failed to establish WebRTC connection.', 'error');
     }
+
+    if (candidateQueue.has(userId)) {
+    const queuedCandidates = candidateQueue.get(userId);
+    for (const candidate of queuedCandidates) {
+        try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            console.log('✅ Added queued ICE candidate from:', userId);
+        } catch (err) {
+            console.error('❌ Error adding queued ICE candidate:', err);
+        }
+    }
+    candidateQueue.delete(userId);
+}
 }

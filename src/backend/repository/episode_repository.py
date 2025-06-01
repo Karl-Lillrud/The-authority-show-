@@ -102,16 +102,22 @@ class EpisodeRepository:
 
 
     def get_episode(self, episode_id, user_id):
-        """Get a single episode by its ID and user."""
+       
         try:
-            result = self.collection.find_one(
-                {"_id": episode_id, "userid": str(user_id)}
-            )
+            query = {"_id": episode_id}
+            if user_id:
+                query["userid"] = str(user_id)
+
+            result = self.collection.find_one(query)
+
             if not result:
                 return {"error": "Episode not found"}, 404
+
             return result, 200
+
         except Exception as e:
             return {"error": f"Failed to fetch episode: {str(e)}"}, 500
+
 
     def get_episodes(self, user_id):
         """Get all episodes created by the user."""

@@ -145,11 +145,44 @@ export function updateParticipantsList(guests, domElements, connectedUsers, gree
                 </div>
             `;
             domElements.participantsContainer.appendChild(card);
+
+            const video = document.getElementById(`video-${guest._id}`);
+            const indicator = card.querySelector('.audio-indicator');
+            if (video && indicator) {
+                const checkStream = setInterval(() => {
+                    if (video.srcObject) {
+                        clearInterval(checkStream);
+                        setupAudioLevelMeter(video.srcObject, indicator);
+                    }
+                }, 500);
+            }
         }
     });
 
     domElements.participantsContainer.style.display = connectedUsers.length > 1 ? 'block' : 'none';
 }
+
+
+function setupAudioLevelMeter(stream, indicatorElement) {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(stream);
+    source.connect(analyser);
+
+    analyser.fftSize = 256;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    function updateVolume() {
+        analyser.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        const volume = Math.min(100, Math.max(0, average)); // Clamp between 0-100
+        indicatorElement.style.width = `${volume}%`; // E.g. width on bar, or update a class
+        requestAnimationFrame(updateVolume);
+    }
+
+    updateVolume();
+}
+
 
 export async function showJoinRequest(guestId, guestName, episodeId, roomId, domElements, socket, greenroomUsers, updateCallback) {
     if (!domElements.joinRequestModal) {
@@ -162,7 +195,10 @@ export async function showJoinRequest(guestId, guestName, episodeId, roomId, dom
     let effectiveGuestName = guestName;
     let effectiveGuestId = guestId;
     try {
-        const guests = await fetchGuestsByEpisode(episodeId);
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get("token");
+
+        const guests = await fetchGuestsByEpisode(episodeId, token);
         const guest = guests.find(g => g.id === guestId);
         effectiveGuestName = guest?.name || guestName || 'Guest';
         effectiveGuestId = guest?.id || guestId;

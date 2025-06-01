@@ -22,7 +22,7 @@ export function initializeSocket({
     fetchGuestsByEpisode: fetchGuests // Avoid naming conflict
 }) {
     const leaveTimeouts = new Map();
-
+    const candidateQueue = new Map();
         let hasJoinedRoom = false;
 
 socket.on('connect', () => {
@@ -70,7 +70,9 @@ socket.on('connect', () => {
     socket.on('studio_joined', async (data) => {
         console.log('Joined studio room:', data);
         try {
-            const guests = await fetchGuests(episodeId);
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get("token");
+            const guests = await fetchGuests(episodeId, token);
             updateParticipantsList(guests, domElements, connectedUsers, greenroomUsers);
         } catch (error) {
             showNotification('Error: Failed to load guests.', 'error');
@@ -93,7 +95,9 @@ socket.on('connect', () => {
             domElements.remoteVideoWrapper.style.display = 'none';
             domElements.remoteVideo.srcObject = null;
             try {
-                const guests = await fetchGuests(episodeId);
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get("token");
+                const guests = await fetchGuests(episodeId, token);
                 updateParticipantsList(guests, domElements, connectedUsers, greenroomUsers);
             } catch (error) {
                 showNotification('Error: Failed to load guests.', 'error');
@@ -104,27 +108,28 @@ socket.on('connect', () => {
 
 socket.on('ice_candidate', async (data) => {
     console.log('Received ICE candidate:', data);
-    if (!data.room || !data.targetUserId || !data.fromUserId || !data.candidate) {
-        console.error('Invalid ICE candidate data:', data);
-        showNotification('Error: Invalid ICE candidate received.', 'error');
-        return;
-    }
-    if (data.targetUserId === guestId || (isHost && data.targetUserId === 'host')) {
-        const pc = peerConnections.get(data.fromUserId);
-        if (pc) {
-            try {
-                await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-                console.log('Added ICE candidate from:', data.fromUserId);
-            } catch (error) {
-                console.error('Error adding ICE candidate:', error);
-                showNotification('Error: Failed to add ICE candidate.', 'error');
-            }
-        } else {
-            console.warn('No peer connection found for user:', data.fromUserId);
-            showNotification('Warning: No peer connection for incoming ICE candidate.', 'warning');
+    const { fromUserId, targetUserId, candidate } = data;
+
+    const isTarget = (isHost && targetUserId === 'host') || (!isHost && targetUserId === guestId);
+    if (!isTarget) return;
+
+    const pc = peerConnections.get(fromUserId);
+    if (pc) {
+        try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            console.log('✅ Added ICE candidate from:', fromUserId);
+        } catch (err) {
+            console.error('Error adding ICE candidate:', err);
         }
+    } else {
+        console.warn(`⚠ No peer connection yet for ${fromUserId}. Queuing candidate.`);
+        if (!candidateQueue.has(fromUserId)) {
+            candidateQueue.set(fromUserId, []);
+        }
+        candidateQueue.get(fromUserId).push(candidate);
     }
 });
+
 
    // In socket_manager.js
 socket.on('participant_joined', async (data) => {
@@ -167,7 +172,9 @@ socket.on('participant_joined', async (data) => {
         guestId // Pass guestId
     );
     try {
-        const guests = await fetchGuests(episodeId);
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get("token");
+        const guests = await fetchGuests(episodeId, token);
         updateParticipantsList(guests, domElements, connectedUsers, greenroomUsers);
     } catch (error) {
         showNotification('Error: Failed to load guests.', 'error');

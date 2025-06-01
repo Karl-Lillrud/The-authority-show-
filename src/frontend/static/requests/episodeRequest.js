@@ -19,22 +19,38 @@ export async function fetchAllEpisodes() {
 
 export async function fetchEpisode(episodeId) {
   try {
-    const response = await fetch(`/get_episodes/${episodeId}`)
-    const data = await response.json()
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get("token");
+    const accessToken = localStorage.getItem("access_token");
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (tokenFromUrl) {
+      headers["Authorization"] = `Bearer ${tokenFromUrl}`;
+    } else if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(`/get_episodes/${episodeId}`, {
+      headers
+    });
+
+    const data = await response.json();
+
     if (response.ok) {
-      // This function returns the episode object as provided by the backend.
-      // Ensure the backend response for this endpoint includes:
-      // title, description, image_url, audio_url, status, and other necessary fields.
-      return data
+      return data;
     } else {
-      console.error("Failed to fetch episode:", data.error)
-      alert("Failed to fetch episode: " + data.error)
+      console.error("Failed to fetch episode:", data.error);
+      alert("Failed to fetch episode: " + data.error);
     }
   } catch (error) {
-    console.error("Error fetching episode:", error)
-    alert("Failed to fetch episode.")
+    console.error("Error fetching episode:", error);
+    alert("Failed to fetch episode.");
   }
 }
+
 
 export async function fetchEpisodes(guestId) {
   try {

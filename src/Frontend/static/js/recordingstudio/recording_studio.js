@@ -215,12 +215,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         let guestName = 'Guest';
         try {
-            const guests = await fetchGuestsByEpisode(episodeId);
+            const guests = await fetchGuestsByEpisode(episodeId, token); // ✅ skickar token
             const guest = guests.find(g => g.id === guestId);
             guestName = guest?.name || 'Guest';
         } catch (error) {
             console.error('Error fetching guest name:', error);
         }
+
         window.guestName = guestName;
         socket.emit('join_studio', {
             room,
