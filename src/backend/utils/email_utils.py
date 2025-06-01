@@ -642,3 +642,42 @@ def send_booking_email(recipient_email, recipient_name, recording_at, pod_name, 
     except Exception as e:
         logger.error(f"❌ Error sending booking email to {recipient_email}: {e}", exc_info=True)
         return {"error": f"Failed to send booking email: {str(e)}"}
+
+
+def send_summary_email(recipient_email, subject, context):
+    """
+    Sends a daily summary email using the summary_email.html template.
+    
+    Args:
+        recipient_email (str): The email address to send the summary to
+        subject (str): The subject line for the email
+        context (dict): The template context variables
+    
+    Returns:
+        dict: Result of the sending operation
+    """
+    try:
+        # Add current year to context for the footer
+        if 'current_year' not in context:
+            context['current_year'] = datetime.now().year
+            
+        # Render the summary email template
+        from flask import render_template, current_app
+        with current_app.app_context():
+            # Updated path to use the frontend templates directory
+            body = render_template('emails/summary_email.html', **context)
+        
+        logger.info(f"📧 Preparing to send summary email to {recipient_email}")
+        
+        # Use the generic send_email function
+        result = send_email(recipient_email, subject, body)
+        
+        if result.get("success"):
+            logger.info(f"✅ Summary email sent successfully to {recipient_email}")
+        else:
+            logger.error(f"❌ Failed to send summary email to {recipient_email}: {result.get('error')}")
+        
+        return result
+    except Exception as e:
+        logger.error(f"❌ Error sending summary email to {recipient_email}: {e}", exc_info=True)
+        return {"error": f"Error sending summary email: {str(e)}"}

@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 import logging
 import requests
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from io import BytesIO
 from backend.utils.email_utils import send_activation_email
@@ -21,6 +21,11 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')
 BLOB_CONTAINER = os.getenv("AZURE_STORAGE_CONTAINER_NAME", "podmanagerfiles")
 SCRAPED_XML_BLOB_PATH = "activate/scraped.xml"
 ACTIVATED_JSON_BLOB_PATH = "activate/activated_emails.json"
+BATCH_CONFIG_BLOB_PATH = "activate/batch_config.json"
+
+# Initial batch size and growth rate
+INITIAL_BATCH_SIZE = 89
+DAILY_GROWTH_RATE = 1.20  # 20% increase daily
 
 def load_podcasts_from_blob():
     """Load podcasts from the XML file in blob storage."""
@@ -126,13 +131,101 @@ def get_podcast_logo_from_rss(rss_url):
         logger.error(f"Error fetching podcast logo from RSS: {e}", exc_info=True)
         return None
 
-def process_activation_emails(num_emails=5):
+def get_batch_config():
+    """
+    Get the batch configuration for email sending, including batch size adjusted for daily growth
+    
+    Returns:
+        dict: Batch configuration with keys:
+            - batch_size: Current day's batch size
+            - start_date: When the first batch was sent
+            - days_running: Number of days since start
+    """
+    try:
+        logger.info("Getting batch configuration...")
+        # Try to load existing batch config
+        blob_content = get_blob_content(BLOB_CONTAINER, BATCH_CONFIG_BLOB_PATH)
+        
+        if blob_content:
+            # Parse existing config
+            config = json.loads(blob_content.decode('utf-8'))
+            
+            # Calculate days running
+            start_date = datetime.fromisoformat(config["start_date"])
+            days_running = (datetime.now() - start_date).days + 1  # Include first day
+            
+            # Calculate batch size for today with 20% daily growth
+            current_batch_size = int(INITIAL_BATCH_SIZE * (DAILY_GROWTH_RATE ** (days_running - 1)))
+            
+            # Update config
+            config["days_running"] = days_running
+            config["batch_size"] = current_batch_size
+            
+            logger.info(f"Batch config: Started {days_running} days ago, current batch size: {current_batch_size}")
+            return config
+        else:
+            # First time running - create new config
+            logger.info(f"No batch config found. Creating new with initial batch size: {INITIAL_BATCH_SIZE}")
+            config = {
+                "start_date": datetime.now().isoformat(),
+                "batch_size": INITIAL_BATCH_SIZE,
+                "days_running": 1
+            }
+            
+            # Save the new config
+            save_batch_config(config)
+            return config
+            
+    except Exception as e:
+        logger.error(f"Error getting batch config: {e}", exc_info=True)
+        # Fall back to safe defaults
+        return {
+            "start_date": datetime.now().isoformat(),
+            "batch_size": INITIAL_BATCH_SIZE,
+            "days_running": 1
+        }
+
+def save_batch_config(config):
+    """
+    Save the batch configuration to blob storage
+    
+    Args:
+        config (dict): The batch configuration to save
+    
+    Returns:
+        bool: Success status
+    """
+    try:
+        logger.info(f"Saving batch config: {config}")
+        json_data = json.dumps(config, indent=2)
+        
+        # Upload to blob storage
+        json_bytes = BytesIO(json_data.encode('utf-8'))
+        upload_url = upload_file_to_blob(
+            container_name=BLOB_CONTAINER,
+            blob_path=BATCH_CONFIG_BLOB_PATH,
+            file=json_bytes,
+            content_type="application/json"
+        )
+        
+        if not upload_url:
+            logger.error("Failed to save batch config to blob storage")
+            return False
+            
+        return True
+    
+    except Exception as e:
+        logger.error(f"Error saving batch config: {e}", exc_info=True)
+        return False
+
+def process_activation_emails(num_emails=None):
     """
     Process and send activation emails in a batch.
     This function is designed to be called by the scheduler at 5 AM.
     
     Args:
-        num_emails (int): Maximum number of emails to send in this batch
+        num_emails (int, optional): Maximum number of emails to send in this batch.
+                                  If None, uses dynamic batch sizing based on days running.
         
     Returns:
         dict: Result of the operation with keys:
@@ -141,8 +234,14 @@ def process_activation_emails(num_emails=5):
             - emails_sent: Number of emails sent
             - total_processed: Total podcasts processed
     """
-    logger.info(f"Starting activation email processing (batch size: {num_emails})")
     try:
+        # Get dynamic batch config if no specific number was provided
+        if num_emails is None:
+            batch_config = get_batch_config()
+            num_emails = batch_config["batch_size"]
+            
+        logger.info(f"Starting activation email processing (batch size: {num_emails})")
+        
         # Load existing activated emails record
         activated_record = load_activated_emails()
         emails_already_sent = set(activated_record.get("emails_sent", []))
@@ -164,8 +263,16 @@ def process_activation_emails(num_emails=5):
             if podcast.get("email") and podcast.get("email") not in emails_already_sent
         ]
         
-        # Limit to the batch size
-        podcasts_to_process = podcasts_to_process[:num_emails]
+        # Calculate remaining emails we can process
+        remaining_podcasts = len(podcasts_to_process)
+        logger.info(f"Remaining unprocessed podcasts: {remaining_podcasts}")
+        
+        # Use the smaller of requested batch size or remaining podcasts
+        actual_batch_size = min(num_emails, remaining_podcasts)
+        
+        # Limit to the actual batch size
+        podcasts_to_process = podcasts_to_process[:actual_batch_size]
+        logger.info(f"Processing {len(podcasts_to_process)} podcasts in this batch")
         
         for podcast_data in podcasts_to_process:
             total_processed += 1
@@ -218,7 +325,8 @@ def process_activation_emails(num_emails=5):
             "success": True,
             "message": f"Successfully sent {emails_sent_successfully} activation emails",
             "emails_sent": emails_sent_successfully,
-            "total_processed": total_processed
+            "total_processed": total_processed,
+            "batch_size": num_emails
         }
         
     except Exception as e:
@@ -242,11 +350,17 @@ def get_activation_stats():
         all_podcasts = load_podcasts_from_blob()
         total_podcasts = len(all_podcasts)
         
+        # Get batch configuration
+        batch_config = get_batch_config()
+        
         return {
             "total_podcasts": total_podcasts,
             "emails_sent": len(emails_sent),
             "podcasts_remaining": total_podcasts - len(emails_sent),
             "last_sent_date": last_sent_date,
+            "batch_size": batch_config["batch_size"],
+            "days_running": batch_config["days_running"],
+            "next_batch_size": int(batch_config["batch_size"] * 1.20),  # 20% growth
             "success": True
         }
         

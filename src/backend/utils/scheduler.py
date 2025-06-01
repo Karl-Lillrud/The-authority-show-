@@ -7,9 +7,8 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 import random
-from backend.utils.email_utils import send_email
+from backend.utils.email_utils import send_email, send_summary_email  # Updated import
 from backend.services.activateVerificationService import verify_activation_file_exists
-from flask import render_template
 from backend.utils.activate import process_activation_emails, get_activation_stats
 
 logger = logging.getLogger(__name__)
@@ -104,7 +103,7 @@ class TimeBasedSchedulerTask(SchedulerTask):
 class ActivationEmailTask(TimeBasedSchedulerTask):
     """Task for sending activation emails at 5 AM."""
 
-    def __init__(self, api_base_url, emails_per_batch=5):
+    def __init__(self, api_base_url, emails_per_batch=None):
         # Set to run at 5 AM
         super().__init__("activation_email", hour=5, minute=0)
         
@@ -122,8 +121,14 @@ class ActivationEmailTask(TimeBasedSchedulerTask):
         else:
             self.api_base_url = api_base_url
             
+        # We'll use None to indicate dynamic sizing based on days running
+        # with initial batch of 89 and 20% daily increase
         self.emails_per_batch = emails_per_batch
         logger.info(f"ActivationEmailTask initialized with API base URL: {self.api_base_url}, scheduled for 5:00 AM")
+        if emails_per_batch is None:
+            logger.info("Using dynamic batch sizing starting at 89 emails with 20% daily growth")
+        else:
+            logger.info(f"Using fixed batch size of {emails_per_batch} emails")
 
     def execute(self):
         """Send a batch of activation emails using activate.py module."""
@@ -131,10 +136,12 @@ class ActivationEmailTask(TimeBasedSchedulerTask):
             logger.info(f"Scheduler: Starting activation email task at {datetime.now()}")
             
             # Use process_activation_emails from activate.py
+            # Pass None to use dynamic batch sizing
             result = process_activation_emails(self.emails_per_batch)
             
             if result and result.get("success"):
-                logger.info(f"Scheduler: Successfully sent {result.get('emails_sent', 0)} activation emails")
+                batch_size = result.get("batch_size", "unknown")
+                logger.info(f"Scheduler: Successfully sent {result.get('emails_sent', 0)} activation emails out of batch size {batch_size}")
                 return True
             else:
                 logger.error(f"Scheduler: Failed to send activation emails: {result.get('error', 'Unknown error')}")
@@ -179,24 +186,38 @@ class SummaryEmailTask(TimeBasedSchedulerTask):
                 logger.error(f"Scheduler: Failed to get activation stats: {stats.get('error', 'Unknown error')}")
                 return False
             
+            # Get batch configuration information
+            try:
+                from backend.utils.activate import get_batch_config
+                batch_config = get_batch_config()
+                current_batch_size = batch_config["batch_size"]
+                days_running = batch_config["days_running"]
+                next_batch_size = int(current_batch_size * 1.20)  # 20% growth
+            except Exception as e:
+                logger.error(f"Failed to get batch configuration: {e}")
+                current_batch_size = "Unknown"
+                days_running = "Unknown"
+                next_batch_size = "Unknown"
+            
             # Send summary email to admin
             admin_email = os.getenv("ADMIN_EMAIL", "contact@podmanager.ai")
             subject = f"PodManager Daily Activation Summary - {datetime.now().strftime('%Y-%m-%d')}"
             
-            body = render_email_content(
-                "summary_email.html",
-                subject=subject,
-                total_podcasts=stats.get("total_podcasts", 0),
-                emails_sent=stats.get("emails_sent", 0),
-                podcasts_remaining=stats.get("podcasts_remaining", 0),
-                last_sent_date=stats.get("last_sent_date", "Never"),
-                current_year=datetime.now().year
-            )
+            # Prepare context for the email template
+            context = {
+                "subject": subject,
+                "total_podcasts": stats.get("total_podcasts", 0),
+                "emails_sent": stats.get("emails_sent", 0),
+                "podcasts_remaining": stats.get("podcasts_remaining", 0),
+                "last_sent_date": stats.get("last_sent_date", "Never"),
+                "batch_size": current_batch_size,
+                "days_running": days_running,
+                "next_batch_size": next_batch_size
+            }
             
-            # Debug
+            # Use the new send_summary_email function 
             logger.info(f"Sending summary email to {admin_email}")
-            
-            result = send_email(admin_email, subject, body)
+            result = send_summary_email(admin_email, subject, context)
             
             if result.get("success", False):
                 logger.info(f"Scheduler: Successfully sent summary email to {admin_email}")
@@ -226,8 +247,8 @@ class Scheduler:
 
     def initialize_default_tasks(self):
         """Initialize the default tasks for the scheduler."""
-        # Add activation email task (runs at 5 AM)
-        self.add_task(ActivationEmailTask(self.api_base_url))
+        # Add activation email task (runs at 5 AM) with dynamic batch sizing
+        self.add_task(ActivationEmailTask(self.api_base_url, emails_per_batch=None))
         
         # Add summary email task (runs at 7 AM)
         self.add_task(SummaryEmailTask(self.api_base_url))
