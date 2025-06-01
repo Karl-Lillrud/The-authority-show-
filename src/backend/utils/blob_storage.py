@@ -136,3 +136,44 @@ def download_blob_to_tempfile(container_name, blob_path):
         if temp_db_file and os.path.exists(temp_db_file.name):
              os.remove(temp_db_file.name)
         return None
+
+def get_blob_content(container_name, blob_path):
+    """
+    Read a blob directly from Azure Blob Storage without downloading to a file
+    
+    Args:
+        container_name (str): The name of the Azure Blob Storage container.
+        blob_path (str): The path of the blob to read.
+        
+    Returns:
+        bytes: The content of the blob or None if an error occurs.
+    """
+    blob_service_client = get_blob_service_client()
+    if not blob_service_client:
+        logger.error("BlobServiceClient not initialized. Cannot read blob.")
+        return None
+
+    try:
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
+        
+        # Check if blob exists before trying to download
+        if not blob_client.exists():
+            logger.error(f"Blob '{blob_path}' not found in container '{container_name}'.")
+            return None
+        
+        # Download blob content directly to memory
+        download_stream = blob_client.download_blob()
+        content = download_stream.readall()
+        
+        logger.info(f"Successfully read blob: {blob_path}")
+        return content
+        
+    except ResourceNotFoundError:
+        logger.error(f"Blob '{blob_path}' not found in container '{container_name}'.", exc_info=True)
+        return None
+    except AzureError as ae:
+        logger.error(f"Azure error during blob read: {ae}", exc_info=True)
+        return None
+    except Exception as e:
+        logger.error(f"Failed to read blob '{blob_path}' from container '{container_name}': {e}", exc_info=True)
+        return None

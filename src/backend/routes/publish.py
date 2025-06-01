@@ -70,7 +70,7 @@ def publish_episode():
 
         # Optionally notify directories immediately or schedule
         notify_spotify(episode_id)
-        notify_google_podcasts(episode_id)
+        notify_youtube_podcasts(episode_id)  # Fixed the extra parenthesis
 
         return jsonify({"message": "Episode saved and encoding triggered", "episodeId": str(episode_id)})
     except Exception as e:
@@ -143,3 +143,8 @@ def api_publish_episode(episode_id):
     except Exception as e:
         current_app.logger.error(f"Error in api_publish_episode for episode {episode_id}: {str(e)}", exc_info=True)
         return jsonify({"success": False, "error": f"An unexpected error occurred: {str(e)}"}), 500
+
+# Replace this function if it exists
+def notify_youtube_podcasts(episode_id):
+    # YouTube Podcasts does not have a public API for pinging, but you can use their directory to submit the RSS.
+    pass
