@@ -76,7 +76,7 @@ def send_invitation():
 @invitation_bp.route("/invite_email_body", methods=["GET"])
 def invite_email_body():
     """Returns the HTML template for the beta invitation email."""
-    return render_template("beta-email/podmanager-beta-invite.html")
+    return render_template("emails/podmanager-beta-invite.html")
 
 
 @invitation_bp.route("/send_team_invite", methods=["POST"])

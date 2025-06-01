@@ -247,9 +247,9 @@ def send_login_email(email, login_link):
     try:
         subject = "Your login link for PodManager"
         
-        # Use the login.html template instead of inline HTML
+        # Use the login_email.html template instead of inline HTML
         body = render_template(
-            "emails/login.html",
+            "emails/login_email.html",
             login_link=login_link,
             current_year=datetime.now().year  # Add current year for the footer
         )
@@ -488,7 +488,7 @@ def send_beta_invite_email(email, user_name=None):
     subject = "🎉 Welcome to PodManager.ai Beta – New Features Unlocked!"
     # Render the correct template for the beta invite
     body = render_template(
-        "beta-email/podmanager-beta-invite.html",
+        "emails/podmanager-beta-invite.html",
         user_name=user_name or "Podcaster"
     )
     logger.info(f"📧 Preparing to send beta invite email to {email}")
