@@ -93,9 +93,7 @@ button {
 }
 
 .sidebar-item .chevron {
-  margin-left: auto;
-  color: var(--account-muted-foreground);
-  transition: transform 0.3s ease;
+  display: none;
 }
 
 .sidebar-item:hover {
@@ -117,9 +115,7 @@ button {
   color: var(--account-primary);
 }
 
-.sidebar-item[data-toggle="submenu"].active .chevron {
-  transform: rotate(90deg);
-}
+
 
 /* Submenu */
 .submenu {
