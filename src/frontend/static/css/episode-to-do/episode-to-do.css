@@ -182,7 +182,7 @@ a,
   padding: 0.5rem 1rem;
   background-color: var(--success);
   color: white;
-  border-radius: var(--radius);
+  border-radius: var(--radius-small);
   text-decoration: none;
   font-weight: 600;
   transition: all 0.2s ease;
@@ -370,16 +370,11 @@ a,
 /* Cards */
 .card {
   background-color: var(--card-bg);
-  border-radius: var(--radius);
+  border-radius: var(--radius-large);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition: box-shadow 0.3s ease, transform 0.2s ease;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
 }
 
 .card-content {
@@ -487,7 +482,7 @@ a,
   padding: 0.75rem 0.5rem;
   background-color: var(--light);
   border: 1px solid transparent;
-  border-radius: var(--radius);
+  border-radius: var(--radius-tiny);
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 500;
@@ -564,7 +559,7 @@ a,
 
 .podcast-item {
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-small);
   padding: 0.75rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -609,7 +604,7 @@ a,
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
-  border-radius: var(--radius);
+  border-radius: var(--radius-tiny);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1595,7 +1590,7 @@ textarea:focus {
 .workflow-editor {
   padding: 1.5rem;
   background-color: var(--card-bg);
-  border-radius: var(--radius);
+  border-radius: var(--radius-medium);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
 }
@@ -1614,7 +1609,7 @@ textarea:focus {
 .workflow-selector select {
   flex-grow: 1;
   padding: 0.5rem;
-  border-radius: var(--radius);
+  border-radius: var(--radius-small);
   border: 1px solid var(--border);
   background-color: var(--input-bg);
 }
@@ -1676,7 +1671,7 @@ textarea:focus {
   text-align: center;
   color: var(--muted);
   background-color: var(--light);
-  border-radius: var(--radius);
+  border-radius: var(--radius-small);
   border: 1px dashed var(--border);
 }
 
@@ -1685,7 +1680,7 @@ textarea:focus {
   text-align: center;
   color: var(--muted);
   background-color: var(--light);
-  border-radius: var(--radius);
+  border-radius: var(--radius-small);
   border: 1px dashed var(--border);
   margin-bottom: 1rem;
 }
@@ -1852,7 +1847,7 @@ textarea:focus {
   margin-top: 1.5rem;
   padding: 1rem;
   background-color: var(--light);
-  border-radius: var(--radius);
+  border-radius: var(--radius-small);
   border: 1px solid var(--border);
 }
 

@@ -288,7 +288,7 @@ function showTab(tabName) {
                 <p><strong>Original Audio</strong></p>
             </div>
 
-            <div class="ap-container" style="margin-top: 23px; padding: 1.5rem; padding-bottom: 1rem; border: 1px solid #ddd; border-radius: 12px; width: 100%;">
+            <div class="ap-container" style="margin-top: 23px; padding: 1.5rem; padding-bottom: 1rem; border: 1px solid #ddd; border-radius: var(--radius-medium); width: 100%;">
                 <h3>Choose Audio Processing Method</h3>
                 <p style="margin-bottom: 20px;">Select one of the following enhancements:</p>
 

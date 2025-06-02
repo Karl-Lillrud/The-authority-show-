@@ -71,7 +71,7 @@ body {
   #content .content-wrapper {
     background-color: var(--card-bg-light);
     padding: 1.5rem;
-    border-radius: 1rem;
+    border-radius: var(--radius-large);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
   }
@@ -84,7 +84,7 @@ body {
   input[type="file"] {
     border: 2px dashed #ccc;
     padding: 1rem;
-    border-radius: 0.75rem;
+    border-radius: var(--radius-medium);
     background: #fafafa;
     text-align: center;
     cursor: pointer;
@@ -107,7 +107,7 @@ body {
     font-weight: 600;
     padding: 0.5rem 1.5rem;
     border: none;
-    border-radius: 1rem;
+    border-radius: var(--radius-small);
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(255, 115, 0, 0.4);
     transition: background 0.3s ease;
@@ -141,7 +141,7 @@ body {
     font-size: 1rem;         
     font-weight: 600;
     border: none;
-    border-radius: var(--radius-medium);  
+    border-radius: var(--radius-small);  
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: var(--button-shadow);

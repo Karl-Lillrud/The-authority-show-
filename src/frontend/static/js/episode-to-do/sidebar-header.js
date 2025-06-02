@@ -172,7 +172,7 @@ export function addModalStyles() {
     
     .btn {
       padding: 8px 16px;
-      border-radius: 4px;
+      border-radius: var(--radius-tiny);
       cursor: pointer;
       font-weight: 500;
       transition: background-color 0.2s;
