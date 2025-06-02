@@ -405,6 +405,7 @@
   padding: 3px 10px;
   background-color: rgba(255, 127, 63, 0.1);
   border-radius: var(--radius-small);
+  width: fit-content;
 }
 
 .detail-section {
@@ -538,6 +539,11 @@
   width: 100%;
   padding: var(--spacing-sm);
   margin-top: var(--spacing-sm);
+  
+}
+
+.episode-list-item {
+  width: fit-content;
 }
 
 .detail-section-title {
@@ -693,6 +699,7 @@
   padding: var(--spacing-sm);
   background-color: rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-medium);
+  
 }
 
 .podcast-episode-item {
@@ -707,6 +714,7 @@
   transition: all var(--transition-normal);
   cursor: pointer;
   border-left: 2px solid var(--highlight-color);
+  width: fit-content;
 }
 
 .podcast-episode-actions {
@@ -1583,6 +1591,12 @@ select option:disabled {
 
 .episode-list-item:last-child {
   margin-bottom: 0;
+}
+
+.episodes-list-container {
+  display: flex;
+  flex-direction: wrap;
+  gap: var(--spacing-xs);
 }
 
 .episode-list-item:hover {
