@@ -457,7 +457,7 @@ def send_activation_email(email, activation_link, podcast_name, artwork_url):
     """
 
     # To temporarily disable this function, uncomment the next line
-    return {"success": False, "message": "Beta invites are temporarily disabled."}
+    # return {"success": False, "message": "Beta invites are temporarily disabled."}
 
     try:
         subject = f"Activate Your Podcast Account: {podcast_name}"

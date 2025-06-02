@@ -308,7 +308,11 @@ def process_activation_emails(num_emails=None):
                     # Add to tracking list
                     activated_record["emails_sent"].append(email)
                 else:
-                    logger.error(f"Failed to send activation email to {email}: {result.get('error', 'Unknown error')}")
+                    error_message = result.get('error', result.get('message', 'Unknown error'))
+                    if "temporarily disabled" in error_message.lower():
+                        logger.warning(f"Activation email sending is currently disabled. Email to {email} not sent. Message: {error_message}")
+                    else:
+                        logger.error(f"Failed to send activation email to {email}: {error_message}")
 
             except Exception as e:
                 logger.error(f"Failed to process activation for {email}: {e}", exc_info=True)
