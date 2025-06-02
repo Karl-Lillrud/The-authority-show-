@@ -928,3 +928,21 @@ video {
     border: 1px solid #ccc !important;
   }
 }
+
+.control-button i.fas {
+  display: inline-block !important;
+  font-family: 'Font Awesome 5 Free' !important;
+  font-weight: 900 !important;
+  font-size: 1rem;
+  color: inherit;
+}
+
+.control-button.pause.resume {
+  background: var(--success-gradient);
+  color: white;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.control-button.pause.resume:hover {
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+}
