@@ -1,6 +1,5 @@
 {% extends "/components/base.html" %} {% block title %}Podcast Management{%
 endblock %} {% block content %}
-<head>
   <script
     async
     src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"
@@ -24,8 +23,7 @@ endblock %} {% block content %}
     rel="stylesheet"
     href="{{ url_for('static', filename='css/dashboard/task.css') }}"
   />
-</head>
-<body>
+
   <div class="dashboard">
     <!-- Dashboard Header -->
     <div class="dashboard-header">
@@ -103,6 +101,7 @@ endblock %} {% block content %}
                     <th>Goal</th>
                   </tr>
                 </thead>
+                <tbody class="leaderboard-body"></tbody>
               </table>
             </div>
             <div class="team-leaderboard">
@@ -161,4 +160,3 @@ endblock %} {% block content %}
     src="{{ url_for('static', filename='js/dashboard/dashboard.js') }}"
   ></script>
   {% endblock %}
-</body>

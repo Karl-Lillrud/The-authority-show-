@@ -10,6 +10,13 @@ mongo_bp = Blueprint("mongo_bp", __name__)
 # Load environment variables
 load_dotenv()
 
+
+mongo_uri = os.getenv("MONGODB_URI","mongodb://127.0.0.1:27017/Podmanager")
+client = MongoClient(mongo_uri)
+database = client.get_default_database()  
+client["Podmanager"]
+
+
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI")
 DATABASE_NAME = "Podmanager"
@@ -40,7 +47,7 @@ try:
     fs = GridFS(database)  # Initialize GridFS
     logger.info("MongoDB connected successfully!")
 except Exception as ez:
-    logger.error("Failed to connect to MongoDB or initialize GridFS: {e}")
+    logger.error(f"Failed to connect to MongoDB or initialize GridFS: {ez}")
     raise
 
 
