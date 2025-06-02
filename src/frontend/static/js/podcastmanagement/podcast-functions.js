@@ -259,9 +259,9 @@ try {
         const episodeContent = document.createElement("div");
         episodeContent.className = "podcast-episode-content";
         episodeContent.innerHTML = `
-        <h4 class="podcast-episode-title">${episode.title}</h4>
+        <h4 class="podcast-episode-title">${episode.title.slice(0, 20)}</h4>
         <div class="podcast-episode-description">${
-          episode.description || "No description available."
+          episode.description.slice(0, 50) || "No description available."
         }</div>
       `;
 

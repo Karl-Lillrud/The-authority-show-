@@ -364,3 +364,28 @@ def plan_and_mix_sfx():
     except Exception as e:
         logger.error(f"Error generating SFX plan & mix: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
+    
+@audio_bp.route("/proxy_audio")
+def proxy_audio():
+    from flask import request, Response
+    import requests
+
+    url = request.args.get("url")
+    logger.info(f"🛰️ Proxy fetching: {url}")
+
+    if not url:
+        return jsonify({"error": "Missing 'url' query param"}), 400
+
+    try:
+        r = requests.get(url, stream=True, timeout=10)
+        if r.status_code != 200:
+            logger.warning(f"❌ Upstream fetch failed with status {r.status_code}")
+            return jsonify({"error": f"Upstream fetch failed: {r.status_code}"}), r.status_code
+
+        return Response(
+            r.iter_content(chunk_size=4096),
+            content_type=r.headers.get("Content-Type", "audio/mpeg"),
+        )
+    except Exception as e:
+        logger.error(f"❌ Failed to proxy fetch: {e}")
+        return jsonify({"error": str(e)}), 500

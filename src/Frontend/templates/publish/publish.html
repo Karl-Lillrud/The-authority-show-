@@ -59,8 +59,8 @@
             <div class="platform-toggle">
                 <input type="checkbox" id="platform-google" name="platform-google" data-platform="google" checked>
                 <label for="platform-google">
-                    <img src="{{ url_for('static', filename='images/platform-icons/googlepodcasts.svg') }}" alt="Google Podcasts">
-                    Google Podcasts
+                    <img src="{{ url_for('static', filename='images/platform-icons/youtube.png') }}" alt="YouTube Podcasts">
+                    YouTube
                 </label>
             </div>
             <div class="platform-toggle">
@@ -96,6 +96,14 @@
         <pre id="publish-log"></pre>
     </div>
 </div>
+
+<!-- Data for JavaScript -->
+<script>
+  window.publishPageData = {
+    podcasts: {{ podcasts|tojson|safe if podcasts else [] }},
+    singlePodcastId: {% if single_podcast and single_podcast.id %}"{{ single_podcast.id }}"{% else %}null{% endif %}
+  };
+</script>
 {% endblock %}
 
 {% block page_specific_scripts %}

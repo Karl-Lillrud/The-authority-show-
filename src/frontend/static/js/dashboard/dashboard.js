@@ -11,6 +11,8 @@ import { getActivitiesRequest } from "/static/requests/activityRequests.js";
 
 import { fetchGuestsRequest } from "/static/requests/guestRequests.js";
 
+=======
+import { updateEpisode } from "/static/requests/episodeRequest.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {

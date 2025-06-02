@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, request, jsonify, current_app, Response, send_file, g
 from backend.services.publishService import PublishService  # Only import the class
+from backend.repository.podcast_repository import PodcastRepository # Import PodcastRepository
 from bson.objectid import ObjectId
 import datetime
+from backend.utils.episode_helpers import force_episode_published_status  # Add this import
 
 publish_bp = Blueprint('publish_bp', __name__, url_prefix='/publish')
 
@@ -9,7 +11,30 @@ publish_bp = Blueprint('publish_bp', __name__, url_prefix='/publish')
 @publish_bp.route('/', methods=['GET'])
 def publish_page():
     """Renders the main publishing page."""
-    return render_template('publish/publish.html')
+    podcasts_for_template = []
+    single_podcast_details = None
+
+    if hasattr(g, "user_id") and g.user_id:
+        try:
+            podcast_repo = PodcastRepository()
+            response, status_code = podcast_repo.get_podcasts(g.user_id)
+            if status_code == 200 and response.get("podcast"):
+                podcasts_for_template = response["podcast"]
+                if len(podcasts_for_template) == 1:
+                    single_podcast = podcasts_for_template[0]
+                    single_podcast_details = {
+                        "id": single_podcast.get("_id"),
+                        "name": single_podcast.get("podName")
+                    }
+        except Exception as e:
+            current_app.logger.error(f"Error fetching podcasts for publish page: {e}", exc_info=True)
+            # Continue without podcast data if an error occurs
+
+    return render_template(
+        'publish/publish.html',
+        podcasts=podcasts_for_template, # Pass all podcasts
+        single_podcast=single_podcast_details # Pass single podcast details if applicable
+    )
 
 
 @publish_bp.route('/get_sas_url', methods=['POST'])
@@ -45,7 +70,7 @@ def publish_episode():
 
         # Optionally notify directories immediately or schedule
         notify_spotify(episode_id)
-        notify_google_podcasts(episode_id)
+        notify_youtube_podcasts(episode_id)  # Fixed the extra parenthesis
 
         return jsonify({"message": "Episode saved and encoding triggered", "episodeId": str(episode_id)})
     except Exception as e:
@@ -100,8 +125,17 @@ def api_publish_episode(episode_id):
         
         publish_service = PublishService()
         result = publish_service.publish_episode(episode_id, g.user_id, platforms)
-
+        
+        # Add a failsafe to ensure published status
         if result.get("success"):
+            # Double-check episode status after successful publish
+            episode_data, _ = publish_service.episode_repo.get_episode(episode_id, g.user_id)
+            if episode_data and episode_data.get("status", "").lower() != "published":
+                current_app.logger.warning(f"Episode {episode_id} status is not 'published' after successful publish. Forcing status update.")
+                force_published = force_episode_published_status(episode_id, g.user_id)
+                current_app.logger.info(f"Force update result: {force_published}")
+                result["details"].append(f"Status force-updated: {force_published}")
+                
             return jsonify(result), 200
         else:
             return jsonify(result), 500 
@@ -109,3 +143,8 @@ def api_publish_episode(episode_id):
     except Exception as e:
         current_app.logger.error(f"Error in api_publish_episode for episode {episode_id}: {str(e)}", exc_info=True)
         return jsonify({"success": False, "error": f"An unexpected error occurred: {str(e)}"}), 500
+
+# Replace this function if it exists
+def notify_youtube_podcasts(episode_id):
+    # YouTube Podcasts does not have a public API for pinging, but you can use their directory to submit the RSS.
+    pass

@@ -69,10 +69,9 @@ async function initializeDevices() {
         showNotification('Error initializing devices. Check permissions or devices.', 'error');
     }
 }
-
 async function loadGuestsForEpisode(episodeId) {
     try {
-        const guests = await fetchGuestsByEpisode(episodeId);
+        const guests = await fetchGuestsByEpisode(episodeId, token);
         updateParticipantsList(guests, []);
     } catch (err) {
         console.error('Failed to load guests:', err);
@@ -80,6 +79,7 @@ async function loadGuestsForEpisode(episodeId) {
         showNotification('Error loading guests', 'error');
     }
 }
+
 
 // Update participant list
 function updateParticipantsList(guests, connectedUsers) {
@@ -239,18 +239,26 @@ testSpeakerButton.addEventListener('click', async () => {
 });
 
 // Socket.IO events
-socket.on('connect', () => {
+socket.on('connect', async () => {
     if (isConnected) return;
     isConnected = true;
     console.log('Connected to server');
     currentRoom = urlParams.get('room') || episodeId;
     if (currentRoom) {
-        socket.emit('join_greenroom', { 
-            room: currentRoom, 
-            user: { id: guestId, socketId: socket.id, name: 'Guest' },
-            token
-        });
-        console.log('Emitted join_greenroom:', currentRoom);
+        try {
+            const guests = await fetchGuestsByEpisode(episodeId, token); // ← Token här
+            const guest = guests.find(g => g.id === guestId);
+            const guestName = guest?.name || 'Guest';
+            socket.emit('join_greenroom', { 
+                room: currentRoom, 
+                user: { id: guestId, socketId: socket.id, name: guestName },
+                token
+            });
+            console.log('Emitted join_greenroom:', { room: currentRoom, user: { id: guestId, name: guestName } });
+        } catch (error) {
+            console.error('Error fetching guest name:', error);
+            showNotification('Error loading guest information.', 'error');
+        }
     } else {
         showNotification('Error: Room or Episode ID missing', 'error');
     }
@@ -259,7 +267,7 @@ socket.on('connect', () => {
 socket.on('greenroom_joined', async (data) => {
     console.log('Greenroom joined:', data);
     try {
-        const guests = await fetchGuestsByEpisode(episodeId);
+        const guests = await fetchGuestsByEpisode(episodeId, token); // ← Token här
         updateParticipantsList(guests, data.users);
     } catch (err) {
         console.error('Error fetching guests:', err);
@@ -270,7 +278,7 @@ socket.on('greenroom_joined', async (data) => {
 socket.on('participant_update', async (data) => {
     console.log('Participant update:', data);
     try {
-        const guests = await fetchGuestsByEpisode(episodeId);
+        const guests = await fetchGuestsByEpisode(episodeId, token); // ← Token här
         updateParticipantsList(guests, data.users);
     } catch (err) {
         console.error('Error updating participants:', err);
@@ -278,10 +286,13 @@ socket.on('participant_update', async (data) => {
     }
 });
 
+
 socket.on('host_ready', (data) => {
-    roomStatus.querySelector('.status-text').textContent = 'Host is ready';
+    const hostName = data?.hostName || 'Host';
+    roomStatus.querySelector('.status-text').textContent = `${hostName} is ready`;
     roomStatus.querySelector('.status-indicator').classList.add('active');
 });
+
 
 socket.on('join_studio_approved', async (data) => {
     showNotification('Join request approved! Joining studio...', 'success');

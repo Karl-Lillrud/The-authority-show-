@@ -322,12 +322,16 @@ class GuestRepository:
 
     def get_guest_by_id(self, user_id, guest_id):
         """
-        Get a specific guest by ID
+        Get a specific guest by ID.
+        If user_id is None, skip user scoping (e.g. for invite token access).
         """
         try:
-            # Fetch guest for the logged-in user based on guest_id
+            query = {"_id": guest_id}
+            if user_id:
+                query["user_id"] = user_id
+
             guest_cursor = self.collection.find_one(
-                {"_id": guest_id, "user_id": user_id},
+                query,
                 {
                     "_id": 1,
                     "episodeId": 1,
@@ -339,7 +343,7 @@ class GuestRepository:
                     "linkedin": 1,
                     "twitter": 1,
                     "areasOfInterest": 1,
-                    "calendarEventId": 1,  # Include calendar event ID
+                    "calendarEventId": 1,
                     "company": 1,
                     "phone": 1,
                     "scheduled": 1,
@@ -361,20 +365,19 @@ class GuestRepository:
                 "linkedin": guest_cursor.get("linkedin", ""),
                 "twitter": guest_cursor.get("twitter", ""),
                 "areasOfInterest": guest_cursor.get("areasOfInterest", []),
-                "calendarEventId": guest_cursor.get(
-                    "calendarEventId", ""
-                ),  # Include calendar event ID
+                "calendarEventId": guest_cursor.get("calendarEventId", ""),
                 "company": guest_cursor.get("company", ""),
                 "phone": guest_cursor.get("phone", ""),
                 "scheduled": guest_cursor.get("scheduled", 0),
                 "notes": guest_cursor.get("notes", ""),
             }
 
-            return {"message": "Guest fetched successfully", "guest": guest}, 200
+            return guest, 200
 
         except Exception as e:
             logger.exception("❌ ERROR: Failed to fetch guest by ID")
             return {"error": f"An error occurred while fetching guest: {str(e)}"}, 500
+
 
     def get_episodes_by_guest(self, guest_id):
         """

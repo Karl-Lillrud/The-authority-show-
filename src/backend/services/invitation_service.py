@@ -1,14 +1,29 @@
 from flask import url_for
 from backend.database.mongo_connection import collection
-from backend.utils.email_utils import send_email, send_guest_invitation_email
+from backend.utils.email_utils import send_guest_invitation_email
 import uuid
-from datetime import datetime, timedelta
+import re
 import logging
 import requests
 
 logger = logging.getLogger(__name__)
 
 class InvitationService:
+    @staticmethod
+    def validate_email(email):
+        """ Validate email format using regex """
+        pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+        return re.match(pattern, email)
+
+    @staticmethod
+    def validate_uuid(uuid_str):
+        """ Validate UUID format """
+        try:
+            uuid.UUID(uuid_str)
+            return True
+        except ValueError:
+            return False
+
     @staticmethod
     def send_guest_invitation(user_id, guest_data):
         """
@@ -17,6 +32,13 @@ class InvitationService:
         from backend.repository.guest_repository import GuestRepository
         
         try:
+            # Validate guest data
+            if not InvitationService.validate_email(guest_data["email"]):
+                return {"error": "Invalid email address"}, 400
+
+            if not InvitationService.validate_uuid(guest_data["episodeId"]):
+                return {"error": "Invalid episodeId"}, 400
+
             # Fetch the user's googleCal token
             user = collection.database.Users.find_one({"_id": user_id}, {"googleCal": 1})
             google_cal_token = user.get("googleCal")
@@ -83,6 +105,14 @@ class InvitationService:
         Assigns guest to episode and sends booking email via /invite-guest.
         """
         try:
+            # Validate email format
+            if not InvitationService.validate_email(email):
+                return {"error": "Invalid email address"}, 400
+
+            # Validate episode and guest IDs
+            if not InvitationService.validate_uuid(episode_id) or not InvitationService.validate_uuid(guest_id):
+                return {"error": "Invalid episodeId or guestId"}, 400
+
             invite_url = "http://127.0.0.1:8000/invite-guest"
             payload = {"episode_id": episode_id, "guest_id": guest_id}
             response = requests.post(invite_url, json=payload)
@@ -102,4 +132,3 @@ class InvitationService:
         except Exception as e:
             logger.error(f"Failed to send session invitation: {e}", exc_info=True)
             return {"error": f"Failed to send session invitation: {str(e)}"}, 500
-

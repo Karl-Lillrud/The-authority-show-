@@ -42,7 +42,6 @@ button {
   gap: 0.5rem;
   font-size: 0.875rem;
   color: var(--account-muted-foreground);
-  margin-bottom: 0.75rem;
   transition: color 0.2s ease;
 }
 
@@ -60,7 +59,7 @@ button {
 .sidebar {
   flex: 0 0 280px;
   background-color: var(--account-card);
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-large);
   box-shadow: var(--account-shadow);
   padding: 1.5rem;
   height: fit-content;
@@ -80,7 +79,7 @@ button {
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   margin-bottom: 0.5rem;
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-tiny);
   color: var(--account-foreground);
   font-weight: 300;
   cursor: pointer;
@@ -196,7 +195,7 @@ button {
 .settings-section {
   display: none;
   background-color: var(--account-card);
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-large);
   box-shadow: var(--account-shadow);
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -286,7 +285,7 @@ button {
   background-color: var(--account-primary);
   color: white;
   border: none;
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-small);
   padding: 0.75rem 1.5rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -318,7 +317,7 @@ button {
 /* Profile Info Card Styles */
 .profile-info-card {
   background-color: var(--account-background);
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-medium);
   padding: 1.5rem;
   margin-bottom: 1.5rem;
   border: 1px solid var(--account-border);
@@ -377,7 +376,7 @@ input[type="tel"]{
   padding: 0.75rem 1rem;
   background-color: var(--account-input);
   border: 1px solid var(--account-border);
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-small);
   color: var(--account-foreground);
   font-size: 0.875rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -400,7 +399,7 @@ input:focus {
   background-color: var(--account-primary);
   color: white;
   border: none;
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-small);
   padding: 0.75rem 1.5rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -419,7 +418,7 @@ input:focus {
   background-color: var(--account-input);
   color: var(--account-foreground);
   border: 1px solid var(--account-border);
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-small);
   padding: 0.75rem 1.5rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -545,7 +544,7 @@ input:focus {
   gap: 1rem;
   padding: 1.5rem;
   background-color: var(--account-primary-light);
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-medium);
   margin-bottom: 1.5rem;
   position: relative; /* Add position relative to contain absolute elements */
 }
@@ -577,7 +576,7 @@ input:focus {
   gap: 1rem;
   padding: 1.5rem;
   background-color: rgba(245, 158, 11, 0.1);
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-medium);
   margin-bottom: 1.5rem;
 }
 
@@ -696,9 +695,6 @@ input:focus {
 }
 
 /* Billing History */
-.billing-history {
-  margin-bottom: 2.5rem;
-}
 
 .billing-history h3 {
   margin-bottom: 1.25rem;
@@ -708,7 +704,7 @@ input:focus {
 
 .billing-table {
   border: 1px solid var(--account-border);
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-medium);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
@@ -837,7 +833,7 @@ input:focus {
   gap: 1rem;
   padding: 1rem;
   background-color: var(--account-input);
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-medium);
   margin-bottom: 1rem;
 }
 
@@ -896,7 +892,7 @@ input:focus {
   margin-top: 2rem;
   padding: 1.5rem;
   background-color: var(--account-input);
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-medium);
 }
 
 .subscription-form-container h3 {
@@ -1061,7 +1057,7 @@ input:focus:invalid {
   gap: 0.5rem;
   padding: 0.6rem 1rem; /* Slightly smaller padding */
   font-size: 0.85rem; /* Slightly smaller font size */
-  border-radius: var(--account-radius);
+  border-radius: var(--radius-small);
   transition: all 0.2s ease;
 }
 

@@ -4,8 +4,6 @@ from flask import (
     Blueprint,
     g,
     render_template,
-    send_from_directory,
-    url_for,
 )
 from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.podcast_repository import PodcastRepository
@@ -13,8 +11,10 @@ from backend.repository.guest_repository import GuestRepository
 from backend.services.activity_service import ActivityService
 import logging
 import os
-from werkzeug.utils import secure_filename
+from datetime import datetime
+from backend.database.mongo_connection import database
 
+invitations_collection = database.GuestInvitations
 guest_repo = GuestRepository()
 episode_bp = Blueprint("episode_bp", __name__)
 episode_repo = EpisodeRepository()
@@ -50,10 +50,37 @@ def add_episode():
 
 @episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
 def get_episode(episode_id):
-    if not hasattr(g, "user_id") or not g.user_id:
-        logger.warning("Unauthorized attempt to get episode: No user_id in g")
-        return jsonify({"error": "User not authenticated"}), 401
-    return episode_repo.get_episode(episode_id, g.user_id)
+    user_id = getattr(g, "user_id", None)
+
+    if not user_id:
+
+        token = (
+            request.args.get("token")
+            or request.headers.get("Authorization", "").replace("Bearer ", "")
+        )
+
+        if not token:
+            logger.warning("Unauthorized attempt to get episode: Missing token")
+            return jsonify({"error": "User not authenticated"}), 401
+
+        invitation = invitations_collection.find_one({
+            "invite_token": token,
+            "episode_id": episode_id,
+            "expires_at": {"$gt": datetime.utcnow()}
+        })
+
+        if not invitation:
+            logger.warning("Unauthorized attempt: Invalid or expired token")
+            return jsonify({"error": "Invalid or expired token"}), 403
+
+        episode, status_code = episode_repo.get_episode(episode_id, None)
+
+        if status_code != 200:
+            return jsonify(episode), status_code
+
+        return jsonify(episode), 200
+
+    return episode_repo.get_episode(episode_id, user_id)
 
 
 @episode_bp.route("/get_episodes", methods=["GET"])
@@ -79,7 +106,6 @@ def delete_episode(episode_id):
 
 @episode_bp.route("/episodes/<episode_id>", methods=["PUT"])
 def update_episode(episode_id):
-    logger.warning(f"BACKEND: update_episode called with episode_id={episode_id}")
     # --- Debug Logging ---
     logger.debug(f"Update request received for episode {episode_id}")
     logger.debug(f"Request Headers: {dict(request.headers)}")
@@ -161,7 +187,17 @@ def get_episodes_by_podcast(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
         logger.warning(f"Unauthorized attempt to get episodes for podcast {podcast_id}: No user_id in g")
         return jsonify({"error": "User not authenticated"}), 401
-    return episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
+    
+    # Get 'exclude_statuses' query parameter, e.g., ?exclude_statuses=published,archived
+    exclude_statuses_str = request.args.get('exclude_statuses')
+    statuses_to_exclude = [] # Default to empty list (no exclusion)
+    if exclude_statuses_str:
+        statuses_to_exclude = [status.strip() for status in exclude_statuses_str.split(',') if status.strip()]
+        logger.info(f"Request to fetch episodes for podcast {podcast_id}, excluding statuses: {statuses_to_exclude}")
+
+    # Pass the list of statuses to exclude to the repository method
+    # If statuses_to_exclude is empty, the repository method will fetch all episodes.
+    return episode_repo.get_episodes_by_podcast(podcast_id, g.user_id, exclude_statuses=statuses_to_exclude)
 
 
 @episode_bp.route("/episode/new", methods=["GET"])

@@ -689,6 +689,208 @@ body {
   }
 }
 
+/* Split Screen Layout */
+.split-screen {
+  display: flex;
+  flex: 1;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  min-height: 0; /* Prevent overflow in flex container */
+  background: var(--bg-glass);
+  backdrop-filter: blur(var(--blur-sm));
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-normal);
+}
+
+/* Video Wrapper (Local and Remote) */
+.video-wrapper {
+  flex: 1;
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-md);
+  min-height: 200px; /* Ensure minimum height for empty states */
+}
+
+.video-wrapper:hover {
+  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-glow);
+  transform: scale(1.01);
+}
+
+/* Local and Remote Video Containers */
+.local-video,
+.remote-video {
+  display: block !important; /* Ensure videos are always visible */
+  width: 100%;
+  height: 100%;
+}
+
+/* Video Elements */
+.local-video video,
+.remote-video video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: calc(var(--radius-lg) - 2px); /* Account for border */
+  transition: all var(--transition-normal);
+}
+
+/* Optional: Placeholder for when video is off */
+.video-wrapper::after {
+  content: 'Video Off';
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-muted);
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  background: var(--bg-glass);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.video-wrapper.no-video::after {
+  display: block;
+}
+
+.studio-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.header-left, .header-right {
+    display: flex;
+    align-items: center;
+}
+.timer {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--text-primary, #212529);
+}
+.host-controls {
+    display: flex;
+    gap: 10px;
+}
+.shared-controls {
+    display: flex;
+    gap: 10px;
+}
+.video-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.split-screen {
+    display: flex;
+    flex: 1;
+    gap: 10px;
+    padding: 10px;
+}
+.video-wrapper {
+    flex: 1;
+    position: relative;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.local-video, .remote-video {
+    display: block !important; /* Ensure both videos are always visible after join */
+}
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.status-indicators {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    display: flex;
+    gap: 5px;
+}
+.indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #dc3545;
+}
+.indicator.active {
+    background: #28a745;
+}
+.participants-list {
+    display: none; /* Hide participants list unless needed for more than two users */
+}
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal.visible {
+    display: flex !important;
+}
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 100%;
+}
+
+/* Responsive Adjustments (already partially handled, but ensure split-screen consistency) */
+@media (max-width: 768px) {
+  .split-screen {
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+  }
+
+  .video-wrapper {
+    height: 250px; /* Fixed height for mobile stacking */
+    border-radius: var(--radius-md);
+  }
+
+  .local-video video,
+  .remote-video video {
+    border-radius: calc(var(--radius-md) - 2px);
+  }
+}
+
+@media (max-width: 480px) {
+  .split-screen {
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+  }
+
+  .video-wrapper {
+    height: 200px;
+    border-radius: var(--radius-sm);
+  }
+
+  .local-video video,
+  .remote-video video {
+    border-radius: calc(var(--radius-sm) - 2px);
+  }
+}
+
 /* Accessibility */
 .control-button:focus,
 .device-select:focus,

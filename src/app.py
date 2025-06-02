@@ -1,13 +1,18 @@
+import eventlet  
+eventlet.monkey_patch() 
+
 import os
 import logging
+
 from colorama import init
 from flask import Flask, request, session, g
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from dotenv import load_dotenv
+from azure.storage.blob import BlobServiceClient
 
-# Import blueprints
-from backend.routes.publish import publish_bp # Import the publish blueprint
+# Import blueprints (unchanged)
+from backend.routes.publish import publish_bp
 from backend.routes.auth import auth_bp
 from backend.routes.podcast import podcast_bp
 from backend.routes.dashboard import dashboard_bp
@@ -41,115 +46,142 @@ from backend.routes.edit_routes import edit_bp
 from backend.routes.enterprise import enterprise_bp
 from backend.routes.lia import lia_bp
 from backend.routes.index import index_bp
-from backend.routes.recording_studio import register_socketio_events  # <- updated import
+from backend.sockets.recording_events import register_socketio_events
 from backend.routes.recording_studio import recording_studio_bp
 from backend.routes.audio_pipeline import audio_pipeline_bp
 
-
-
 # Utils
+=======
+
 from backend.utils.scheduler import start_scheduler
 from backend.utils.credit_scheduler import init_credit_scheduler
 from backend.utils import venvupdate
+from backend.services.activateVerificationService import verify_activation_file_exists
 
-# Start environment setup
+
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
 
 load_dotenv()
 
-template_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "templates")
-static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "static")
+def create_app():
+    template_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "templates")
+    static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "static")
 
-app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
-socketio = SocketIO(app, cors_allowed_origins="*")  # Create instance
+    app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+    CORS(app, resources={r"/*": {"origins": [
+        "https://devapp.podmanager.ai",
+        "https://app.podmanager.ai",
+        "http://127.0.0.1:8000",
+    ]}})
 
-CORS(app, resources={r"/*": {"origins": [
-    "https://devapp.podmanager.ai",
-    "https://app.podmanager.ai",
-    "http://127.0.0.1:8000",
-]}})
+    app.secret_key = os.getenv("SECRET_KEY")
+    app.config["PREFERRED_URL_SCHEME"] = "https"
 
-app.secret_key = os.getenv("SECRET_KEY")
-app.config["PREFERRED_URL_SCHEME"] = "https"
+    # Register blueprints
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(podcast_bp)
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(pod_management_bp)
+    app.register_blueprint(podtask_bp)
+    app.register_blueprint(team_bp)
+    app.register_blueprint(Mailing_list_bp)
+    app.register_blueprint(guest_bp)
+    app.register_blueprint(guestpage_bp)
+    app.register_blueprint(account_bp)
+    app.register_blueprint(credits_bp)
+    app.register_blueprint(usertoteam_bp)
+    app.register_blueprint(invitation_bp)
+    app.register_blueprint(google_calendar_bp)
+    app.register_blueprint(episode_bp)
+    app.register_blueprint(podprofile_bp)
+    app.register_blueprint(activation_bp)
+    app.register_blueprint(podprofile_initial_bp)
+    app.register_blueprint(frontend_bp)
+    app.register_blueprint(guesttoepisode_bp)
+    app.register_blueprint(transcription_bp, url_prefix="/transcription")
+    app.register_blueprint(audio_bp)
+    app.register_blueprint(video_bp)
+    app.register_blueprint(billing_bp)
+    app.register_blueprint(guest_form_bp, url_prefix="/guest-form")
+    app.register_blueprint(user_bp, url_prefix="/user")
+    app.register_blueprint(landingpage_bp)
+    app.register_blueprint(comment_bp)
+    app.register_blueprint(activity_bp)
+    app.register_blueprint(stripe_config_bp)
+    app.register_blueprint(edit_bp)
+    app.register_blueprint(enterprise_bp, url_prefix="/enterprise")
+    app.register_blueprint(lia_bp, url_prefix="/lia")
+    app.register_blueprint(index_bp)
+    app.register_blueprint(recording_studio_bp)
+    app.register_blueprint(publish_bp)
+    app.register_blueprint(audio_pipeline_bp)
 
-# Register blueprints
-app.register_blueprint(auth_bp)
-app.register_blueprint(podcast_bp)
-app.register_blueprint(dashboard_bp)
-app.register_blueprint(pod_management_bp)
-app.register_blueprint(podtask_bp)
-app.register_blueprint(team_bp)
-app.register_blueprint(Mailing_list_bp)
-app.register_blueprint(guest_bp)
-app.register_blueprint(guestpage_bp)
-app.register_blueprint(account_bp)
-app.register_blueprint(credits_bp)
-app.register_blueprint(usertoteam_bp)
-app.register_blueprint(invitation_bp)
-app.register_blueprint(google_calendar_bp)
-app.register_blueprint(episode_bp)
-app.register_blueprint(podprofile_bp)
-app.register_blueprint(activation_bp, url_prefix='/activation')
-app.register_blueprint(podprofile_initial_bp, url_prefix='/podprofile')
-app.register_blueprint(frontend_bp)
-app.register_blueprint(guesttoepisode_bp)
-app.register_blueprint(transcription_bp, url_prefix="/transcription")
-app.register_blueprint(audio_bp)
-app.register_blueprint(video_bp)
-app.register_blueprint(billing_bp)
-app.register_blueprint(guest_form_bp, url_prefix="/guest-form")
-app.register_blueprint(user_bp, url_prefix="/user")
-app.register_blueprint(landingpage_bp)
-app.register_blueprint(comment_bp)
-app.register_blueprint(activity_bp)
-app.register_blueprint(stripe_config_bp)
-app.register_blueprint(edit_bp)
-app.register_blueprint(enterprise_bp, url_prefix="/enterprise")
-app.register_blueprint(lia_bp, url_prefix="/lia")
-app.register_blueprint(index_bp)
-app.register_blueprint(recording_studio_bp)
-app.register_blueprint(publish_bp) # Register the publish blueprint
-app.register_blueprint(audio_pipeline_bp)
+    @app.before_request
+    def load_user():
+        logger.info(f"Session object before loading user: {dict(session)}")
+        g.user_id = session.get("user_id")
+        logger.info(f"Request to {request.path} by user {g.user_id if g.user_id else 'None'}")
 
-# Set up environment and logging
-APP_ENV = os.getenv("APP_ENV", "production")
-API_BASE_URL = os.getenv("API_BASE_URL")
+    return app
 
-init(autoreset=True)
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
-logger.info("========================================")
-logger.info("✓ Starting server...")
-logger.info(f"API Base URL: {API_BASE_URL}")
-logger.info(f"MongoDB URI:  {os.getenv('MONGODB_URI')}")
-logger.info("========================================")
-logger.info("📧 Email Configuration:")
-logger.info(f"EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
-logger.info(f"EMAIL_PASS: {'**** **** **** ****' if os.getenv('EMAIL_PASS') else 'Not Set'}")
-logger.info("========================================")
-logger.info("🚀 Server is running!")
-logger.info(f"🌐 Local:  {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}")
+def init_extensions(app):
+    global socketio
+    socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True, async_mode='eventlet')
+    register_socketio_events(socketio)
 
-api_base_url_for_network = os.getenv('API_BASE_URL', 'Not Set')
-if ':' not in api_base_url_for_network.split('//')[-1]:
-    api_base_url_for_network += ':8000'
-logger.info(f"🌐 Network: {api_base_url_for_network}")
-logger.info("========================================")
 
-@app.before_request
-def load_user():
-    logger.info(f"Session object before loading user: {dict(session)}")
-    g.user_id = session.get("user_id")
-    logger.info(f"Request to {request.path} by user {g.user_id if g.user_id else 'None'}")
+def initialize_background_jobs(app):
+    # Initialize these once per worker carefully
+    start_scheduler(app)
+    init_credit_scheduler(app)
 
-# Initialize schedulers
-start_scheduler(app)
-init_credit_scheduler(app)
 
-# 🔌 Register socket events
-register_socketio_events(socketio)
+def configure_logging():
+    init(autoreset=True)
+    logging.basicConfig(level=logging.INFO)
+    global logger
+    logger = logging.getLogger(__name__)
+
+    logger.info("========================================")
+    logger.info("✓ Starting server...")
+    logger.info(f"API Base URL: {os.getenv('API_BASE_URL')}")
+    logger.info(f"MongoDB URI:  {os.getenv('MONGODB_URI')}")
+    logger.info("========================================")
+    logger.info("📧 Email Configuration:")
+    logger.info(f"EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
+    logger.info(f"EMAIL_PASS: {'**** **** **** ****' if os.getenv('EMAIL_PASS') else 'Not Set'}")
+    logger.info("========================================")
+    logger.info("🚀 Server is running!")
+    logger.info(f"🌐 Local:  {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}")
+    api_base_url_for_network = os.getenv('API_BASE_URL', 'Not Set')
+    if ':' not in api_base_url_for_network.split('//')[-1]:
+        api_base_url_for_network += ':8000'
+    logger.info(f"🌐 Network: {api_base_url_for_network}")
+    logger.info("========================================")
+
+
+app = create_app()
+
+# Add verification at startup
+with app.app_context():
+    from backend.services.activateVerificationService import verify_activation_file_exists
+    activation_file_check = verify_activation_file_exists()
+    if activation_file_check:
+        app.logger.info("Activation system ready: scraped.xml file is accessible")
+    else:
+        app.logger.warning("Activation system may not work: could not access scraped.xml file")
+
+
+@app.route("/health")
+def health():
+    return "OK", 200
+
+configure_logging()
+init_extensions(app)
+initialize_background_jobs(app)
+
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=8000, debug=True)
+    socketio.run(app, host="0.0.0.0", port=8000, debug=False)  # Disable debug mode
