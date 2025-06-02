@@ -589,6 +589,7 @@
   padding: 6px;
   background-color: rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-medium);
+  
 }
 
 .podcast-episode-item {
@@ -603,6 +604,7 @@
   transition: all var(--transition-normal);
   cursor: pointer;
   border-left: 2px solid var(--highlight-color);
+  width: fit-content;
 }
 
 .podcast-episode-actions {
