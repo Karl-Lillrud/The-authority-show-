@@ -10,7 +10,7 @@ body {
   margin: 2rem auto;
   padding: 2rem;
   background-color: #fff;
-  border-radius: var(--border-radius-md, 20px);
+  border-radius: var(--radius-large);
   box-shadow: var(--card-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
 }
 
@@ -46,7 +46,7 @@ body {
   margin-bottom: 2rem;
   padding: 1.5rem;
   border: 1px solid var(--border-color-light, #e0e0e0);
-  border-radius: var(--radius-medium, 8px);
+  border-radius: var(--radius-medium);
   background-color: var(--background-color-soft, #fdfdfd);
 }
 
@@ -140,7 +140,7 @@ body {
   padding: 0.75rem;
   background-color: #fff;
   border: 1px solid var(--border-color-light, #e0e0e0);
-  border-radius: var(--radius-medium, 8px);
+  border-radius: var(--radius-small);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 

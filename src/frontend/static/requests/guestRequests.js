@@ -45,12 +45,25 @@ export async function editGuestRequest(guestId, payload) {
 }
 
 export async function deleteGuestRequest(guestId) {
+  if (!guestId) {
+    console.error("deleteGuestRequest: guestId is undefined");
+    throw new Error("Missing guestId when trying to delete guest.");
+  }
+
   const res = await fetch(`/delete_guests/${guestId}`, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
   });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("Failed to delete guest:", errorText);
+    throw new Error("Failed to delete guest");
+  }
+
   return res.json();
 }
+
 
 export async function fetchGuestsRequest() {
   const res = await fetch("/get_guests");

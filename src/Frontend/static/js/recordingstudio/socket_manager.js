@@ -310,7 +310,6 @@ socket.on('participant_joined', async (data) => {
         }
     });
 
-    // IMPROVED: Recording resumed event handler (add this if not handled elsewhere)
     socket.on('recording_resumed', (data) => {
         console.log('Recording resumed:', data);
         

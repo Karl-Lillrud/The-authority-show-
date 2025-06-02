@@ -18,7 +18,7 @@ h2 {
 
 p {
   font-size: 16px;
-  color: rgb(84, 84, 84);
+  color: rgb(45 45 45);
 }
 
 figure {
@@ -58,11 +58,15 @@ header.index-header nav {
   width: 100%;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: flex-start;
   font-size: 16px;
   text-transform: uppercase;
   margin: 0px 20px;
+}
+
+header.index-header nav .to-app {
+  order: 2;
 }
 
 header.index-header nav ul li {
@@ -169,10 +173,11 @@ section#index-banner .hero-content {
   margin-bottom: 40px;
   color: white;
   position: absolute;
-  left: 3vw;
-  top: 22%;
+  right: calc(50% + 300px);
+  top: 28%;
+  margin: var(--spacing-xl);
   text-align: left;
-  max-width: 600px;
+  max-width: 460px;
   z-index: 3;
   display: flex;
   flex-direction: column;
@@ -187,14 +192,15 @@ section#index-banner .hero-content .tagline {
   font-weight: 500;
   text-transform: uppercase;
   color: var(--index-highlight-color);
-  margin-bottom: 15px;
+  margin-bottom: 10px;
+  margin-left: 10px;
   letter-spacing: 1px;
 }
 
 section#index-banner .hero-content h1 {
   font-size: 48px;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
@@ -204,6 +210,7 @@ section#index-banner .hero-content p.subheading {
   max-width: 700px;
   line-height: 1.6;
   text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  margin-bottom: var(--spacing-lg)
 }
 
 section#index-banner .hero-content p.last-subheading {
@@ -222,12 +229,15 @@ section#index-banner .hero-content a.button.hero-cta {
   transition: var(--transition-normal);
   display: inline-block;
   box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+  margin: 0 auto;
+  text-align: center;
 }
 
 section#index-banner .hero-content a.button.hero-cta:hover {
-  background-color: darken(var(--index-highlight-color), 10%);
-  transform: translateY(-2px);
-  box-shadow: 0px 6px 12px rgba(0,0,0,0.3);
+  opacity: 0.95;
+  transform: scale(1.15) rotate(0.02deg);
+  box-shadow: 0px 0px 10px var(--index-highlight-color);
+  text-decoration: none;
 }
 
 section#index-banner #logo img {
@@ -235,6 +245,76 @@ section#index-banner #logo img {
   width: auto;
   min-height: 250px;
   max-height: 300px;
+}
+
+section#index-banner div.product-review {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  position: absolute;
+  max-width: 390px;
+  padding: 40px;
+  z-index: 2;
+}
+
+section#index-banner div#product-review-1 {
+  left: calc(50% + 250px );
+  bottom: calc(50% + 50px );
+}
+
+section#index-banner div#product-review-2 {
+  max-width: 350px;
+  left: calc(50% + 300px );
+  bottom: calc(50% - 275px );
+}
+
+section#index-banner div.product-review .product-rating {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+section#index-banner div.product-review .product-quote {
+  font-size: 20px;
+  font-weight: 500;
+  font-kerning: normal;
+  color: black;
+  text-transform: uppercase;
+  text-shadow: 0px 0px 3px #000000cc;
+}
+
+section#index-banner div.product-review .product-quote {
+  font-size: 20px;
+  font-weight: 500;
+  font-kerning: normal;
+  color: black;
+  text-transform: uppercase;
+  text-align: left;
+  text-shadow: 0px 0px 3px #000000cc;
+}
+
+section#index-banner div.product-review .product-quote::before {
+  content: "❝";
+  position: absolute;
+  color: var(--index-highlight-color);
+  font-size: 192px;
+  top: -30px;
+  left: -25px;
+  text-shadow: none;
+  z-index: -1;
+}
+
+section#index-banner div.product-review .product-review-author {
+  font-size: 12px;
+  font-weight: 500;
+  font-style: italic;
+  font-kerning: normal;
+  color: black;
+  text-transform: uppercase;
+  text-shadow: 0px 0px 3px #000000cc;
+  margin-top: 20px;
 }
 
 /* About Section */
@@ -614,7 +694,53 @@ section#index-get-started .get-started-lottie svg g {
   }
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1250px) {
+
+  /* Banner Section */
+  section#index-banner {
+    background-image: none;
+  }
+
+  section#index-banner figure {
+    position: relative;
+    margin-bottom: 30px;
+  }
+
+  section#index-banner figure img {
+    margin-top: 0 !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
+  }
+
+  section#index-banner .hero-content {
+    position: relative;
+    margin: 0 auto 40px auto;
+    text-align: center;
+    max-width: 90vw;
+    left: unset;
+    top: unset;
+    right: unset;
+    align-items: center;
+  }
+
+  section#index-banner .hero-content .tagline {
+    margin-left: 0;
+  }
+
+  section#index-banner #product-review-1, section#index-banner #product-review-2 {
+    position: relative;
+    left: unset !important;
+    bottom: unset !important;
+    max-width: 600px !important;
+  }
+
+  section#index-banner #product-review-1 {
+    padding-bottom: 10px;
+  }
+
+  section#index-banner #product-review-2 {
+    margin-bottom: 20px;
+  }
 
   /* About Section */
   section#index-about::before {
@@ -714,21 +840,6 @@ section#index-get-started .get-started-lottie svg g {
     transform: translate(0, -9px) rotate(45deg);
   }
 
-  /* Banner Section */
-  section#index-banner {
-    background-image: none;
-  }
-
-  section#index-banner figure {
-    position: relative;
-  }
-
-  section#index-banner figure img {
-    margin-top: 0 !important;
-    min-height: 200px !important;
-    max-height: 200px !important;
-  }
-
   /* About Section */
   section#index-about article {
     flex-direction: column;
@@ -818,14 +929,6 @@ section#index-get-started .get-started-lottie svg g {
     margin-bottom: 0px;
   }
 
-  section#index-banner .hero-content {
-    position: static;
-    margin: 0 auto 40px auto;
-    text-align: center;
-    max-width: 90vw;
-    left: unset;
-    top: unset;
-  }
 }
 
 @media (max-width: 800px) {

@@ -14,7 +14,6 @@ const VIDEO_QUALITY_PRESETS = {
     '1080p': { width: 1920, height: 1080 }
 };
 
-// Device state management
 class DeviceState {
     constructor() {
         this.devices = {
@@ -56,12 +55,8 @@ class DeviceState {
     }
 }
 
-// Global device state
 const deviceState = new DeviceState();
 
-/**
- * Validates DOM elements and throws error if required elements are missing
- */
 function validateDOMElements(domElements) {
     const required = ['cameraSelect', 'microphoneSelect', 'speakerSelect', 'videoPreview'];
     const missing = required.filter(key => !domElements[key]);
@@ -71,9 +66,6 @@ function validateDOMElements(domElements) {
     }
 }
 
-/**
- * Checks if MediaDevices API is supported
- */
 function checkMediaDevicesSupport() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
         throw new Error('MediaDevices API not supported in this browser');
@@ -84,18 +76,13 @@ function checkMediaDevicesSupport() {
     }
 }
 
-/**
- * Checks if HTTPS is required and available
- */
+
 function checkSecureContext() {
     if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
         throw new Error('Media access requires HTTPS or localhost');
     }
 }
 
-/**
- * Populates a select element with device options
- */
 function populateDeviceSelect(selectElement, devices, deviceType, defaultLabel) {
     if (!selectElement) return;
     
@@ -118,9 +105,6 @@ function populateDeviceSelect(selectElement, devices, deviceType, defaultLabel) 
     });
 }
 
-/**
- * Sets up device change event listeners
- */
 function setupDeviceChangeListeners(domElements, isHost, onMicrophoneInitialized) {
     if (!navigator.mediaDevices.addEventListener) return;
     
@@ -138,7 +122,7 @@ function setupDeviceChangeListeners(domElements, isHost, onMicrophoneInitialized
 
 async function refreshDeviceList(domElements, isHost, onMicrophoneInitialized) {
     try {
-        // Säkerställ åtkomst så att enheter kan enumreras korrekt
+
         await navigator.mediaDevices.getUserMedia({ audio: true });
 
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -174,7 +158,6 @@ async function refreshDeviceList(domElements, isHost, onMicrophoneInitialized) {
             }
         }
 
-        // Auto-select speaker if none selected
         if (!deviceState.selectedDevices.speaker && deviceState.devices.audioOutput.length > 0) {
             const defaultSpeaker = deviceState.devices.audioOutput[0].deviceId;
             deviceState.setSelectedDevice('speaker', defaultSpeaker);
@@ -213,21 +196,15 @@ function validateSelectedDevices() {
 }
 
 
-export async function initializeDevices(domElements, isHost, onMicrophoneInitialized) {
+export async function initializeDevices(domElements, isHost, onMicrophoneInitialized, socket, room, guestId, peerConnections) {
     try {
-        // Steg 1: Kontrollera säker kontext
+
         checkSecureContext();
-
-        // Steg 2: Försök hämta tillstånd direkt
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
-        // Steg 3: DOM-validering och stöd
         validateDOMElements(domElements);
         checkMediaDevicesSupport();
 
         deviceState.retryCount = 0;
 
-        // Steg 4: Hämta alla enheter efter tillstånd beviljats
         const devices = await navigator.mediaDevices.enumerateDevices();
         console.log('Available devices:', devices.map(d => ({ kind: d.kind, label: d.label, deviceId: d.deviceId })));
         deviceState.updateDevices(devices);
@@ -245,7 +222,6 @@ export async function initializeDevices(domElements, isHost, onMicrophoneInitial
 
         setupDeviceChangeListeners(domElements, isHost, onMicrophoneInitialized);
 
-        // Steg 5: Initiera mikrofon (och kamera)
         const defaultMic = deviceState.devices.audio[0]?.deviceId;
         if (defaultMic) {
             deviceState.setSelectedDevice('microphone', defaultMic);
@@ -256,7 +232,7 @@ export async function initializeDevices(domElements, isHost, onMicrophoneInitial
             const defaultCamera = deviceState.devices.video[0]?.deviceId;
             if (defaultCamera) {
                 deviceState.setSelectedDevice('camera', defaultCamera);
-                await startCamera(defaultCamera, domElements, isHost);
+                await startCamera(defaultCamera, domElements, isHost, socket, room, guestId, peerConnections); // ✅ FIXAD
             }
 
             return true;
@@ -267,7 +243,6 @@ export async function initializeDevices(domElements, isHost, onMicrophoneInitial
     } catch (error) {
         console.error('Error initializing devices:', error);
 
-        // Tydligare hantering av tillståndsproblem
         if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
             showNotification('Mikrofon- eller kameraåtkomst nekades. Kontrollera webbläsartillstånd.', 'error');
         } else {
@@ -277,6 +252,7 @@ export async function initializeDevices(domElements, isHost, onMicrophoneInitial
         return await retryMicrophoneInitialization(domElements, isHost, onMicrophoneInitialized);
     }
 }
+
 
 
 async function retryMicrophoneInitialization(domElements, isHost, onMicrophoneInitialized) {
@@ -292,10 +268,9 @@ async function retryMicrophoneInitialization(domElements, isHost, onMicrophoneIn
         await new Promise(resolve => setTimeout(resolve, delay));
 
         try {
-            // Försök att begära tillstånd på nytt
+     
             await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            // Uppdatera enhetslistan
             await refreshDeviceList(domElements, isHost, onMicrophoneInitialized);
 
             if (deviceState.devices.audio.length > 0) {
@@ -317,7 +292,7 @@ async function retryMicrophoneInitialization(domElements, isHost, onMicrophoneIn
                     'Microphone access is blocked. Please allow access in your browser settings and retry.',
                     'error'
                 );
-                break; // Avsluta om tillstånd nekas – användaren måste agera
+                break; 
             }
         }
     }
@@ -329,10 +304,6 @@ async function retryMicrophoneInitialization(domElements, isHost, onMicrophoneIn
     return false;
 }
 
-
-/**
- * Initialize microphone with better error handling
- */
 export async function tryInitializeMicrophone(deviceId, localStream, socket, room, guestId, peerConnections) {
     try {
         if (!deviceId) {
@@ -410,10 +381,8 @@ export async function tryInitializeMicrophone(deviceId, localStream, socket, roo
     }
 }
 
-/**
- * Start camera with improved error handling and constraints
- */
 export async function startCamera(deviceId, domElements, isHost, socket, room, guestId, peerConnections) {
+ 
     const { videoPreview, microphoneSelect, videoQualitySelect } = domElements;
     let localStream = deviceState.localStream || videoPreview?.srcObject || null;
 
@@ -528,16 +497,12 @@ export async function startCamera(deviceId, domElements, isHost, socket, room, g
     }
 }
 
-
-/**
- * Toggle camera on/off
- */
 export async function toggleCamera(localStream, domElements, isCameraActive, isHost, socket, room, guestId, peerConnections) {
     const { videoPreview, cameraSelect } = domElements;
 
     try {
         if (isCameraActive) {
-            // Turn off camera
+     
             const videoTracks = localStream?.getVideoTracks() || [];
             videoTracks.forEach(track => {
                 track.stop();

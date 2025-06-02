@@ -4,6 +4,7 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/recordingstudio/recording_studio.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 {% endblock %}
 
 {% block content %}
@@ -25,47 +26,49 @@
                 <span id="recordingTime">00:00:00</span>
             </div>
             <div class="host-controls" id="hostControls" style="display: none;">
-                <div class="recording-controls">
-                    <button id="startRecordingBtn" class="control-button record">
-                        <i class="fas fa-microphone"></i> Start
-                    </button>
-                    <button id="pauseButton" class="control-button pause" disabled>
-                        <i class="fas fa-pause"></i> Pause
-                    </button>
-                    <button id="stopRecordingBtn" class="control-button stop" disabled>
-                        <i class="fas fa-stop"></i> Stop
-                    </button>
-                    <button id="saveRecording" class="control-button save" disabled>
-                        <i class="fas fa-save"></i> Save
-                    </button>
-                    <button id="discardRecording" class="control-button discard" disabled>
-                        <i class="fas fa-trash"></i> Discard
-                    </button>
-                </div>
-                <div class="media-settings">
-                    <select id="videoQuality" class="device-select" title="Select Video Quality">
-                        <option value="1080p">1080p</option>
-                        <option value="720p">720p</option>
-                        <option value="480p">480p</option>
-                    </select>
-                </div>
+            <div class="recording-controls">
+                <button id="startRecordingBtn" class="control-button record" title="Start Recording">
+    <i class="fas fa-circle-play"></i>
+        </button>
+        <button id="pauseButton" class="control-button pause" disabled title="Pause/Resume Recording">
+            <i class="fas fa-pause"></i>
+        </button>
+        <button id="stopRecordingBtn" class="control-button stop" disabled title="Stop Recording">
+            <i class="fas fa-stop"></i>
+        </button>
+        <button id="saveRecording" class="control-button save" disabled title="Save Recording">
+            <i class="fas fa-save"></i>
+        </button>
+        <button id="discardRecording" class="control-button discard" disabled title="Discard Recording">
+            <i class="fas fa-trash"></i>
+        </button>
+
             </div>
-            <div class="shared-controls">
-                <select id="cameraSelect" class="device-select" title="Select Camera">
-                    <option value="">Camera</option>
+            <div class="media-settings">
+                <select id="videoQuality" class="device-select" title="Select Video Quality">
+                    <option value="1080p">1080p</option>
+                    <option value="720p">720p</option>
+                    <option value="480p">480p</option>
                 </select>
-                <select id="microphoneSelect" class="device-select" title="Select Microphone">
-                    <option value="">Microphone</option>
-                </select>
-                <select id="speakerSelect" class="device-select" title="Select Speaker">
-                    <option value="">Speaker</option>
-                </select>
-                <button id="toggle-camera" class="control-button toggle-camera" title="Toggle Camera">
-                    <i class="fas fa-video"></i>
-                </button>
-                <button id="toggle-mic" class="control-button toggle-mic" title="Toggle Microphone">
-                    <i class="fas fa-microphone"></i>
-                </button>
+            </div>
+        </div>
+        <div class="shared-controls">
+            <select id="cameraSelect" class="device-select" title="Select Camera">
+                <option value="">Camera</option>
+            </select>
+            <select id="microphoneSelect" class="device-select" title="Select Microphone">
+                <option value="">Microphone</option>
+            </select>
+            <select id="speakerSelect" class="device-select" title="Select Speaker">
+                <option value="">Speaker</option>
+            </select>
+            <button id="toggle-camera" class="control-button toggle-camera" title="Toggle Camera">
+                <i class="fas fa-video"></i> Camera
+            </button>
+            <button id="toggle-mic" class="control-button toggle-mic" title="Toggle Microphone">
+                <i class="fas fa-microphone"></i> Microphone
+            </button>
+        </div>
             </div>
         </div>
     </div>
