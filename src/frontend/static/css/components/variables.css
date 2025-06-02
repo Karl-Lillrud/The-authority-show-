@@ -51,14 +51,15 @@
   --spacing-xl: 32px;
 
   /* Border Radiuses */
-  --radius-small: 12px;
-  --radius-medium: 12px;  /* For buttons */
-  --radius-large: 50px;
+  --radius-tiny: 6px; /* For smaller buttons */
+  --radius-small: 12px; /* For buttons, form inputs, selects and other small elements */
+  --radius-medium: 16px;  /* For inside containers */
+  --radius-large: 20px; /* For Main Containers */
 
-  --border-radius-sm: 10px;
-  --border-radius-md: 20px;
-  --border-radius-lg: 30px;
-  --border-radius-xl: 40px;
+  --border-radius-sm: 12px;
+  --border-radius-md: 16px;
+  --border-radius-lg: 20px;
+  --border-radius-xl: 30px;
 
   /* Breakpoints */
   --breakpoint-xs: 360px;
