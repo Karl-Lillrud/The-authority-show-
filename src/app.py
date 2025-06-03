@@ -130,7 +130,7 @@ def init_extensions(app):
 
 def initialize_background_jobs(app):
     # Initialize these once per worker carefully
-    start_scheduler(app)
+    start_scheduler(app)  # Pass the Flask app instance directly
     init_credit_scheduler(app)
 
 

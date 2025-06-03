@@ -40,15 +40,26 @@ def load_podcasts_from_blob():
         # Parse XML from the content
         root = ET.fromstring(xml_content)
         
-        for podcast_elem in root.findall("podcast"):
+        # Find podcasts - check for either direct podcast children or nested within <podcasts>
+        podcast_elements = root.findall("podcast")
+        if not podcast_elements:
+            # Try finding podcasts inside a <podcasts> container element
+            podcast_elements = root.findall("podcasts/podcast")
+            logger.info(f"Found {len(podcast_elements)} podcast elements within <podcasts> container")
+        else:
+            logger.info(f"Found {len(podcast_elements)} direct podcast elements")
+        
+        for podcast_elem in podcast_elements:
             title = podcast_elem.findtext("title")
             email_element = podcast_elem.find("emails/email")
             email = email_element.text if email_element is not None else None
             rss_feed = podcast_elem.findtext("rss")
+            
             if title and email and rss_feed:
                 podcasts.append({"title": title, "email": email, "rss_feed": rss_feed})
             else:
                 logger.warning(f"Skipping podcast entry due to missing data: Title={title}, Email={email}, RSS={rss_feed}")
+        
         logger.info(f"Loaded {len(podcasts)} podcasts from blob storage XML")
     except ET.ParseError:
         logger.error(f"Error parsing XML from blob storage")

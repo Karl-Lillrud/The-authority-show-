@@ -25,7 +25,7 @@ def render_email_content(template_name, **context):
         str: The rendered HTML content
     """
     try:
-        from flask import current_app
+        from flask import current_app, render_template
         with current_app.app_context():
             content = render_template(f'emails/{template_name}', **context)
             return content
@@ -155,7 +155,7 @@ class ActivationEmailTask(TimeBasedSchedulerTask):
 class SummaryEmailTask(TimeBasedSchedulerTask):
     """Task for sending daily summary emails at 7 AM."""
 
-    def __init__(self, api_base_url):
+    def __init__(self, api_base_url, flask_app=None):
         # Set to run at 7 AM
         super().__init__("summary_email", hour=7, minute=0)
         
@@ -172,6 +172,11 @@ class SummaryEmailTask(TimeBasedSchedulerTask):
             logger.info(f"Converted API base URL to: {self.api_base_url}")
         else:
             self.api_base_url = api_base_url
+        
+        # Store Flask app reference for application context
+        self.flask_app = flask_app
+        if not flask_app:
+            logger.warning("No Flask app provided to SummaryEmailTask - rendering templates may fail")
             
         logger.info(f"SummaryEmailTask initialized with API base URL: {self.api_base_url}, scheduled for 7:00 AM")
 
@@ -212,12 +217,56 @@ class SummaryEmailTask(TimeBasedSchedulerTask):
                 "last_sent_date": stats.get("last_sent_date", "Never"),
                 "batch_size": current_batch_size,
                 "days_running": days_running,
-                "next_batch_size": next_batch_size
+                "next_batch_size": next_batch_size,
+                "current_year": datetime.now().year  # Add current year for the footer
             }
             
-            # Use the new send_summary_email function 
-            logger.info(f"Sending summary email to {admin_email}")
-            result = send_summary_email(admin_email, subject, context)
+            # Use the send_summary_email function with proper app context
+            if self.flask_app:
+                with self.flask_app.app_context():
+                    # Import here to avoid circular import
+                    from backend.utils.email_utils import send_summary_email
+                    logger.info(f"Sending summary email to {admin_email} with app context")
+                    result = send_summary_email(admin_email, subject, context)
+            else:
+                # Try to get current app if flask_app wasn't provided
+                try:
+                    from flask import current_app
+                    with current_app.app_context():
+                        from backend.utils.email_utils import send_summary_email
+                        logger.info(f"Sending summary email to {admin_email} with current_app context")
+                        result = send_summary_email(admin_email, subject, context)
+                except Exception as app_err:
+                    logger.error(f"No Flask app context available: {app_err}")
+                    # Attempt a direct send without app context as fallback
+                    from backend.utils.email_utils import send_email
+                    
+                    # Create a basic HTML email directly without template
+                    html_content = f"""
+                    <html>
+                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h2>PodManager Activation Summary</h2>
+                            <p><strong>Date:</strong> {datetime.now().strftime('%Y-%m-%d')}</p>
+                            <p><strong>Total Podcasts:</strong> {stats.get("total_podcasts", 0)}</p>
+                            <p><strong>Emails Sent:</strong> {stats.get("emails_sent", 0)}</p>
+                            <p><strong>Podcasts Remaining:</strong> {stats.get("podcasts_remaining", 0)}</p>
+                            <p><strong>Last Sent Date:</strong> {stats.get("last_sent_date", "Never")}</p>
+                            <p><strong>Current Batch Size:</strong> {current_batch_size}</p>
+                            <p><strong>Days Running:</strong> {days_running}</p>
+                            <p><strong>Next Batch Size:</strong> {next_batch_size}</p>
+                        </div>
+                        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                            <p style="color: #666; font-size: 14px;">
+                                &copy; {datetime.now().year} PodManager.ai. All rights reserved.
+                            </p>
+                        </div>
+                    </body>
+                    </html>
+                    """
+                    
+                    logger.info(f"Sending summary email to {admin_email} without app context (fallback)")
+                    result = send_email(admin_email, subject, html_content)
             
             if result.get("success", False):
                 logger.info(f"Scheduler: Successfully sent summary email to {admin_email}")
@@ -234,11 +283,16 @@ class SummaryEmailTask(TimeBasedSchedulerTask):
 class Scheduler:
     """Background task scheduler."""
 
-    def __init__(self, api_base_url):
+    def __init__(self, api_base_url, flask_app=None):
         self.running = False
         self.tasks = []
         self.api_base_url = api_base_url
+        self.flask_app = flask_app
         logger.info(f"Scheduler initialized with API base URL: {api_base_url}")
+        if flask_app:
+            logger.info("Flask app provided to scheduler")
+        else:
+            logger.warning("No Flask app provided to scheduler - template rendering may fail")
 
     def add_task(self, task):
         """Add a task to the scheduler."""
@@ -251,7 +305,7 @@ class Scheduler:
         self.add_task(ActivationEmailTask(self.api_base_url, emails_per_batch=None))
         
         # Add summary email task (runs at 7 AM)
-        self.add_task(SummaryEmailTask(self.api_base_url))
+        self.add_task(SummaryEmailTask(self.api_base_url, flask_app=self.flask_app))
 
     def run_forever(self):
         """Run the scheduler in a loop."""
@@ -288,30 +342,36 @@ class Scheduler:
         logger.info("Scheduler: Stopping")
 
 # Add this function to initialize and start the scheduler
-def start_scheduler(api_base_url):
+def start_scheduler(api_base_url_or_app):
     """
-    Initializes and starts the scheduler with the given API base URL.
+    Initializes and starts the scheduler with the given API base URL or Flask app.
     
     Args:
-        api_base_url (str): The base URL for API requests made by the scheduler
+        api_base_url_or_app: The base URL for API requests or the Flask app instance
         
     Returns:
         Scheduler: The initialized and started scheduler instance
     """
     try:
-        # Fix: Handle the case where api_base_url might be the Flask app object
-        if str(api_base_url).startswith('<Flask'):
+        flask_app = None
+        api_base_url = None
+        
+        # Handle case where we get a Flask app instead of a URL string
+        if str(api_base_url_or_app).startswith('<Flask'):
+            flask_app = api_base_url_or_app
             # Use environment variables to determine the proper URL
             if os.getenv("ENVIRONMENT", "production").lower() == "local":
                 api_base_url = f"http://localhost:{os.getenv('PORT', '8000')}"
             else:
                 api_base_url = f"https://{os.getenv('API_BASE_URL', 'app.podmanager.ai')}"
-            logger.info(f"Converted Flask app to actual API URL: {api_base_url}")
+            logger.info(f"Extracted Flask app and API URL: {api_base_url}")
+        else:
+            api_base_url = api_base_url_or_app
         
         logger.info(f"Initializing scheduler with API base URL: {api_base_url}")
         
-        # Create a scheduler instance
-        scheduler_instance = Scheduler(api_base_url)
+        # Create a scheduler instance with both API URL and Flask app
+        scheduler_instance = Scheduler(api_base_url, flask_app=flask_app)
         
         # Initialize default tasks
         scheduler_instance.initialize_default_tasks()
