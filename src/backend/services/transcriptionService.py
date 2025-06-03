@@ -2,11 +2,13 @@
 import os
 import logging
 import re
+import tempfile
 from pydub import AudioSegment, effects
 from datetime import datetime, timezone
 from typing import List
 from io import BytesIO
 from elevenlabs.client import ElevenLabs
+from backend.repository.edit_repository import get_edit_by_id
 from backend.database.mongo_connection import fs
 from backend.utils.ai_utils import (
     generate_ai_suggestions,
@@ -199,8 +201,7 @@ class TranscriptionService:
         sfx_suggestions = suggest_sound_effects(emotion_data)
         return {"emotions": emotion_data, "sound_effects": sfx_suggestions}
     
-    def generate_audio_from_translated(self, raw_transcription: str, language: str) -> bytes:
-     
+    def generate_audio_from_translated(self, raw_transcription: str, language: str, edit_id: str = None) -> bytes:
         segments = self.build_segments_from_raw(raw_transcription)
         segments.sort(key=lambda s: s["start"])
 
@@ -208,13 +209,19 @@ class TranscriptionService:
             raise ValueError("No valid segments in raw_transcription.")
 
         total_ms = int(max(s["end"] for s in segments) * 1000)
-
         final = AudioSegment.silent(duration=total_ms)
 
-        voice_map = VOICE_MAPS.get(language)
-        if not voice_map:
-            raise ValueError(f"No voice for'{language}'")
-    
+        # 🔁 Hämta voiceMap från edit eller default map
+        voice_map = VOICE_MAPS.get(language, {})
+        if edit_id:
+            try:
+                edit = get_edit_by_id(edit_id)
+                if edit and "voiceMap" in edit:
+                    logger.info(f"🧠 Using saved voiceMap from edit {edit_id}")
+                    voice_map = edit["voiceMap"]
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to fetch voiceMap from edit {edit_id}: {e}")
+
         default_voice = next(iter(voice_map.values()), None)
 
         for seg in segments:
@@ -225,7 +232,7 @@ class TranscriptionService:
 
             voice_id = voice_map.get(speaker) or default_voice
             if not voice_id:
-                raise ValueError(f"No voice_id for {speaker} in {language}")
+                raise ValueError(f"No voice_id for {speaker} in voice_map")
 
             target_dur = end_ms - start_ms
             if target_dur <= 0:
@@ -253,6 +260,7 @@ class TranscriptionService:
         buf = BytesIO()
         final.export(buf, format="mp3")
         return buf.getvalue()
+
     
     def build_segments_from_raw(self, raw_transcription: str) -> List[dict]:
         segments = []
@@ -294,3 +302,23 @@ class TranscriptionService:
             translated.append(f"{prefix} {trans}" if prefix else trans)
         return translated
     
+    def clone_user_voice(self, file_data: bytes, user_id: str, voice_name: str = None) -> str:
+        """
+        Create a new voice clone from uploaded audio and return voice_id.
+        """
+
+        voice_name = voice_name or f"{user_id}_voice"
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(file_data)
+            tmp.flush()
+
+            # 🧠 ElevenLabs voice cloning (API)
+            voice = client.voices.ivc.create(
+                name=voice_name,
+                files=[tmp.name],
+                remove_background_noise=True
+            )
+
+        # ✅ Returnera voice_id för användning
+        return voice.voice_id

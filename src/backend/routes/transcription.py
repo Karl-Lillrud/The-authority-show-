@@ -20,7 +20,7 @@ from backend.services.subscriptionService import SubscriptionService
 from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
 from backend.services.creditService import consume_credits
-from backend.repository.edit_repository import save_transcription_edit
+from backend.repository.edit_repository import save_transcription_edit, get_edit_by_id, add_voice_map_to_edit
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
 from backend.utils.subscription_access import get_max_duration_limit
 from backend.utils.ai_utils import get_osint_info, create_podcast_scripts_paid, text_to_speech_with_elevenlabs,check_audio_duration
@@ -485,17 +485,22 @@ def translate_audio():
     data = request.get_json()
     raw = data.get("raw_transcription", "")
     language = data.get("language", "English")
+    edit_id = data.get("edit_id", None)  # 👈 hämta edit_id från klienten
+
     if not raw:
         return jsonify({"error": "No transcript provided"}), 400
 
     try:
-        audio_bytes = transcription_service.generate_audio_from_translated(raw, language)
+        audio_bytes = transcription_service.generate_audio_from_translated(
+            raw, language, edit_id=edit_id
+        )
         import base64
         b64 = base64.b64encode(audio_bytes).decode("utf-8")
         return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64}"})
     except Exception as e:
-        logger.error(f"Error generating translated audio: {e}")
+        logger.error(f"Error generating translated audio: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
+
 
 @transcription_bp.route("/audio_clip", methods=["POST"])
 def audio_clip():
@@ -513,3 +518,40 @@ def audio_clip():
     except Exception as e:
         logger.error(f"audio_clip error: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
+
+@transcription_bp.route("/clone_voice", methods=["POST"])
+def clone_voice():
+    user_id = request.form.get("user_id")
+    edit_id = request.form.get("edit_id")
+
+    if not user_id or not edit_id:
+        return jsonify({"error": "Missing user_id or edit_id"}), 400
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files["file"]
+    file_data = file.read()
+
+    try:
+        # 1. Klona rösten
+        voice_id = transcription_service.clone_user_voice(file_data, user_id)
+
+        # 2. Skapa voice_map, t.ex. alla "Speaker X" får samma röst
+        edit = get_edit_by_id(edit_id)
+        speakers = {
+            seg["speaker"]
+            for seg in edit.get("metadata", {}).get("segments", [])
+            if "speaker" in seg
+        }
+
+        voice_map = {speaker: voice_id for speaker in speakers}
+
+        # 3. Spara voice_map i edit
+        add_voice_map_to_edit(edit_id, voice_map)
+
+        return jsonify({"voice_id": voice_id, "voice_map": voice_map})
+    except Exception as e:
+        logger.error(f"Voice cloning failed: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+

@@ -167,6 +167,12 @@
       border-left: 4px solid #f56565;
     }
     
+    .status-success {
+      background-color: #f0fff4 !important;
+      color: #276749 !important;
+      border-left: 4px solid #48bb78;
+    }
+    
     /* Option item positioning */
     .option-item {
       position: relative;
@@ -188,11 +194,32 @@
       font-weight: 500;
       color: #2c5282;
     }
+
+    /* Voice clone button styling */
+    .voice-clone-section {
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f0fff4;
+      border-radius: 8px;
+      border: 1px solid #c6f6d5;
+    }
+
+    .voice-clone-section h3 {
+      margin-top: 0;
+      color: #276749;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Select the AI modules to run</h1>
+
+    <!-- Voice Clone Section -->
+    <div class="voice-clone-section">
+      <h3>🎙️ Röstkloning</h3>
+      <p>Klona din röst för framtida användning i AI-genererat innehåll.</p>
+      <button id="voice-clone-button" class="btn ai-edit-button">🎙️ Klona Min Röst</button>
+    </div>
 
     <!-- Dependency info section -->
     <div class="dependency-info">
@@ -230,8 +257,6 @@
     <div class="status-message" id="status-message"></div>
 
     <hr>
-
-
 
   <!-- Output Areas (initially hidden) -->
 
@@ -312,6 +337,12 @@
   <div class="output-section" id="finalAudioResult" style="display: none;">
     <h2>Final Processed Audio</h2>
     <!-- Audio player and download link will be inserted here -->
+  </div>
+
+  <!-- Voice Clone Result Section -->
+  <div class="output-section" id="voice-clone-result" style="display: none;">
+    <h2>🎙️ Röstkloning Resultat</h2>
+    <div id="voiceCloneOutput">Voice clone results will appear here...</div>
   </div>
 
   <script src="{{ url_for('static', filename='js/ai_edits/ai_edits_script.js') }}"></script>

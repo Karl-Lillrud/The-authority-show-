@@ -1,5 +1,6 @@
 import logging
 import uuid
+from typing import Optional
 from datetime import datetime
 from backend.database.mongo_connection import get_db
 
@@ -48,3 +49,45 @@ def save_transcription_edit(user_id, episode_id, transcript_text, raw_transcript
     }
 
     db.Edits.insert_one(edit)
+
+def get_edit_by_id(edit_id: str) -> Optional[dict]:
+    """
+    Hämtar ett edit-dokument baserat på dess ID
+    """
+    logger.info(f"🔍 Looking for edit with ID: {edit_id}")
+    edit = db.Edits.find_one({"_id": edit_id})
+    
+    if edit:
+        word_timings_count = len(edit.get("metadata", {}).get("word_timings", []))
+        logger.info(f"✅ Found edit {edit_id} with {word_timings_count} word_timings")
+    else:
+        logger.warning(f"❌ Edit not found: {edit_id}")
+    
+    return edit
+
+def add_voice_map_to_edit(edit_id: str, voice_map: dict):
+    """
+    Spara eller uppdatera en voiceMap i ett befintligt edit-dokument.
+    """
+    if not edit_id or not voice_map:
+        logger.warning("Missing edit_id or voice_map for update")
+        return None
+
+    logger.info(f"💾 Adding voice_map to edit {edit_id}: {voice_map}")
+
+    result = db.Edits.update_one(
+        {"_id": edit_id},
+        {
+            "$set": {
+                "voiceMap": voice_map,
+                "updatedAt": datetime.utcnow()
+            }
+        }
+    )
+
+    if result.modified_count == 1:
+        logger.info(f"✅ VoiceMap updated in edit {edit_id}")
+    else:
+        logger.warning(f"⚠️ Edit not found or unchanged for ID: {edit_id}")
+    return result
+
