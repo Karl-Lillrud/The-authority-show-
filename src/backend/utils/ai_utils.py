@@ -104,10 +104,11 @@ def analyze_emotions(text: str) -> List[dict]:
     results = []
     for sentence in sentences:
         if sentence.strip():
+            logger.info(f"Analyzing: {sentence[:50]}...")  # 👈 debug
             result = emotion_classifier(sentence)
             results.append({
                 "text": sentence,
-                "emotions": result  # List of dicts with label + score
+                "emotions": result
             })
     return results
 

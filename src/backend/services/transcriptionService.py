@@ -3,12 +3,15 @@ import os
 import logging
 import re
 import tempfile
+import httpx
+from typing import Optional, Dict
+from elevenlabs import ElevenLabs
 from pydub import AudioSegment, effects
 from datetime import datetime, timezone
 from typing import List
 from io import BytesIO
 from elevenlabs.client import ElevenLabs
-from backend.repository.edit_repository import get_edit_by_id
+from backend.repository.edit_repository import get_edit_by_id, save_transcription_edit
 from backend.database.mongo_connection import fs
 from backend.utils.ai_utils import (
     generate_ai_suggestions,
@@ -42,7 +45,7 @@ VOICE_MAPS = {
 
 
 class TranscriptionService:
-    def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
+    def transcribe_audio(self, file_data: bytes, filename: str, user_id: str, episode_id: str) -> dict:
         """
         Transcribes audio and groups words into sentences with accurate timestamps.
         """
@@ -126,11 +129,22 @@ class TranscriptionService:
         raw_lines = [f"[{s:.2f}-{e:.2f}] {sp}: {txt}" for s, e, sp, txt in raw_entries]
         raw_transcription = "\n".join(raw_lines)
 
+        edit_id = save_transcription_edit(
+            user_id=user_id,
+            episode_id=episode_id,
+            transcript_text=full_text,
+            raw_transcript=raw_transcription,
+            sentiment={"overall": "neutral"},
+            emotion={"overall": "neutral"},
+            filename=filename
+        )
+
         return {
             "file_id": str(file_id),
             "raw_transcription": raw_transcription,
             "full_transcript": full_text,
-            "word_timestamps": word_timings  # ✅ Add this line
+            "word_timestamps": word_timings,
+            "edit_id": str(edit_id)
         }
 
     def get_clean_transcript(self, transcript_text: str) -> str:
@@ -201,7 +215,14 @@ class TranscriptionService:
         sfx_suggestions = suggest_sound_effects(emotion_data)
         return {"emotions": emotion_data, "sound_effects": sfx_suggestions}
     
-    def generate_audio_from_translated(self, raw_transcription: str, language: str, edit_id: str = None) -> bytes:
+    def generate_audio_from_translated(
+        self,
+        raw_transcription: str,
+        language: str,
+        edit_id: str = None,
+        voice_map: dict = None,
+        voice_id: str = None  # ✅ NYTT
+    ) -> bytes:
         segments = self.build_segments_from_raw(raw_transcription)
         segments.sort(key=lambda s: s["start"])
 
@@ -211,27 +232,33 @@ class TranscriptionService:
         total_ms = int(max(s["end"] for s in segments) * 1000)
         final = AudioSegment.silent(duration=total_ms)
 
-        # 🔁 Hämta voiceMap från edit eller default map
-        voice_map = VOICE_MAPS.get(language, {})
-        if edit_id:
-            try:
-                edit = get_edit_by_id(edit_id)
-                if edit and "voiceMap" in edit:
-                    logger.info(f"🧠 Using saved voiceMap from edit {edit_id}")
-                    voice_map = edit["voiceMap"]
-            except Exception as e:
-                logger.warning(f"⚠️ Failed to fetch voiceMap from edit {edit_id}: {e}")
+        # === NY LOGIK: om voice_map inte finns men voice_id anges, bygg dummy-map ===
+        if voice_map is None:
+            if voice_id:
+                logger.info("🧠 Building simple voice_map from single voice_id")
+                speakers = list(set([s["speaker"] for s in segments]))
+                voice_map = {speaker: voice_id for speaker in speakers}
+            elif edit_id:
+                try:
+                    edit = get_edit_by_id(edit_id)
+                    if edit and "voiceMap" in edit:
+                        logger.info(f"🧠 Using saved voiceMap from edit {edit_id}")
+                        voice_map = edit["voiceMap"]
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to fetch voiceMap from edit {edit_id}: {e}")
+            if voice_map is None:
+                voice_map = VOICE_MAPS.get(language, {})
 
         default_voice = next(iter(voice_map.values()), None)
 
         for seg in segments:
             start_ms = int(seg["start"] * 1000)
-            end_ms   = int(seg["end"]   * 1000)
-            text     = seg["text"]
-            speaker  = seg["speaker"]
+            end_ms = int(seg["end"] * 1000)
+            text = seg["text"]
+            speaker = seg["speaker"]
 
-            voice_id = voice_map.get(speaker) or default_voice
-            if not voice_id:
+            speaker_voice_id = voice_map.get(speaker) or default_voice
+            if not speaker_voice_id:
                 raise ValueError(f"No voice_id for {speaker} in voice_map")
 
             target_dur = end_ms - start_ms
@@ -239,13 +266,39 @@ class TranscriptionService:
                 logger.warning(f"Segment vid {seg['start']}s har längd {target_dur} ms – skippar")
                 continue
 
-            tts_stream = client.text_to_speech.convert(
-                text=text,
-                voice_id=voice_id,
-                model_id="eleven_multilingual_v2",
-                output_format="mp3_44100_128"
-            )
-            tts_bytes = b"".join(tts_stream)
+            try:
+                tts_stream = client.text_to_speech.convert(
+                    text=text,
+                    voice_id=speaker_voice_id,
+                    model_id="eleven_multilingual_v2",
+                    output_format="mp3_44100_128"
+                )
+                tts_bytes = b"".join(tts_stream)
+                if not tts_bytes or len(tts_bytes) < 1000:
+                    raise Exception("Stream returned too little data – fallback triggered")
+
+            except Exception as e:
+                logger.warning(f"⚠️ ElevenLabs stream error, trying fallback with httpx: {e}")
+                url = f"https://api.elevenlabs.io/v1/text-to-speech/{speaker_voice_id}"
+                headers = {
+                    "xi-api-key": os.getenv("ELEVENLABS_API_KEY"),
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "text": text,
+                    "model_id": "eleven_multilingual_v2",
+                    "output_format": "mp3_44100_128",
+                    "voice_settings": {
+                        "stability": 0.5,
+                        "similarity_boost": 0.75
+                    }
+                }
+                response = httpx.post(url, headers=headers, json=payload, timeout=30.0)
+
+                if response.status_code != 200:
+                    raise Exception(f"ElevenLabs fallback failed: {response.text}")
+                tts_bytes = response.content
+
             tts_audio = AudioSegment.from_file(BytesIO(tts_bytes), format="mp3")
 
             actual = len(tts_audio)
@@ -261,7 +314,9 @@ class TranscriptionService:
         final.export(buf, format="mp3")
         return buf.getvalue()
 
-    
+
+
+
     def build_segments_from_raw(self, raw_transcription: str) -> List[dict]:
         segments = []
         pattern = re.compile(
@@ -303,22 +358,15 @@ class TranscriptionService:
         return translated
     
     def clone_user_voice(self, file_data: bytes, user_id: str, voice_name: str = None) -> str:
-        """
-        Create a new voice clone from uploaded audio and return voice_id.
-        """
-
         voice_name = voice_name or f"{user_id}_voice"
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(file_data)
             tmp.flush()
 
-            # 🧠 ElevenLabs voice cloning (API)
-            voice = client.voices.ivc.create(
-                name=voice_name,
-                files=[tmp.name],
-                remove_background_noise=True
-            )
-
-        # ✅ Returnera voice_id för användning
+        voice = client.clone(
+            name=voice_name,
+            description="Cloned via PodManager AI",
+            files=[tmp.name]
+        )
         return voice.voice_id

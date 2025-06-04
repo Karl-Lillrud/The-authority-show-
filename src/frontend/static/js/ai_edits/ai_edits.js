@@ -148,16 +148,24 @@ function showTab(tabName) {
                 </div>
 
                 <div class="result-group">
-                  <div class="language-wrapper">
-                    <label for="languageSelect">
-                      <strong>Language:</strong>
-                    </label>
-                    <select id="languageSelect" class="input-field">
-                        <option value="English">English</option>
-                        <option value="Spanish">Spanish</option>
-                        <!-- lägg till fler språk här -->
-                    </select>
-                  </div>
+                <div class="language-wrapper">
+                <label for="languageSelect">
+                    <strong>Language:</strong>
+                </label>
+                <select id="languageSelect" class="input-field">
+                    <option value="English">English</option>
+                    <option value="Spanish">Spanish</option>
+                    <!-- lägg till fler språk här -->
+                </select>
+                </div>
+
+                <div class="button-with-help" style="margin-top: 10px;">
+                <button class="btn ai-edit-button" onclick="cloneVoice()">
+                    Clone Voice from Uploaded Audio
+                </button>
+                <span class="help-icon" data-tooltip="Clones your voice using the uploaded file and stores it for use in translated speech">?</span>
+                <span id="voiceCloneStatus" style="margin-left: 10px; font-weight: bold;"></span>
+                </div>
                     <div class="button-with-help">
                         <button class="btn ai-edit-button" onclick="translateTranscript()">
                             ${labelWithCredits("Translate", "translation")}
@@ -732,6 +740,44 @@ async function translateTranscript() {
       resultContainer.innerText = `Error: ${err.message}`;
     }
   }
+async function cloneVoice() {
+  const container = document.getElementById("translateResult") || document.body;
+  const editId = sessionStorage.getItem("transcription_edit_id");
+  const userId = window.CURRENT_USER_ID;
+
+  if (!rawAudioBlob) return alert("No audio available.");
+  if (!editId) return alert("Missing transcription edit_id.");
+  if (!userId) return alert("User not logged in.");
+
+  const formData = new FormData();
+  formData.append("file", rawAudioBlob);
+  formData.append("edit_id", editId);
+  formData.append("user_id", userId);
+
+  showSpinner("translateResult");
+
+  try {
+    const res = await fetch("/transcription/clone_voice", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    hideSpinner("translateResult");
+
+    if (!res.ok) throw new Error(data.error || "Voice cloning failed.");
+
+    // Spara till sessionStorage
+    sessionStorage.setItem("voice_id", data.voice_id);
+    sessionStorage.setItem("voice_map", JSON.stringify(data.voice_map));
+
+    alert("✅ Voice cloned successfully!");
+  } catch (err) {
+    hideSpinner("translateResult");
+    alert("Voice cloning failed: " + err.message);
+  }
+}
+
 
 async function generateCleanTranscript() {
     const containerId = "cleanTranscriptResult";
@@ -1980,33 +2026,42 @@ function getSelectedEpisodeId() {
 async function generateAudioClip() {
   const container = document.getElementById("audioClipResult");
   const translated = document.getElementById("translateResult").innerText;
-  if (!translated.trim()) return alert("No translated transcript available to generate an podcast.");
+  const editId = sessionStorage.getItem("transcription_edit_id");
+
+  if (!translated.trim()) return alert("No translated transcript available.");
+  if (!editId) return alert("Missing transcription edit ID.");
 
   container.style.display = "block";
   showSpinner("audioClipResult");
+
   try {
     const res = await fetch("/transcription/audio_clip", {
       method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ translated_transcription: translated })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        translated_transcription: translated,
+        edit_id: editId,
+      }),
     });
+
     hideSpinner("audioClipResult");
 
-    if (!res.ok) throw new Error(`Server svarade ${res.status}`);
+    if (!res.ok) throw new Error(`Server responded ${res.status}`);
     const data = await res.json();
+
     const audio = document.createElement("audio");
     audio.controls = true;
     audio.src = data.audio_base64;
     container.innerHTML = "";
     container.appendChild(audio);
 
-    // Only consume credits after successful audio clip generation
     await consumeStoreCredits("audio_clip");
   } catch (err) {
     hideSpinner("audioClipResult");
     container.innerText = `Failed to generate audio clip: ${err.message}`;
   }
 }
+
 
 function renderWaveform(audioBlob) {
     const container = document.getElementById("waveform");
