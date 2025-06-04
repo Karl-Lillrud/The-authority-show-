@@ -476,32 +476,6 @@ def generate_intro_outro_audio():
         logger.error(f"ElevenLabs TTS failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@transcription_bp.route("/translate_audio", methods=["POST"])
-def translate_audio():
-    """
-    Tar emot det översatta rå-transkriptet (med timestamps + speakers)
-    och returnerar en mp3-bytestring med TTS per segment.
-    """
-    data = request.get_json()
-    raw = data.get("raw_transcription", "")
-    language = data.get("language", "English")
-    edit_id = data.get("edit_id", None)  # 👈 hämta edit_id från klienten
-
-    if not raw:
-        return jsonify({"error": "No transcript provided"}), 400
-
-    try:
-        audio_bytes = transcription_service.generate_audio_from_translated(
-            raw, language, edit_id=edit_id
-        )
-        import base64
-        b64 = base64.b64encode(audio_bytes).decode("utf-8")
-        return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64}"})
-    except Exception as e:
-        logger.error(f"Error generating translated audio: {e}", exc_info=True)
-        return jsonify({"error": str(e)}), 500
-
-
 @transcription_bp.route("/audio_clip", methods=["POST"])
 def audio_clip():
     data = request.get_json() or {}
