@@ -41,6 +41,10 @@ export const svgpodcastmanagement = {
   tiktok: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
   </svg>`,
+  youtube: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21.8 8.001a2.76 2.76 0 0 0-1.942-1.95C18.015 6 12 6 12 6s-6.015 0-7.858.051A2.76 2.76 0 0 0 2.2 8.001 28.77 28.77 0 0 0 2 12c.002 1.34.073 2.667.2 3.999a2.76 2.76 0 0 0 1.942 1.95C5.985 18 12 18 12 18s6.015 0 7.858-.051a2.76 2.76 0 0 0 1.942-1.95A28.77 28.77 0 0 0 22 12a28.77 28.77 0 0 0-.2-3.999zM10 15V9l5 3-5 3z"/>
+  </svg>`,
+
   success: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
     <polyline points="22 4 12 14.01 9 11.01"></polyline>

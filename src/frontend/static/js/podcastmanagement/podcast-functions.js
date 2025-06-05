@@ -611,6 +611,14 @@ export function renderPodcastDetail(podcast) {
               </a>`
             : ""
         }
+        ${
+          podcast.socialMedia && podcast.socialMedia[6]
+        ? `<a href="${podcast.socialMedia[6]}" target="_blank" class="social-link">
+        ${shared.svgpodcastmanagement.youtube}
+        YouTube
+        </a>`
+      : ""
+     }  
       </div>
     </div>
   </div>

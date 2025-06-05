@@ -30,6 +30,7 @@ function addSocialMedia(selectedPlatform = "", profileLink = "") {
         <option value="Twitter" ${selectedPlatform === "Twitter" ? "selected" : ""}>Twitter</option>
         <option value="Facebook" ${selectedPlatform === "Facebook" ? "selected" : ""}>Facebook</option>
         <option value="Whatsapp" ${selectedPlatform === "Whatsapp" ? "selected" : ""}>Whatsapp</option>
+         <option value="YouTube" ${selectedPlatform === "YouTube" ? "selected" : ""}>YouTube</option>
     `
 
   // Text input for profile link

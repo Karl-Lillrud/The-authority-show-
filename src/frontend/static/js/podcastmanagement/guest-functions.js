@@ -391,6 +391,13 @@ export function renderGuestDetail(guest) {
             </a>`
           : ""
       }
+      ${
+        guest.socialMedia?.youtube
+        ? `<a href="${guest.socialMedia.youtube}" target="_blank" class="social-link">
+        ${shared.svgpodcastmanagement.youtube} YouTube
+        </a>`
+       : ""
+      }
     </div>
   </div>
 </div>
