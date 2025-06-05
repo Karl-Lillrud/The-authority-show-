@@ -314,11 +314,11 @@ function setDynamicPageTitle() {
       "/episode-to-do": "Episode To-Do",
       "/enterprise": "Enterprise",
       "/lia": "LIA", // Add this line
-      "/publish": "Publish", // <-- Add this line for the publish endpoint
+      "/publish/": "Publish" // <-- Add this line for the publish endpoint
     };
 
     const currentPath = window.location.pathname;
-    const pageTitle = pageTitles[currentPath]
+    const pageTitle = pageTitles[currentPath];
     const mainMenu = document.querySelectorAll("#main-menu nav ul li a");
     pageTitleElement.textContent = pageTitle;
 
