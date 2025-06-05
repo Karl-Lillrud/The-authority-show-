@@ -484,6 +484,8 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-md);
+   max-height: 400px;     /* Justera höjden efter behov */
+  overflow-y: scroll;
 }
 
 .episode-card {
