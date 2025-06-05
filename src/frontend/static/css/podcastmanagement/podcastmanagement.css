@@ -140,6 +140,20 @@
   background-color: rgba(0, 0, 0, 0.01);
 }
 
+.podcast-footer button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff3e0;
+  border: 1px solid #ff9800;
+  color: #ff9800;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
 .footer-link {
   color: var(--highlight-color);
   font-weight: 500;
