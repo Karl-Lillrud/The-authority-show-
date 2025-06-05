@@ -319,7 +319,17 @@ function setDynamicPageTitle() {
 
     const currentPath = window.location.pathname;
     const pageTitle = pageTitles[currentPath]
+    const mainMenu = document.querySelectorAll("#main-menu nav ul li a");
     pageTitleElement.textContent = pageTitle;
+
+    // Highlight the active link in the main menu
+    mainMenu.forEach((link) => {
+      if (link.getAttribute("href") === currentPath) {
+        link.classList.add("active");
+      } else {
+        link.classList.remove("active");
+      }
+    });
   }
 }
 
