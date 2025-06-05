@@ -193,7 +193,15 @@ export async function renderPodcastList() {
         </div>
       </div>
       <div class="podcast-footer">
-        <span class="footer-link landing-page-link" data-id="${
+    <button class="footer-link landing-page-link" data-id="${
+          podcast._id
+        }">Landing Page </button>
+    <button class="footer-link view-details-link" data-id="${
+          podcast._id
+        }">View Details </button>
+      </div>`;
+/*
+  <span class="footer-link landing-page-link" data-id="${
           podcast._id
         }">Landing Page</span>
         <span class="footer-separator">|</span>
@@ -203,9 +211,9 @@ export async function renderPodcastList() {
         <span class="footer-separator">|</span>
         <span class="footer-link email-config-link" data-id="${
           podcast._id
-        }">Email Config</span>
-      </div>`;
-
+        }">Email Config</span> 
+        */
+      
       podcastListElement.appendChild(podcastCard);
 
       // Redirect to the landing page with the specific podcastId
