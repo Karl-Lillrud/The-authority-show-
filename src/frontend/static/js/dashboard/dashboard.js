@@ -468,11 +468,15 @@ async function fetchAndDisplayActivities() {
   try {
     const timelineContainer = document.querySelector(".activity-timeline");
     if (!timelineContainer) {
-      console.error(
-        "Activity timeline container not found. Ensure .activity-timeline exists in the DOM."
-      );
-      return;
-    }
+  // Endast logga felet om du är på dashboard-sidan
+  if (window.location.pathname.includes("dashboard")) {
+    console.error(
+      "Activity timeline container not found. Ensure .activity-timeline exists in the DOM."
+    );
+  }
+  return;
+}
+    
 
     const activities = await getActivitiesRequest();
     timelineContainer.innerHTML = "";

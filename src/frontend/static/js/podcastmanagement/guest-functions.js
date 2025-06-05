@@ -372,8 +372,8 @@ export function renderGuestDetail(guest) {
     <div class="social-links">
       ${
         guest.socialMedia?.twitter
-          ? `<a href="${guest.socialMedia.twitter}" target="_blank" class="social-link">
-              ${shared.svgpodcastmanagement.twitter} Twitter
+          ? `<a href="${guest.socialMedia.X}" target="_blank" class="social-link">
+              ${shared.svgpodcastmanagement.X} X
             </a>`
           : ""
       }

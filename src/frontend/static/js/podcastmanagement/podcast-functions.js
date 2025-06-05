@@ -88,7 +88,7 @@ function displayPodcastDetails(podcast) {
   const linkedinEl = document.getElementById("linkedin");
   if (linkedinEl) linkedinEl.value = podcast.socialMedia?.[2] || "";
 
-  const twitterEl = document.getElementById("twitter");
+  const twitterEl = document.getElementById("X");
   if (twitterEl) twitterEl.value = podcast.socialMedia?.[3] || "";
 
   const tiktokEl = document.getElementById("tiktok");
@@ -598,8 +598,8 @@ export function renderPodcastDetail(podcast) {
         ${
           podcast.socialMedia && podcast.socialMedia[3]
             ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
-                ${shared.svgpodcastmanagement.twitter}
-                Twitter
+                ${shared.svgpodcastmanagement.X}
+                X
               </a>`
             : ""
         }
@@ -830,7 +830,7 @@ function handlePodcastFormSubmission() {
         document.getElementById("facebook")?.value.trim() || " ",
         document.getElementById("instagram")?.value.trim() || " ",
         document.getElementById("linkedin")?.value.trim() || " ",
-        document.getElementById("twitter")?.value.trim() || " ",
+        document.getElementById("X")?.value.trim() || " ",
         document.getElementById("tiktok")?.value.trim() || " ",
         document.getElementById("pinterest")?.value.trim() || " ",
         document.getElementById("youtube")?.value.trim() || " "

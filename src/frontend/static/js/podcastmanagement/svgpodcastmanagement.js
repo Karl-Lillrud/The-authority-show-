@@ -35,11 +35,11 @@ export const svgpodcastmanagement = {
     <rect width="4" height="12" x="2" y="9"></rect>
     <circle cx="4" cy="4" r="2"></circle>
   </svg>`,
-  twitter: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+  X:`<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M3 3h4.5l5.25 6.75L18.75 3H23l-8.25 9.75L23 21h-4.5l-5.25-6.75L5.25 21H1l8.25-9.75L1 3z"/>
   </svg>`,
-  tiktok: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+  tiktok: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M16 8.245v2.384a4.93 4.93 0 0 1-1.94-.393v4.593a5.991 5.991 0 1 1-6-5.978v2.388a3.6 3.6 0 1 0 3.6 3.59v-9.83h2.4c.005.83.304 1.611.84 2.243a3.46 3.46 0 0 0 1.1.903z"/>
   </svg>`,
   success: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>

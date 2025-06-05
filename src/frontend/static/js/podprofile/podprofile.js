@@ -775,7 +775,7 @@ for (const payload of episodePayloads) {
     
   function getPlatformIcon(platform) {
     const icons = {
-      twitter: "fab fa-twitter",
+      X: "fab fa-X",
       facebook: "fab fa-facebook-f",
       instagram: "fab fa-instagram",
       youtube: "fab fa-youtube",
