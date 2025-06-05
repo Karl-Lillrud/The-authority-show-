@@ -1871,7 +1871,6 @@ textarea:focus {
 .save-workflow-btn:hover {
   background-color: #0ca678;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
 .import-workflow-btn {
