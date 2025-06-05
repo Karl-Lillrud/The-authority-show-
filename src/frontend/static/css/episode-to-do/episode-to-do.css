@@ -845,11 +845,8 @@ a,
 
 /* Kanban Board */
 .kanban-board {
-  display: flex;
-  gap: 2rem;
   padding: 1.5rem;
   overflow-x: auto;
-  padding-bottom: 2rem;
   scrollbar-width: thin;
   scrollbar-color: var(--muted) transparent;
 }
