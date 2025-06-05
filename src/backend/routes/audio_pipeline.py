@@ -140,11 +140,12 @@ def process_audio_pipeline():
 
             ordered_step_priority = [
                 "transcribe",
-                "translate_transcript",  # NY POSITION
+                "translate_transcript",  # First translate to get timestamps
+                "voice_cloning",         # Then clone voice
+                "generate_audio_clip",   # Finally generate audio
                 "voice_isolation",
                 "enhance",
                 "analyze_audio",
-                "voice_cloning",  # NY POSITION
                 "ai_cut",
                 "clean_transcript", 
                 "generate_show_notes", 
@@ -154,7 +155,6 @@ def process_audio_pipeline():
                 "osint_lookup", 
                 "generate_intro_outro", 
                 "intro_outro_to_speech",
-                "generate_audio_clip", 
                 "cut_audio", 
                 "plan_and_mix_sfx"
             ]
@@ -275,7 +275,6 @@ def process_audio_pipeline():
                         metadata["intro_outro_audio_url"] = f"data:audio/mp3;base64,{b64}"
 
                     elif step == "generate_audio_clip":
-                        # Ta transcript på följande prioritet: från request, från metadata, annars inget
                         transcript = (
                             translated_transcript
                             or metadata.get("translated_transcript")
@@ -284,19 +283,29 @@ def process_audio_pipeline():
                         if not transcript:
                             raise ValueError("Transcript missing for TTS.")
 
-                        # Skicka med alla voice-parametrar
+                        # Get the cloned voice ID from metadata
+                        voice_id = metadata.get("voice_id")
+                        if not voice_id:
+                            raise ValueError("No cloned voice ID found. Please run voice cloning first.")
+
                         def create_clip():
                             return transcription_service.generate_audio_from_translated(
                                 transcript,
-                                target_language,   # Den här kan komma från din request, t.ex. "English"
-                                edit_id=edit_id,
-                                voice_map=voice_map,
-                                voice_id=voice_id,
+                                target_language,
+                                voice_id=voice_id
                             )
 
                         b64 = safe_consume_credits_after_success(user_id, credit_type, create_clip)
                         metadata["steps_applied"].append(step)
-                        metadata["translated_clip_url"] = f"data:audio/mp3;base64,{base64.b64encode(b64).decode('utf-8')}"
+                        translated_clip_path = os.path.join(temp_dir, f"translated_clip_{filename}.mp3")
+                        with open(translated_clip_path, "wb") as f:
+                            f.write(b64)
+                        podcast_id = episode_repo.get_podcast_id_by_episode(episode_id)
+                        blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/translated_clip_{filename}.mp3"
+                        with open(translated_clip_path, "rb") as f:
+                            clip_stream = BytesIO(f.read())
+                        translated_clip_url = upload_file_to_blob("podmanagerfiles", blob_path, clip_stream)
+                        metadata["translated_clip_url"] = translated_clip_url
 
                     # NYTT: translate_transcript
                     elif step == "translate_transcript":
@@ -308,26 +317,17 @@ def process_audio_pipeline():
                         metadata["steps_applied"].append(step)
                         metadata["translated_transcript"] = translated_transcript
 
-                    # NYTT: voice_cloning
                     elif step == "voice_cloning":
                         if not audio_file:
                             raise ValueError("Audio file is required for voice cloning.")
                         def clone_voice():
+                            # Clone one voice from the audio file
                             voice_id = transcription_service.clone_user_voice(audio_bytes, user_id)
-                            # Hämta speakers från metadata (kan förbättras beroende på din pipeline)
-                            speakers = {
-                                seg["speaker"]
-                                for seg in metadata.get("metadata", {}).get("segments", [])
-                                if "speaker" in seg
-                            }
-                            # Om du inte har speakers, kan du defaulta till t.ex. {"Speaker 1": voice_id}
-                            if not speakers:
-                                speakers = {"Speaker 1"}
-                            voice_map = {speaker: voice_id for speaker in speakers}
-                            return voice_map
-                        voice_map = safe_consume_credits_after_success(user_id, credit_type, clone_voice)
+                            return voice_id
+                        voice_id = safe_consume_credits_after_success(user_id, credit_type, clone_voice)
                         metadata["steps_applied"].append(step)
-                        metadata["voice_map"] = voice_map
+                        metadata["voice_id"] = voice_id  # Store voice_id in metadata
+                        logger.info(f"Voice cloned successfully with ID: {voice_id}")
 
                 except Exception as e:
                     logger.error(f"Error in step '{step}': {str(e)}", exc_info=True)

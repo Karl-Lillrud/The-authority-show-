@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import List
 from io import BytesIO
 from elevenlabs.client import ElevenLabs
+from pydub.exceptions import CouldntDecodeError
 from backend.repository.edit_repository import get_edit_by_id, save_transcription_edit
 from backend.database.mongo_connection import fs
 from backend.utils.ai_utils import (
@@ -219,115 +220,107 @@ class TranscriptionService:
         sfx_suggestions = suggest_sound_effects(emotion_data)
         return {"emotions": emotion_data, "sound_effects": sfx_suggestions}
     
+
     def generate_audio_from_translated(
         self,
         raw_transcription: str,
         language: str,
-        edit_id: str = None,
-        voice_map: dict = None,
-        voice_id: str = None  # ✅ NYTT
+        voice_id: str
     ) -> bytes:
-        segments = self.build_segments_from_raw(raw_transcription)
-        segments.sort(key=lambda s: s["start"])
+        """
+        Generate audio from translated transcription using a cloned voice.
+        """
+        try:
+            logger.info(f"Starting audio generation from translation. Language: {language}, Voice ID: {voice_id}")
+            if not raw_transcription:
+                raise ValueError("No raw transcription provided")
+            if not language:
+                raise ValueError("No language specified")
+            if not voice_id:
+                raise ValueError("No voice ID provided")
 
-        if not segments:
-            raise ValueError("No valid segments in raw_transcription.")
+            segments = self.build_segments_from_raw(raw_transcription)
+            segments.sort(key=lambda s: s["start"])
+            if not segments:
+                raise ValueError("No valid segments in raw_transcription.")
+            logger.info(f"Built {len(segments)} segments from transcription")
 
-        total_ms = int(max(s["end"] for s in segments) * 1000)
-        final = AudioSegment.silent(duration=total_ms)
+            total_ms = int(max(s["end"] for s in segments) * 1000)
+            final = AudioSegment.silent(duration=total_ms)
 
-        # === NY LOGIK: om voice_map inte finns men voice_id anges, bygg dummy-map ===
-        if voice_map is None:
-            if voice_id:
-                logger.info("🧠 Building simple voice_map from single voice_id")
-                speakers = list(set([s["speaker"] for s in segments]))
-                voice_map = {speaker: voice_id for speaker in speakers}
-            elif edit_id:
+            for i, seg in enumerate(segments):
                 try:
-                    edit = get_edit_by_id(edit_id)
-                    if edit and "voiceMap" in edit:
-                        logger.info(f"🧠 Using saved voiceMap from edit {edit_id}")
-                        voice_map = edit["voiceMap"]
+                    start_ms = int(seg["start"] * 1000)
+                    end_ms = int(seg["end"] * 1000)
+                    text = seg["text"]
+                    logger.info(f"Processing segment {i+1}/{len(segments)}: {start_ms}-{end_ms} ms, text='{text[:40]}...'")
+                    target_dur = end_ms - start_ms
+                    if target_dur <= 0:
+                        logger.warning(f"Segment at {seg['start']}s has duration {target_dur} ms – skipping")
+                        continue
+
+                    tts_bytes = None
+                    try:
+                        logger.info(f"Calling ElevenLabs TTS API for segment {i+1}")
+                        tts_stream = client.text_to_speech.convert(
+                            text=text,
+                            voice_id=voice_id,
+                            model_id="eleven_multilingual_v2",
+                            output_format="mp3_44100_128"
+                        )
+                        if tts_stream is None:
+                            raise Exception("TTS stream was None (SDK bug or API fail)")
+                        tts_bytes = b"".join(tts_stream) if hasattr(tts_stream, '__iter__') else tts_stream
+                        logger.info(f"TTS bytes length for segment {i+1}: {len(tts_bytes) if tts_bytes else 'None'}")
+                        # Save TTS output for debugging
+                        debug_path = f"tts_debug_segment_{i+1}.mp3"
+                        with open(debug_path, "wb") as f:
+                            f.write(tts_bytes)
+                        logger.info(f"Saved TTS debug file: {debug_path}")
+                        # Delete the debug file after logging
+                        try:
+                            os.remove(debug_path)
+                            logger.info(f"Deleted TTS debug file: {debug_path}")
+                        except Exception as e:
+                            logger.warning(f"Could not delete debug file {debug_path}: {e}")
+                        if not tts_bytes or len(tts_bytes) < 1000:
+                            raise Exception("Stream returned too little data – fallback triggered")
+                    except Exception as e:
+                        logger.error(f"TTS error for segment {i+1}: {e}", exc_info=True)
+                        continue
+
+                    try:
+                        logger.info(f"Loading audio segment {i+1} with pydub")
+                        tts_audio = AudioSegment.from_file(BytesIO(tts_bytes), format="mp3")
+                        actual = len(tts_audio)
+                        logger.info(f"Loaded audio segment {i+1} with duration {actual} ms (target: {target_dur} ms)")
+                        if actual > target_dur:
+                            speed = actual / target_dur
+                            tts_audio = effects.speedup(tts_audio, playback_speed=speed)
+                        else:
+                            tts_audio += AudioSegment.silent(duration=(target_dur - actual))
+                        final = final.overlay(tts_audio, position=start_ms)
+                        logger.info(f"Overlayed segment {i+1} at {start_ms} ms")
+                    except Exception as e:
+                        logger.error(f"Error processing audio segment {i+1}: {e}", exc_info=True)
+                        continue
+
+                    logger.info(f"Finished processing segment {i+1}")
                 except Exception as e:
-                    logger.warning(f"⚠️ Failed to fetch voiceMap from edit {edit_id}: {e}")
-            if voice_map is None:
-                voice_map = VOICE_MAPS.get(language, {})
-
-        default_voice = next(iter(voice_map.values()), None)
-
-        for seg in segments:
-            start_ms = int(seg["start"] * 1000)
-            end_ms = int(seg["end"] * 1000)
-            text = seg["text"]
-            speaker = seg["speaker"]
-            speaker_voice_id = voice_map.get(speaker) or default_voice
-
-            if not speaker_voice_id:
-                logger.error(f"No voice_id for {speaker} in voice_map")
-                continue
-
-            target_dur = end_ms - start_ms
-            if target_dur <= 0:
-                logger.warning(f"Segment at {seg['start']}s has duration {target_dur} ms – skipping")
-                continue
-
-            tts_bytes = None
-            # First try the main client call
-            try:
-                tts_stream = client.text_to_speech.convert(
-                    text=text,
-                    voice_id=speaker_voice_id,
-                    model_id="eleven_multilingual_v2",
-                    output_format="mp3_44100_128"
-                )
-                tts_bytes = b"".join(tts_stream)
-                if not tts_bytes or len(tts_bytes) < 1000:
-                    raise Exception("Stream returned too little data – fallback triggered")
-
-            except Exception as e:
-                logger.warning(f"❌ ElevenLabs stream error, trying fallback with httpx: {e}")
-                try:
-                    url = f"https://api.elevenlabs.io/v1/text-to-speech/{speaker_voice_id}"
-                    headers = {
-                        "xi-api-key": os.getenv("ELEVENLABS_API_KEY"),
-                        "Content-Type": "application/json"
-                    }
-                    payload = {
-                        "text": text,
-                        "model_id": "eleven_multilingual_v2",
-                        "output_format": "mp3_44100_128",
-                        "voice_settings": {
-                            "stability": 0.5,
-                            "similarity_boost": 0.75
-                        }
-                    }
-                    response = httpx.post(url, headers=headers, json=payload, timeout=30.0)
-
-                    if response.status_code != 200:
-                        logger.error(f"ElevenLabs fallback failed: {response.text}")
-                        continue  # Skip this segment
-                    tts_bytes = response.content
-                except Exception as e2:
-                    logger.error(f"Total TTS failure for segment '{text[:50]}...': {e2}")
+                    logger.error(f"Error in segment {i+1}: {e}", exc_info=True)
                     continue
-
-            # Now if we got tts_bytes, continue with processing
+            logger.info("All segments processed, exporting final audio")
+            buf = BytesIO()
             try:
-                tts_audio = AudioSegment.from_file(BytesIO(tts_bytes), format="mp3")
-                actual = len(tts_audio)
-                if actual > target_dur:
-                    speed = actual / target_dur
-                    tts_audio = effects.speedup(tts_audio, playback_speed=speed)
-                else:
-                    tts_audio += AudioSegment.silent(duration=(target_dur - actual))
-                final = final.overlay(tts_audio, position=start_ms)
+                final.export(buf, format="mp3")
+                logger.info("Exported final audio successfully")
             except Exception as e:
-                logger.error(f"Error processing audio segment for '{text[:50]}...': {e}")
-                continue
-
-        buf = BytesIO()
-        final.export(buf, format="mp3")
-        return buf.getvalue()
+                logger.error(f"Error exporting final audio: {e}", exc_info=True)
+                raise
+            return buf.getvalue()
+        except Exception as e:
+            logger.error(f"Fatal error in generate_audio_from_translated: {e}", exc_info=True)
+            raise
 
     def build_segments_from_raw(self, raw_transcription: str) -> List[dict]:
         segments = []

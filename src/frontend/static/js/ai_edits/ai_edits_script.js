@@ -70,7 +70,7 @@ const aiOptions = [
     description: "Clone the user's voice from the provided audio",
     icon: "🗣️",
     dependencies: { transcribe: true },
-    resultContainer: "voice-cloning-result"
+    resultContainer: "cloneVoice-result"
   },
   {
     id: "generateShowNotes",
@@ -150,7 +150,7 @@ const aiOptions = [
     dependencies: {
       transcribe: "Transcription is required"
     },
-    resultContainer: "generateAudioClip-result"
+    resultContainer: "generateTranslatedPodcast-result"
   },
   {
     id: "analyzeAudio",
@@ -1135,6 +1135,7 @@ function updateAudioClipResult(translatedClipUrl) {
     </div>
   `;
 }
+
 
 /**
  * Updates the final audio result
