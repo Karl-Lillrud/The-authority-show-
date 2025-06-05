@@ -40,6 +40,15 @@ def process_audio_pipeline():
     audio_file = request.files.get("audio")
     cuts_raw = request.form.get("cuts")
     target_language = request.form.get("target_language", "English")  # NYTT: För translate_transcript
+    voice_id = request.form.get("voice_id")
+    edit_id = request.form.get("edit_id")
+    voice_map_raw = request.form.get("voice_map")
+    translated_transcript = request.form.get("translated_transcript")
+    try:
+        voice_map = json.loads(voice_map_raw) if voice_map_raw else None
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to parse voice_map JSON: {e}")
+        voice_map = None
 
     if not steps_raw or not episode_id or not audio_file:
         return jsonify({"error": "Missing required fields: steps, episode_id, or audio"}), 400
@@ -266,22 +275,35 @@ def process_audio_pipeline():
                         metadata["intro_outro_audio_url"] = f"data:audio/mp3;base64,{b64}"
 
                     elif step == "generate_audio_clip":
-                        transcript = metadata.get("transcript", "")
+                        # Ta transcript på följande prioritet: från request, från metadata, annars inget
+                        transcript = (
+                            translated_transcript
+                            or metadata.get("translated_transcript")
+                            or metadata.get("transcript", "")
+                        )
                         if not transcript:
-                            raise ValueError("Transcript missing for translation")
+                            raise ValueError("Transcript missing for TTS.")
+
+                        # Skicka med alla voice-parametrar
                         def create_clip():
-                            audio_bytes = transcription_service.generate_audio_from_translated(transcript, "English")
-                            return base64.b64encode(audio_bytes).decode("utf-8")
+                            return transcription_service.generate_audio_from_translated(
+                                transcript,
+                                target_language,   # Den här kan komma från din request, t.ex. "English"
+                                edit_id=edit_id,
+                                voice_map=voice_map,
+                                voice_id=voice_id,
+                            )
+
                         b64 = safe_consume_credits_after_success(user_id, credit_type, create_clip)
                         metadata["steps_applied"].append(step)
-                        metadata["translated_clip_url"] = f"data:audio/mp3;base64,{b64}"
+                        metadata["translated_clip_url"] = f"data:audio/mp3;base64,{base64.b64encode(b64).decode('utf-8')}"
 
                     # NYTT: translate_transcript
                     elif step == "translate_transcript":
-                        if not metadata.get("transcript"):
-                            raise ValueError("Transcript is required for translation. Ensure 'transcribe' or 'analyze_audio' is included.")
+                        if not metadata.get("raw_transcription"):
+                            raise ValueError("Raw transcription with timestamps is required for translation. Ensure 'transcribe' or 'analyze_audio' is included.")
                         def translate():
-                            return transcription_service.translate_transcript(metadata["transcript"], target_language)
+                            return transcription_service.translate_transcript(metadata["raw_transcription"], target_language)
                         translated_transcript = safe_consume_credits_after_success(user_id, credit_type, translate)
                         metadata["steps_applied"].append(step)
                         metadata["translated_transcript"] = translated_transcript
@@ -353,7 +375,7 @@ def process_audio_pipeline():
                 "osint": metadata.get("osint"),
                 "intro_outro_script": metadata.get("intro_outro_script"),
                 "intro_outro_audio_url": metadata.get("intro_outro_audio_url"),
-                "translated_clip_url": metadata.get("translated_clip_url")
+                "translated_clip_url": metadata.get("translated_clip_url"),
             })
 
         except Exception as e:

@@ -681,7 +681,18 @@ const stepMappings = {
     }
     formData.append("osint_query", osintQuery);
   }
+  // === ADD THE BLOCK HERE ===
+  const voiceMap = sessionStorage.getItem("voice_map"); // Should be a JSON string
+  const voiceId = sessionStorage.getItem("voice_id");
+  const editId = sessionStorage.getItem("transcription_edit_id");
+  const translatedTranscript = sessionStorage.getItem("translated_transcript");
 
+  if (mappedSteps.includes("generate_audio_clip")) {
+    if (voiceMap)      formData.append("voice_map", voiceMap);
+    if (voiceId)       formData.append("voice_id", voiceId);
+    if (editId)        formData.append("edit_id", editId);
+    if (translatedTranscript) formData.append("translated_transcript", translatedTranscript);
+  }
   // Send request to server
   fetch("/audio/process_pipeline", {
     method: "POST",
@@ -785,16 +796,19 @@ function processSuccessResponse(data, steps) {
         updateIntroOutroAudioResult(data.intro_outro_audio_url || null);
         break;
 
-      case "generateAudioClip":
-        updateAudioClipResult(data.translated_clip_url || null);
+      case "voiceCloning":
+        updateVoiceCloningResult(data.voice_map || {});
+        if (data.voice_map) sessionStorage.setItem("voice_map", JSON.stringify(data.voice_map));
+        if (data.voice_id) sessionStorage.setItem("voice_id", data.voice_id);
         break;
 
       case "translateTranscript":
         updateTranslateResult(data.translated_transcript || "No translation generated");
+        if (data.translated_transcript) sessionStorage.setItem("translated_transcript", data.translated_transcript);
         break;
 
-      case "voiceCloning":
-        updateVoiceCloningResult(data.voice_map || {});
+      case "generateAudioClip":
+        updateAudioClipResult(data.translated_clip_url || null);
         break;
     }
   });
@@ -948,7 +962,7 @@ function applyCuts(cuts) {
   formData.append("episode_id", CURRENT_EPISODE_ID);
   formData.append("steps", JSON.stringify(["cut_audio"]));
   formData.append("cuts", JSON.stringify(cuts));
-  
+
   // Send request to server
   fetch("/audio/process_pipeline", {
     method: "POST",
@@ -1088,6 +1102,38 @@ function updateSoundEffectsResult(sfxPlan, sfxClips) {
     container.style.display = "block";
     container.classList.add("visible");
   }
+}
+
+function updateVoiceCloningResult(voiceMap) {
+  const container = document.getElementById("cloneVoiceResult");
+  if (!container) return;
+  if (!voiceMap || Object.keys(voiceMap).length === 0) {
+    container.textContent = "No voice was cloned.";
+    return;
+  }
+  let html = "✅ Din röst har klonats!<br><br>";
+  Object.entries(voiceMap).forEach(([speaker, id]) => {
+    html += `<b>${speaker}:</b> <code>${id}</code><br>`;
+  });
+  container.innerHTML = html;
+}
+
+function updateAudioClipResult(translatedClipUrl) {
+  const container = document.getElementById("audioClipResult");
+  if (!container) return;
+  if (!translatedClipUrl) {
+    container.innerHTML = "<p>No audio clip was generated.</p>";
+    return;
+  }
+  container.innerHTML = `
+    <audio controls style="width: 100%;">
+      <source src="${translatedClipUrl}" type="audio/mp3">
+      Your browser does not support the audio element.
+    </audio>
+    <div style="margin-top: 10px;">
+      <a href="${translatedClipUrl}" download="translated_podcast.mp3" class="btn ai-edit-button">Download Audio</a>
+    </div>
+  `;
 }
 
 /**

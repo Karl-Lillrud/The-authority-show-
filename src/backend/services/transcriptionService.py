@@ -202,7 +202,10 @@ class TranscriptionService:
         translated_lines = translated_bulk.split("\n")
         final_lines = []
         for idx, translated_body in enumerate(translated_lines):
-            placeholder, prefix = placeholder_map[idx]
+            if idx < len(placeholder_map):
+                placeholder, prefix = placeholder_map[idx]
+            else:
+                placeholder, prefix = "", ""
             if prefix:
                 final_lines.append(f"{prefix} {translated_body}")
             else:
@@ -257,16 +260,19 @@ class TranscriptionService:
             end_ms = int(seg["end"] * 1000)
             text = seg["text"]
             speaker = seg["speaker"]
-
             speaker_voice_id = voice_map.get(speaker) or default_voice
+
             if not speaker_voice_id:
-                raise ValueError(f"No voice_id for {speaker} in voice_map")
+                logger.error(f"No voice_id for {speaker} in voice_map")
+                continue
 
             target_dur = end_ms - start_ms
             if target_dur <= 0:
-                logger.warning(f"Segment vid {seg['start']}s har längd {target_dur} ms – skippar")
+                logger.warning(f"Segment at {seg['start']}s has duration {target_dur} ms – skipping")
                 continue
 
+            tts_bytes = None
+            # First try the main client call
             try:
                 tts_stream = client.text_to_speech.convert(
                     text=text,
@@ -279,37 +285,45 @@ class TranscriptionService:
                     raise Exception("Stream returned too little data – fallback triggered")
 
             except Exception as e:
-                logger.warning(f"⚠️ ElevenLabs stream error, trying fallback with httpx: {e}")
-                url = f"https://api.elevenlabs.io/v1/text-to-speech/{speaker_voice_id}"
-                headers = {
-                    "xi-api-key": os.getenv("ELEVENLABS_API_KEY"),
-                    "Content-Type": "application/json"
-                }
-                payload = {
-                    "text": text,
-                    "model_id": "eleven_multilingual_v2",
-                    "output_format": "mp3_44100_128",
-                    "voice_settings": {
-                        "stability": 0.5,
-                        "similarity_boost": 0.75
+                logger.warning(f"❌ ElevenLabs stream error, trying fallback with httpx: {e}")
+                try:
+                    url = f"https://api.elevenlabs.io/v1/text-to-speech/{speaker_voice_id}"
+                    headers = {
+                        "xi-api-key": os.getenv("ELEVENLABS_API_KEY"),
+                        "Content-Type": "application/json"
                     }
-                }
-                response = httpx.post(url, headers=headers, json=payload, timeout=30.0)
+                    payload = {
+                        "text": text,
+                        "model_id": "eleven_multilingual_v2",
+                        "output_format": "mp3_44100_128",
+                        "voice_settings": {
+                            "stability": 0.5,
+                            "similarity_boost": 0.75
+                        }
+                    }
+                    response = httpx.post(url, headers=headers, json=payload, timeout=30.0)
 
-                if response.status_code != 200:
-                    raise Exception(f"ElevenLabs fallback failed: {response.text}")
-                tts_bytes = response.content
+                    if response.status_code != 200:
+                        logger.error(f"ElevenLabs fallback failed: {response.text}")
+                        continue  # Skip this segment
+                    tts_bytes = response.content
+                except Exception as e2:
+                    logger.error(f"Total TTS failure for segment '{text[:50]}...': {e2}")
+                    continue
 
-            tts_audio = AudioSegment.from_file(BytesIO(tts_bytes), format="mp3")
-
-            actual = len(tts_audio)
-            if actual > target_dur:
-                speed = actual / target_dur
-                tts_audio = effects.speedup(tts_audio, playback_speed=speed)
-            else:
-                tts_audio += AudioSegment.silent(duration=(target_dur - actual))
-
-            final = final.overlay(tts_audio, position=start_ms)
+            # Now if we got tts_bytes, continue with processing
+            try:
+                tts_audio = AudioSegment.from_file(BytesIO(tts_bytes), format="mp3")
+                actual = len(tts_audio)
+                if actual > target_dur:
+                    speed = actual / target_dur
+                    tts_audio = effects.speedup(tts_audio, playback_speed=speed)
+                else:
+                    tts_audio += AudioSegment.silent(duration=(target_dur - actual))
+                final = final.overlay(tts_audio, position=start_ms)
+            except Exception as e:
+                logger.error(f"Error processing audio segment for '{text[:50]}...': {e}")
+                continue
 
         buf = BytesIO()
         final.export(buf, format="mp3")
