@@ -323,7 +323,7 @@ a,
 
 .left-sidebar {
   width: 100%;
-  max-width: 16rem;
+  max-width: 300px;
 }
 
 .right-sidebar {
@@ -547,7 +547,7 @@ a,
   font-size: 1.125rem;
   font-weight: 500;
   margin-bottom: 0.5rem;
-  margin-top: 1.5rem;
+  padding-left: 3px;
 }
 
 /* Podcast Selector */
@@ -604,6 +604,7 @@ a,
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
+  margin-right: var(--spacing-sm);
   border-radius: var(--radius-tiny);
   cursor: pointer;
   transition: all 0.2s ease;
