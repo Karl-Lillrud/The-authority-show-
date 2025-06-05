@@ -7,7 +7,7 @@ from backend.database.mongo_connection import get_db
 logger = logging.getLogger(__name__)
 db = get_db()
 
-def create_edit_entry(episode_id, user_id, edit_type, clip_url, **kwargs):
+def create_edit_entry(episode_id, user_id, edit_type, clip_url, voice_map=None, **kwargs):
     if not episode_id or not user_id or not clip_url:
         logger.warning("Missing required edit entry fields")
         return None
@@ -26,29 +26,32 @@ def create_edit_entry(episode_id, user_id, edit_type, clip_url, **kwargs):
         "transcript": kwargs.get("transcript"),
         "sentiment": kwargs.get("sentiment"),
         "metadata": kwargs.get("metadata", {}),
+        "voiceMap": voice_map or {}  # Lägg till voiceMap om det anges, annars tom dict
     }
 
     logger.info(f"✅ Inserting edit: {edit}")
     db.Edits.insert_one(edit)
     return edit
 
-def save_transcription_edit(user_id, episode_id, transcript_text, raw_transcript, sentiment, emotion, filename):
+def save_transcription_edit(user_id, episode_id, transcript_text, raw_transcript, sentiment, emotion, filename, voice_map=None):
     edit = {
-        "_id": str(uuid.uuid4()),  # <--- custom string ID
+        "_id": str(uuid.uuid4()),
         "episodeId": episode_id,
         "userId": user_id,
         "editType": "transcription",
         "clipUrl": "",
         "status": "done",
         "transcript": transcript_text,
-        "metadata": {"filename": filename},
+        "metadata": {"filename": filename, "raw_transcript": raw_transcript},
         "sentiment": sentiment,
         "emotion": emotion,
         "createdAt": datetime.utcnow(),
-        "tags": ["transcript"]
+        "tags": ["transcript"],
+        "voiceMap": voice_map or {}  # Lägg till voiceMap om det anges
     }
 
     db.Edits.insert_one(edit)
+    return edit
 
 def get_edit_by_id(edit_id: str) -> Optional[dict]:
     """
@@ -58,8 +61,7 @@ def get_edit_by_id(edit_id: str) -> Optional[dict]:
     edit = db.Edits.find_one({"_id": edit_id})
     
     if edit:
-        word_timings_count = len(edit.get("metadata", {}).get("word_timings", []))
-        logger.info(f"✅ Found edit {edit_id} with {word_timings_count} word_timings")
+        logger.info(f"✅ Found edit {edit_id}")
     else:
         logger.warning(f"❌ Edit not found: {edit_id}")
     
@@ -71,7 +73,7 @@ def add_voice_map_to_edit(edit_id: str, voice_map: dict):
     """
     if not edit_id or not voice_map:
         logger.warning("Missing edit_id or voice_map for update")
-        return None
+        return {"status": "error", "message": "Missing edit_id or voice_map"}
 
     logger.info(f"💾 Adding voice_map to edit {edit_id}: {voice_map}")
 
@@ -87,7 +89,8 @@ def add_voice_map_to_edit(edit_id: str, voice_map: dict):
 
     if result.modified_count == 1:
         logger.info(f"✅ VoiceMap updated in edit {edit_id}")
+        return {"status": "success"}
     else:
         logger.warning(f"⚠️ Edit not found or unchanged for ID: {edit_id}")
-    return result
+        return {"status": "error", "message": "Edit not found or unchanged"}
 

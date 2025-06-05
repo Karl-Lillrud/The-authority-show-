@@ -2,6 +2,7 @@
 import os
 import logging
 import re
+import time
 import tempfile
 import httpx
 from typing import Optional, Dict
@@ -314,9 +315,6 @@ class TranscriptionService:
         final.export(buf, format="mp3")
         return buf.getvalue()
 
-
-
-
     def build_segments_from_raw(self, raw_transcription: str) -> List[dict]:
         segments = []
         pattern = re.compile(
@@ -359,14 +357,28 @@ class TranscriptionService:
     
     def clone_user_voice(self, file_data: bytes, user_id: str, voice_name: str = None) -> str:
         voice_name = voice_name or f"{user_id}_voice"
+        tmp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                tmp.write(file_data)
+                tmp.flush()
+                tmp_path = tmp.name
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-            tmp.write(file_data)
-            tmp.flush()
+            # Call SDK, which will open/close the file internally
+            voice = client.clone(
+                name=voice_name,
+                description="Cloned via PodManager AI",
+                files=[tmp_path]
+            )
+            return voice.voice_id
 
-        voice = client.clone(
-            name=voice_name,
-            description="Cloned via PodManager AI",
-            files=[tmp.name]
-        )
-        return voice.voice_id
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                # Windows kan låsa filen kort efter SDK-anrop, så vi väntar och försöker igen om det krävs
+                for _ in range(5):
+                    try:
+                        os.remove(tmp_path)
+                        break
+                    except PermissionError:
+                        time.sleep(0.2)
+

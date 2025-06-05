@@ -19,7 +19,7 @@ CREDIT_COSTS = {
     "ai_osint": 800,
     "ai_intro_outro": 800,
     "ai_intro_outro_audio": 500,
-
+    "voice_cloning": 1000,
     # credits
     "basic_pack": 2500,
     "pro_pack": 5000,

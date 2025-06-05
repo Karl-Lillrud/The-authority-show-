@@ -31,6 +31,14 @@ const aiOptions = [
     resultContainer: "cleanTranscript-result"
   },
   {
+    id: "translate_transcript",
+    title: "Translate Transcript",
+    description: "Translate the transcript into another language using AI",
+    icon: "🌐",
+    dependencies: { transcribe: true },
+    resultContainer: "translate-result"
+  },
+  {
     id: "enhanceAudio",
     title: "Enhance Audio",
     description: "Improve audio quality and reduce noise",
@@ -55,6 +63,14 @@ const aiOptions = [
     icon: "V",
     dependencies: {},
     resultContainer: "voiceIsolation-result"
+  },
+  {
+    id: "voice_cloning",
+    title: "Clone Voice",
+    description: "Clone the user's voice from the provided audio",
+    icon: "🗣️",
+    dependencies: { transcribe: true },
+    resultContainer: "voice-cloning-result"
   },
   {
     id: "generateShowNotes",
@@ -618,24 +634,27 @@ function handleRunButtonClick() {
   // Get selected steps
   const selectedSteps = selectedOptions.map(checkbox => checkbox.dataset.function);
 
-  // Map frontend IDs to backend step names
-  const stepMappings = {
-    transcribe: "transcribe",
-    enhanceAudio: "enhance",
-    aiCut: "ai_cut",
-    voice_isolation: "voice_isolation",
-    cleanTranscript: "clean_transcript",
-    planAndMixSfx: "plan_and_mix_sfx",
-    analyzeAudio: "analyze_audio",
-    generateShowNotes: "generate_show_notes",
-    aiSuggestions: "ai_suggestions",
-    generateQuotes: "generate_quotes",
-    generateQuoteImages: "generate_quote_images",
-    osintLookup: "osint_lookup",
-    generateIntroOutro: "generate_intro_outro",
-    introOutroToSpeech: "intro_outro_to_speech",
-    generateAudioClip: "generate_audio_clip"
-  };
+// Map frontend IDs to backend step names
+const stepMappings = {
+  transcribe: "transcribe",
+  enhanceAudio: "enhance",
+  aiCut: "ai_cut",
+  voice_isolation: "voice_isolation",
+  cleanTranscript: "clean_transcript",
+  planAndMixSfx: "plan_and_mix_sfx",
+  analyzeAudio: "analyze_audio",
+  generateShowNotes: "generate_show_notes",
+  aiSuggestions: "ai_suggestions",
+  generateQuotes: "generate_quotes",
+  generateQuoteImages: "generate_quote_images",
+  osintLookup: "osint_lookup",
+  generateIntroOutro: "generate_intro_outro",
+  introOutroToSpeech: "intro_outro_to_speech",
+  generateAudioClip: "generate_audio_clip",
+  translateTranscript: "translate_transcript",
+  voiceCloning: "voice_cloning"
+};
+
 
   // Sort steps by dependencies (still frontend IDs)
   const sortedSteps = sortFunctionsByDependencies(selectedSteps);
@@ -768,6 +787,14 @@ function processSuccessResponse(data, steps) {
 
       case "generateAudioClip":
         updateAudioClipResult(data.translated_clip_url || null);
+        break;
+
+      case "translateTranscript":
+        updateTranslateResult(data.translated_transcript || "No translation generated");
+        break;
+
+      case "voiceCloning":
+        updateVoiceCloningResult(data.voice_map || {});
         break;
     }
   });

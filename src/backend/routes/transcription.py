@@ -497,34 +497,40 @@ def audio_clip():
 def clone_voice():
     user_id = request.form.get("user_id")
     edit_id = request.form.get("edit_id")
+    speaker_mappings = request.form.get("speaker_mappings")  # Ex: "Speaker 1:file1,Speaker 2:file2"
 
     if not user_id or not edit_id:
         return jsonify({"error": "Missing user_id or edit_id"}), 400
 
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-
-    file = request.files["file"]
-    file_data = file.read()
+    files = request.files
+    if not files:
+        return jsonify({"error": "No files uploaded"}), 400
 
     try:
-        # 1. Klona rösten
-        voice_id = transcription_service.clone_user_voice(file_data, user_id)
-
-        # 2. Skapa voice_map, t.ex. alla "Speaker X" får samma röst
         edit = get_edit_by_id(edit_id)
+        if not edit:
+            return jsonify({"error": "Edit not found"}), 404
+
         speakers = {
             seg["speaker"]
             for seg in edit.get("metadata", {}).get("segments", [])
             if "speaker" in seg
         }
+        voice_map = {}
 
-        voice_map = {speaker: voice_id for speaker in speakers}
+        # Om flera filer skickas, mappa dem till talare
+        for speaker in speakers:
+            file_key = f"file_{speaker.replace(' ', '_')}"
+            if file_key in files:
+                file_data = files[file_key].read()
+                voice_id = transcription_service.clone_user_voice(file_data, user_id, f"{user_id}_{speaker}")
+                voice_map[speaker] = voice_id
+            else:
+                # Fallback till en standardröst om ingen fil finns för talaren
+                voice_map[speaker] = voice_map.get(speaker, "default_voice_id")
 
-        # 3. Spara voice_map i edit
         add_voice_map_to_edit(edit_id, voice_map)
-
-        return jsonify({"voice_id": voice_id, "voice_map": voice_map})
+        return jsonify({"voice_map": voice_map})
     except Exception as e:
         logger.error(f"Voice cloning failed: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500

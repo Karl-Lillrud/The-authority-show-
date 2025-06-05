@@ -13,7 +13,7 @@ from backend.services.audioService import AudioService
 from backend.services.creditService import consume_credits
 from backend.utils.blob_storage import upload_file_to_blob
 from backend.repository.episode_repository import EpisodeRepository
-from backend.repository.edit_repository import create_edit_entry
+from backend.repository.edit_repository import create_edit_entry, add_voice_map_to_edit
 from backend.utils.ai_utils import check_audio_duration, insufficient_credits_response,enhance_audio_with_ffmpeg,get_osint_info, create_podcast_scripts_paid,text_to_speech_with_elevenlabs
 
 logger = logging.getLogger(__name__)
@@ -34,31 +34,12 @@ def safe_consume_credits_after_success(user_id: str, credit_type: Optional[str],
 
 @audio_pipeline_bp.route("/audio/process_pipeline", methods=["POST"])
 def process_audio_pipeline():
-    """
-    Process audio through a pipeline of steps selected by the user.
-
-    Expected multipart/form-data:
-    - steps: JSON array string, e.g. '["enhance", "ai_cut"]'
-    - episode_id: string
-    - audio: audio file (File)
-    - cuts: optional JSON string if "cut_audio" is in steps
-
-    Returns:
-    {
-        "final_audio_url": "...",
-        "steps_applied": ["enhance", "ai_cut", ...],
-        "transcript": "...",
-        "cuts": [...],
-        ...
-    }
-    """
-    # --- Initialize variables ---
     word_timestamps = None
-    # --- Request validation ---
     steps_raw = request.form.get("steps")
     episode_id = request.form.get("episode_id")
     audio_file = request.files.get("audio")
     cuts_raw = request.form.get("cuts")
+    target_language = request.form.get("target_language", "English")  # NYTT: För translate_transcript
 
     if not steps_raw or not episode_id or not audio_file:
         return jsonify({"error": "Missing required fields: steps, episode_id, or audio"}), 400
@@ -88,7 +69,8 @@ def process_audio_pipeline():
         "transcribe", "enhance", "ai_cut", "voice_isolation", "cut_audio",
         "analyze_audio", "plan_and_mix_sfx",
         "clean_transcript", "generate_show_notes", "ai_suggestions", "generate_quotes",
-        "generate_quote_images", "osint_lookup", "generate_intro_outro", "intro_outro_to_speech", "generate_audio_clip"
+        "generate_quote_images", "osint_lookup", "generate_intro_outro", "intro_outro_to_speech", "generate_audio_clip",
+        "voice_cloning", "translate_transcript"  # NYA STEG
     ]
     for step in steps:
         if step not in valid_steps:
@@ -108,22 +90,24 @@ def process_audio_pipeline():
     # --- Credit handling ---
     user_id = g.user_id
     credit_types = {
-    "transcribe": "transcription",
-    "enhance": "audio_enhancement",
-    "ai_cut": "ai_audio_cutting",
-    "voice_isolation": "voice_isolation",
-    "cut_audio": "audio_cutting",
-    "analyze_audio": "ai_audio_analysis",
-    "plan_and_mix_sfx": "audio_clip",
-    "clean_transcript": "clean_transcript",
-    "generate_show_notes": "show_notes",
-    "ai_suggestions": "ai_suggestions",
-    "generate_quotes": "ai_quotes",
-    "generate_quote_images": "ai_quote_images",
-    "osint_lookup": "ai_osint",
-    "generate_intro_outro": "ai_intro",
-    "intro_outro_to_speech": "ai_intro",
-    "generate_audio_clip": "audio_clip"
+        "transcribe": "transcription",
+        "enhance": "audio_enhancement",
+        "ai_cut": "ai_audio_cutting",
+        "voice_isolation": "voice_isolation",
+        "cut_audio": "audio_cutting",
+        "analyze_audio": "ai_audio_analysis",
+        "plan_and_mix_sfx": "audio_clip",
+        "clean_transcript": "clean_transcript",
+        "generate_show_notes": "show_notes",
+        "ai_suggestions": "ai_suggestions",
+        "generate_quotes": "ai_quotes",
+        "generate_quote_images": "ai_quote_images",
+        "osint_lookup": "ai_osint",
+        "generate_intro_outro": "ai_intro",
+        "intro_outro_to_speech": "ai_intro",
+        "generate_audio_clip": "audio_clip",
+        "voice_cloning": "voice_cloning",  # NY KREDITTYP
+        "translate_transcript": "translation"  # NY KREDITTYP
     }
 
     for step in steps:
@@ -147,9 +131,11 @@ def process_audio_pipeline():
 
             ordered_step_priority = [
                 "transcribe",
+                "translate_transcript",  # NY POSITION
                 "voice_isolation",
                 "enhance",
                 "analyze_audio",
+                "voice_cloning",  # NY POSITION
                 "ai_cut",
                 "clean_transcript", 
                 "generate_show_notes", 
@@ -171,7 +157,7 @@ def process_audio_pipeline():
                 credit_type = credit_types.get(step)
 
                 try:
-                    if step in ["clean_transcript", "generate_show_notes", "ai_suggestions", "generate_quotes"] and not metadata.get("transcript"):
+                    if step in ["clean_transcript", "generate_show_notes", "ai_suggestions", "generate_quotes", "translate_transcript"] and not metadata.get("transcript"):
                         raise ValueError(f"Step '{step}' requires transcript. Ensure 'transcribe', 'analyze_audio' or 'ai_cut' is included.")
 
                     if step == "enhance":
@@ -192,7 +178,7 @@ def process_audio_pipeline():
                         if credit_type: consume_credits(user_id, credit_type)
 
                     elif step == "transcribe":
-                        result = transcription_service.transcribe_audio(current_audio, filename)
+                        result = transcription_service.transcribe_audio(current_audio, filename, user_id, episode_id)
                         metadata["steps_applied"].append(step)
                         metadata["transcript"] = result.get("full_transcript", "")
                         metadata["raw_transcription"] = result.get("raw_transcription", "")
@@ -290,6 +276,36 @@ def process_audio_pipeline():
                         metadata["steps_applied"].append(step)
                         metadata["translated_clip_url"] = f"data:audio/mp3;base64,{b64}"
 
+                    # NYTT: translate_transcript
+                    elif step == "translate_transcript":
+                        if not metadata.get("transcript"):
+                            raise ValueError("Transcript is required for translation. Ensure 'transcribe' or 'analyze_audio' is included.")
+                        def translate():
+                            return transcription_service.translate_transcript(metadata["transcript"], target_language)
+                        translated_transcript = safe_consume_credits_after_success(user_id, credit_type, translate)
+                        metadata["steps_applied"].append(step)
+                        metadata["translated_transcript"] = translated_transcript
+
+                    # NYTT: voice_cloning
+                    elif step == "voice_cloning":
+                        if not audio_file:
+                            raise ValueError("Audio file is required for voice cloning.")
+                        def clone_voice():
+                            voice_id = transcription_service.clone_user_voice(audio_bytes, user_id)
+                            # Hämta speakers från metadata (kan förbättras beroende på din pipeline)
+                            speakers = {
+                                seg["speaker"]
+                                for seg in metadata.get("metadata", {}).get("segments", [])
+                                if "speaker" in seg
+                            }
+                            # Om du inte har speakers, kan du defaulta till t.ex. {"Speaker 1": voice_id}
+                            if not speakers:
+                                speakers = {"Speaker 1"}
+                            voice_map = {speaker: voice_id for speaker in speakers}
+                            return voice_map
+                        voice_map = safe_consume_credits_after_success(user_id, credit_type, clone_voice)
+                        metadata["steps_applied"].append(step)
+                        metadata["voice_map"] = voice_map
 
                 except Exception as e:
                     logger.error(f"Error in step '{step}': {str(e)}", exc_info=True)
@@ -312,13 +328,20 @@ def process_audio_pipeline():
                 edit_type="pipeline",
                 clip_url=blob_url,
                 clipName=output_filename,
-                metadata={"steps_applied": metadata["steps_applied"], "edit_type": "pipeline"}
+                metadata={
+                    "steps_applied": metadata["steps_applied"],
+                    "edit_type": "pipeline",
+                    "voice_map": metadata.get("voice_map"),
+                    "translated_transcript": metadata.get("translated_transcript"),
+                }
             )
 
             return jsonify({
                 "final_audio_url": blob_url,
                 "steps_applied": metadata["steps_applied"],
                 "transcript": metadata.get("transcript"),
+                "translated_transcript": metadata.get("translated_transcript"),  # NYTT
+                "voice_map": metadata.get("voice_map"),  # NYTT
                 "cuts": metadata.get("cuts", []),
                 "ai_suggestions": metadata.get("ai_suggestions"),
                 "quotes": metadata.get("quotes"),
@@ -336,7 +359,6 @@ def process_audio_pipeline():
         except Exception as e:
             logger.error(f"Error in audio pipeline: {str(e)}", exc_info=True)
             return jsonify({"error": f"Pipeline processing failed: {str(e)}", "steps_applied": metadata["steps_applied"]}), 500
-
 
 
 def process_enhance_step(audio_bytes: bytes, input_path: str, temp_dir: str) -> Tuple[bytes, str]:
