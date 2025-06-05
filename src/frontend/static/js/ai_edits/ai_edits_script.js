@@ -797,8 +797,7 @@ function processSuccessResponse(data, steps) {
         break;
 
       case "voiceCloning":
-        updateVoiceCloningResult(data.voice_map || {});
-        if (data.voice_map) sessionStorage.setItem("voice_map", JSON.stringify(data.voice_map));
+        updateVoiceCloningResult(data.voice_id || "");
         if (data.voice_id) sessionStorage.setItem("voice_id", data.voice_id);
         break;
 
@@ -1104,18 +1103,14 @@ function updateSoundEffectsResult(sfxPlan, sfxClips) {
   }
 }
 
-function updateVoiceCloningResult(voiceMap) {
+function updateVoiceCloningResult(voiceId) {
   const container = document.getElementById("cloneVoiceResult");
   if (!container) return;
-  if (!voiceMap || Object.keys(voiceMap).length === 0) {
+  if (!voiceId) {
     container.textContent = "No voice was cloned.";
     return;
   }
-  let html = "✅ Din röst har klonats!<br><br>";
-  Object.entries(voiceMap).forEach(([speaker, id]) => {
-    html += `<b>${speaker}:</b> <code>${id}</code><br>`;
-  });
-  container.innerHTML = html;
+  container.innerHTML = `✅ Din röst har klonats!<br><br><b>Voice ID:</b> <code>${voiceId}</code>`;
 }
 
 function updateAudioClipResult(translatedClipUrl) {

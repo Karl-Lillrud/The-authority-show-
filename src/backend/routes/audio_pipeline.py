@@ -362,8 +362,9 @@ def process_audio_pipeline():
                 "final_audio_url": blob_url,
                 "steps_applied": metadata["steps_applied"],
                 "transcript": metadata.get("transcript"),
-                "translated_transcript": metadata.get("translated_transcript"),  # NYTT
-                "voice_map": metadata.get("voice_map"),  # NYTT
+                "translated_transcript": metadata.get("translated_transcript"),
+                "voice_id": metadata.get("voice_id"),
+                "voice_map": metadata.get("voice_map"),
                 "cuts": metadata.get("cuts", []),
                 "ai_suggestions": metadata.get("ai_suggestions"),
                 "quotes": metadata.get("quotes"),
