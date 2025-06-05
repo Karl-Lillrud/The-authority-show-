@@ -306,6 +306,8 @@ def process_audio_pipeline():
                             clip_stream = BytesIO(f.read())
                         translated_clip_url = upload_file_to_blob("podmanagerfiles", blob_path, clip_stream)
                         metadata["translated_clip_url"] = translated_clip_url
+                        # Add base64 for frontend
+                        metadata["audio_base64"] = "data:audio/mp3;base64," + base64.b64encode(b64).decode("utf-8")
 
                     # NYTT: translate_transcript
                     elif step == "translate_transcript":
@@ -377,6 +379,7 @@ def process_audio_pipeline():
                 "intro_outro_script": metadata.get("intro_outro_script"),
                 "intro_outro_audio_url": metadata.get("intro_outro_audio_url"),
                 "translated_clip_url": metadata.get("translated_clip_url"),
+                "audio_base64": metadata.get("audio_base64"),
             })
 
         except Exception as e:

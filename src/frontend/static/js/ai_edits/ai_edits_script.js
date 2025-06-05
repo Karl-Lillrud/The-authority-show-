@@ -807,7 +807,7 @@ function processSuccessResponse(data, steps) {
         break;
 
       case "generateAudioClip":
-        updateAudioClipResult(data.translated_clip_url || null);
+        updateAudioClipResult(data.translated_clip_url || null, data.audio_base64 || null);
         break;
     }
   });
@@ -1113,20 +1113,21 @@ function updateVoiceCloningResult(voiceId) {
   container.innerHTML = `✅ Din röst har klonats!<br><br><b>Voice ID:</b> <code>${voiceId}</code>`;
 }
 
-function updateAudioClipResult(translatedClipUrl) {
+function updateAudioClipResult(translatedClipUrl, audioBase64) {
   const container = document.getElementById("audioClipResult");
   if (!container) return;
-  if (!translatedClipUrl) {
+  let src = audioBase64 || translatedClipUrl;
+  if (!src) {
     container.innerHTML = "<p>No audio clip was generated.</p>";
     return;
   }
   container.innerHTML = `
     <audio controls style="width: 100%;">
-      <source src="${translatedClipUrl}" type="audio/mp3">
+      <source src="${src}" type="audio/mp3">
       Your browser does not support the audio element.
     </audio>
     <div style="margin-top: 10px;">
-      <a href="${translatedClipUrl}" download="translated_podcast.mp3" class="btn ai-edit-button">Download Audio</a>
+      <a href="${src}" download="translated_podcast.mp3" class="btn ai-edit-button">Download Audio</a>
     </div>
   `;
 }
