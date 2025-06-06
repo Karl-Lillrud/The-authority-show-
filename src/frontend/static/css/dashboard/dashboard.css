@@ -473,12 +473,10 @@
   margin-bottom: none;
   background-color: white;
   border-radius: var(--radius-medium);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm);
   box-shadow: var(--card-shadow);
   border: 1px solid rgba(0, 0, 0, 0.03);
   overflow: hidden;
-  max-height: 480px;
-}
 
 .cards-container {
   display: grid;

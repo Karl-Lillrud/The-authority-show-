@@ -9,18 +9,26 @@ console.log("podcastmanagement.js loaded")
  
 // Utility functions
 function initializeSvgIcons() {
-  // Sidebar menu icons
-  document.getElementById("back-to-dashboard-icon").innerHTML = svgpodcastmanagement.backToDashboard
-  document.getElementById("podcasts-icon").innerHTML = svgpodcastmanagement.podcasts
- 
-  document.getElementById("episodes-icon").innerHTML = svgpodcastmanagement.episodes
- 
-  document.getElementById("guests-icon").innerHTML = svgpodcastmanagement.guests
- 
-  // Action button icons
-  document.getElementById("add-icon-podcast").innerHTML = svgpodcastmanagement.add
-  document.getElementById("add-icon-episode").innerHTML = svgpodcastmanagement.add
-  document.getElementById("add-icon-guest").innerHTML = svgpodcastmanagement.add
+  const backToDashboardIcon = document.getElementById("back-to-dashboard-icon");
+  if (backToDashboardIcon) backToDashboardIcon.innerHTML = svgpodcastmanagement.backToDashboard;
+
+  const podcastsIcon = document.getElementById("podcasts-icon");
+  if (podcastsIcon) podcastsIcon.innerHTML = svgpodcastmanagement.podcasts;
+
+  const episodesIcon = document.getElementById("episodes-icon");
+  if (episodesIcon) episodesIcon.innerHTML = svgpodcastmanagement.episodes;
+
+  const guestsIcon = document.getElementById("guests-icon");
+  if (guestsIcon) guestsIcon.innerHTML = svgpodcastmanagement.guests;
+
+  const addIconPodcast = document.getElementById("add-icon-podcast");
+  if (addIconPodcast) addIconPodcast.innerHTML = svgpodcastmanagement.add;
+
+  const addIconEpisode = document.getElementById("add-icon-episode");
+  if (addIconEpisode) addIconEpisode.innerHTML = svgpodcastmanagement.add;
+
+  const addIconGuest = document.getElementById("add-icon-guest");
+  if (addIconGuest) addIconGuest.innerHTML = svgpodcastmanagement.add;
 }
  
 // Function to update edit buttons to use pen icons

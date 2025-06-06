@@ -780,6 +780,13 @@ function setupSubscriptionToggle() {
       const productName = card.querySelector(".product-name").textContent;
       const productFeaturesList = card.querySelector(".product-features .product-features-list");
 
+      if (productName === "Enterprise Subscription") {
+        priceElement.textContent = "Contact Us";
+        pricePeriod.textContent = "for pricing";
+        // Optionally, you can update features if needed
+        return;
+      }
+
       if (period === "monthly") {
         priceElement.textContent = `$${monthlyPrice}`;
         pricePeriod.textContent = "/month";

@@ -109,7 +109,7 @@ body {
     border: none;
     border-radius: var(--radius-small);
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(255, 115, 0, 0.4);
+    box-shadow: var(--button-shadow);
     transition: background 0.3s ease;
   }
   

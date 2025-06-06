@@ -271,10 +271,10 @@ function populateOptionsList() {
       innerHTML = `
         <div class="option-icon">${option.icon}</div>
         <div class="option-content" style="flex-grow: 1;">
-          <div class="option-title" style="display: flex; align-items: center; gap: 10px;">
+          <div class="option-title" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
             ${option.title}
             <input type="text" id="osint-query" placeholder="Enter guest name..." 
-              style="padding: 6px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; width: 200px;" />
+              style="padding: 6px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px;" />
           </div>
           <div class="option-description" style="margin-top: 4px;">${option.description}</div>
         </div>
@@ -381,6 +381,7 @@ function handleFileInputChange(e) {
 function updateFileInfo(message) {
   const fileInfo = document.getElementById("file-info");
   if (fileInfo) {
+    fileInfo.style = "word-break: break-all;";
     fileInfo.textContent = message;
   }
 }
