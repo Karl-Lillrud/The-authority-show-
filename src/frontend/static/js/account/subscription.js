@@ -254,8 +254,8 @@ async function updateSubscriptionUI() {
           renewalTextElement.classList.remove("cancellation-notice");
         }
         
-        // Enable and show cancel button if subscription is active and paid
-        if (cancelButton && subscription.status === "active" && subscription.plan !== "Free") {
+        // Enable and show cancel button if subscription is active and not a free plan
+        if (cancelButton && subscription.status === "active" && subscription.plan.toLowerCase() !== "free") {
           cancelButton.disabled = false;
           cancelButton.textContent = "Cancel Subscription";
           cancelButton.style.display = 'flex'; // Show it
