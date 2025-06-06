@@ -10,7 +10,7 @@ body {
   margin: 2rem auto;
   padding: 2rem;
   background-color: #fff;
-  border-radius: var(--radius-large, 12px);
+  border-radius: var(--radius-large);
   box-shadow: var(--card-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
 }
 
@@ -21,7 +21,6 @@ body {
   text-align: left;
   position: relative;
   padding-bottom: 0; /* Remove bottom padding */
-  margin-bottom: 0.7rem; /* Less margin below text, more below line */
 }
 
 .dashboard-title {
@@ -46,7 +45,7 @@ body {
   margin-bottom: 2rem;
   padding: 1.5rem;
   border: 1px solid var(--border-color-light, #e0e0e0);
-  border-radius: var(--radius-medium, 8px);
+  border-radius: var(--radius-medium);
   background-color: var(--background-color-soft, #fdfdfd);
 }
 
@@ -140,7 +139,7 @@ body {
   padding: 0.75rem;
   background-color: #fff;
   border: 1px solid var(--border-color-light, #e0e0e0);
-  border-radius: var(--radius-medium, 8px);
+  border-radius: var(--radius-small);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
@@ -278,14 +277,34 @@ body {
   /* Add other button styles if needed */
 }
 
-/* Style for platform links in the RSS feed popup */
-#rss-feed-popup a {
-    color: orange;
-    text-decoration: none;
+/* New styles for orange platform links and "Copy RSS" button */
+.copy-rss-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff3e0;
+  border: 1px solid #ff9800;
+  color: #ff9800;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.copy-rss-btn:hover, .copy-rss-btn:focus {
+  background: #ffe0b2;
+  color: #e65100;
+  border-color: #e65100;
+}
+.copy-rss-btn svg {
+  margin-right: 2px;
+  flex-shrink: 0;
 }
 
-#rss-feed-popup a:hover {
-    text-decoration: underline;
+.rss-platform-link {
+  color: #ff9800 !important;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 /* Responsive adjustments */
@@ -293,6 +312,7 @@ body {
   .publish-container {
     margin: 1rem;
     padding: 1.5rem;
+    margin-top: 30px;
   }
 
   .page-title {

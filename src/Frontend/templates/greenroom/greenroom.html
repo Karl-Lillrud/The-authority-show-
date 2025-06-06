@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,16 +58,14 @@
                     </div>
                 </div>
 
-                <div class="participants-list">
-                    <h3>Participants</h3>
-                    <div id="participantsContainer" class="participants-grid">
-                        <!-- Participants will be added here dynamically -->
-                    </div>
-                </div>
+                <!-- Notification Area -->
+                <div id="notification-area" class="notification-area"></div>
 
-                <div class="action-buttons">
-                    <button id="readyButton" class="btn btn-primary">I'm Ready</button>
-                    <button id="leaveButton" class="btn btn-danger">Leave</button>
+                <div class="participants-list">
+                    <h3>Guests</h3>
+                    <div id="participantsContainer" class="participants-grid">
+                        <!-- Guests will be inserted here dynamically -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -74,6 +73,6 @@
 
     <!-- Scripts -->
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='js/greenroom/greenroom.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/greenroom/greenroom.js') }}"></script>
 </body>
 </html>

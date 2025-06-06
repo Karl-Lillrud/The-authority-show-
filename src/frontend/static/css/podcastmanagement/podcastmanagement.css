@@ -28,7 +28,7 @@
 
 .podcast-card {
   background-color: white;
-  border-radius: var(--podcastmanagement-radius-large);
+  border-radius: var(--radius-large);
   overflow: hidden;
   box-shadow: var(--podcastmanagement-card-shadow);
   transition: all var(--transition-normal);
@@ -135,9 +135,23 @@
   padding: var(--spacing-sm) var(--spacing-lg);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
-  justify-content: flex-start;
+  justify-content: right;
   gap: 0.5rem;
   background-color: rgba(0, 0, 0, 0.01);
+}
+
+.podcast-footer button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff3e0;
+  border: 1px solid #ff9800;
+  color: #ff9800;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
 }
 
 .footer-link {
@@ -198,7 +212,7 @@
 /* Podcast Detail */
 .podcast-detail {
   background-color: white;
-  border-radius: var(--podcastmanagement-radius-large);
+  border-radius: var(--radius-large);
   box-shadow: var(--podcastmanagement-card-shadow);
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.03);
@@ -208,19 +222,129 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  background-color: rgba(0, 0, 0, 0.01);
+  padding: var(--spacing-xl) var(--spacing-xl);
+  border-top-left-radius: var(--radius-large);
+  border-top-right-radius: var(--radius-large);
+  
+  border: 2px solid rgb(255 255 255 / 50%);
+  background-color: var(--highlight-color); /* Keep the orange background */
+  /* Remove the patterned background */
 }
 
 .top-right-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-lg);
 }
+
+.detail-header button {
+  border-radius: var(--radius-small);
+}
+
+.detail-header .studio-btn, .detail-header .save-btn, .detail-header .edit-btn, .detail-header .delete-btn {
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255,255,255,0.9);
+  position: relative;
+}
+
+.detail-header .studio-btn-off {
+  background-color: rgba(200,200,200,0.9);
+}
+
+.detail-header .studio-btn-on:hover, .detail-header .save-btn:hover, .detail-header .edit-btn:hover, .detail-header .delete-btn:hover {
+  background-color: rgba(225,225,225,0.8);
+}
+
+.detail-header .top-right-actions .save-btn {
+  border: 1px solid rgb(0, 145, 255);
+}
+
+.detail-header .top-right-actions .save-btn svg g path {
+  fill: rgb(0, 145, 255);
+}
+
+.detail-header .top-right-actions .edit-btn {
+  border: 1px solid var(--highlight-color);
+}
+
+.detail-header .top-right-actions .edit-btn svg {
+  stroke: var(--highlight-color);
+}
+
+.detail-header .top-right-actions .delete-btn {
+  border: 1px solid var(--danger-color);
+}
+
+.detail-header .top-right-actions .delete-btn svg {
+  stroke: var(--danger-color);
+}
+
+/* Studio button styling */
+.top-right-actions .studio-btn-on:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1)
+}
+
+/* AI Edit button styling */
+.top-right-actions .studio-btn::after {
+  content: "Studio";
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.top-right-actions .studio-btn-off::after {
+  content: "Studio (Unavailable)";
+}
+
+.top-right-actions .studio-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* AI Edit button styling */
+.top-right-actions .save-btn::after {
+  content: "AI Edit";
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.top-right-actions .save-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
 
 /* Edit button styling */
 .top-right-actions .edit-btn::after {
-  content: "Edit";
+  content: "Edit Info";
   position: absolute;
   bottom: -25px;
   left: 50%;
@@ -294,7 +418,8 @@
   display: inline-block;
   padding: 3px 10px;
   background-color: rgba(255, 127, 63, 0.1);
-  border-radius: 16px;
+  border-radius: var(--radius-small);
+  width: fit-content;
 }
 
 .detail-section {
@@ -428,6 +553,11 @@
   width: 100%;
   padding: var(--spacing-sm);
   margin-top: var(--spacing-sm);
+  
+}
+
+.episode-list-item {
+  width: fit-content;
 }
 
 .detail-section-title {
@@ -580,9 +710,10 @@
   margin-top: 12px;
   max-height: 120px;
   overflow-y: auto;
-  padding: 6px;
+  padding: var(--spacing-sm);
   background-color: rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-medium);
+  
 }
 
 .podcast-episode-item {
@@ -597,6 +728,7 @@
   transition: all var(--transition-normal);
   cursor: pointer;
   border-left: 2px solid var(--highlight-color);
+  width: fit-content;
 }
 
 .podcast-episode-actions {
@@ -797,7 +929,9 @@
   font-weight: 600;
   font-size: 0.7rem;
   transition: all var(--transition-normal);
+  margin-right: 8px; /* Add this line for spacing */
 }
+
 
 .view-profile-btn:hover {
   background-color: var(--highlight-hover);
@@ -923,7 +1057,9 @@
 /* Form Box */
 .form-box {
   background-color: #ffffff;
-  border-radius: 12px;
+  border-radius: var(--radius-large);
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   padding: 2rem;
   width: 90%; 
@@ -1126,19 +1262,7 @@ select option:disabled {
   transform: translateY(-1px);
 }
 
-.save-btn {
-  position: relative;
-  background-color: var(--highlight-color, #ff7f3f);
-  color: #ffffff;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 600;
-  overflow: hidden;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
+
 
 /* Remove the default ::before pseudo-element for the buy credits button */
 #buy-credits-btn-popup::before {
@@ -1146,8 +1270,8 @@ select option:disabled {
 }
 
 .save-btn:hover {
-  background-color: var(--highlight-hover, #e66b2e);
-  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 /* Responsive Adjustments */
@@ -1411,6 +1535,10 @@ select option:disabled {
   padding-bottom: var(--spacing-sm);
 }
 
+.section-title.section-description-title {
+  padding-top: var(--spacing-lg);
+}
+
 .section-title::after {
   content: "";
   position: absolute;
@@ -1440,7 +1568,7 @@ select option:disabled {
   overflow-y: auto;
   border-radius: var(--radius-medium);
   background-color: rgba(0, 0, 0, 0.02);
-  padding: var(--spacing-xs);
+  padding: var(--spacing-md);
   margin-top: var(--spacing-sm);
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) white;
@@ -1466,7 +1594,7 @@ select option:disabled {
   border-radius: var(--radius-medium);
   box-shadow: var(--podcastmanagement-card-shadow);
   padding: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm2);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -1477,6 +1605,12 @@ select option:disabled {
 
 .episode-list-item:last-child {
   margin-bottom: 0;
+}
+
+.episodes-list-container {
+  display: flex;
+  flex-direction: wrap;
+  gap: var(--spacing-xs);
 }
 
 .episode-list-item:hover {
@@ -1500,6 +1634,7 @@ select option:disabled {
 .episode-status {
   font-size: 0.7rem;
   padding: 3px 6px;
+  margin-top: 4px;
   background-color: rgba(255, 127, 63, 0.1);
   color: var(--highlight-color);
   border-radius: 10px;
@@ -2059,5 +2194,34 @@ select#episode-id {
     cursor: not-allowed;
     box-shadow: none;
   }
+}
+
+.popup .form-box select {
+  background-color: white;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: var(--radius-small);
+  margin-bottom: 16px;
+  color: #000; /* Ensure text is black, not grey */
+}
+
+/* Hide published episodes in the dropdown */
+select option.published {
+  display: none;
+}
+
+/* Style for non-published episodes */
+select option.non-published {
+  color: #000000;
+  background-color: white;
+}
+
+/* Remove any greyed-out styling for the episode dropdown specifically */
+#episode-id, 
+select#episode-id option {
+  background-color: white !important;
+  color: #000000 !important; 
+  opacity: 1 !important;
 }
 

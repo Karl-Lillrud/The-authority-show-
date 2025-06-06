@@ -168,6 +168,9 @@ ${isCompleted ? '<i class="fas fa-check" style="position:absolute; top:50%; left
             <button class="task-action-btn edit-task-btn" title="Edit Task" data-task-id="${task.id || task._id}">
               <i class="fas fa-edit"></i>
             </button>
+            <button class="task-action-btn add-comment-btn" title="Add Comment" data-task-id="${task.id || task._id}">
+              <i class="fas fa-comment"></i>
+            </button>
             <button class="task-action-btn delete-task-btn" title="Delete Task" data-task-id="${task.id || task._id}">
               <i class="fas fa-trash"></i>
             </button>
@@ -271,29 +274,38 @@ ${isCompleted ? '<i class="fas fa-check" style="position:absolute; top:50%; left
 export function setupTaskInteractions(state, updateUI) {
   // Task checkbox toggle
   document.querySelectorAll(".task-checkbox").forEach((checkbox) => {
-    checkbox.addEventListener("click", () => {
-      const taskId = checkbox.getAttribute("data-task-id")
-      toggleTaskCompletion(taskId, state, updateUI)
-    })
+    if (!checkbox.classList.contains("complete-task-listener")) {
+      checkbox.classList.add("complete-task-listener")
+      checkbox.addEventListener("click", () => {
+        const taskId = checkbox.getAttribute("data-task-id")
+        toggleTaskCompletion(taskId, state, updateUI)
+      })
+    }
   })
 
   // Task expand/collapse
   document.querySelectorAll(".task-expand").forEach((button) => {
-    button.addEventListener("click", () => {
-      const taskId = button.getAttribute("data-task-id")
-      toggleTaskExpansion(taskId, state, updateUI)
-    })
+    if (!button.classList.contains("expand-task-listener")) {
+      button.classList.add("expand-task-listener")
+      button.addEventListener("click", () => {
+        const taskId = button.getAttribute("data-task-id")
+        toggleTaskExpansion(taskId, state, updateUI)
+      })
+    }
   })
 
   // Task name click to show details
   document.querySelectorAll(".task-name").forEach((taskName) => {
-    taskName.addEventListener("click", () => {
-      const taskItem = taskName.closest(".task-item")
-      if (taskItem) {
-        const taskId = taskItem.dataset.taskId
-        showTaskDetailsModal(taskId, state, updateUI)
-      }
-    })
+    if (!taskName.classList.contains("show-task-details-listener")) {
+      taskName.classList.add("show-task-details-listener")
+      taskName.addEventListener("click", (e) => {
+        const taskItem = taskName.closest(".task-item")
+        if (taskItem) {
+          const taskId = taskItem.dataset.taskId
+          showTaskDetailsModal(taskId, state, updateUI)
+        }
+      })
+    }
   })
 
   // Edit task buttons
@@ -315,36 +327,48 @@ export function setupTaskInteractions(state, updateUI) {
 
   // Delete task buttons
   document.querySelectorAll(".delete-task-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const taskId = button.getAttribute("data-task-id")
-      confirmDeleteTask(taskId, state, updateUI)
-    })
+    if (!button.classList.contains("delete-task-listener")) {
+      button.classList.add("delete-task-listener")
+      button.addEventListener("click", () => {
+        const taskId = button.getAttribute("data-task-id")
+        confirmDeleteTask(taskId, state, updateUI)
+      })
+    }
   })
 
   // Assign task buttons
   document.querySelectorAll(".assign-task-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const taskId = button.getAttribute("data-task-id")
-      toggleTaskAssignment(taskId, state, updateUI)
-    })
+    if (!button.classList.contains("assign-task-listener")) {
+      button.classList.add("assign-task-listener")
+      button.addEventListener("click", () => {
+        const taskId = button.getAttribute("data-task-id")
+        toggleTaskAssignment(taskId, state, updateUI)
+      })
+    }
   })
 
   // Add comment buttons
   document.querySelectorAll(".add-comment-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const taskId = button.getAttribute("data-task-id")
-      showAddCommentModal(taskId, state, updateUI)
-    })
+    if (!button.classList.contains("comment-task-listener")) {
+      button.classList.add("comment-task-listener")
+      button.addEventListener("click", () => {
+        const taskId = button.getAttribute("data-task-id")
+        showAddCommentModal(taskId, state, updateUI)
+      })
+    }
   })
 
   // Workspace redirect buttons
   document.querySelectorAll(".workspace-redirect-btn").forEach((button) => {
-    button.addEventListener("click", (e) => {
-      e.stopPropagation() // Prevent task details from opening
-      const taskId = button.getAttribute("data-task-id")
-      const aiTool = button.getAttribute("data-ai-tool")
-      redirectToWorkspace(taskId, aiTool, state, updateUI)
-    })
+    if (!button.classList.contains("redirect-task-listener")) {
+      button.classList.add("redirect-task-listener")
+      button.addEventListener("click", (e) => {
+        e.stopPropagation() // Prevent task details from opening
+        const taskId = button.getAttribute("data-task-id")
+        const aiTool = button.getAttribute("data-ai-tool")
+        redirectToWorkspace(taskId, aiTool, state, updateUI)
+      })
+    }
   })
 }
 
@@ -1129,6 +1153,13 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
   const task = state.tasks.find((t) => t.id === taskId || t._id === taskId)
   if (!task) return
 
+  // Check that this pane isn't already opened
+  const existingModal = document.getElementById("task-details-modal")
+  if (existingModal) {
+    console.error("Task Details is already opened!")
+    return
+  }
+
   // Get dependency information
   const dependencyInfo = getDependencyInfo(taskId, state.tasks)
   const { dependencyTasks, dependentTasks } = dependencyInfo
@@ -1216,31 +1247,9 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
               `
                 : ""
             }
-            
-            ${
-              task.comments && task.comments.length > 0
-                ? `
-                <div class="task-comments-section">
-                  <h4>Comments (${task.comments.length}):</h4>
-                  <div class="comments-list">
-                    ${task.comments
-                      .map(
-                        (comment) => `
-                      <div class="comment-item">
-                        <div class="comment-header">
-                          <span class="comment-author">${comment.userName || "Anonymous"}</span>
-                          <span class="comment-date">${new Date(comment.createdAt).toLocaleString()}</span>
-                        </div>
-                        <div class="comment-text">${comment.text}</div>
-                      </div>
-                    `,
-                      )
-                      .join("")}
-                  </div>
-                </div>
-              `
-                : `<div class="task-comments-section"><p>No comments yet</p></div>`
-            }
+
+            <div class="task-comments-section" id="task-details-comments"><p><i class="fas fa-spinner fa-spin"></i> Loading comments...</p></div>
+
           </div>
         </div>
         <div class="modal-footer">
@@ -1268,9 +1277,50 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
   // Show the popup
   popup.style.display = "flex"
 
+  const commentsCount = task.comments && task.comments.length > 0 ? task.comments.length : -1
+  function updateComments() {
+    const commentsHTML = `
+      ${
+      task.comments && task.comments.length > 0
+        ? `
+          <h4>Comments (${task.comments.length}):</h4>
+          <div class="comments-list">
+            ${task.comments
+              .map(
+                (comment) => `
+              <div class="comment-item">
+                <div class="comment-header">
+                  <span class="comment-author">${comment.userName || "Anonymous"}</span>
+                  <span class="comment-date">${new Date(comment.createdAt).toLocaleString()}</span>
+                </div>
+                <div class="comment-text">${comment.text}</div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+        `
+        : `<p>No comments yet</p>`
+      }
+    `
+    const taskComments = document.getElementById("task-details-comments")
+    if (!taskComments)
+    {
+      alert("didn't find section")
+    }
+    taskComments.innerHTML = commentsHTML
+    if (commentsCount != task.comment.length) {
+      updateUI()
+    }
+  }
+
   // Add class to animate in
   setTimeout(() => {
     popup.querySelector(".popup-content").classList.add("show")
+    import("/static/js/episode-to-do/comment-utils.js")
+    .then((module) => {
+      module.loadTaskComments(taskId, state, updateComments)
+    })
   }, 10)
 
   // Close button event
@@ -1283,6 +1333,13 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
   const closeDetailsBtn = document.getElementById("close-task-details-btn")
   closeDetailsBtn.addEventListener("click", () => {
     closePopup(popup)
+  })
+
+  // Edit Task button event
+  const editTaskBtn = document.getElementById("edit-task-details-btn")
+  editTaskBtn.addEventListener("click", () => {
+    closePopup(popup)
+    showEditTaskPopup(taskId, state, updateUI)
   })
 
   // Workspace button event

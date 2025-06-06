@@ -1,14 +1,29 @@
 from flask import url_for
 from backend.database.mongo_connection import collection
-from backend.utils.email_utils import send_email, send_guest_invitation_email
+from backend.utils.email_utils import send_guest_invitation_email
 import uuid
-from datetime import datetime, timedelta
+import re
 import logging
 import requests
 
 logger = logging.getLogger(__name__)
 
 class InvitationService:
+    @staticmethod
+    def validate_email(email):
+        """ Validate email format using regex """
+        pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+        return re.match(pattern, email)
+
+    @staticmethod
+    def validate_uuid(uuid_str):
+        """ Validate UUID format """
+        try:
+            uuid.UUID(uuid_str)
+            return True
+        except ValueError:
+            return False
+
     @staticmethod
     def send_guest_invitation(user_id, guest_data):
         """
@@ -17,6 +32,13 @@ class InvitationService:
         from backend.repository.guest_repository import GuestRepository
         
         try:
+            # Validate guest data
+            if not InvitationService.validate_email(guest_data["email"]):
+                return {"error": "Invalid email address"}, 400
+
+            if not InvitationService.validate_uuid(guest_data["episodeId"]):
+                return {"error": "Invalid episodeId"}, 400
+
             # Fetch the user's googleCal token
             user = collection.database.Users.find_one({"_id": user_id}, {"googleCal": 1})
             google_cal_token = user.get("googleCal")
@@ -80,47 +102,31 @@ class InvitationService:
     @staticmethod
     def send_session_invitation(email, episode_id, guest_id):
         """
-        Generates an invitation token using guest_to_episode and sends an email with a link to greenroom.html.
+        Assigns guest to episode and sends booking email via /invite-guest.
         """
         try:
-            # Call the guest_to_episode /invite-guest route to create an invite token
-            invite_url = f"http://127.0.0.1:8000/invite-guest"
+            # Validate email format
+            if not InvitationService.validate_email(email):
+                return {"error": "Invalid email address"}, 400
+
+            # Validate episode and guest IDs
+            if not InvitationService.validate_uuid(episode_id) or not InvitationService.validate_uuid(guest_id):
+                return {"error": "Invalid episodeId or guestId"}, 400
+
+            invite_url = "http://127.0.0.1:8000/invite-guest"
             payload = {"episode_id": episode_id, "guest_id": guest_id}
             response = requests.post(invite_url, json=payload)
 
-            logger.info(f"Response from /invite-guest: {response.json()}")
+            data = response.json()
+            logger.info(f"Response from /invite-guest: {data}")
 
             if response.status_code != 201:
-                logger.error(f"Failed to create invite token: {response.json()}")
-                return {"error": "Failed to create invite token"}, 500
+                logger.error(f"Failed to create invite: {data}")
+                return {"error": data.get("error", "Failed to create invite")}, 500
 
-            # Extract the invite token and construct the greenroom link
-            invite_data = response.json()
-            invite_url = invite_data.get("invite_url")
-            if not invite_url:
-                logger.error("Invite URL not found in response")
-                return {"error": "Failed to retrieve invite URL"}, 500
-
-            token = invite_url.split("/")[-1]  # Extract token from the URL
-            logger.info(f"Extracted token: {token}")
-
-            greenroom_url = url_for(
-                "recording_studio_bp.greenroom",
-                _external=True,
-                guestId=guest_id,
-                token=token
-            )
-
-            # Send the invitation email
-            subject = "You're Invited to Join the Recording Session"
-            body = f"Click the link below to join the greenroom:\n\n{greenroom_url}"
-            send_email(email, subject, body)
-
-            logger.info(f"Session invitation email sent to {email}")
             return {
-                "message": "Invitation sent successfully",
-                "greenroom_url": greenroom_url,
-                "token": token
+                "message": "Guest assigned and invitation sent successfully",
+                "greenroom_url": data.get("invite_url")
             }, 201
 
         except Exception as e:

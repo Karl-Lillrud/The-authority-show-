@@ -3,6 +3,11 @@ import xml.etree.ElementTree as ET
 import logging
 import requests
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
+import json
+from io import BytesIO
+from backend.utils.email_utils import send_activation_email
+from backend.utils.blob_storage import get_blob_content, upload_file_to_blob
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
@@ -13,14 +18,28 @@ load_dotenv()
 
 # Constants
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')
-XML_FILE_PATH = os.getenv("ACTIVATION_XML_FILE_PATH", "../../frontend/static/scraped.xml")
+BLOB_CONTAINER = os.getenv("AZURE_STORAGE_CONTAINER_NAME", "podmanagerfiles")
+SCRAPED_XML_BLOB_PATH = "activate/scraped.xml"
+ACTIVATED_JSON_BLOB_PATH = "activate/activated_emails.json"
+BATCH_CONFIG_BLOB_PATH = "activate/batch_config.json"
 
-def load_podcasts_from_xml(file_path):
-    """Load podcasts from an XML file."""
+# Initial batch size and growth rate
+INITIAL_BATCH_SIZE = 89
+DAILY_GROWTH_RATE = 1.20  # 20% increase daily
+
+def load_podcasts_from_blob():
+    """Load podcasts from the XML file in blob storage."""
     podcasts = []
     try:
-        tree = ET.parse(file_path)
-        root = tree.getroot()
+        # Get XML data from blob storage
+        xml_content = get_blob_content(BLOB_CONTAINER, SCRAPED_XML_BLOB_PATH)
+        if not xml_content:
+            logger.error(f"XML data not found in blob storage at {SCRAPED_XML_BLOB_PATH}")
+            return []
+            
+        # Parse XML from the content
+        root = ET.fromstring(xml_content)
+        
         for podcast_elem in root.findall("podcast"):
             title = podcast_elem.findtext("title")
             email_element = podcast_elem.find("emails/email")
@@ -30,76 +49,333 @@ def load_podcasts_from_xml(file_path):
                 podcasts.append({"title": title, "email": email, "rss_feed": rss_feed})
             else:
                 logger.warning(f"Skipping podcast entry due to missing data: Title={title}, Email={email}, RSS={rss_feed}")
-        logger.info(f"Loaded {len(podcasts)} podcasts from {file_path}")
-    except FileNotFoundError:
-        logger.error(f"XML file not found at {file_path}")
+        logger.info(f"Loaded {len(podcasts)} podcasts from blob storage XML")
     except ET.ParseError:
-        logger.error(f"Error parsing XML file at {file_path}")
+        logger.error(f"Error parsing XML from blob storage")
     except Exception as e:
         logger.error(f"An unexpected error occurred while loading XML: {e}", exc_info=True)
     return podcasts
 
-def main():
-    logger.info("Starting activation script (API mode)...")
-    podcasts_to_process = load_podcasts_from_xml(XML_FILE_PATH)
-    if not podcasts_to_process:
-        logger.info("No podcasts to process. Exiting.")
-        return
-
-    emails_sent_successfully = 0
-    total_processed = 0
-    processed_emails_in_current_run = set() # Keep track of processed emails in this run
-
-    for podcast_data in podcasts_to_process:
-        total_processed += 1
-        email = podcast_data.get("email")
-        rss_url = podcast_data.get("rss_feed")
-        podcast_title = podcast_data.get("title")
-
-        if not email or not rss_url or not podcast_title:
-            logger.warning(f"Skipping entry due to incomplete data: {podcast_data}")
-            continue
-
-        if email in processed_emails_in_current_run:
-            logger.info(f"Skipping duplicate email in current run: {email} for podcast: {podcast_title}")
-            continue
-
-        try:
-            logger.info(f"Processing activation for: {email}, Podcast: {podcast_title}, RSS: {rss_url}")
-
-            invite_url = f"{API_BASE_URL}/activation/invite"
-            payload = {
-                "email": email,
-                "rss_url": rss_url,
-                "podcast_title": podcast_title
+def load_activated_emails():
+    """Load the list of emails that have already been activated."""
+    try:
+        logger.info(f"Loading activated emails record from blob: {ACTIVATED_JSON_BLOB_PATH}")
+        blob_content = get_blob_content(BLOB_CONTAINER, ACTIVATED_JSON_BLOB_PATH)
+        
+        if not blob_content:
+            logger.info("No existing activated emails record found. Will create a new one when first emails are sent.")
+            return {
+                "last_sent_date": "",
+                "emails_sent": []
             }
-            response = requests.post(invite_url, json=payload)
+        
+        data = json.loads(blob_content.decode('utf-8'))
+        return data
+    
+    except Exception as e:
+        logger.error(f"Error loading activated emails: {e}", exc_info=True)
+        # Return a fresh tracking object if load fails
+        return {
+            "last_sent_date": "",
+            "emails_sent": []
+        }
+
+def save_activated_emails(data):
+    """Save the activated emails tracking JSON to blob storage"""
+    try:
+        logger.info(f"Saving activated emails record to blob: {ACTIVATED_JSON_BLOB_PATH}")
+        
+        # Update the last sent date
+        data["last_sent_date"] = datetime.now().isoformat()
+        
+        # Convert to JSON string
+        json_data = json.dumps(data, indent=2)
+        
+        # Upload to blob storage
+        json_bytes = BytesIO(json_data.encode('utf-8'))
+        upload_url = upload_file_to_blob(
+            container_name=BLOB_CONTAINER,
+            blob_path=ACTIVATED_JSON_BLOB_PATH,
+            file=json_bytes,
+            content_type="application/json"
+        )
+        
+        if not upload_url:
+            logger.error("Failed to save activated emails record to blob storage")
+            return False
             
-            if response.ok:
-                response_data = response.json()
-                activation_link = response_data.get("activation_link")
-                if activation_link:
-                    logger.info(f"Constructed activation link for {email}: {activation_link}")
-                else:
-                    logger.warning(f"Activation link not found in API response for {email}")
+        return True
+    
+    except Exception as e:
+        logger.error(f"Error saving activated emails: {e}", exc_info=True)
+        return False
+
+def get_podcast_logo_from_rss(rss_url):
+    """Fetch podcast logo from RSS feed URL"""
+    try:
+        if not rss_url:
+            return None
+            
+        from backend.services.rss_Service import RSSService
+        rss_service = RSSService()
+        rss_data, status = rss_service.fetch_rss_feed(rss_url)
+        
+        if status == 200 and rss_data and rss_data.get("imageUrl"):
+            logo_url = rss_data.get("imageUrl")
+            logger.info(f"Successfully fetched podcast logo from RSS: {logo_url}")
+            return logo_url
+        else:
+            logger.warning(f"No logo found in RSS feed: {rss_url}")
+            return None
+    except Exception as e:
+        logger.error(f"Error fetching podcast logo from RSS: {e}", exc_info=True)
+        return None
+
+def get_batch_config():
+    """
+    Get the batch configuration for email sending, including batch size adjusted for daily growth
+    
+    Returns:
+        dict: Batch configuration with keys:
+            - batch_size: Current day's batch size
+            - start_date: When the first batch was sent
+            - days_running: Number of days since start
+    """
+    try:
+        logger.info("Getting batch configuration...")
+        # Try to load existing batch config
+        blob_content = get_blob_content(BLOB_CONTAINER, BATCH_CONFIG_BLOB_PATH)
+        
+        if blob_content:
+            # Parse existing config
+            config = json.loads(blob_content.decode('utf-8'))
+            
+            # Calculate days running
+            start_date = datetime.fromisoformat(config["start_date"])
+            days_running = (datetime.now() - start_date).days + 1  # Include first day
+            
+            # Calculate batch size for today with 20% daily growth
+            current_batch_size = int(INITIAL_BATCH_SIZE * (DAILY_GROWTH_RATE ** (days_running - 1)))
+            
+            # Update config
+            config["days_running"] = days_running
+            config["batch_size"] = current_batch_size
+            
+            logger.info(f"Batch config: Started {days_running} days ago, current batch size: {current_batch_size}")
+            return config
+        else:
+            # First time running - create new config
+            logger.info(f"No batch config found. Creating new with initial batch size: {INITIAL_BATCH_SIZE}")
+            config = {
+                "start_date": datetime.now().isoformat(),
+                "batch_size": INITIAL_BATCH_SIZE,
+                "days_running": 1
+            }
+            
+            # Save the new config
+            save_batch_config(config)
+            return config
+            
+    except Exception as e:
+        logger.error(f"Error getting batch config: {e}", exc_info=True)
+        # Fall back to safe defaults
+        return {
+            "start_date": datetime.now().isoformat(),
+            "batch_size": INITIAL_BATCH_SIZE,
+            "days_running": 1
+        }
+
+def save_batch_config(config):
+    """
+    Save the batch configuration to blob storage
+    
+    Args:
+        config (dict): The batch configuration to save
+    
+    Returns:
+        bool: Success status
+    """
+    try:
+        logger.info(f"Saving batch config: {config}")
+        json_data = json.dumps(config, indent=2)
+        
+        # Upload to blob storage
+        json_bytes = BytesIO(json_data.encode('utf-8'))
+        upload_url = upload_file_to_blob(
+            container_name=BLOB_CONTAINER,
+            blob_path=BATCH_CONFIG_BLOB_PATH,
+            file=json_bytes,
+            content_type="application/json"
+        )
+        
+        if not upload_url:
+            logger.error("Failed to save batch config to blob storage")
+            return False
+            
+        return True
+    
+    except Exception as e:
+        logger.error(f"Error saving batch config: {e}", exc_info=True)
+        return False
+
+def process_activation_emails(num_emails=None):
+    """
+    Process and send activation emails in a batch.
+    This function is designed to be called by the scheduler at 5 AM.
+    
+    Args:
+        num_emails (int, optional): Maximum number of emails to send in this batch.
+                                  If None, uses dynamic batch sizing based on days running.
+        
+    Returns:
+        dict: Result of the operation with keys:
+            - success: Boolean indicating success
+            - message: Description of results
+            - emails_sent: Number of emails sent
+            - total_processed: Total podcasts processed
+    """
+    try:
+        # Get dynamic batch config if no specific number was provided
+        if num_emails is None:
+            batch_config = get_batch_config()
+            num_emails = batch_config["batch_size"]
+            
+        logger.info(f"Starting activation email processing (batch size: {num_emails})")
+        
+        # Load existing activated emails record
+        activated_record = load_activated_emails()
+        emails_already_sent = set(activated_record.get("emails_sent", []))
+        logger.info(f"Found {len(emails_already_sent)} previously sent emails")
+        
+        # Load podcasts data from XML blob
+        podcasts_to_process = load_podcasts_from_blob()
+        if not podcasts_to_process:
+            logger.info("No podcasts to process. Exiting.")
+            return {"success": False, "message": "No podcasts to process", "emails_sent": 0}
+
+        emails_sent_successfully = 0
+        total_processed = 0
+        processed_emails_in_current_run = set()  # Keep track of processed emails in this run
+
+        # Filter out already processed emails
+        podcasts_to_process = [
+            podcast for podcast in podcasts_to_process
+            if podcast.get("email") and podcast.get("email") not in emails_already_sent
+        ]
+        
+        # Calculate remaining emails we can process
+        remaining_podcasts = len(podcasts_to_process)
+        logger.info(f"Remaining unprocessed podcasts: {remaining_podcasts}")
+        
+        # Use the smaller of requested batch size or remaining podcasts
+        actual_batch_size = min(num_emails, remaining_podcasts)
+        
+        # Limit to the actual batch size
+        podcasts_to_process = podcasts_to_process[:actual_batch_size]
+        logger.info(f"Processing {len(podcasts_to_process)} podcasts in this batch")
+        
+        for podcast_data in podcasts_to_process:
+            total_processed += 1
+            email = podcast_data.get("email")
+            rss_url = podcast_data.get("rss_feed")
+            podcast_title = podcast_data.get("title")
+
+            if not email or not rss_url or not podcast_title:
+                logger.warning(f"Skipping entry due to incomplete data: {podcast_data}")
+                continue
+
+            if email in processed_emails_in_current_run:
+                logger.info(f"Skipping duplicate email in current run: {email} for podcast: {podcast_title}")
+                continue
+
+            try:
+                logger.info(f"Processing activation for: {email}, Podcast: {podcast_title}, RSS: {rss_url}")
                 
-                logger.info(f"Successfully triggered activation for {email}. API Message: {response_data.get('message')}")
-                emails_sent_successfully += 1
-                processed_emails_in_current_run.add(email) # Add email to processed set
-            else:
-                logger.error(f"Failed to trigger activation for {email}: {response.status_code} - {response.text}")
-                # Optionally, still add to processed_emails_in_current_run to avoid retrying a failing email within the same run
-                # processed_emails_in_current_run.add(email)
+                # Get podcast logo from RSS if available
+                artwork_url = get_podcast_logo_from_rss(rss_url) 
+                
+                # Generate activation link
+                activation_link = f"{API_BASE_URL}/signin?email={email}"
+                
+                # Send activation email using email_utils
+                result = send_activation_email(email, activation_link, podcast_title, artwork_url)
+                
+                if result.get("success", False):
+                    logger.info(f"Successfully sent activation email to {email}")
+                    emails_sent_successfully += 1
+                    processed_emails_in_current_run.add(email)
+                    
+                    # Add to tracking list
+                    activated_record["emails_sent"].append(email)
+                else:
+                    logger.error(f"Failed to send activation email to {email}: {result.get('error', 'Unknown error')}")
 
+            except Exception as e:
+                logger.error(f"Failed to process activation for {email}: {e}", exc_info=True)
 
-        except requests.exceptions.RequestException as req_err:
-            logger.error(f"API request failed for {email}: {req_err}", exc_info=True)
-            # processed_emails_in_current_run.add(email) # Optionally add here too
-        except Exception as e:
-            logger.error(f"Failed to process activation for {email}: {e}", exc_info=True)
-            # processed_emails_in_current_run.add(email) # Optionally add here too
+        # Update tracking record if any emails were sent
+        if processed_emails_in_current_run:
+            save_success = save_activated_emails(activated_record)
+            if not save_success:
+                logger.warning("Failed to save updated activated emails record")
 
-    logger.info(f"Activation script finished. Processed {total_processed} entries. Successfully triggered {emails_sent_successfully} activations.")
+        logger.info(f"Activation process finished. Processed {total_processed} entries. Successfully sent {emails_sent_successfully} emails.")
+        
+        return {
+            "success": True,
+            "message": f"Successfully sent {emails_sent_successfully} activation emails",
+            "emails_sent": emails_sent_successfully,
+            "total_processed": total_processed,
+            "batch_size": num_emails
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing activation emails: {str(e)}", exc_info=True)
+        return {
+            "success": False,
+            "error": f"Failed to process activation emails: {str(e)}",
+            "emails_sent": 0,
+            "total_processed": 0
+        }
+
+def get_activation_stats():
+    """Get statistics about activation emails"""
+    try:
+        # Load existing activated emails record
+        activated_record = load_activated_emails()
+        emails_sent = activated_record.get("emails_sent", [])
+        last_sent_date = activated_record.get("last_sent_date", "")
+        
+        # Load all podcasts from blob
+        all_podcasts = load_podcasts_from_blob()
+        total_podcasts = len(all_podcasts)
+        
+        # Get batch configuration
+        batch_config = get_batch_config()
+        
+        return {
+            "total_podcasts": total_podcasts,
+            "emails_sent": len(emails_sent),
+            "podcasts_remaining": total_podcasts - len(emails_sent),
+            "last_sent_date": last_sent_date,
+            "batch_size": batch_config["batch_size"],
+            "days_running": batch_config["days_running"],
+            "next_batch_size": int(batch_config["batch_size"] * 1.20),  # 20% growth
+            "success": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting activation stats: {str(e)}", exc_info=True)
+        return {
+            "success": False,
+            "error": f"Failed to get activation stats: {str(e)}"
+        }
+
+def main():
+    """Legacy entry point for manual running"""
+    logger.info("Starting activation script...")
+    result = process_activation_emails(5)  # Process up to 5 emails in one batch
+    logger.info(f"Activation script completed with result: {result}")
 
 if __name__ == "__main__":
     main()

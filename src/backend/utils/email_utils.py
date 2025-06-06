@@ -19,6 +19,9 @@ from pymongo import MongoClient
 from backend.database.mongo_connection import collection
 import dns.resolver
 import re
+import logging
+from datetime import datetime  # Import datetime
+
 
 # Load environment variables once
 load_dotenv(override=True)
@@ -243,17 +246,13 @@ def send_login_email(email, login_link):
     """
     try:
         subject = "Your login link for PodManager"
-        body = f"""
-        <html>
-            <body>
-                <p>Hello,</p>
-                <p>Click the link below to log in to your PodManager account:</p>
-                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Log in</a>
-                <p>This link is valid for 10 minutes. If you did not request this, please ignore this email.</p>
-                <p>Best regards,<br>The PodManager.ai Team</p>
-            </body>
-        </html>
-        """
+        
+        # Use the login_email.html template instead of inline HTML
+        body = render_template(
+            "emails/login_email.html",
+            login_link=login_link,
+            current_year=datetime.now().year  # Add current year for the footer
+        )
 
         print(f"Login link for {email}: {login_link}", flush=True)
 
@@ -456,6 +455,10 @@ def send_activation_email(email, activation_link, podcast_name, artwork_url):
     """
     Sends an activation email with a link and optional artwork.
     """
+
+    # To temporarily disable this function, uncomment the next line
+    return {"success": False, "message": "Beta invites are temporarily disabled."}
+
     try:
         subject = f"Activate Your Podcast Account: {podcast_name}"
         # Render the email body using the activate_email.html template
@@ -481,10 +484,11 @@ def send_beta_invite_email(email, user_name=None):
     """
     Sends the PodManager beta invite email using the correct HTML template.
     """
+    
     subject = "🎉 Welcome to PodManager.ai Beta – New Features Unlocked!"
     # Render the correct template for the beta invite
     body = render_template(
-        "beta-email/podmanager-beta-invite.html",
+        "emails/podmanager-beta-invite.html",
         user_name=user_name or "Podcaster"
     )
     logger.info(f"📧 Preparing to send beta invite email to {email}")
@@ -594,37 +598,86 @@ def send_lia_inquiry_email(name, email, phone, school_and_study):
         return {"error": f"Error while sending LIA inquiry email: {str(e)}"}
 
 
-def send_booking_email(recipient_email, recipient_name, recording_at, pod_name):
-    """
-    Sends a confirmed booking email to the guest.
-    """
+def send_booking_email(recipient_email, recipient_name, recording_at, pod_name, invite_url=None):
     try:
         subject = "Booking Confirmation"
+        recording_at_str = recording_at if recording_at else "To be confirmed"
+        invite_link_html = (
+            f'<p><a href="{invite_url}">Join the Greenroom</a></p>'
+            if invite_url else ""
+        )
 
-        # Email body with inline template logic
         body = f"""
         <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Booking Information</title>
-            </head>
+            <head><meta charset="UTF-8"><title>Booking Information</title></head>
             <body>
                 <h2>Hello {recipient_name},</h2>
                 <p>Thank you for booking your recording session with us. Your session details are confirmed.</p>
-                <p>Your session is scheduled for: {recording_at}.</p>
+                <p>Your session is scheduled for: {recording_at_str}.</p>
+                {invite_link_html}
                 <p>If you have any questions, feel free to reach out.</p>
                 <p>Best regards,<br>{pod_name}</p>
             </body>
         </html>
         """
 
-        # Send the email
-        result = send_email(recipient_email, subject, body)
-        if "error" in result:
-            raise Exception(result["error"])
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = formataddr((pod_name, EMAIL_USER))  # Friendly sender name + email
+        msg['To'] = recipient_email
+
+        part = MIMEText(body, 'html')
+        msg.attach(part)
+
+        # Send email using environment variables for SMTP config
+        server = smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT))
+        server.starttls()
+        server.login(EMAIL_USER, EMAIL_PASSWORD)
+        server.sendmail(EMAIL_USER, recipient_email, msg.as_string())
+        server.quit()
 
         logger.info(f"✅ Booking email sent to {recipient_email}")
         return {"message": "Booking email sent successfully"}
+
     except Exception as e:
         logger.error(f"❌ Error sending booking email to {recipient_email}: {e}", exc_info=True)
         return {"error": f"Failed to send booking email: {str(e)}"}
+
+
+def send_summary_email(recipient_email, subject, context):
+    """
+    Sends a daily summary email using the summary_email.html template.
+    
+    Args:
+        recipient_email (str): The email address to send the summary to
+        subject (str): The subject line for the email
+        context (dict): The template context variables
+    
+    Returns:
+        dict: Result of the sending operation
+    """
+    try:
+        # Add current year to context for the footer
+        if 'current_year' not in context:
+            context['current_year'] = datetime.now().year
+            
+        # Render the summary email template
+        from flask import render_template, current_app
+        with current_app.app_context():
+            # Updated path to use the frontend templates directory
+            body = render_template('emails/summary_email.html', **context)
+        
+        logger.info(f"📧 Preparing to send summary email to {recipient_email}")
+        
+        # Use the generic send_email function
+        result = send_email(recipient_email, subject, body)
+        
+        if result.get("success"):
+            logger.info(f"✅ Summary email sent successfully to {recipient_email}")
+        else:
+            logger.error(f"❌ Failed to send summary email to {recipient_email}: {result.get('error')}")
+        
+        return result
+    except Exception as e:
+        logger.error(f"❌ Error sending summary email to {recipient_email}: {e}", exc_info=True)
+        return {"error": f"Error sending summary email: {str(e)}"}

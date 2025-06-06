@@ -284,7 +284,7 @@ const episodePayloads = [];
 
 for (const episode of episodes) {
   console.log("Preparing episode:", episode.title, "for podcastId:", podcastId);
-  
+
   const episodeData = {
     podcastId,
     title: episode.title || "Untitled Episode",
@@ -314,19 +314,14 @@ for (const episode of episodes) {
   episodePayloads.push(episodeData);
 }
 
-// Now register all episodes after the loop is done
 for (const payload of episodePayloads) {
   try {
     const registerResponse = await registerEpisode(payload);
     console.log("✅ Episode registered:", registerResponse);
   } catch (error) {
-    console.error("❌ Error registering episode:", payload.title, error);
-    alert(`Error registering episode "${payload.title}". Aborting.`);
-    return;
+    console.error(`❌ Error registering episode "${payload.title}":`, error);
   }
 }
-
-
 
 
         loadingBar.processStep(3);
@@ -380,9 +375,18 @@ for (const payload of episodePayloads) {
         .then((data) => {
           if (data.message) {
             console.log("Google refresh token saved successfully.");
+ 
+              if (connectCalendarButton) {  // if the calandar is connected
+            connectCalendarButton.textContent = "Calendar Connected"; // Corrected typo
+            connectCalendarButton.disabled = true;
+            connectCalendarButton.style.backgroundColor = "#ccc";
+            connectCalendarButton.style.cursor = "not-allowed";
           } else {
-            console.error("Error saving Google refresh token:", data.error);
+            console.error("Error saving Google refresh token (connectCalendarButton not found, but data.message was true):", data.error);
           }
+        } else { // This is an example if you have an else for 'if (data.message)'
+            console.error("Error saving Google refresh token (data.message was false):", data.error);
+        } // Closing brace for the 'else' block
         });
     } catch (error) {
       console.error("Error saving Google refresh token:", error);

@@ -157,6 +157,7 @@
   position: relative;
   padding-bottom: var(--spacing-xs);
   margin-bottom: 8px;
+ 
 }
 
 .section-header h2::after {
@@ -421,7 +422,7 @@
   display: flex; /* Keep flex */
   flex-direction: column; /* Keep column */
   position: sticky; /* Make it sticky */
-  top: 255px; /* Increased from 20px (20px + ~3cm/114px) */
+  top: 291px; /* Increased from 20px (20px + ~3cm/114px) */
   /* height: auto; <-- Height is auto unless JS sets it */
   max-height: calc(
     100vh - 154px
@@ -436,12 +437,14 @@
   display: flex;
   align-items: center;
   padding: var(--spacing-md);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+ /*
   background: linear-gradient(
     to right,
     rgba(255, 127, 63, 0.1),
     rgba(255, 127, 63, 0.02)
   );
+  */
   border-top-left-radius: var(--radius-large);
   border-top-right-radius: var(--radius-large);
 }
@@ -941,4 +944,44 @@
     flex-wrap: wrap;
     gap: var(--spacing-xs);
   }
+}
+
+.subscription-section {
+  justify-content: center;
+}
+
+.subscription-toggle {
+  display: flex;
+  background-color: #f0f0f0;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.toggle-button {
+  border: none;
+  background-color: transparent;
+  color: var(--text-color-light);
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+  font-weight: 600;
+}
+
+.toggle-button:focus {
+  outline: none;
+}
+
+.toggle-button.active {
+  background-color: var(--highlight-color);
+  color: white;
+}
+
+.product-features-list li {
+  font-size: 0.85rem;
 }

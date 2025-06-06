@@ -2,7 +2,8 @@
   rel="stylesheet"
   href="{{ url_for('static', filename='css/components/header.css') }}"
 />
-<header>
+<header id="main-header">
+  <div id="header-wrapper">
   <!-- Logo and Page Title -->
   <div class="logo-title-container">
     <a href="{{ url_for('dashboard_bp.dashboard') }}" class="logo-container">
@@ -15,24 +16,29 @@
     <span id="page-title" class="page-title"></span>
   </div>
   <nav class="header-nav">
-    <div class="custom-dropdown" id="headerPodcastDropdown">
-      <div class="dropdown-selected">Select a Podcast</div>
-      <div class="dropdown-options" id="header-dropdown-options">
-        <!-- JS will insert options here -->
-      </div>
-    </div>
     <!-- New Credits Display Field -->
     <!-- Credits & Buy Button -->
-    <div class="credits-wrapper">
+    <!--<div class="credits-wrapper">
       <span class="credit-text"><span id="user-credits">Loading...</span></span>
       <button id="buy-credits-btn">Buy Credits</button>
+    </div>-->
+
+    <div class="store-wrapper">
+      <a href="{{ url_for('dashboard_bp.store') }}">
+        <svg width="54px" height="54px" viewBox="-4.8 -4.8 33.60 33.60" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#000000" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.384"></g>
+          <g id="SVGRepo_iconCarrier"> <path d="M6.29977 5H21L19 12H7.37671M20 16H8L6 3H3M9 20C9 20.5523 8.55228 21 8 21C7.44772 21 7 20.5523 7 20C7 19.4477 7.44772 19 8 19C8.55228 19 9 19.4477 9 20ZM20 20C20 20.5523 19.5523 21 19 21C18.4477 21 18 20.5523 18 20C18 19.4477 18.4477 19 19 19C19.5523 19 20 19.4477 20 20Z" stroke="var(--text-color-light)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path> </g>
+        </svg>
+      </a>
     </div>
 
-    <!-- Hamburger menu -->
-    <div class="menu-toggle" onclick="toggleMenu()">
-      <span></span>
-      <span></span>
-      <span></span>
+    <div class="user-wrapper">
+      <div class="menu-toggle circle" onclick="toggleMenu()">
+        <div class="user-avatar">
+          <svg style="margin-bottom:2px;" width="20px" height="20px" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#6e7f8d" stroke-width="0.00016"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="SVGRepo_iconCarrier"> <path d="M8 7C9.65685 7 11 5.65685 11 4C11 2.34315 9.65685 1 8 1C6.34315 1 5 2.34315 5 4C5 5.65685 6.34315 7 8 7Z" fill="#6e7f8d"></path> <path d="M14 12C14 10.3431 12.6569 9 11 9H5C3.34315 9 2 10.3431 2 12V15H14V12Z" fill="#6e7f8d"></path> </g>
+          </svg>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -40,10 +46,12 @@
     const currentUserID = "{{ session['user_id'] or '' }}";
   </script>
     <div class="menu" id="menu">
+      <div class="credits-wrapper">
+        <span class="credit-text"><span id="user-credits">Loading...</span></span>
+        <button id="buy-credits-btn">Buy Credits</button>
+      </div>
       <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
-      <a href="{{ url_for('dashboard_bp.episodetodo') }}">Episode To-Do</a>
       <a href="{{ url_for('dashboard_bp.team') }}">Team Management</a>
-      <a href="{{ url_for('dashboard_bp.podcastmanagement') }}">Podcast Management</a>
     
       <a href="#" class="dropdown-trigger" onclick="toggleLandingPage()">Landing Pages<span id="triangle" class="triangle-down"></span></a>
       <!-- Dropdown content that will appear next to the "Landing Page" link -->
@@ -52,10 +60,20 @@
           <!-- Podcast options will be inserted here dynamically -->
         </div>
       </div>
-      <a href="{{ url_for('dashboard_bp.store') }}">Store</a>
       <a href="#" id="logout-link">Log out</a>
     </div>
-  </nav>
+  </div>
+  <div id="main-menu">
+    <nav>
+      <ul>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/podcastmanagement">Create</a></li>
+        <li><a href="/studio">Record</a></li>
+        <li><a href="/episode-to-do">Edit</a></li>
+        <li><a href="/publish/">Publish</a></li>
+      </ul>
+    </nav>
+  </div>
 </header>
 
 <!-- Custom Logout Modal (TikTok-style) -->

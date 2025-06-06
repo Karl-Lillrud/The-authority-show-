@@ -1,14 +1,15 @@
-from flask import request, jsonify, Blueprint, g, session, url_for
+from flask import request, jsonify, Blueprint, g, session
 from backend.repository.guest_repository import GuestRepository
-from backend.database.mongo_connection import collection
-from backend.utils.email_utils import send_email, send_guest_invitation_email
-from backend.services.invitation_service import InvitationService
+from datetime import datetime
+from backend.database.mongo_connection import database
+from backend.utils.token_utils import decode_token
 import logging
 
 # Define Blueprint
 guest_bp = Blueprint("guest_bp", __name__)
 
 # Create repository instance
+invitations_collection = database.GuestInvitations
 guest_repo = GuestRepository()
 
 # Configure logger
@@ -82,17 +83,50 @@ def delete_guest(guest_id):
 
 @guest_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
 def get_guests_by_episode(episode_id):
-    """Fetch all guest profiles linked to a specific episode ID."""
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
+    """Fetch guest(s) linked to a specific episode, based on either logged-in user or guest token."""
+    user_id = getattr(g, "user_id", None)
+    guest_id_from_token = None
+
+    if not user_id:
+
+        token = (
+            request.args.get("token")
+            or request.headers.get("Authorization", "").replace("Bearer ", "")
+        )
+
+        if not token:
+            return jsonify({"error": "Unauthorized: Missing token"}), 403
+
+        invitation = invitations_collection.find_one({
+            "invite_token": token,
+            "episode_id": episode_id,
+            "expires_at": {"$gt": datetime.utcnow()}
+        })
+
+        if not invitation:
+            return jsonify({"error": "Invalid or expired token"}), 403
+
+        guest_id_from_token = invitation.get("guest_id")
+
+        guest, status_code = guest_repo.get_guest_by_id(None, guest_id_from_token)
+        if status_code != 200:
+            return jsonify(guest), status_code
+
+        if guest.get("episodeId") != episode_id:
+            return jsonify({"error": "Guest does not belong to this episode"}), 403
+
+        return jsonify({"guests": [guest]}), 200
 
     try:
-        # Ensure the episode_id is valid and fetch guests
+
         response, status_code = guest_repo.get_guests_by_episode(episode_id)
         return jsonify(response), status_code
+
     except Exception as e:
         logger.exception("❌ ERROR: Failed to fetch guests by episode")
         return jsonify({"error": f"Failed to fetch guests by episode: {str(e)}"}), 500
+
+
 
 @guest_bp.route("/get_guests_by_id/<guest_id>", methods=["GET"])
 def get_guest_by_id(guest_id):

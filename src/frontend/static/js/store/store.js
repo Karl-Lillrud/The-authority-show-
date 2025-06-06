@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     pageTitle.textContent = "Store"; // Set the page title
   }
 
+  setupSubscriptionToggle();
 });
 
 async function handlePurchaseSuccess() {
@@ -737,4 +738,112 @@ function setupMobileCartToggles() {
     }
   };
   shoppingCart.addEventListener("click", shoppingCart.__closeCartHandler);
+}
+
+function setupSubscriptionToggle() {
+  const monthlyButton = document.querySelector(
+    '.subscription-toggle button[data-period="monthly"]'
+  );
+  const yearlyButton = document.querySelector(
+    '.subscription-toggle button[data-period="yearly"]'
+  );
+  const productCards = document.querySelectorAll(".product-card.subscription-card");
+
+  if (!monthlyButton || !yearlyButton || !productCards) {
+    console.warn("Subscription toggle elements not found.");
+    return;
+  }
+
+  monthlyButton.addEventListener("click", () => {
+    setActivePeriod("monthly");
+  });
+
+  yearlyButton.addEventListener("click", () => {
+    setActivePeriod("yearly");
+  });
+
+  function setActivePeriod(period) {
+    monthlyButton.classList.remove("active");
+    yearlyButton.classList.remove("active");
+
+    if (period === "monthly") {
+      monthlyButton.classList.add("active");
+    } else {
+      yearlyButton.classList.add("active");
+    }
+
+    productCards.forEach((card) => {
+      const monthlyPrice = card.dataset.monthlyPrice;
+      const yearlyPrice = card.dataset.yearlyPrice;
+      const priceElement = card.querySelector(".product-price .price-amount");
+      const pricePeriod = card.querySelector(".product-price .price-period");
+      const productName = card.querySelector(".product-name").textContent;
+      const productFeaturesList = card.querySelector(".product-features .product-features-list");
+
+      if (productName === "Enterprise Subscription") {
+        priceElement.textContent = "Contact Us";
+        pricePeriod.textContent = "for pricing";
+        // Optionally, you can update features if needed
+        return;
+      }
+
+      if (period === "monthly") {
+        priceElement.textContent = `$${monthlyPrice}`;
+        pricePeriod.textContent = "/month";
+        if (productName === "Pro Subscription") {
+          productFeaturesList.innerHTML = `
+            <li>
+              10,000 Credits at Month's Start<br />(resets monthly, no
+              carry-over)
+            </li>
+            <li>3 Episode Slots / Month (Max. 5 Total Slots)</li>
+            <li>
+              Free Podcast Landing Page (Option to Host on Own Domain)
+            </li>
+          `;
+        } else if (productName === "Studio Subscription") {
+          productFeaturesList.innerHTML = `
+            <li>
+              20,000 Credits at Month's Start <br />(resets monthly,
+              no carry-over)
+            </li>
+            <li>4 Episode Slots / Month (Max. 6 Total Slots)</li>
+            <li>
+              Free Podcast Landing Page (Option to Host on Own Domain)
+            </li>
+          `;
+        }
+      } else {
+        priceElement.textContent = `$${yearlyPrice}`;
+        pricePeriod.textContent = "/year";
+        if (productName === "Pro Subscription") {
+          productFeaturesList.innerHTML = `
+            <li>
+              10,000 Credits at Month's Start<br />(resets monthly, no
+              carry-over)
+            </li>
+            <li>3 Episode Slots / Month (Max. 5 Total Slots)</li>
+            <li>
+              Free Podcast Landing Page (Option to Host on Own Domain)
+            </li>
+            <li>(Re-occuring Yearly Payment)</li>
+            <li>(10 % Discount & One Month Free!)</li>
+          `;
+        } else if (productName === "Studio Subscription") {
+          productFeaturesList.innerHTML = `
+            <li>
+              20,000 Credits at Month's Start <br />(resets monthly,
+              no carry-over)
+            </li>
+            <li>4 Episode Slots / Month (Max. 6 Total Slots)</li>
+            <li>
+              Free Podcast Landing Page (Option to Host on Own Domain)
+            </li>
+            <li>(Re-occuring Yearly Payment)</li>
+            <li>(20 % Discount & One Month Free!)</li>
+          `;
+        }
+      }
+    });
+  }
 }

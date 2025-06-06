@@ -1,5 +1,5 @@
 from marshmallow import Schema, fields, validates, ValidationError
-from marshmallow.validate import Length, Range
+from marshmallow.validate import Length
 from datetime import datetime
 
 class EpisodeSchema(Schema):
@@ -11,7 +11,7 @@ class EpisodeSchema(Schema):
     summary = fields.Str(allow_none=True)
     subtitle = fields.Str(allow_none=True)
     publishDate = fields.DateTime(allow_none=True, data_key="publishDate")
-    duration = fields.Int(allow_none=True)
+    duration = fields.Raw(allow_none=True)  
     audioUrl = fields.Url(allow_none=True, data_key="audioUrl")
     fileSize = fields.Int(allow_none=True, data_key="fileSize")
     fileType = fields.Str(allow_none=True, data_key="fileType")
@@ -25,10 +25,7 @@ class EpisodeSchema(Schema):
     author = fields.Str(allow_none=True)
     keywords = fields.List(fields.Str(), allow_none=True)
     chapters = fields.List(fields.Dict(), allow_none=True)
-
-    # ✅ Updated: allow any string for status
     status = fields.Str(allow_none=True)
-
     isHidden = fields.Bool(allow_none=True, data_key="isHidden")
     recordingAt = fields.DateTime(allow_none=True, data_key="recordingAt")
     isImported = fields.Bool(allow_none=True, data_key="isImported")
@@ -39,6 +36,9 @@ class EpisodeSchema(Schema):
 
     @validates("duration")
     def validate_duration(self, value):
+        """
+        Validate that duration is a positive integer or None.
+        """
         if value is not None:
             if not isinstance(value, int):
                 raise ValidationError("Duration must be an integer.")
@@ -48,5 +48,9 @@ class EpisodeSchema(Schema):
 
     @validates("publishDate")
     def validate_publish_date(self, value):
-        if not isinstance(value, (datetime, type(None))):
-            raise ValidationError("publishDate must be a datetime object or null.")
+        """
+        Validate that publishDate is a datetime object or None.
+        """
+        if value is not None and not isinstance(value, (datetime, str)):
+            raise ValidationError("publishDate must be a datetime object, string, or null.")
+        return value

@@ -107,6 +107,7 @@ a,
   max-width: 1400px;
   margin: 0 auto;
   padding: 1rem;
+  margin-top: 14px;
 }
 
 .main-content {
@@ -123,6 +124,7 @@ a,
 .header {
   margin-bottom: 1.5rem;
   z-index: 1;
+  position: relative;
 }
 
 .header-content {
@@ -166,9 +168,60 @@ a,
   font-size: 0.875rem;
 }
 
-.header-right {
-  display: flex;
+.header-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.publish-button {
+  display: inline-flex;
+  align-items: center;
   gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--success);
+  color: white;
+  border-radius: var(--radius-small);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow);
+  font-size: 0.875rem;
+}
+
+.publish-button i {
+  font-size: 0.875rem;
+}
+
+/* Tablet and larger screens */
+@media (min-width: 768px) {
+  .publish-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .publish-button i {
+    font-size: 1rem;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 480px) {
+  .publish-button {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .publish-button i {
+    font-size: 0.75rem;
+  }
+}
+
+.publish-button:hover {
+  background-color: #0d946a;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 /* Progress Tracker */
@@ -270,7 +323,7 @@ a,
 
 .left-sidebar {
   width: 100%;
-  max-width: 16rem;
+  max-width: 300px;
 }
 
 .right-sidebar {
@@ -317,16 +370,11 @@ a,
 /* Cards */
 .card {
   background-color: var(--card-bg);
-  border-radius: var(--radius);
+  border-radius: var(--radius-large);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition: box-shadow 0.3s ease, transform 0.2s ease;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
 }
 
 .card-content {
@@ -434,7 +482,7 @@ a,
   padding: 0.75rem 0.5rem;
   background-color: var(--light);
   border: 1px solid transparent;
-  border-radius: var(--radius);
+  border-radius: var(--radius-tiny);
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 500;
@@ -499,7 +547,7 @@ a,
   font-size: 1.125rem;
   font-weight: 500;
   margin-bottom: 0.5rem;
-  margin-top: 1.5rem;
+  padding-left: 3px;
 }
 
 /* Podcast Selector */
@@ -511,7 +559,7 @@ a,
 
 .podcast-item {
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-small);
   padding: 0.75rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -556,7 +604,8 @@ a,
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
-  border-radius: var(--radius);
+  margin-right: var(--spacing-sm);
+  border-radius: var(--radius-tiny);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -797,11 +846,8 @@ a,
 
 /* Kanban Board */
 .kanban-board {
-  display: flex;
-  gap: 2rem;
   padding: 1.5rem;
   overflow-x: auto;
-  padding-bottom: 2rem;
   scrollbar-width: thin;
   scrollbar-color: var(--muted) transparent;
 }
@@ -1542,7 +1588,7 @@ textarea:focus {
 .workflow-editor {
   padding: 1.5rem;
   background-color: var(--card-bg);
-  border-radius: var(--radius);
+  border-radius: var(--radius-medium);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
 }
@@ -1561,7 +1607,7 @@ textarea:focus {
 .workflow-selector select {
   flex-grow: 1;
   padding: 0.5rem;
-  border-radius: var(--radius);
+  border-radius: var(--radius-small);
   border: 1px solid var(--border);
   background-color: var(--input-bg);
 }
@@ -1623,7 +1669,7 @@ textarea:focus {
   text-align: center;
   color: var(--muted);
   background-color: var(--light);
-  border-radius: var(--radius);
+  border-radius: var(--radius-small);
   border: 1px dashed var(--border);
 }
 
@@ -1632,7 +1678,7 @@ textarea:focus {
   text-align: center;
   color: var(--muted);
   background-color: var(--light);
-  border-radius: var(--radius);
+  border-radius: var(--radius-small);
   border: 1px dashed var(--border);
   margin-bottom: 1rem;
 }
@@ -1799,7 +1845,7 @@ textarea:focus {
   margin-top: 1.5rem;
   padding: 1rem;
   background-color: var(--light);
-  border-radius: var(--radius);
+  border-radius: var(--radius-small);
   border: 1px solid var(--border);
 }
 
@@ -1823,7 +1869,6 @@ textarea:focus {
 .save-workflow-btn:hover {
   background-color: #0ca678;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
 .import-workflow-btn {

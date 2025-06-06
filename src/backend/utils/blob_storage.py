@@ -1,4 +1,4 @@
-from azure.storage.blob import BlobServiceClient, BlobClient # Import BlobClient
+from azure.storage.blob import BlobServiceClient, BlobClient, ContentSettings # Import ContentSettings
 from azure.core.exceptions import ResourceNotFoundError, AzureError # Import specific exceptions
 import os
 import logging
@@ -30,13 +30,14 @@ def get_blob_service_client():
         logger.error(f"Unexpected error during BlobServiceClient initialization: {e}", exc_info=True)
         return None
 
-def upload_file_to_blob(container_name, blob_path, file):
+def upload_file_to_blob(container_name, blob_path, file, content_type=None): # Added content_type parameter
     """
     Uploads a file to Azure Blob Storage.
     Args:
         container_name (str): The name of the Azure Blob Storage container.
         blob_path (str): The path within the container where the file will be stored.
         file: The file object or path to upload.
+        content_type (str, optional): The MIME type of the file. Defaults to None.
     Returns:
         str: The URL of the uploaded file or None on failure.
     """
@@ -47,14 +48,19 @@ def upload_file_to_blob(container_name, blob_path, file):
 
     try:
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
+        
+        current_content_settings = None
+        if content_type:
+            current_content_settings = ContentSettings(content_type=content_type)
+
         # Best Practice: Check if file is a path or stream
         if isinstance(file, str) and os.path.exists(file):
              with open(file, "rb") as data:
-                  blob_client.upload_blob(data, overwrite=True)
+                  blob_client.upload_blob(data, overwrite=True, content_settings=current_content_settings) # Use ContentSettings object
         else:
              # Assume it's a file-like object (stream)
              file.seek(0) # Ensure stream is at the beginning
-             blob_client.upload_blob(file, overwrite=True)
+             blob_client.upload_blob(file, overwrite=True, content_settings=current_content_settings) # Use ContentSettings object
 
         # Best Practice: Construct URL reliably
         account_name = blob_service_client.account_name
@@ -129,4 +135,45 @@ def download_blob_to_tempfile(container_name, blob_path):
         logger.error(f"Failed to download blob '{blob_path}' from container '{container_name}': {e}", exc_info=True)
         if temp_db_file and os.path.exists(temp_db_file.name):
              os.remove(temp_db_file.name)
+        return None
+
+def get_blob_content(container_name, blob_path):
+    """
+    Read a blob directly from Azure Blob Storage without downloading to a file
+    
+    Args:
+        container_name (str): The name of the Azure Blob Storage container.
+        blob_path (str): The path of the blob to read.
+        
+    Returns:
+        bytes: The content of the blob or None if an error occurs.
+    """
+    blob_service_client = get_blob_service_client()
+    if not blob_service_client:
+        logger.error("BlobServiceClient not initialized. Cannot read blob.")
+        return None
+
+    try:
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
+        
+        # Check if blob exists before trying to download
+        if not blob_client.exists():
+            logger.error(f"Blob '{blob_path}' not found in container '{container_name}'.")
+            return None
+        
+        # Download blob content directly to memory
+        download_stream = blob_client.download_blob()
+        content = download_stream.readall()
+        
+        logger.info(f"Successfully read blob: {blob_path}")
+        return content
+        
+    except ResourceNotFoundError:
+        logger.error(f"Blob '{blob_path}' not found in container '{container_name}'.", exc_info=True)
+        return None
+    except AzureError as ae:
+        logger.error(f"Azure error during blob read: {ae}", exc_info=True)
+        return None
+    except Exception as e:
+        logger.error(f"Failed to read blob '{blob_path}' from container '{container_name}': {e}", exc_info=True)
         return None

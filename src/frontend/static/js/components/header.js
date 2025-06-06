@@ -77,13 +77,45 @@ async function populateLandingPageDropdown() {
 // 🔽 Header Dropdown for `/podcast/:id`
 async function populateHeaderPodcastDropdown() {
   const dropdownContainer = document.getElementById("headerPodcastDropdown");
-  const dropdownSelected =
-    dropdownContainer.querySelector(".dropdown-selected");
+  
+  // Exit early if the dropdown container doesn't exist in the current page
+  if (!dropdownContainer) {
+    return;
+  }
+  
+  const dropdownSelected = dropdownContainer.querySelector(".dropdown-selected");
   const dropdownOptions = dropdownContainer.querySelector(".dropdown-options");
+  
+  // Make sure the DOM elements exist before proceeding
+  if (!dropdownSelected || !dropdownOptions) {
+    console.warn("Dropdown elements not found in the DOM");
+    return;
+  }
 
   try {
     const data = await fetchPodcasts();
     const podcasts = data.podcast || [];
+    
+    // Only display and populate the dropdown if user has more than two podcasts
+    if (podcasts.length <= 2) {
+      dropdownContainer.style.display = 'none';
+      return;
+    }
+    
+    // User has more than two podcasts, show the dropdown container
+    dropdownContainer.style.display = 'block';
+    
+    // Clear existing options before adding new ones
+    dropdownOptions.innerHTML = '';
+    
+    // Add current podcast name to selected dropdown if available
+    const currentPodcastId = getCurrentPodcastIdFromUrl();
+    if (currentPodcastId) {
+      const currentPodcast = podcasts.find(p => p._id === currentPodcastId);
+      if (currentPodcast && dropdownSelected) {
+        dropdownSelected.textContent = currentPodcast.podName;
+      }
+    }
 
     podcasts.forEach((podcast) => {
       const option = document.createElement("div");
@@ -112,6 +144,21 @@ async function populateHeaderPodcastDropdown() {
   } catch (err) {
     console.error("Error populating header podcast dropdown:", err);
   }
+}
+
+/**
+ * Helper function to extract the current podcast ID from the URL
+ * @returns {string|null} The podcast ID if found in the URL, null otherwise
+ */
+function getCurrentPodcastIdFromUrl() {
+  const pathParts = window.location.pathname.split('/');
+  const podcastIndex = pathParts.indexOf('podcast');
+  
+  if (podcastIndex !== -1 && pathParts.length > podcastIndex + 1) {
+    return pathParts[podcastIndex + 1];
+  }
+  
+  return localStorage.getItem("selectedPodcastId") || null;
 }
 
 // Function to fetch and display user credits
@@ -267,12 +314,22 @@ function setDynamicPageTitle() {
       "/episode-to-do": "Episode To-Do",
       "/enterprise": "Enterprise",
       "/lia": "LIA", // Add this line
-      "/publish": "Publish", // <-- Add this line for the publish endpoint
+      "/publish/": "Publish" // <-- Add this line for the publish endpoint
     };
 
     const currentPath = window.location.pathname;
-    const pageTitle = pageTitles[currentPath]
+    const pageTitle = pageTitles[currentPath];
+    const mainMenu = document.querySelectorAll("#main-menu nav ul li a");
     pageTitleElement.textContent = pageTitle;
+
+    // Highlight the active link in the main menu
+    mainMenu.forEach((link) => {
+      if (link.getAttribute("href") === currentPath) {
+        link.classList.add("active");
+      } else {
+        link.classList.remove("active");
+      }
+    });
   }
 }
 

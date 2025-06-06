@@ -2,7 +2,7 @@
 import logging
 import requests
 import json
-from flask import Blueprint, request, jsonify, g, Response
+from flask import Blueprint, request, jsonify, g, Response,session
 
 from backend.services.audioService import AudioService
 from backend.services.subscriptionService import SubscriptionService
@@ -91,6 +91,51 @@ def audio_analysis():
 
     except Exception as e:
         logger.error(f"Error analyzing audio: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@audio_bp.route("/voice_isolate", methods=["POST"])
+def isolate_voice():
+    if "audio" not in request.files or "episode_id" not in request.form:
+        return jsonify({"error": "Audio file and episode_id are required"}), 400
+
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    # Consume credits BEFORE processing
+    try:
+        consume_credits(user_id, "voice_isolation")
+    except ValueError as e:
+        logger.warning(f"User {user_id} has insufficient credits for voice isolation.")
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
+    audio_file = request.files["audio"]
+    episode_id = request.form["episode_id"]
+    filename = audio_file.filename
+    audio_bytes = audio_file.read()
+
+    try:
+        blob_url = audio_service.isolate_voice(audio_bytes, filename, episode_id)
+        return jsonify({"isolated_blob_url": blob_url})  
+    except Exception as e:
+        logger.error(f"Error during voice isolation: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+    
+@audio_bp.route("/get_isolated_audio", methods=["GET"])
+def get_isolated_audio():
+    url = request.args.get("url")
+    if not url:
+        return jsonify({"error": "Missing URL"}), 400
+    
+    try:
+        response = requests.get(url)
+        return Response(response.content, content_type="audio/wav")
+    
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
     
 
@@ -318,4 +363,29 @@ def plan_and_mix_sfx():
         return jsonify(data)
     except Exception as e:
         logger.error(f"Error generating SFX plan & mix: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+    
+@audio_bp.route("/proxy_audio")
+def proxy_audio():
+    from flask import request, Response
+    import requests
+
+    url = request.args.get("url")
+    logger.info(f"🛰️ Proxy fetching: {url}")
+
+    if not url:
+        return jsonify({"error": "Missing 'url' query param"}), 400
+
+    try:
+        r = requests.get(url, stream=True, timeout=10)
+        if r.status_code != 200:
+            logger.warning(f"❌ Upstream fetch failed with status {r.status_code}")
+            return jsonify({"error": f"Upstream fetch failed: {r.status_code}"}), r.status_code
+
+        return Response(
+            r.iter_content(chunk_size=4096),
+            content_type=r.headers.get("Content-Type", "audio/mpeg"),
+        )
+    except Exception as e:
+        logger.error(f"❌ Failed to proxy fetch: {e}")
         return jsonify({"error": str(e)}), 500

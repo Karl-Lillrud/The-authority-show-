@@ -1,4 +1,7 @@
-// Initialize Socket.IO connection
+import { fetchGuestsByEpisode } from '../../../static/requests/guestRequests.js';
+import { fetchEpisode } from '../../../static/requests/episodeRequest.js'; // Import fetchEpisode
+
+// Initialize Socket.IO
 const socket = io();
 
 // DOM Elements
@@ -8,20 +11,35 @@ const speakerSelect = document.getElementById('speakerSelect');
 const cameraPreview = document.getElementById('cameraPreview');
 const audioMeter = document.querySelector('.audio-meter');
 const testSpeakerButton = document.getElementById('testSpeaker');
-const readyButton = document.getElementById('readyButton');
-const leaveButton = document.getElementById('leaveButton');
+const notificationArea = document.getElementById('notification-area');
 const participantsContainer = document.getElementById('participantsContainer');
 const roomStatus = document.getElementById('roomStatus');
 
-// State
+// Variables
 let localStream = null;
 let audioContext = null;
 let audioAnalyser = null;
-let isHost = false;
-let isReady = false;
 let currentRoom = null;
+let isConnected = false;
 
-// Initialize device settings
+// Get URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+const episodeId = urlParams.get('episodeId');
+const guestId = urlParams.get('guestId');
+const token = urlParams.get('token');
+
+// Fetch podcast ID
+async function getPodcastId(episodeId) {
+    try {
+        const episode = await fetchEpisode(episodeId);
+        return episode.podcast_id || 'default-podcast-id'; // Fallback if podcast_id is not available
+    } catch (error) {
+        console.error('Error fetching podcast ID:', error);
+        return 'default-podcast-id'; // Fallback ID
+    }
+}
+
+// Initialize devices
 async function initializeDevices() {
     try {
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -41,39 +59,118 @@ async function initializeDevices() {
         speakerSelect.innerHTML = '<option value="">Select Speaker</option>' +
             speakerDevices.map(device => `<option value="${device.deviceId}">${device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}</option>`).join('');
 
-        // Set up initial camera preview
         if (videoDevices.length > 0) {
             await startCamera(videoDevices[0].deviceId);
+        } else {
+            showNotification('No cameras detected. Connect a camera or proceed without video.', 'info');
         }
     } catch (error) {
         console.error('Error initializing devices:', error);
+        showNotification('Error initializing devices. Check permissions or devices.', 'error');
+    }
+}
+async function loadGuestsForEpisode(episodeId) {
+    try {
+        const guests = await fetchGuestsByEpisode(episodeId, token);
+        updateParticipantsList(guests, []);
+    } catch (err) {
+        console.error('Failed to load guests:', err);
+        participantsContainer.innerHTML = '<p>Error loading guests.</p>';
+        showNotification('Error loading guests', 'error');
     }
 }
 
-// Start camera preview
+
+// Update participant list
+function updateParticipantsList(guests, connectedUsers) {
+    participantsContainer.innerHTML = '';
+
+    if (!guests.length) {
+        participantsContainer.innerHTML = '<p>No guests found for this episode.</p>';
+        return;
+    }
+
+    guests.forEach(guest => {
+        const isConnected = connectedUsers.some(u => u.userId === guest.id);
+        const card = document.createElement('div');
+        card.className = 'guest-card p-3 border rounded m-2';
+
+        if (guest.id === guestId) {
+            card.classList.add('bg-light', 'border-success');
+            card.innerHTML = `
+                <h5>${guest.name}</h5>
+                <p><strong>Email:</strong> ${guest.email || 'N/A'}</p>
+                <p><strong>Status:</strong> ${isConnected ? 'In Greenroom' : 'Not Connected'}</p>
+                <button class="btn btn-primary join-studio-btn" data-guest-id="${guest.id}">Request to Join Studio</button>
+            `;
+        } else {
+            card.innerHTML = `
+                <h5>${guest.name}</h5>
+                <p><strong>Email:</strong> ${guest.email || 'N/A'}</p>
+                <p><strong>Status:</strong> ${isConnected ? 'In Greenroom' : 'Not Connected'}</p>
+            `;
+        }
+        participantsContainer.appendChild(card);
+    });
+
+    document.querySelectorAll('.join-studio-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const guestId = button.getAttribute('data-guest-id');
+            if (!currentRoom) {
+                showNotification('Cannot send request: Room ID missing', 'error');
+                return;
+            }
+            socket.emit('request_join_studio', {
+                room: currentRoom,
+                episodeId,
+                guestId,
+                guestName: guests.find(g => g.id === guestId)?.name || 'Guest',
+                token
+            });
+            console.log('Sending request_join_studio:', { room: currentRoom, episodeId, guestId, token });
+            button.disabled = true;
+            button.textContent = 'Request Sent';
+            showNotification('Join request sent to host', 'success');
+        }, { once: true });
+    });
+}
+
+// Start camera
 async function startCamera(deviceId) {
     try {
+        if (!deviceId) {
+            showNotification('No camera available. Please connect a camera.', 'error');
+            return;
+        }
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+            showNotification('Camera access requires HTTPS.', 'error');
+            return;
+        }
         if (localStream) {
             localStream.getTracks().forEach(track => track.stop());
         }
-
         localStream = await navigator.mediaDevices.getUserMedia({
             video: { deviceId: deviceId ? { exact: deviceId } : undefined },
             audio: false
         });
-
         cameraPreview.srcObject = localStream;
     } catch (error) {
-        console.error('Error starting camera:', error);
+        console.error('Error starting camera:', error.name, error.message);
+        if (error.name === 'NotAllowedError') {
+            showNotification('Camera permission denied. Please allow camera access in your browser settings.', 'error');
+        } else if (error.name === 'NotFoundError') {
+            showNotification('No camera found. Please connect a camera.', 'error');
+        } else {
+            showNotification(`Camera error: ${error.message}`, 'error');
+        }
     }
 }
 
-// Set up audio analysis
+// Audio analysis
 function setupAudioAnalysis(stream) {
     if (audioContext) {
         audioContext.close();
     }
-
     audioContext = new AudioContext();
     const source = audioContext.createMediaStreamSource(stream);
     audioAnalyser = audioContext.createAnalyser();
@@ -90,7 +187,6 @@ function setupAudioAnalysis(stream) {
         audioMeter.style.width = `${level}%`;
         requestAnimationFrame(updateAudioMeter);
     }
-
     updateAudioMeter();
 }
 
@@ -107,6 +203,7 @@ microphoneSelect.addEventListener('change', async (e) => {
         setupAudioAnalysis(stream);
     } catch (error) {
         console.error('Error setting up microphone:', error);
+        showNotification('Error setting up microphone', 'error');
     }
 });
 
@@ -125,8 +222,11 @@ testSpeakerButton.addEventListener('click', async () => {
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
         
-        oscillator.start();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
         gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        
+        oscillator.start();
         
         setTimeout(() => {
             oscillator.stop();
@@ -134,88 +234,111 @@ testSpeakerButton.addEventListener('click', async () => {
         }, 1000);
     } catch (error) {
         console.error('Error testing speaker:', error);
+        showNotification('Error testing speaker', 'error');
     }
 });
 
-readyButton.addEventListener('click', () => {
-    isReady = !isReady;
-    readyButton.textContent = isReady ? 'Not Ready' : 'I\'m Ready';
-    readyButton.classList.toggle('btn-success');
-    readyButton.classList.toggle('btn-primary');
-    
-    socket.emit('participant_ready', {
-        room: currentRoom,
-        user: {
-            id: socket.id,
-            isReady: isReady
-        }
-    });
-});
-
-leaveButton.addEventListener('click', () => {
-    if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-    }
-    if (audioContext) {
-        audioContext.close();
-    }
-    window.location.href = '/';
-});
-
-// Socket.IO Event Handlers
-socket.on('connect', () => {
+// Socket.IO events
+socket.on('connect', async () => {
+    if (isConnected) return;
+    isConnected = true;
     console.log('Connected to server');
-    currentRoom = new URLSearchParams(window.location.search).get('room');
+    currentRoom = urlParams.get('room') || episodeId;
     if (currentRoom) {
-        socket.emit('join_greenroom', { room: currentRoom });
+        try {
+            const guests = await fetchGuestsByEpisode(episodeId, token); // ← Token här
+            const guest = guests.find(g => g.id === guestId);
+            const guestName = guest?.name || 'Guest';
+            socket.emit('join_greenroom', { 
+                room: currentRoom, 
+                user: { id: guestId, socketId: socket.id, name: guestName },
+                token
+            });
+            console.log('Emitted join_greenroom:', { room: currentRoom, user: { id: guestId, name: guestName } });
+        } catch (error) {
+            console.error('Error fetching guest name:', error);
+            showNotification('Error loading guest information.', 'error');
+        }
+    } else {
+        showNotification('Error: Room or Episode ID missing', 'error');
     }
 });
 
-socket.on('greenroom_joined', (data) => {
-    console.log('Joined greenroom:', data);
-    updateParticipantsList(data.users);
+socket.on('greenroom_joined', async (data) => {
+    console.log('Greenroom joined:', data);
+    try {
+        const guests = await fetchGuestsByEpisode(episodeId, token); // ← Token här
+        updateParticipantsList(guests, data.users);
+    } catch (err) {
+        console.error('Error fetching guests:', err);
+        showNotification('Error updating participants', 'error');
+    }
 });
 
-socket.on('participant_ready', (data) => {
-    updateParticipantStatus(data.user);
+socket.on('participant_update', async (data) => {
+    console.log('Participant update:', data);
+    try {
+        const guests = await fetchGuestsByEpisode(episodeId, token); // ← Token här
+        updateParticipantsList(guests, data.users);
+    } catch (err) {
+        console.error('Error updating participants:', err);
+        showNotification('Error updating participants', 'error');
+    }
 });
+
 
 socket.on('host_ready', (data) => {
-    roomStatus.querySelector('.status-text').textContent = 'Host is ready';
+    const hostName = data?.hostName || 'Host';
+    roomStatus.querySelector('.status-text').textContent = `${hostName} is ready`;
     roomStatus.querySelector('.status-indicator').classList.add('active');
 });
 
-socket.on('move_to_studio', (data) => {
-    window.location.href = `/studio?room=${currentRoom}`;
+
+socket.on('join_studio_approved', async (data) => {
+    showNotification('Join request approved! Joining studio...', 'success');
+    const podcastId = await getPodcastId(data.episodeId);
+    window.location.href = `/studio?podcastId=${podcastId}&episodeId=${data.episodeId}&room=${data.room}&guestId=${guestId}&token=${token}`;
 });
 
-// Helper Functions
-function updateParticipantsList(users) {
-    participantsContainer.innerHTML = '';
-    users.forEach(user => {
-        const participantCard = document.createElement('div');
-        participantCard.className = 'participant-card';
-        participantCard.innerHTML = `
-            <div class="participant-video">
-                <video autoplay muted playsinline></video>
-            </div>
-            <div class="participant-name">${user.name || 'Anonymous'}</div>
-            <div class="participant-status">${user.isReady ? 'Ready' : 'Not Ready'}</div>
-        `;
-        participantsContainer.appendChild(participantCard);
+socket.on('join_studio_denied', (data) => {
+    showNotification(`Join request denied: ${data.reason || 'No reason provided'}`, 'error');
+    document.querySelectorAll('.join-studio-btn').forEach(button => {
+        button.disabled = false;
+        button.textContent = 'Request to Join Studio';
     });
-}
+});
 
-function updateParticipantStatus(user) {
-    const participantCards = participantsContainer.querySelectorAll('.participant-card');
-    participantCards.forEach(card => {
-        const nameElement = card.querySelector('.participant-name');
-        if (nameElement.textContent === (user.name || 'Anonymous')) {
-            const statusElement = card.querySelector('.participant-status');
-            statusElement.textContent = user.isReady ? 'Ready' : 'Not Ready';
-        }
+socket.on('request_join_studio_failed', (data) => {
+    showNotification(`Request failed: ${data.reason}`, 'error');
+    document.querySelectorAll('.join-studio-btn').forEach(button => {
+        button.disabled = false;
+        button.textContent = 'Request to Join Studio';
     });
+});
+
+socket.on('disconnect', () => {
+    isConnected = false;
+    console.log('Disconnected from server');
+});
+
+// Helpers
+function showNotification(message, type = 'info') {
+    console.log(`${type}: ${message}`);
+    if (notificationArea) {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        notification.style.padding = '10px';
+        notification.style.margin = '5px';
+        notification.style.borderRadius = '4px';
+        notification.style.backgroundColor = type === 'error' ? '#fee2e2' : type === 'success' ? '#d1fae5' : '#e0f2fe';
+        notificationArea.appendChild(notification);
+        setTimeout(() => notification.remove(), 5000);
+    }
 }
 
 // Initialize
 initializeDevices();
+if (episodeId) {
+    loadGuestsForEpisode(episodeId);
+}

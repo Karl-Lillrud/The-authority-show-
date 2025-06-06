@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Activation Summary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header {
+            background-color: #FF8C00;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .stats {
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .growth-info {
+            background-color: #e8f4ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>PodManager Daily Activation Summary</h2>
+    </div>
+    <div class="content">
+        <p>Hello,</p>
+        <p>Here is your daily summary of PodManager activation emails:</p>
+        
+        <div class="stats">
+            <p><strong>Total Podcasts Available:</strong> {{ total_podcasts }}</p>
+            <p><strong>Activation Emails Sent:</strong> {{ emails_sent }}</p>
+            <p><strong>Podcasts Remaining:</strong> {{ podcasts_remaining }}</p>
+            <p><strong>Last Email Sent:</strong> {{ last_sent_date }}</p>
+        </div>
+        
+        <div class="growth-info">
+            <p><strong>Current Batch Size:</strong> {{ batch_size }}</p>
+            <p><strong>Days Running:</strong> {{ days_running }}</p>
+            <p><strong>Tomorrow's Batch Size:</strong> {{ next_batch_size }}</p>
+            <p><em>Note: Batch sizes increase by 20% daily from an initial 89 emails.</em></p>
+        </div>
+        
+        <p>This summary is automatically generated and sent daily at 9 AM.</p>
+        <p>Best regards,<br>PodManager System</p>
+    </div>
+    <div class="footer">
+        &copy; {{ current_year }} PodManager.ai - All rights reserved
+    </div>
+</body>
+</html>

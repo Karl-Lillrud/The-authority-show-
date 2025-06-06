@@ -2,25 +2,33 @@ export async function addGuestRequest(payload) {
   try {
     const res = await fetch("/add_guest", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem('access_token') || ""}` 
+      },
       body: JSON.stringify(payload)
     });
 
     if (!res.ok) {
       const errorData = await res.json();
-      console.error(errorData.error);
+      console.error("Error adding guest:", errorData.error);
 
       // If Google Calendar is not connected, show a specific error
       if (errorData.error.includes("connect your Google Calendar")) {
-        alert(errorData.error);  // Show specific alert message
-        window.location.href = "/podprofile";  // Redirect to the page where the user can connect their calendar
-        return;
+        throw new Error(errorData.error || "Google Calendar is not connected");
       }
 
       throw new Error(errorData.error || "Failed to add guest.");
     }
 
-    return await res.json();
+    const data = await res.json();
+    
+    // Check if invitation was sent and include that in the response
+    if (payload.sendInvitation && data.invitationSent) {
+      console.log("Guest invitation email was sent successfully");
+    }
+    
+    return data;
   } catch (error) {
     console.error("Error in addGuestRequest:", error);
     throw error;
@@ -37,12 +45,25 @@ export async function editGuestRequest(guestId, payload) {
 }
 
 export async function deleteGuestRequest(guestId) {
+  if (!guestId) {
+    console.error("deleteGuestRequest: guestId is undefined");
+    throw new Error("Missing guestId when trying to delete guest.");
+  }
+
   const res = await fetch(`/delete_guests/${guestId}`, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
   });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("Failed to delete guest:", errorText);
+    throw new Error("Failed to delete guest");
+  }
+
   return res.json();
 }
+
 
 export async function fetchGuestsRequest() {
   const res = await fetch("/get_guests");
@@ -53,16 +74,16 @@ export async function fetchGuestsRequest() {
   return data.guests || [];
 }
 
-export async function fetchGuestsByEpisode(episodeId) {
+export async function fetchGuestsByEpisode(episodeId, token) {
   if (!episodeId || episodeId === "undefined") {
-    console.warn(
-      "⚠️ Invalid episodeId passed to fetchGuestsByEpisode:",
-      episodeId
-    );
+    console.warn(" Invalid episodeId passed to fetchGuestsByEpisode:", episodeId);
     return [];
   }
 
-  const res = await fetch(`/get_guests_by_episode/${episodeId}`);
+  const res = await fetch(`/get_guests_by_episode/${episodeId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+
   if (res.status === 404) {
     return [];
   }

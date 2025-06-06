@@ -1,7 +1,7 @@
+from asyncio.log import logger
 from typing import Dict, List
 from datetime import datetime
 
-# Service logic for room join/leave and user management (expand as needed)
 class RecordingStudioService:
     def __init__(self):
         self.rooms: Dict[str, List[dict]] = {}
@@ -21,33 +21,46 @@ class RecordingStudioService:
         return self.rooms[room]
 
     def leave_room(self, room: str, user: dict) -> List[dict]:
+        print(f"Leaving room {room}: user={user}")
         if room in self.rooms:
+            before_count = len(self.rooms[room])
             self.rooms[room] = [u for u in self.rooms[room] if u.get('id') != user.get('id')]
+            after_count = len(self.rooms[room])
+            print(f"Users before: {before_count}, after: {after_count}")
             if not self.rooms[room]:
+                print(f"Room {room} is empty, deleting room")
                 del self.rooms[room]
+        else:
+            print(f"Room {room} not found")
         return self.rooms.get(room, [])
 
     def get_users_in_room(self, room: str) -> List[dict]:
         return self.rooms.get(room, [])
 
     def join_greenroom(self, room: str, user: dict) -> List[dict]:
+        logger.info(f"Adding user {user.get('id')} to greenroom: {room}")
         if room not in self.greenrooms:
             self.greenrooms[room] = []
         
-        # Check if user already exists in greenroom
         existing_user = next((u for u in self.greenrooms[room] if u.get('id') == user.get('id')), None)
         if existing_user:
             existing_user.update(user)
+            logger.info(f"Updated existing user {user.get('id')} in greenroom: {room}")
         else:
             self.greenrooms[room].append(user)
+            logger.info(f"Added new user {user.get('id')} to greenroom: {room}")
         
         return self.greenrooms[room]
 
     def leave_greenroom(self, room: str, user: dict) -> List[dict]:
+        logger.info(f"Removing user {user.get('id')} from greenroom: {room}")
         if room in self.greenrooms:
             self.greenrooms[room] = [u for u in self.greenrooms[room] if u.get('id') != user.get('id')]
             if not self.greenrooms[room]:
+                logger.info(f"Greenroom {room} is empty, deleting")
                 del self.greenrooms[room]
+        else:
+            logger.warning(f"Greenroom {room} not found")
         return self.greenrooms.get(room, [])
 
     def get_users_in_greenroom(self, room: str) -> List[dict]:
