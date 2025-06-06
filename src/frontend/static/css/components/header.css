@@ -498,6 +498,18 @@ header #header-wrapper {
   border-top-color: white;
  }
 
+.disabled-link {
+  color: #b0b0b0 !important; /* Grey out the text */
+  pointer-events: none !important; /* Disable click events */
+  cursor: default !important; /* Change cursor to default */
+  text-decoration: none !important; /* Remove underline if any */
+}
+
+.disabled-link:hover {
+  color: #b0b0b0 !important; /* Keep it grey on hover */
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1) !important; /* Keep original shadow or remove */
+}
+
 .credits-info {
   padding: 8px 12px;
   background-color: #f4f4f4; /* Light Gray background */
