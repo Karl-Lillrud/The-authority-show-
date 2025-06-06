@@ -4,6 +4,7 @@ endblock %} {% block content %}
 <head>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/file-inputs.css') }}" />
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
@@ -139,11 +140,17 @@ endblock %} {% block content %}
             </div>
             <div class="field-group">
               <label for="logo">Album Art</label>
-              <input type="file" id="logo" name="logo" accept="image/*" />
+              <div class="file-input-container">
+                <input type="file" id="logo" name="logo" accept="image/*" />
+                <div id="logo-name-display" class="file-name-display"></div>
+              </div>
             </div>
             <div class="field-group">
               <label for="banner">Podcast Banner</label>
-              <input type="file" id="banner" name="banner" accept="image/*" />
+              <div class="file-input-container">
+                <input type="file" id="banner" name="banner" accept="image/*" />
+                <div id="banner-name-display" class="file-name-display"></div>
+              </div>
             </div>
             <div class="field-group">
               <label for="google-cal">Google Calendar URL</label>
@@ -203,7 +210,10 @@ endblock %} {% block content %}
             </div>
             <div class="field-group">
               <label for="host-image">Host Image</label>
-              <input type="file" id="host-image" name="hostImage" accept="image/*" />
+              <div class="file-input-container">
+                <input type="file" id="host-image" name="hostImage" accept="image/*" />
+                <div id="host-image-name-display" class="file-name-display"></div>
+              </div>
             </div>
           </div>
 
