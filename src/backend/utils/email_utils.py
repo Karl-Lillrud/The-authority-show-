@@ -461,13 +461,19 @@ def send_activation_email(email, activation_link, podcast_name, artwork_url):
 
     try:
         subject = f"Activate Your Podcast Account: {podcast_name}"
+        
         # Render the email body using the activate_email.html template
-        body = render_template(
-            "emails/activate_email.html",
-            activation_link=activation_link,
-            podcast_name=podcast_name,
-            artwork_url=artwork_url,
-        )
+        # Ensure this runs within an app context
+        from flask import render_template, current_app
+        with current_app.app_context():
+            body = render_template(
+                "emails/activate_email.html",
+                activation_link=activation_link,
+                podcast_name=podcast_name,
+                artwork_url=artwork_url,
+                current_year=datetime.now().year # Add current year for the footer
+            )
+            
         logger.info(f"📧 Preparing to send activation email to {email}")
         result = send_email(email, subject, body)
         if result.get("success"):

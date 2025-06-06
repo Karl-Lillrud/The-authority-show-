@@ -103,7 +103,7 @@ class TimeBasedSchedulerTask(SchedulerTask):
 class ActivationEmailTask(TimeBasedSchedulerTask):
     """Task for sending activation emails at 5 AM."""
 
-    def __init__(self, api_base_url, emails_per_batch=None):
+    def __init__(self, api_base_url, emails_per_batch=None, flask_app=None):
         # Set to run at 5 AM
         super().__init__("activation_email", hour=5, minute=0)
         
@@ -124,20 +124,31 @@ class ActivationEmailTask(TimeBasedSchedulerTask):
         # We'll use None to indicate dynamic sizing based on days running
         # with initial batch of 89 and 20% daily increase
         self.emails_per_batch = emails_per_batch
+        self.flask_app = flask_app  # Store Flask app instance
+
         logger.info(f"ActivationEmailTask initialized with API base URL: {self.api_base_url}, scheduled for 5:00 AM")
         if emails_per_batch is None:
             logger.info("Using dynamic batch sizing starting at 89 emails with 20% daily growth")
         else:
             logger.info(f"Using fixed batch size of {emails_per_batch} emails")
+        if not self.flask_app:
+            logger.warning("No Flask app provided to ActivationEmailTask - template rendering may fail if not handled downstream.")
 
     def execute(self):
         """Send a batch of activation emails using activate.py module."""
         try:
             logger.info(f"Scheduler: Starting activation email task at {datetime.now()}")
             
+            result = None
             # Use process_activation_emails from activate.py
             # Pass None to use dynamic batch sizing
-            result = process_activation_emails(self.emails_per_batch)
+            if self.flask_app:
+                with self.flask_app.app_context():
+                    logger.info("ActivationEmailTask: Running process_activation_emails within app context.")
+                    result = process_activation_emails(self.emails_per_batch)
+            else:
+                logger.warning("ActivationEmailTask: No Flask app context available. Running process_activation_emails without explicit context.")
+                result = process_activation_emails(self.emails_per_batch)
             
             if result and result.get("success"):
                 batch_size = result.get("batch_size", "unknown")
@@ -302,7 +313,7 @@ class Scheduler:
     def initialize_default_tasks(self):
         """Initialize the default tasks for the scheduler."""
         # Add activation email task (runs at 5 AM) with dynamic batch sizing
-        self.add_task(ActivationEmailTask(self.api_base_url, emails_per_batch=None))
+        self.add_task(ActivationEmailTask(self.api_base_url, emails_per_batch=None, flask_app=self.flask_app))
         
         # Add summary email task (runs at 7 AM)
         self.add_task(SummaryEmailTask(self.api_base_url, flask_app=self.flask_app))
@@ -331,7 +342,7 @@ class Scheduler:
 
     def start(self):
         """Start the scheduler in a background thread."""
-        thread = threading.Thread(target=self.run_forever, daemon=True)
+        thread = threading.Thread(target=self.run_foreever, daemon=True)
         thread.start()
         logger.info("Scheduler: Started in background thread")
         return thread
