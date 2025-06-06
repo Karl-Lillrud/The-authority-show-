@@ -225,10 +225,12 @@ export async function renderPodcastList() {
 
       // Add event listener for the "Email Config" button
       const emailConfigBtn = podcastCard.querySelector(".email-config-link");
-      emailConfigBtn.addEventListener("click", (e) => {
-        const podcastId = e.target.dataset.id; // Get podcast ID
-        openEmailConfigPopup(podcastId); // Pass podcast ID to the popup
-      });
+      if (emailConfigBtn) { // Check if the element exists
+        emailConfigBtn.addEventListener("click", (e) => {
+          const podcastId = e.target.dataset.id; // Get podcast ID
+          openEmailConfigPopup(podcastId); // Pass podcast ID to the popup
+        });
+      }
 
       // Fetch episodes for this podcast and add them to the preview
 try {
