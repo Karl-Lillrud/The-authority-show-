@@ -323,7 +323,7 @@ a,
 
 .left-sidebar {
   width: 100%;
-  max-width: 16rem;
+  max-width: 300px;
 }
 
 .right-sidebar {
@@ -547,7 +547,7 @@ a,
   font-size: 1.125rem;
   font-weight: 500;
   margin-bottom: 0.5rem;
-  margin-top: 1.5rem;
+  padding-left: 3px;
 }
 
 /* Podcast Selector */
@@ -604,6 +604,7 @@ a,
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
+  margin-right: var(--spacing-sm);
   border-radius: var(--radius-tiny);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -845,11 +846,8 @@ a,
 
 /* Kanban Board */
 .kanban-board {
-  display: flex;
-  gap: 2rem;
   padding: 1.5rem;
   overflow-x: auto;
-  padding-bottom: 2rem;
   scrollbar-width: thin;
   scrollbar-color: var(--muted) transparent;
 }
@@ -1871,7 +1869,6 @@ textarea:focus {
 .save-workflow-btn:hover {
   background-color: #0ca678;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
 .import-workflow-btn {
