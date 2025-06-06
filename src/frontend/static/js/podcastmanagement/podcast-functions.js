@@ -29,6 +29,12 @@ function resetForm() {
   const form = document.getElementById("register-podcast-form");
   form.reset();
   shared.selectedPodcastId = null;
+  
+  // Reset file name displays
+  document.querySelectorAll('.file-name-display').forEach(display => {
+    display.textContent = '';
+    display.classList.remove('has-file');
+  });
 }
 
 // Function to display podcast details in the form
@@ -99,6 +105,31 @@ function displayPodcastDetails(podcast) {
 
   const youtubeEl = document.getElementById("youtube");
   if (youtubeEl) youtubeEl.value = podcast.socialMedia?.[6] || "";
+
+  // Show indicators for existing images
+  if (podcast.logoUrl || podcast.rssImage) {
+    const logoNameDisplay = document.getElementById('logo-name-display');
+    if (logoNameDisplay) {
+      logoNameDisplay.textContent = "Current image selected";
+      logoNameDisplay.classList.add('has-file');
+    }
+  }
+
+  if (podcast.bannerUrl) {
+    const bannerNameDisplay = document.getElementById('banner-name-display');
+    if (bannerNameDisplay) {
+      bannerNameDisplay.textContent = "Current image selected";
+      bannerNameDisplay.classList.add('has-file');
+    }
+  }
+
+  if (podcast.hostImage) {
+    const hostImageNameDisplay = document.getElementById('host-image-name-display');
+    if (hostImageNameDisplay) {
+      hostImageNameDisplay.textContent = "Current image selected";
+      hostImageNameDisplay.classList.add('has-file');
+    }
+  }
 }
 
 // Function to view podcast details
@@ -799,11 +830,30 @@ fetchEpisodesByPodcast(podcast._id)
 // Function to handle podcast form submission
 function handlePodcastFormSubmission() {
   const form = document.getElementById("register-podcast-form");
+  
+  // Set up file input event listeners for displaying filenames
+  const fileInputs = ['logo', 'banner', 'host-image'];
+  fileInputs.forEach(inputId => {
+    const fileInput = document.getElementById(inputId);
+    const nameDisplay = document.getElementById(`${inputId}-name-display`);
+    
+    if (fileInput && nameDisplay) {
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+          nameDisplay.textContent = fileInput.files[0].name;
+          nameDisplay.classList.add('has-file');
+        } else {
+          nameDisplay.textContent = '';
+          nameDisplay.classList.remove('has-file');
+        }
+      });
+    }
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     console.log("Form submitted");
-
+    
     // Retrieve regular input values
     const podName = document.getElementById("pod-name")?.value.trim() || "";
     const email = document.getElementById("email")?.value.trim() || "";
