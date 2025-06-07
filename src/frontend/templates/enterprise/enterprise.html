@@ -31,7 +31,33 @@
                         
                         <div class="form-group">
                             <label for="phone">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" required>
+                            <div class="phone-input-container">
+                                <div class="country-selector">
+                                    <div class="selected-flag" id="selected-flag">
+                                        <div class="flag us"></div>
+                                        <span class="country-code">+1</span>
+                                        <span class="arrow-down"></span>
+                                    </div>
+                                    <div class="country-list-container">
+                                        <div class="search-container">
+                                            <input type="text" id="country-search" placeholder="Search country...">
+                                        </div>
+                                        <ul class="country-list" id="country-list">
+                                            <!-- Countries will be populated by JavaScript -->
+                                        </ul>
+                                    </div>
+                                </div>
+                                <input type="tel" 
+                                       id="phone" 
+                                       name="phone" 
+                                       maxlength="12" 
+                                       placeholder="Enter phone number" 
+                                       pattern="[0-9]*" 
+                                       inputmode="numeric" 
+                                       onkeypress="return event.charCode >= 48 && event.charCode <= 57" 
+                                       oninput="this.value = this.value.replace(/[^0-9]/g, '')" 
+                                       required>
+                            </div>
                         </div>
                         
                         <p class="form-footer">Let us help you scale your podcasting efforts with PodManager.ai.</p>
