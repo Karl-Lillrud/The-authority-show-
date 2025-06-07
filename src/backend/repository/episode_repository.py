@@ -8,6 +8,7 @@ from backend.services.activity_service import ActivityService
 from dateutil.parser import parse as parse_date
 from backend.utils.subscription_access import PLAN_BENEFITS
 from backend.services.audioToEpisodeService import AudioToEpisodeService # Added import
+from backend.utils.blob_storage import upload_episode_cover_art
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +174,29 @@ class EpisodeRepository:
             if ep["userid"] != str(user_id):
                 return {"error": "Permission denied"}, 403
 
-            # Handle audio file upload first if provided
+            # Get podcast ID for blob storage path
+            podcast_id = ep.get("podcast_id", "unknown")
+            account_id = ep.get("accountId")
+            
+            # Handle cover art upload if provided
+            cover_art_file = data.pop('coverArt', None)
+            if cover_art_file:
+                logger.info(f"Processing cover art upload for episode {episode_id}")
+                cover_art_url = upload_episode_cover_art(
+                    cover_art_file, 
+                    user_id, 
+                    podcast_id,
+                    episode_id
+                )
+                
+                if cover_art_url:
+                    data["imageUrl"] = cover_art_url
+                    logger.info(f"Cover art URL saved for episode {episode_id}: {cover_art_url}")
+                else:
+                    logger.error(f"Cover art upload failed for episode {episode_id}.")
+                    return {"error": "Failed to upload cover art."}, 500
+            
+            # Handle audio file upload if provided
             if audio_file:
                 account_id = ep.get("accountId")
                 podcast_id = ep.get("podcast_id")

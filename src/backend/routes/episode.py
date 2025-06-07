@@ -124,22 +124,29 @@ def update_episode(episode_id):
         logger.warning(f"Unsupported content type for episode update: {content_type}")
         return jsonify({"error": f"Expected multipart/form-data, received {content_type or 'none'}"}), 415
 
-    # Extract form data and file (video or audio)
+    # Extract form data and files
     data = request.form.to_dict()
     video_file = request.files.get("video")
     audio_file = request.files.get("audioFile")
+    cover_art_file = request.files.get("coverArt")
+    
     logger.debug(f"Form data: {data}")
     logger.debug(f"Video file: {video_file.filename if video_file else None}")
     logger.debug(f"Audio file: {audio_file.filename if audio_file else None}")
+    logger.debug(f"Cover art file: {cover_art_file.filename if cover_art_file else None}")
 
     # Validate input
-    if not data and not video_file and not audio_file:
-        logger.warning("No data or file provided for episode update")
+    if not data and not video_file and not audio_file and not cover_art_file:
+        logger.warning("No data or files provided for episode update")
         return jsonify({"error": "No data or file provided"}), 400
 
     # If a file is uploaded, set status to 'recorded'
     if video_file or audio_file:
         data["status"] = "recorded"
+
+    # Add cover art to data if provided
+    if cover_art_file:
+        data["coverArt"] = cover_art_file
 
     try:
         # Prefer video file if present, otherwise audio
