@@ -60,11 +60,20 @@
 .center-box .signin-title {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--primary-color, #ff7f3f);
   margin-bottom: 32px;
   margin-top: 0;
   line-height: 1.2;
   text-align: center;
+}
+
+/* Add styling for the black text part */
+.signin-title .black-text {
+  color: #333333; /* Black color for "Create with" */
+}
+
+/* Keep the orange color for PodManager.ai */
+.signin-title .orange-text {
+  color: var(--primary-color, #ff7f3f); /* Orange color for "PodManager.ai" */
 }
 
 .sliding-container {

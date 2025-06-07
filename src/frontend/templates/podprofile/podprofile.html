@@ -76,6 +76,9 @@
         <!-- Connect Your Calendar Button -->
         <div class="form-group">
           <div class="label-group">
+            <button id="connectCalendar" class="button-primary">
+              Connect Google Calendar
+            </button>
             <button class="help-button calendar-help-button" title="Click to learn more">?</button>
             <span class="help-text">
               To connect your Google Calendar, click the button below and follow the
@@ -83,9 +86,6 @@
               with your calendar.
             </span>
           </div>
-          <button id="connectCalendar" class="button-primary">
-            Connect Google Calendar
-          </button>
         </div>
 
         <form id="podNameForm">
@@ -94,7 +94,7 @@
               <label for="podRss" id="rssLabel">RSS</label>
               <button class="help-button" id="rss-help-button">?</button>
               <span class="help-text">
-                To find your podcast's RSS feed URL, log in to your podcast
+                To find your podcast RSS feed URL, log in to your podcast
                 hosting platform, navigate to your podcast settings or
                 distribution options, and look for the "RSS Feed" section and
                 paste that URL here.
@@ -105,11 +105,11 @@
               id="podRss"
               name="podRss"
               data-prefill="{{ pod_rss }}"
-              placeholder="Enter your RSS feed URL"
+              placeholder="  Enter your RSS feed URL"
             />
           </div>
           <div class="form-group">
-            <label for="podName">Podcast's Name</label>
+            <label for="podName">Podcast Name</label>
             <input type="text" id="podName" name="podName" required />
           </div>
           <div class="form-group-buttons">
@@ -156,7 +156,6 @@
       </div>
     </div>
     
-  
     <script
       type="module"
       src="{{ url_for('static', filename='js/podprofile/podprofile.js') }}"
