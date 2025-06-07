@@ -36,16 +36,32 @@ document.addEventListener("DOMContentLoaded", () => {
 // 🔽 Landing Page Dropdown
 function toggleLandingPage() {
   const dropdown = document.getElementById("dropdown-lp-content");
-  const triangle = document.getElementById("triangle");
-
+  
   if (dropdown.style.display === "none" || dropdown.style.display === "") {
     dropdown.style.display = "block";
-    triangle.classList.replace("triangle-down", "triangle-up");
+    
+    // Close the dropdown when clicking outside
+    document.addEventListener('click', closeLandingDropdown);
   } else {
     dropdown.style.display = "none";
-    triangle.classList.replace("triangle-up", "triangle-down");
+    document.removeEventListener('click', closeLandingDropdown);
+  }
+  
+  // Prevent the event from bubbling up
+  event.stopPropagation();
+}
+
+function closeLandingDropdown(event) {
+  const dropdown = document.getElementById("dropdown-lp-content");
+  const icon = document.querySelector('.landing-page-icon');
+  
+  // Close dropdown if click is outside the dropdown and the icon
+  if (!dropdown.contains(event.target) && !icon.contains(event.target)) {
+    dropdown.style.display = "none";
+    document.removeEventListener('click', closeLandingDropdown);
   }
 }
+
 window.toggleLandingPage = toggleLandingPage;
 
 async function populateLandingPageDropdown() {
@@ -56,19 +72,31 @@ async function populateLandingPageDropdown() {
     const data = await fetchPodcasts();
     const podcasts = data.podcast || [];
     const optionsContainer = dropdown.querySelector(".dropdown-lp-options");
+    
+    // Clear existing options
+    if (optionsContainer) {
+      optionsContainer.innerHTML = '';
+      
+      // Add header or title if needed
+      const dropdownTitle = document.createElement('div');
+      dropdownTitle.className = 'dropdown-lp-title';
+      dropdownTitle.textContent = 'Landing Pages';
+      optionsContainer.appendChild(dropdownTitle);
+      
+      // Add podcasts
+      podcasts.forEach((podcast) => {
+        const option = document.createElement("a");
+        option.textContent = podcast.podName;
+        option.href = `/landingpage/${podcast._id}`;
 
-    podcasts.forEach((podcast) => {
-      const option = document.createElement("a");
-      option.textContent = podcast.podName;
-      option.href = `/landingpage/${podcast._id}`;
+        option.addEventListener("click", (e) => {
+          e.preventDefault();
+          window.location.href = `/landingpage/${podcast._id}`;
+        });
 
-      option.addEventListener("click", (e) => {
-        e.preventDefault();
-        window.location.href = `/landingpage/${podcast._id}`;
+        optionsContainer.appendChild(option);
       });
-
-      optionsContainer.appendChild(option);
-    });
+    }
   } catch (err) {
     console.error("Error populating landing page dropdown:", err);
   }
