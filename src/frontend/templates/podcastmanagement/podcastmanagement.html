@@ -4,6 +4,7 @@ endblock %} {% block content %}
 <head>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/file-inputs.css') }}" />
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
@@ -31,12 +32,15 @@ endblock %} {% block content %}
       <div class="sidebar-content">
         <nav class="sidebar-menu">
           <ul>
-            <li class="sidebar-menu-item">
-              <a href="/dashboard" class="sidebar-menu-link dashboard-link">
-                <span id="back-to-dashboard-icon" class="sidebar-icon"></span>
-                <span>Back to Dashboard</span>
-              </a>
-            </li>
+<!--
+            
+<li class="sidebar-menu-item">
+  <a href="/dashboard" class="sidebar-menu-link dashboard-link">
+    <span id="back-to-dashboard-icon" class="sidebar-icon"></span>
+    <span>Back to Dashboard</span>
+  </a>
+</li>
+-->
             <li class="sidebar-menu-item active">
               <a href="/podcastmanagement" class="sidebar-menu-link">
                 <span id="podcasts-icon" class="sidebar-icon"></span>
@@ -76,19 +80,21 @@ endblock %} {% block content %}
           </button>
         </div>
         <div class="sidebar-content-filler">
-          <div class="sidebar-filler-content">
-            <div class="sidebar-filler-logo">
-              <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
-                <circle cx="14" cy="14" r="13" stroke="#FF7F3F" stroke-width="2"/>
-                <path d="M8 14L13 19L20 9" stroke="#FF7F3F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div class="sidebar-filler-text">
-              <span>Grow Your Podcast</span>
-              <span class="sidebar-filler-byline">Create. Inspire. Connect.</span>
-            </div>
-          </div>
-          <div class="sidebar-filler-gradient"></div>
+<!--
+<div class="sidebar-filler-content">
+  <div class="sidebar-filler-logo">
+    <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="14" r="13" stroke="#FF7F3F" stroke-width="2"/>
+      <path d="M8 14L13 19L20 9" stroke="#FF7F3F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="sidebar-filler-text">
+    <span>Grow Your Podcast</span>
+    <span class="sidebar-filler-byline">Create. Inspire. Connect.</span>
+  </div>
+</div>
+<div class="sidebar-filler-gradient"></div>
+-->
         </div>
       </div>
       <div class="sidebar-footer">
@@ -134,11 +140,17 @@ endblock %} {% block content %}
             </div>
             <div class="field-group">
               <label for="logo">Album Art</label>
-              <input type="file" id="logo" name="logo" accept="image/*" />
+              <div class="file-input-container">
+                <input type="file" id="logo" name="logo" accept="image/*" />
+                <div id="logo-name-display" class="file-name-display"></div>
+              </div>
             </div>
             <div class="field-group">
               <label for="banner">Podcast Banner</label>
-              <input type="file" id="banner" name="banner" accept="image/*" />
+              <div class="file-input-container">
+                <input type="file" id="banner" name="banner" accept="image/*" />
+                <div id="banner-name-display" class="file-name-display"></div>
+              </div>
             </div>
             <div class="field-group">
               <label for="google-cal">Google Calendar URL</label>

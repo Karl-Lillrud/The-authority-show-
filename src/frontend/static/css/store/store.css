@@ -157,6 +157,7 @@
   position: relative;
   padding-bottom: var(--spacing-xs);
   margin-bottom: 8px;
+ 
 }
 
 .section-header h2::after {
@@ -421,7 +422,7 @@
   display: flex; /* Keep flex */
   flex-direction: column; /* Keep column */
   position: sticky; /* Make it sticky */
-  top: 255px; /* Increased from 20px (20px + ~3cm/114px) */
+  top: 291px; /* Increased from 20px (20px + ~3cm/114px) */
   /* height: auto; <-- Height is auto unless JS sets it */
   max-height: calc(
     100vh - 154px
@@ -436,12 +437,14 @@
   display: flex;
   align-items: center;
   padding: var(--spacing-md);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+ /*
   background: linear-gradient(
     to right,
     rgba(255, 127, 63, 0.1),
     rgba(255, 127, 63, 0.02)
   );
+  */
   border-top-left-radius: var(--radius-large);
   border-top-right-radius: var(--radius-large);
 }

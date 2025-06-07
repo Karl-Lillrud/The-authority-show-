@@ -21,7 +21,6 @@ body {
   text-align: left;
   position: relative;
   padding-bottom: 0; /* Remove bottom padding */
-  margin-bottom: 0.7rem; /* Less margin below text, more below line */
 }
 
 .dashboard-title {

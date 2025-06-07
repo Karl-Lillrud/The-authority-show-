@@ -13,6 +13,31 @@ import {
   updateSubscriptionUI
 } from "/static/js/account/subscription.js";
 
+// Add email change modal HTML to the document
+const emailChangeModalHTML = `
+<div id="email-change-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Change Email Address</h3>
+      <span class="close-modal">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="email-change-form">
+        <div class="form-group">
+          <label for="new-email">New Email Address <span class="required">*</span></label>
+          <input type="email" id="new-email" name="newEmail" required>
+          <div class="form-hint">You will need to verify this email address</div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="primary-button">Send Verification Email</button>
+          <button type="button" class="secondary-button cancel-email-change">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+`;
+
 document.addEventListener("DOMContentLoaded", () => {
   // Hides the edit buttons when in non-edit mode
   const formActions = document.querySelector(".form-actions");
@@ -123,7 +148,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const phoneInput = document.getElementById("phone");
 
       if (fullNameInput) fullNameInput.value = account.full_name || "";
-      if (emailInput) emailInput.value = account.email || "";
+      if (emailInput) {
+        emailInput.value = account.email || "";
+        emailInput.readOnly = true; // Make email field read-only
+        emailInput.classList.add('readonly-field'); // Add a class for styling
+      }
       if (phoneInput) phoneInput.value = account.phone || "";
 
       // Update the display values
@@ -669,6 +698,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Load account data but preserve profile picture
       loadAccountData(true);
+
+      // Add change email button
+      addChangeEmailButton();
     } else {
       // Switch back to view mode
       profileForm.style.display = "none";
@@ -698,6 +730,20 @@ document.addEventListener("DOMContentLoaded", () => {
       // Hide upload button and profile pic overlay
       if (uploadButton) uploadButton.style.display = "none";
       if (profilePicOverlay) profilePicOverlay.style.display = "none";
+
+      // Remove change email button and restore input to original position
+      const emailContainer = document.querySelector(".email-field-container");
+      if (emailContainer) {
+        const emailInput = emailContainer.querySelector("#email");
+        const formGroup = emailContainer.parentNode;
+
+        if (emailInput && formGroup) {
+          // Move email input back to its original position
+          emailContainer.removeChild(emailInput);
+          formGroup.insertBefore(emailInput, emailContainer);
+          formGroup.removeChild(emailContainer);
+        }
+      }
 
       // Load account data but preserve profile picture
       loadAccountData(true);
@@ -1069,6 +1115,123 @@ document.addEventListener("DOMContentLoaded", () => {
     const savedUrl = localStorage.getItem('lastProfilePicUrl');
     if (savedUrl && profilePic) {
       profilePic.src = savedUrl;
+    }
+  }
+
+  // Add email change modal to document
+  document.body.insertAdjacentHTML('beforeend', emailChangeModalHTML);
+
+  // Get modal elements
+  const emailChangeModal = document.getElementById("email-change-modal");
+  const emailChangeForm = document.getElementById("email-change-form");
+  const closeModalBtn = emailChangeModal.querySelector(".close-modal");
+  const cancelBtn = emailChangeModal.querySelector(".cancel-email-change");
+
+  // Function to show email change modal
+  function showEmailChangeModal() {
+    emailChangeModal.style.display = "block";
+  }
+
+  // Function to hide email change modal
+  function hideEmailChangeModal() {
+    emailChangeModal.style.display = "none";
+    emailChangeForm.reset();
+  }
+
+  // Add event listeners for modal
+  closeModalBtn.addEventListener("click", hideEmailChangeModal);
+  cancelBtn.addEventListener("click", hideEmailChangeModal);
+  window.addEventListener("click", (event) => {
+    if (event.target === emailChangeModal) {
+      hideEmailChangeModal();
+    }
+  });
+
+  // Handle email change form submission
+  emailChangeForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const newEmail = document.getElementById("new-email").value;
+    const submitButton = emailChangeForm.querySelector('.primary-button');
+
+    // Save original button text
+    const originalButtonText = submitButton.innerHTML;
+
+    // Show loading spinner
+    submitButton.innerHTML = `
+      <svg class="spinner" viewBox="0 0 50 50">
+        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+      </svg>
+      Sending...
+    `;
+    submitButton.disabled = true;
+
+    try {
+      const response = await fetch("/api/email/change", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ newEmail }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showNotification(
+          "Success",
+          "Confirmation email sent. Please check your new email address.",
+          "success"
+        );
+        hideEmailChangeModal();
+      } else {
+        throw new Error(data.error || "Failed to initiate email change");
+      }
+    } catch (error) {
+      showNotification(
+        "Error",
+        error.message || "An error occurred while processing your request",
+        "error"
+      );
+    } finally {
+      // Restore button
+      submitButton.innerHTML = originalButtonText;
+      submitButton.disabled = false;
+    }
+  });
+
+  // Function to add change email button
+  function addChangeEmailButton() {
+    const emailInput = document.getElementById("email");
+    if (emailInput) {
+      // Create a container div to hold both email input and button
+      const emailContainer = document.createElement("div");
+      emailContainer.className = "email-field-container";
+
+      // Move email input inside the container
+      const parent = emailInput.parentNode;
+      parent.insertBefore(emailContainer, emailInput);
+      emailContainer.appendChild(emailInput);
+
+      // Create the change email button with compact styling
+      const changeEmailBtn = document.createElement("button");
+      changeEmailBtn.type = "button";
+      changeEmailBtn.className = "secondary-button change-email-btn compact";
+      changeEmailBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          <path d="m12 15 3-3-3-3"></path>
+          <path d="M15 12H3"></path>
+        </svg>
+        Change
+      `;
+
+      // Add the button to the container
+      emailContainer.appendChild(changeEmailBtn);
+
+      // Add click event
+      changeEmailBtn.addEventListener("click", showEmailChangeModal);
     }
   }
 });
