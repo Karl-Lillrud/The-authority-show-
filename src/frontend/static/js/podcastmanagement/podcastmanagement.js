@@ -365,6 +365,77 @@ function setupMobileSidebar() {
   }
 }
  
+// Initialize the file input display functionality
+document.addEventListener('DOMContentLoaded', function() {
+  // File input display for podcast logo
+  const logoInput = document.getElementById('logo');
+  const logoNameDisplay = document.getElementById('logo-name-display');
+  
+  if (logoInput && logoNameDisplay) {
+    logoInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const fileName = this.files[0].name;
+        logoNameDisplay.textContent = fileName;
+        logoNameDisplay.title = fileName;
+      } else {
+        logoNameDisplay.textContent = '';
+        logoNameDisplay.title = '';
+      }
+    });
+  }
+  
+  // File input display for banner
+  const bannerInput = document.getElementById('banner');
+  const bannerNameDisplay = document.getElementById('banner-name-display');
+  
+  if (bannerInput && bannerNameDisplay) {
+    bannerInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const fileName = this.files[0].name;
+        bannerNameDisplay.textContent = fileName;
+        bannerNameDisplay.title = fileName;
+      } else {
+        bannerNameDisplay.textContent = '';
+        bannerNameDisplay.title = '';
+      }
+    });
+  }
+  
+  // File input display for host image
+  const hostImageInput = document.getElementById('host-image');
+  const hostImageNameDisplay = document.getElementById('host-image-name-display');
+  
+  if (hostImageInput && hostImageNameDisplay) {
+    hostImageInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const fileName = this.files[0].name;
+        hostImageNameDisplay.textContent = fileName;
+        hostImageNameDisplay.title = fileName;
+      } else {
+        hostImageNameDisplay.textContent = '';
+        hostImageNameDisplay.title = '';
+      }
+    });
+  }
+  
+  // File input display for episode cover art
+  const episodeCoverInput = document.getElementById('episode-cover');
+  const episodeCoverNameDisplay = document.getElementById('episode-cover-name-display');
+  
+  if (episodeCoverInput && episodeCoverNameDisplay) {
+    episodeCoverInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const fileName = this.files[0].name;
+        episodeCoverNameDisplay.textContent = fileName;
+        episodeCoverNameDisplay.title = fileName;
+      } else {
+        episodeCoverNameDisplay.textContent = '';
+        episodeCoverNameDisplay.title = '';
+      }
+    });
+  }
+});
+ 
 // Export shared utilities and variables
 export const shared = {
   selectedPodcastId: null,
@@ -374,4 +445,3 @@ export const shared = {
 document.getElementById("guests-link").addEventListener("click", (event) => {
   event.preventDefault()
 })
- 

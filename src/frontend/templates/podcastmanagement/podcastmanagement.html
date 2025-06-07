@@ -267,6 +267,13 @@ endblock %} {% block content %}
               <select id="podcast-select" name="podcastId" required></select>
             </div>
             <div class="field-group full-width">
+              <label for="episode-cover">Album Cover Art</label>
+              <div class="file-input-container">
+                <input type="file" id="episode-cover" name="coverArt" accept="image/*" />
+                <div id="episode-cover-name-display" class="file-name-display"></div>
+              </div>
+            </div>
+            <div class="field-group full-width">
               <label for="episode-title">Episode Title</label>
               <input type="text" id="episode-title" name="title" required />
             </div>

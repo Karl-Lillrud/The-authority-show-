@@ -3,6 +3,7 @@ from azure.core.exceptions import ResourceNotFoundError, AzureError # Import spe
 import os
 import logging
 import tempfile
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -176,4 +177,71 @@ def get_blob_content(container_name, blob_path):
         return None
     except Exception as e:
         logger.error(f"Failed to read blob '{blob_path}' from container '{container_name}': {e}", exc_info=True)
+        return None
+
+def upload_episode_cover_art(file, user_id, podcast_id, episode_id):
+    """
+    Uploads episode cover art to Azure Blob Storage.
+    
+    Args:
+        file: The file object from the request
+        user_id: The ID of the user who owns the episode
+        podcast_id: The ID of the podcast
+        episode_id: The ID of the episode
+        
+    Returns:
+        str: The URL of the uploaded image, or None if upload fails
+    """
+    if not file:
+        return None
+    
+    blob_service_client = get_blob_service_client()
+    if not blob_service_client:
+        logger.error("BlobServiceClient not initialized. Cannot upload episode cover art.")
+        return None
+    
+    try:
+        # Determine file extension from content type or filename
+        file_extension = None
+        if hasattr(file, 'filename') and file.filename:
+            file_extension = os.path.splitext(file.filename)[1].lower()
+        if not file_extension and hasattr(file, 'content_type'):
+            if file.content_type == 'image/jpeg':
+                file_extension = '.jpg'
+            elif file.content_type == 'image/png':
+                file_extension = '.png'
+            elif file.content_type == 'image/webp':
+                file_extension = '.webp'
+        if not file_extension:
+            file_extension = '.jpg'  # Default extension
+            
+        # Generate a unique blob path
+        timestamp = int(datetime.now().timestamp())
+        blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/{episode_id}/cover_art_{timestamp}{file_extension}"
+        
+        # Set content type based on file extension
+        content_type = None
+        if file_extension == '.jpg' or file_extension == '.jpeg':
+            content_type = 'image/jpeg'
+        elif file_extension == '.png':
+            content_type = 'image/png'
+        elif file_extension == '.webp':
+            content_type = 'image/webp'
+        
+        # Get appropriate container name
+        container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME", "podcastaudio")
+        
+        # Upload file
+        file.seek(0)  # Ensure we're at the beginning of the file
+        blob_url = upload_file_to_blob(container_name, blob_path, file, content_type)
+        
+        if not blob_url:
+            logger.error(f"Failed to upload cover art for episode {episode_id}")
+            return None
+            
+        logger.info(f"Successfully uploaded cover art for episode {episode_id}: {blob_url}")
+        return blob_url
+        
+    except Exception as e:
+        logger.error(f"Error uploading episode cover art: {e}", exc_info=True)
         return None
