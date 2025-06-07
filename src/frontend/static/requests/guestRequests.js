@@ -41,8 +41,16 @@ export async function editGuestRequest(guestId, payload) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
-  return res.json();
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json.error || "Failed to edit guest");
+  }
+
+  return json;
 }
+
 
 export async function deleteGuestRequest(guestId) {
   if (!guestId) {
