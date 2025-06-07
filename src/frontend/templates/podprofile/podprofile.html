@@ -76,6 +76,9 @@
         <!-- Connect Your Calendar Button -->
         <div class="form-group">
           <div class="label-group">
+            <button id="connectCalendar" class="button-primary">
+              Connect Google Calendar
+            </button>
             <button class="help-button calendar-help-button" title="Click to learn more">?</button>
             <span class="help-text">
               To connect your Google Calendar, click the button below and follow the
@@ -83,9 +86,6 @@
               with your calendar.
             </span>
           </div>
-          <button id="connectCalendar" class="button-primary">
-            Connect Google Calendar
-          </button>
         </div>
 
         <form id="podNameForm">
@@ -105,7 +105,7 @@
               id="podRss"
               name="podRss"
               data-prefill="{{ pod_rss }}"
-              placeholder="Enter your RSS feed URL"
+              placeholder="  Enter your RSS feed URL"
             />
           </div>
           <div class="form-group">
@@ -156,7 +156,6 @@
       </div>
     </div>
     
-  
     <script
       type="module"
       src="{{ url_for('static', filename='js/podprofile/podprofile.js') }}"

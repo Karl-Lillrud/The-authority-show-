@@ -12,7 +12,8 @@ from flask import (
 from backend.database.mongo_connection import collection
 import requests
 from datetime import datetime, timezone
-from os import getenv  # Add this import
+from os import getenv
+from backend.repository.user_repository import UserRepository  # Import UserRepository
 
 podprofile_bp = Blueprint("podprofile_bp", __name__)
 
@@ -23,21 +24,49 @@ def podprofile():
         return redirect(url_for("signin"))
 
     try:
-        # Fetch the user's email
-        user_email = session.get("email")
-        if not user_email:
+        user_email = session.get("email")  # Keep for potential use
+        if not user_email:  # Should not happen if g.user_id is set, but good check
+            current_app.logger.warning(
+                "User email not in session for podprofile, redirecting to signin."
+            )
             return redirect(url_for("signin"))
 
-        # Fetch the user's podcast data
-        podcast = collection["Podcasts"].find_one({"userId": g.user_id})
-        pod_rss = podcast.get("podRss") if podcast else ""
+        # Determine if Google Calendar is connected by checking for tokens
+        calendar_connected = False
+        user_repo = UserRepository()
+        user_details = user_repo.get_user_by_id(g.user_id)  # Fetch full user details
 
-        session["user_email"] = user_email  # Store the email in the session
-        return render_template("podprofile/podprofile.html", user_email=user_email, pod_rss=pod_rss)
+        if user_details and user_details.get("google_access_token"):
+            calendar_connected = True
+            current_app.logger.info(
+                f"User {g.user_id} has Google Calendar connected (access token found)."
+            )
+        else:
+            current_app.logger.info(
+                f"User {g.user_id} does not have Google Calendar connected (no access token)."
+            )
+
+        # The actual podcast data (like pod_rss or googleCal URL)
+        # will be fetched by podprofile.js using selectedPodcastId.
+        # We only need to pass the connection status for the button logic.
+        return render_template(
+            "podprofile/podprofile.html",
+            user_email=user_email,  # Pass for potential display or other uses
+            calendar_connected=calendar_connected,  # Pass OAuth connection status
+        )
 
     except Exception as e:
-        current_app.logger.error(f"Error fetching podcast data: {e}")
-        return redirect(url_for("signin"))
+        current_app.logger.error(
+            f"Error in /podprofile route for user {g.user_id}: {e}", exc_info=True
+        )
+        # Avoid redirecting on all errors, could show a generic error page or message
+        return (
+            render_template(
+                "error_page.html",
+                error_message="Could not load podcast profile.",
+            ),
+            500,
+        )
 
 
 @podprofile_bp.route("/save_podprofile", methods=["POST"])
@@ -147,8 +176,8 @@ def connect_calendar():
             "redirect_uri": getenv("GOOGLE_REDIRECT_URI"),  # Fetch from .env
             "response_type": "code",
             "scope": "https://www.googleapis.com/auth/calendar.events",
-            #https://www.googleapis.com/auth/calendar Main scope for Google Calendar API
-        #Can take multiple weeks for access to be granted
+            # https://www.googleapis.com/auth/calendar Main scope for Google Calendar API
+            # Can take multiple weeks for access to be granted
             "access_type": "offline",
         }
         auth_url = f"{calendar_auth_url}?{requests.compat.urlencode(params)}"
@@ -170,7 +199,9 @@ def calendar_callback():
         # Get user ID from session
         user_id = session.get("user_id")
         if not user_id:
-            current_app.logger.error("User ID not found in session during calendar callback")
+            current_app.logger.error(
+                "User ID not found in session during calendar callback"
+            )
             return jsonify({"error": "User not authenticated"}), 401
 
         # Exchange code for tokens
@@ -188,18 +219,19 @@ def calendar_callback():
 
         # Save tokens to the database using UserRepository
         from backend.repository.user_repository import UserRepository
+
         user_repo = UserRepository()
         save_result = user_repo.save_tokens(
-            user_id, 
-            tokens["access_token"], 
-            tokens["refresh_token"]
+            user_id, tokens["access_token"], tokens["refresh_token"]
         )
-        
+
         if "error" in save_result:
             current_app.logger.error(f"Error saving tokens: {save_result['error']}")
             return jsonify(save_result), 500
 
-        current_app.logger.info(f"Successfully saved Google Calendar tokens for user {user_id}")
+        current_app.logger.info(
+            f"Successfully saved Google Calendar tokens for user {user_id}"
+        )
         return redirect(url_for("podprofile_bp.podprofile"))
     except Exception as e:
         current_app.logger.error(f"Error in calendar callback: {e}", exc_info=True)
