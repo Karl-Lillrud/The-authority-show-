@@ -123,7 +123,7 @@ endblock %} {% block content %}
         <form id="register-podcast-form">
           <div class="form-grid">
             <div class="field-group">
-              <label for="pod-name">Podcast Name</label>
+              <label for="pod-name">Podcast Name *</label>
               <input type="text" id="pod-name" name="podName" autocomplete="off" required />
             </div>
             <div class="field-group">
@@ -153,6 +153,13 @@ endblock %} {% block content %}
               </div>
             </div>
             <div class="field-group">
+              <label for="host-image">Profile Picture</label>
+              <div class="file-input-container">
+                <input type="file" id="host-image" name="hostImage" accept="image/*" />
+                <div id="host-image-name-display" class="file-name-display"></div>
+              </div>
+            </div>
+            <div class="field-group">
               <label for="google-cal">Google Calendar URL</label>
               <input type="url" id="google-cal" name="googleCal" />
             </div>
@@ -171,7 +178,7 @@ endblock %} {% block content %}
               <textarea id="description" name="description" rows="3"></textarea>
             </div>
             <div class="field-group">
-              <label for="category">Category (Required)</label>
+              <label for="category">Category *</label>
               <select id="category" name="category" required>
                 <option value="">Select a category</option>
                 <option value="Comedy">Comedy</option>
