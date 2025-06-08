@@ -4,6 +4,7 @@ from flask import (
     Blueprint,
     g,
     render_template,
+    current_app,
 )
 from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.podcast_repository import PodcastRepository
@@ -13,6 +14,7 @@ import logging
 import os
 from datetime import datetime
 from backend.database.mongo_connection import database
+from bson import ObjectId # ensure ObjectId is imported
 
 invitations_collection = database.GuestInvitations
 guest_repo = GuestRepository()
@@ -214,3 +216,65 @@ def new_episode():
     except Exception as e:
         logger.error("❌ ERROR in new_episode: %s", str(e))
         return jsonify({"error": "Failed to process the request"}), 500
+
+@episode_bp.route("/episodes", methods=["POST"])
+def create_episode_route():
+    logger = current_app.logger
+    logger.info("Received request to POST /episodes")
+
+    if not hasattr(g, "user_id") or not g.user_id:
+        logger.warning("Unauthorized attempt to create episode - no user_id in g")
+        return jsonify({"error": "User not authenticated"}), 401
+
+    try:
+        logger.debug(f"Request content type: {request.content_type}")
+        
+        # Log all form fields received (text part of multipart)
+        form_data_dict = request.form.to_dict()
+        logger.debug(f"Route /episodes POST - Text form fields received: {form_data_dict}")
+
+        # Log all files received
+        files_dict = {filename: file.filename for filename, file in request.files.items()}
+        logger.debug(f"Route /episodes POST - Files received: {files_dict}")
+
+        data_for_repo = form_data_dict.copy() # Start with text fields
+        
+        cover_art_file_from_request = request.files.get("imageUrl") # Key must be 'imageUrl'
+        
+        if cover_art_file_from_request and cover_art_file_from_request.filename:
+            logger.info(f"Route /episodes POST - Cover art file '{cover_art_file_from_request.filename}' received for key 'imageUrl'.")
+            data_for_repo["imageUrl"] = cover_art_file_from_request # This is the FileStorage object
+        elif "imageUrl" in request.files:
+            logger.warning("Route /episodes POST - 'imageUrl' key found in files, but file has no filename or is empty.")
+            # Potentially remove any 'imageUrl' from form_data_dict if it was an empty string
+            if "imageUrl" in data_for_repo and isinstance(data_for_repo["imageUrl"], str):
+                logger.debug("Removing empty string 'imageUrl' from form data as a file was expected but not properly provided.")
+                del data_for_repo["imageUrl"] # Avoid passing empty string as if it's a file
+        else:
+            logger.info("Route /episodes POST - No cover art file received under key 'imageUrl'.")
+            # If 'imageUrl' was in form_data_dict (e.g. as an empty string), it will remain.
+            # The repository should handle if data_for_repo["imageUrl"] is not a FileStorage object.
+
+        podcast_id_from_form = data_for_repo.get("podcastId")
+        if not podcast_id_from_form: # Basic check
+            logger.error("Route /episodes POST - podcastId is missing from form data.")
+            return jsonify({"error": "podcastId is required"}), 400
+        try:
+            ObjectId(podcast_id_from_form) # Validate format
+        except Exception:
+            logger.error(f"Route /episodes POST - Invalid podcastId format: {podcast_id_from_form}")
+            return jsonify({"error": "Invalid podcastId format"}), 400
+        
+        # Log the type of 'imageUrl' being passed to the repository
+        if "imageUrl" in data_for_repo:
+            logger.debug(f"Route /episodes POST - Passing 'imageUrl' of type {type(data_for_repo['imageUrl'])} to repository.")
+        else:
+            logger.debug("Route /episodes POST - 'imageUrl' not in data_for_repo being passed to repository.")
+
+        response, status = episode_repo.create_episode(data_for_repo, g.user_id)
+        logger.info(f"Route /episodes POST - Repository response status: {status}, data: {response}")
+        return jsonify(response), status
+        
+    except Exception as e:
+        logger.error(f"Error in POST /episodes route: {e}", exc_info=True)
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500

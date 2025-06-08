@@ -426,6 +426,89 @@ endblock %} {% block content %}
         </div>
       </div>
     </div>
+
+    <!-- Edit Episode Form Popup -->
+    <div id="edit-episode-form-popup" class="popup" style="display: none">
+      <div class="form-box">
+        <span id="close-edit-episode-form" class="close-btn">&times;</span>
+        <h2 class="form-title">Edit Episode</h2>
+        <form id="edit-episode-form" data-mode="edit">
+          <input type="hidden" id="edit-episode-id" name="episodeId" />
+          <!-- Podcast ID will be set via JS or could be a hidden input if needed -->
+          <input type="hidden" id="edit-episode-podcast-id" name="podcastId" />
+
+          <div class="form-group">
+            <label for="edit-episode-title">Episode Title</label>
+            <input
+              type="text"
+              id="edit-episode-title"
+              name="title"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="edit-episode-description">Description</label>
+            <textarea
+              id="edit-episode-description"
+              name="description"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <!-- Episode Cover Art for Edit -->
+          <div class="form-group">
+            <label for="edit-episode-cover">Episode Cover Art</label>
+            <div class="file-input-wrapper">
+              <input
+                type="file"
+                id="edit-episode-cover"
+                name="imageUrl"
+                accept="image/png, image/jpeg, image/webp"
+                onchange="handleFileInputChange(this, 'edit-episode-cover-filename')"
+              />
+              <button
+                type="button"
+                class="file-input-button"
+                onclick="document.getElementById('edit-episode-cover').click()"
+              >
+                Choose File
+              </button>
+              <span
+                id="edit-episode-cover-filename"
+                class="file-input-filename"
+                >No file chosen</span
+              >
+            </div>
+            <small class="form-text text-muted"
+              >Optional. Recommended: Square, 1400x1400 to 3000x3000
+              pixels, JPG, PNG or WEBP.</small
+            >
+            <div id="edit-episode-cover-preview" class="image-preview"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-episode-status">Status</label>
+            <select id="edit-episode-status" name="status">
+              <option value="Not Recorded">Not Recorded</option>
+              <option value="Recorded">Recorded</option>
+              <option value="Editing">Editing</option>
+              <option value="Ready to Publish">Ready to Publish</option>
+              <option value="Published">Published</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="save-btn">Save Changes</button>
+            <button
+              type="button"
+              id="cancel-edit-episode"
+              class="cancel-btn"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </main>
 </div>
 

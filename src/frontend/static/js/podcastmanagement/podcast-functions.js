@@ -1039,20 +1039,17 @@ function handlePodcastFormSubmission() {
 
 // Function to render podcast options in a select element
 export function renderPodcastSelection(podcasts) {
-  const podcastSelect = document.getElementById("podcast-select");
-  podcastSelect.innerHTML = ""; // Clear existing options
-
-  // Add a default "Select Podcast" option
-  const defaultOption = document.createElement("option");
-  defaultOption.value = "";
-  defaultOption.textContent = "Select Podcast";
-  podcastSelect.appendChild(defaultOption);
+  const selectElement = document.getElementById("podcast-select");
+  // Clear existing options except the placeholder
+  selectElement.innerHTML = '<option value="">Select a Podcast</option>';
 
   podcasts.forEach((podcast) => {
     const option = document.createElement("option");
-    option.value = podcast._id;
-    option.textContent = podcast.podName;
-    podcastSelect.appendChild(option);
+    option.value = podcast._id; // Use podcast._id as the value
+    option.textContent = podcast.title;
+    // Store the podcast image URL in a data attribute if needed for other UI updates
+    option.dataset.imageUrl = podcast.imageUrl || podcast.image || "/static/images/default.png";
+    selectElement.appendChild(option);
   });
 }
 

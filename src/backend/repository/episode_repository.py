@@ -2,13 +2,22 @@ from backend.services.subscriptionService import SubscriptionService
 from backend.models.episodes import EpisodeSchema
 from datetime import datetime, timezone, timedelta
 from backend.database.mongo_connection import collection
+from bson import ObjectId, errors
+from flask import current_app, g
+from werkzeug.datastructures import FileStorage # For type hinting
+from backend.utils.blob_storage import upload_episode_cover_art_to_blob # Corrected import
+from backend.utils.episode_helpers import (
+    calculate_audio_duration, 
+    get_audio_file_size, 
+    get_audio_file_type
+)
+
 import uuid
 import logging
 from backend.services.activity_service import ActivityService
 from dateutil.parser import parse as parse_date
 from backend.utils.subscription_access import PLAN_BENEFITS
 from backend.services.audioToEpisodeService import AudioToEpisodeService # Added import
-from backend.utils.blob_storage import upload_episode_cover_art
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +191,7 @@ class EpisodeRepository:
             cover_art_file = data.pop('coverArt', None)
             if cover_art_file:
                 logger.info(f"Processing cover art upload for episode {episode_id}")
-                cover_art_url = upload_episode_cover_art(
+                cover_art_url = upload_episode_cover_art_to_blob(
                     cover_art_file, 
                     user_id, 
                     podcast_id,

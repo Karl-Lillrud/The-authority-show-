@@ -144,7 +144,7 @@ export function renderEpisodeDetail(episode) {
   <!-- Header section with image and basic info -->
   <div class="podcast-header-section">
     <div class="podcast-image-container">
-      <div class="detail-image" style="background-image: url('${episode.image || episode.imageUrl || "/static/images/default-image.png"}')"></div>
+      <div class="detail-image" style="background-image: url('${episode.imageUrl || episode.image || "/static/images/default.png"}')"></div>
     </div>
     <div class="podcast-basic-info">
       <h1 class="detail-title">${episode.title}</h1>
@@ -481,7 +481,7 @@ async function showEpisodePopup(episode) {
   const isAudioUploadDisabled = episode.isImported === true;
 
 const popupContent = document.createElement("div");
-popupContent.className = "form-box";
+popupContent.className = "form-box"; // Use form-box for consistent styling
 popupContent.innerHTML = `
   <span id="close-episode-popup" class="close-btn">×</span>
   <h2 class="form-title">Edit Episode</h2>
@@ -494,6 +494,27 @@ popupContent.innerHTML = `
     <div class="field-group full-width">
       <label for="upd-episode-description">Description</label>
       <textarea id="upd-episode-description" name="description" rows="3" placeholder="Describe what this episode is about">${episode.description || ""}</textarea>
+    </div>
+
+    <!-- Episode Cover Art for Edit -->
+    <div class="field-group full-width">
+      <label for="upd-episode-cover">Episode Cover Art</label>
+      <div class="file-input-wrapper">
+        <input
+          type="file"
+          id="upd-episode-cover"
+          name="imageUrl"
+          accept="image/png, image/jpeg, image/webp"
+          onchange="handleFileInputChange(this, 'upd-episode-cover-filename', 'upd-episode-cover-preview')"
+        />
+        <span
+          id="upd-episode-cover-filename"
+          class="file-input-filename"
+          ></span>
+      </div>
+      <div id="upd-episode-cover-preview" class="image-preview">
+        ${episode.imageUrl ? `<img src="${episode.imageUrl}" alt="Current Cover Art" style="max-width: 100px; max-height: 100px; margin-top: 5px;">` : ''}
+      </div>
     </div>
 
     <div class="field-group full-width">

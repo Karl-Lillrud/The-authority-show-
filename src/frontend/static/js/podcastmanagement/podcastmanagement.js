@@ -445,3 +445,61 @@ export const shared = {
 document.getElementById("guests-link").addEventListener("click", (event) => {
   event.preventDefault()
 })
+
+// Make sure this function is defined, or adjust handleFileInputChange if it's integrated
+// For this example, let's assume previewImage is also made global if it's separate.
+// If previewImage is defined in this file, make it global:
+// window.previewImage = function(input, previewElementId) { ... }
+
+// Function to handle file input change and display filename and preview
+window.handleFileInputChange = function(inputElement, filenameElementId, previewElementId) {
+  const filenameSpan = document.getElementById(filenameElementId);
+  const previewContainer = document.getElementById(previewElementId); // Get the preview container
+
+  if (inputElement.files && inputElement.files[0]) {
+    const file = inputElement.files[0];
+    if (filenameSpan) {
+      filenameSpan.textContent = file.name;
+    }
+
+    // Image preview logic
+    if (previewContainer) {
+      // Clear previous preview
+      previewContainer.innerHTML = "";
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        img.style.maxWidth = "100px"; // Or your preferred preview size
+        img.style.maxHeight = "100px";
+        img.style.marginTop = "5px";
+        previewContainer.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    }
+  } else {
+    if (filenameSpan) {
+      filenameSpan.textContent = "No file chosen";
+    }
+    if (previewContainer) {
+      previewContainer.innerHTML = ""; // Clear preview if no file is chosen
+        // If there was an existing image URL (e.g. for edit forms), you might want to restore it here
+        // This part depends on how you store/pass the existing image URL to the edit form
+        const existingImageUrl = inputElement.dataset.existingImageUrl; // Example: store existing URL in a data attribute
+        if (existingImageUrl) {
+            const img = document.createElement("img");
+            img.src = existingImageUrl;
+            img.style.maxWidth = "100px";
+            img.style.maxHeight = "100px";
+            img.style.marginTop = "5px";
+            previewContainer.appendChild(img);
+        }
+    }
+  }
+}
+
+// Ensure that if you have a separate previewImage function, it's also made global
+// e.g., window.previewImage = function previewImage(input, previewElementId) { ... }
+// For the solution above, I've integrated the preview logic directly into handleFileInputChange
+// for simplicity and to ensure it works with the dynamic IDs.

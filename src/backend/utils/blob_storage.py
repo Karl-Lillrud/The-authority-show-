@@ -4,6 +4,8 @@ import os
 import logging
 import tempfile
 from datetime import datetime
+from flask import current_app
+from werkzeug.utils import secure_filename
 
 logger = logging.getLogger(__name__)
 
@@ -32,16 +34,6 @@ def get_blob_service_client():
         return None
 
 def upload_file_to_blob(container_name, blob_path, file, content_type=None): # Added content_type parameter
-    """
-    Uploads a file to Azure Blob Storage.
-    Args:
-        container_name (str): The name of the Azure Blob Storage container.
-        blob_path (str): The path within the container where the file will be stored.
-        file: The file object or path to upload.
-        content_type (str, optional): The MIME type of the file. Defaults to None.
-    Returns:
-        str: The URL of the uploaded file or None on failure.
-    """
     blob_service_client = get_blob_service_client() # Get client instance
     if not blob_service_client:
         logger.error("BlobServiceClient not initialized. Cannot upload file.")
@@ -179,69 +171,87 @@ def get_blob_content(container_name, blob_path):
         logger.error(f"Failed to read blob '{blob_path}' from container '{container_name}': {e}", exc_info=True)
         return None
 
-def upload_episode_cover_art(file, user_id, podcast_id, episode_id):
+
+def upload_episode_cover_art_to_blob(file_stream, user_id, podcast_id, episode_id=None, original_filename="cover.jpg"):
     """
-    Uploads episode cover art to Azure Blob Storage.
-    
-    Args:
-        file: The file object from the request
-        user_id: The ID of the user who owns the episode
-        podcast_id: The ID of the podcast
-        episode_id: The ID of the episode
-        
-    Returns:
-        str: The URL of the uploaded image, or None if upload fails
+    Uploads episode cover art and returns the string URL or None.
+    Path for new: users/<user_id>/podcasts/<podcast_id>/episodes/artwork/new_<timestamp>_<filename>
+    Path for existing: users/<user_id>/podcasts/<podcast_id>/episodes/<episode_id>/artwork/<timestamp>_<filename>
     """
-    if not file:
-        return None
+    logger = current_app.logger
+    # Ensure AZURE_STORAGE_CONTAINER_NAME is set in your environment, e.g., "podmanagerstorage"
+    container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME", "podmanagerstorage") 
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
     
-    blob_service_client = get_blob_service_client()
-    if not blob_service_client:
-        logger.error("BlobServiceClient not initialized. Cannot upload episode cover art.")
-        return None
+    safe_original_filename = secure_filename(original_filename)
+    name_part, file_extension = os.path.splitext(safe_original_filename)
+    if not file_extension: 
+        # Default to .jpg if no extension is found, or consider raising an error/logging a warning
+        file_extension = '.jpg' 
+
+    filename_with_ts = f"{timestamp}_{name_part}{file_extension}" if name_part else f"{timestamp}_artwork{file_extension}"
+
+    if episode_id:
+        # Path for existing episode (update)
+        blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/{episode_id}/artwork/{filename_with_ts}"
+    else:
+        # Path for new episode (create) - episode_id not yet known
+        blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/artwork/new_{filename_with_ts}"
+
+    content_type = getattr(file_stream, 'content_type', 'application/octet-stream')
     
-    try:
-        # Determine file extension from content type or filename
-        file_extension = None
-        if hasattr(file, 'filename') and file.filename:
-            file_extension = os.path.splitext(file.filename)[1].lower()
-        if not file_extension and hasattr(file, 'content_type'):
-            if file.content_type == 'image/jpeg':
-                file_extension = '.jpg'
-            elif file.content_type == 'image/png':
-                file_extension = '.png'
-            elif file.content_type == 'image/webp':
-                file_extension = '.webp'
-        if not file_extension:
-            file_extension = '.jpg'  # Default extension
-            
-        # Generate a unique blob path
-        timestamp = int(datetime.now().timestamp())
-        blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/{episode_id}/cover_art_{timestamp}{file_extension}"
-        
-        # Set content type based on file extension
-        content_type = None
-        if file_extension == '.jpg' or file_extension == '.jpeg':
+    if content_type == 'application/octet-stream' or not content_type: 
+        if file_extension.lower() in ['.jpg', '.jpeg']:
             content_type = 'image/jpeg'
-        elif file_extension == '.png':
+        elif file_extension.lower() == '.png':
             content_type = 'image/png'
-        elif file_extension == '.webp':
+        elif file_extension.lower() == '.webp':
             content_type = 'image/webp'
-        
-        # Get appropriate container name
-        container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME", "podcastaudio")
-        
-        # Upload file
-        file.seek(0)  # Ensure we're at the beginning of the file
-        blob_url = upload_file_to_blob(container_name, blob_path, file, content_type)
-        
-        if not blob_url:
-            logger.error(f"Failed to upload cover art for episode {episode_id}")
-            return None
+        else:
+            # Fallback if extension is not recognized, or log a warning
+            content_type = 'application/octet-stream' 
             
-        logger.info(f"Successfully uploaded cover art for episode {episode_id}: {blob_url}")
-        return blob_url
+    logger.info(f"Preparing to upload episode cover. Path: {container_name}/{blob_path}, Content-Type: {content_type}")
+    
+    # This calls the generic upload_file_to_blob function
+    uploaded_url = upload_file_to_blob(container_name, blob_path, file_stream, content_type)
+    
+    if uploaded_url:
+        logger.info(f"Episode cover art upload successful. Blob URL: {uploaded_url}")
+    else:
+        logger.error(f"Episode cover art upload failed for path: {container_name}/{blob_path}")
         
+    return uploaded_url
+
+def upload_file_to_blob(container_name, blob_path, file_stream, content_type=None):
+    logger = current_app.logger
+    try:
+        # Ensure AZURE_STORAGE_CONNECTION_STRING is set in your environment
+        connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+        if not connection_string:
+            logger.error("AZURE_STORAGE_CONNECTION_STRING is not set.")
+            return None
+
+        blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+        blob_client = blob_service_client.get_blob_client(
+            container=container_name, blob=blob_path
+        )
+
+        if hasattr(file_stream, 'seek'):
+            file_stream.seek(0)
+
+        content_settings_to_apply = None
+        if content_type:
+            content_settings_to_apply = ContentSettings(content_type=content_type)
+            logger.info(f"Uploading with ContentSettings: {content_type} for blob: {blob_path}")
+        else:
+            logger.info(f"Uploading without explicit ContentSettings for blob: {blob_path}")
+
+        blob_client.upload_blob(file_stream, overwrite=True, content_settings=content_settings_to_apply)
+        
+        blob_url = blob_client.url
+        logger.info(f"File uploaded successfully. Blob URL: {blob_url}")
+        return blob_url
     except Exception as e:
-        logger.error(f"Error uploading episode cover art: {e}", exc_info=True)
+        logger.error(f"Failed to upload to Azure Blob Storage: {e}", exc_info=True)
         return None

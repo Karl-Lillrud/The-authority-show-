@@ -9,741 +9,422 @@ import { svgdashboard } from "./svgdashboard.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
 import { getActivitiesRequest } from "/static/requests/activityRequests.js";
 import { updateEpisode } from "/static/requests/episodeRequest.js";
+import { svgIcons } from "./svgdashboard.js";
+import { fetchAccount } from "/static/requests/accountRequests.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  try {
-    // Kör alla asynkrona datahämtningar parallellt
-    await Promise.all([
-      fetchAndDisplayEpisodesWithGuests(),
-      fetchAndDisplayPodcastCount(),
-      fetchAndDisplayEpisodeCount(),
-      fetchAndDisplayGuestCount(),
-      createTeamLeaderBoardRows(),
-      fetchAndDisplayActivities()
-    ]);
-    checkForPendingGuests();
+  // Cache DOM elements
+  const podcastCountElement = document.getElementById("podcast-count");
+  const episodeCountElement = document.getElementById("episode-count");
+  const guestCountElement = document.getElementById("guest-count");
+  const taskCountElement = document.getElementById("task-count");
+  const episodesContainer = document.querySelector(".episodes-section .cards-container");
+  const activityTimeline = document.querySelector(".activity-section .activity-timeline");
+  const createEpisodeButton = document.querySelector(".create-episode.action-button");
+  const viewAllEpisodesLink = document.querySelector(".episodes-section .view-all");
+  const pendingGuestsPopup = document.getElementById("pending-guests-popup");
+  const closePendingGuestsPopup = document.getElementById("close-pending-guests-popup");
+  const pendingGuestsList = document.querySelector(".pending-guests-list");
+  const guestStatCard = guestCountElement ? guestCountElement.closest(".stat-card") : null;
 
-    // Initiera UI-komponenter efter att DOM är uppdaterad
-    initializeSvgIcons();
-    initProgressCircles();
-    initDashboardActions();
-    updateStatCounts();
-    
-  } catch (error) {
-    console.error("Error initializing dashboard:", error);
-  }
-
-});
-
-function initProgressCircles() {
-  const progressCircles = document.querySelectorAll(".progress-circle");
-  progressCircles.forEach((circle) => {
-    const progress = circle.getAttribute("data-progress");
-    if (progress) {
-      circle.style.setProperty("--progress", progress);
-    }
-  });
-}
-
-function initDashboardActions() {
-  const scheduleEpisodeBtn = document.querySelector(".schedule-episode");
-  const createEpisodeBtn = document.querySelector(".create-episode");
-
-  if (scheduleEpisodeBtn) {
-    scheduleEpisodeBtn.addEventListener("click", () => {
-      window.location.href = "/episode/new";
-    });
-  }
-
-  if (createEpisodeBtn) {
-    createEpisodeBtn.addEventListener("click", () => {
-      window.location.href = "/podcastmanagement?openCreateEpisode=true"; // Redirect with query parameter
-    });
-  }
-}
-
-function initializeSvgIcons() {
-  const iconSelectors = [
-    { selector: ".schedule-episode-icon", svg: svgdashboard.scheduleEpisode },
-    { selector: ".podcast-icon", svg: svgdashboard.podcastIcon },
-    { selector: ".episode-icon", svg: svgdashboard.episodeIcon },
-    { selector: ".guest-icon", svg: svgdashboard.guestIcon },
-    { selector: ".task-icon", svg: svgdashboard.taskIcon },
-    { selector: ".completed-icon", svg: svgdashboard.completedIcon },
-    { selector: ".scheduled-icon", svg: svgdashboard.scheduledIcon },
-    { selector: ".published-icon", svg: svgdashboard.publishedIcon },
-    { selector: ".pending-icon", svg: svgdashboard.pendingIcon },
-    { selector: ".episode-created-icon", svg: svgdashboard.episodeCreatedIcon },
-    { selector: ".episode-updated-icon", svg: svgdashboard.episodeUpdatedIcon },
-    { selector: ".episode-deleted-icon", svg: svgdashboard.episodeDeletedIcon },
-    { selector: ".team-created-icon", svg: svgdashboard.teamCreatedIcon },
-    { selector: ".team-deleted-icon", svg: svgdashboard.teamDeletedIcon },
-    { selector: ".tasks-added-icon", svg: svgdashboard.tasksAddedIcon },
-    { selector: ".podcast-created-icon", svg: svgdashboard.podcastCreatedIcon },
-    { selector: ".podcast-deleted-icon", svg: svgdashboard.podcastDeletedIcon },
-    { selector: ".team-leaderboard-trophy", svg: svgdashboard.trophyIcon }
-  ];
-
-  iconSelectors.forEach(({ selector, svg }) => {
-    // Use querySelectorAll to update all matching elements
-    document.querySelectorAll(selector).forEach((element) => {
-      element.innerHTML = svg;
-    });
-  });
-}
-
-function updateStatCounts() {
-  const statValues = document.querySelectorAll(".stat-value");
-  statValues.forEach((stat) => {
-    const finalValue = parseInt(stat.textContent);
-    animateCount(stat, 0, finalValue, 1500);
-  });
-}
-
-function animateCount(element, start, end, duration) {
-  let startTimestamp = null;
-  const step = (timestamp) => {
-    if (!startTimestamp) startTimestamp = timestamp;
-    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-    const currentCount = Math.floor(progress * (end - start) + start);
-    element.textContent = currentCount;
-    if (progress < 1) {
-      window.requestAnimationFrame(step);
-    }
-  };
-  window.requestAnimationFrame(step);
-}
-
-async function fetchAndDisplayPodcastCount() {
-  try {
-    const allPodcasts = await fetchPodcasts();
-    const podcastValue = document.getElementById("podcast-count");
-    if (podcastValue) {
-      podcastValue.innerHTML = allPodcasts.podcast.length;
+  // Function to set the page title
+  function setPageTitle(title) {
+    const pageTitleElement = document.getElementById("page-title");
+    if (pageTitleElement) {
+      pageTitleElement.textContent = title;
     } else {
-      console.warn("Element with ID podcast-count not found.");
-    }
-  } catch (error) {
-    console.error("Error fetching podcast data:", error);
-  }
-}
-
-async function fetchAndDisplayEpisodeCount() {
-  try {
-    const allEpisodes = await fetchAllEpisodes();
-    const episodeValue = document.getElementById("episode-count");
-    if (episodeValue) {
-      episodeValue.innerHTML = allEpisodes.length;
-    } else {
-      console.warn("Element with ID episode-count not found.");
-    }
-  } catch (error) {
-    console.error("Error fetching episode data:", error);
-  }
-}
-
-async function fetchAndDisplayGuestCount() {
-  try {
-    const allGuests = await fetchGuestsRequest();
-    const guestValue = document.getElementById("guest-count");
-    if (guestValue) {
-      guestValue.innerHTML = allGuests.length;
-    } else {
-      console.warn("Element with ID guest-count not found.");
-    }
-  } catch (error) {
-    console.error("Error fetching guest data:", error);
-  }
-}
-
-async function createTeamLeaderBoardRows() {
-  try {
-    const myTeam = await getTeamsRequest();
-    const teamContainer = document.querySelector(".leaderboard-body");
-    if (!teamContainer) {
-      console.warn("Leaderboard body container not found.");
-      return;
-    }
-    teamContainer.innerHTML = "";
-
-    const generateRandomData = () => ({
-      completedTasks: Math.floor(Math.random() * 50) + 1,
-      points: Math.floor(Math.random() * 4901) + 100,
-      monthsWon: Math.floor(Math.random() * 25) + 1,
-      goalPercentage: Math.floor(Math.random() * 85) + 1
-    });
-
-    const teamWithRandomData = myTeam.map((member) => {
-      const randomData = generateRandomData();
-      return { ...member, ...randomData };
-    });
-
-    const sortedTeam = teamWithRandomData.sort(
-      (a, b) => b.goalPercentage - a.goalPercentage
-    );
-
-    const topThreeTeam = sortedTeam.slice(0, 3);
-
-    topThreeTeam.forEach((member) => {
-      const initials = member.name
-        .split(" ")
-        .map((word) => word[0])
-        .join("")
-        .toUpperCase();
-
-      const row = `
-                <tr>
-                    <td>
-                        <div class="member-info">
-                            <div class="member-avatar">${initials}</div>
-                            <span>${member.name}</span>
-                        </div>
-                    </td>
-                    <td>${member.completedTasks}</td>
-                    <td>
-                        <div class="points">
-                            <span>${member.points.toLocaleString()}</span>
-                            <div class="progress-bar">
-                                <div class="progress" style="width: ${
-                                  member.goalPercentage
-                                }%"></div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>${member.monthsWon}</td>
-                    <td>
-                        <div class="goal-progress">
-                            <span>${member.goalPercentage}%</span>
-                            <div class="progress-circle" data-progress="${
-                              member.goalPercentage
-                            }"></div>
-                        </div>
-                    </td>
-                </tr>
-            `;
-      teamContainer.insertAdjacentHTML("beforeend", row);
-    });
-
-    initProgressCircles();
-  } catch (error) {
-    console.error("Error fetching team data:", error);
-  }
-}
-
-async function fetchAndDisplayEpisodesWithGuests() {
-  try {
-    const episodes = await fetchAllEpisodes();
-    const activeEpisodes = episodes.filter(
-      (ep) =>
-        ep.status === "Not Recorded" ||
-        ep.status === "Not Scheduled" ||
-        ep.status === "Recorded" ||
-        ep.status === "Edited"
-    );
-    const container = document.querySelector(".cards-container");
-    if (!container) {
-      console.warn("Cards container not found.");
-      return;
-    }
-    const initialEpisodes = activeEpisodes.slice(0, 3);
-    let isExpanded = false;
-
-    await displayEpisodes(initialEpisodes, container);
-
-    const viewAllBtn = document.querySelector(".episodes-section .view-all");
-    if (viewAllBtn) {
-      viewAllBtn.textContent = "View All";
-      viewAllBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        if (!isExpanded) {
-          await displayEpisodes(activeEpisodes, container);
-          viewAllBtn.textContent = "View Less";
-          isExpanded = true;
-        } else {
-          await displayEpisodes(initialEpisodes, container);
-          viewAllBtn.textContent = "View All";
-          isExpanded = false;
-        }
-      });
-    }
-  } catch (error) {
-    console.error("Error fetching episodes with guests:", error);
-    const container = document.querySelector(".cards-container");
-    if (container) {
-      container.innerHTML = `<div class="error-message">Error loading episodes. Please try again later.</div>`;
-    }
-    displaySampleEpisodes();
-  }
-}
-
-function displaySampleEpisodes() {
-  const container = document.querySelector(".cards-container");
-  if (!container) return;
-
-  const sampleEpisodes = [
-    {
-      id: "ep1",
-      title: "Marketing Insights with Sarah Johnson",
-      status: "Recorded",
-      recordingDate: "2023-10-18",
-      podcastName: "Business Insights",
-      guests: ["Sarah Johnson", "Michael Chen"]
-    },
-    {
-      id: "ep2",
-      title: "Tech Trends 2023",
-      status: "Not Recorded",
-      recordingDate: "2023-10-25",
-      podcastName: "Tech Talk",
-      guests: ["Alex Turner", "Emily Roberts"]
-    },
-    {
-      id: "ep3",
-      title: "Startup Success Stories",
-      status: "Edited",
-      recordingDate: "2023-10-15",
-      podcastName: "Entrepreneur Hour",
-      guests: ["David Miller", "Lisa Wong"]
-    }
-  ];
-
-  container.innerHTML = "";
-
-  sampleEpisodes.forEach((episode) => {
-    const card = createEpisodeCard(episode);
-    container.appendChild(card);
-
-    const logoElement = card.querySelector(".podcast-logo");
-    logoElement.src = `/placeholder.svg?height=50&width=50`;
-
-    const guestList = card.querySelector(".guest-list");
-    guestList.innerHTML = "";
-
-    episode.guests.forEach((guest) => {
-      const li = document.createElement("li");
-      li.textContent = guest;
-      guestList.appendChild(li);
-    });
-  });
-
-  initTaskManagement();
-}
-
-async function displayEpisodes(episodes, container) {
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  if (episodes.length === 0) {
-    container.innerHTML = `<div class="empty-message">No active episodes found.</div>`;
-    return;
-  }
-
-  for (const episode of episodes) {
-    const card = createEpisodeCard(episode);
-    container.appendChild(card);
-    await populatePodcastDetails(card, episode);
-    await populateGuestList(card, episode);
-  }
-
-  initTaskManagement();
-}
-
-function createEpisodeCard(episode) {
-  const card = document.createElement("div");
-  card.classList.add("episode-card");
-  card.dataset.episodeId = episode.id || episode._id;
-
-  let statusText = episode.status || "Not Scheduled";
-  let statusClass = "status-" + statusText.toLowerCase().replace(/\s+/g, "-");
-  let englishStatus = statusText;
-
-  card.innerHTML = `
-        <div class="card-header">
-            <img class="podcast-logo" src="/static/images/default-podcast-logo.png" alt="Podcast Logo">
-            <div class="card-title">
-                <h3>${episode.title}</h3>
-                <div class="episode-meta">
-                    <span class="episode-status ${statusClass}">${englishStatus}</span>
-                    <span class="episode-date">${formatDate(
-                      episode.recordingDate || episode.createdAt || new Date()
-                    )}</span>
-                </div>
-            </div>
-        </div>
-        <div class="card-body">
-            <h4>Guests</h4>
-            <ul class="guest-list">
-                <li>Loading guests...</li>
-            </ul>
-        </div>
-        <div class="card-footer">
-            <div class="episode-progress">
-                <div class="progress-bar">
-                    <div class="progress" style="width: ${getRandomProgress()}%"></div>
-                </div>
-            </div>
-            <button class="toggle-tasks" aria-label="Toggle tasks">+</button>
-        </div>
-        <div class="tasks-container" style="display: none;">
-            <h4>Tasks</h4>
-            <div class="task-actions">
-                <button class="task-action-btn import-tasks">Import</button>
-                <button class="task-action-btn add-task">Add Task</button>
-            </div>
-            <div class="task-list">
-                <p class="no-tasks-message">No tasks yet. Add a task or import default tasks.</p>
-            </div>
-            <div class="task-workflow-actions">
-                <button class="btn save-workflow-btn">Save Workflow</button>
-                <button class="btn import-workflow-btn">Import Workflow</button>
-            </div>
-        </div>
-    `;
-  return card;
-}
-
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric"
-  });
-}
-
-function getRandomProgress() {
-  return Math.floor(Math.random() * 100);
-}
-
-async function populatePodcastDetails(card, episode) {
-  try {
-    const podcastId = episode.podcastId || episode.podcast_id;
-    if (!podcastId) {
-      console.error("Error: Missing podcastId for episode:", episode);
-      return;
-    }
-    const podcastResponse = await fetchPodcast(podcastId);
-    const podcast = podcastResponse.podcast || {};
-
-    const logoElement = card.querySelector(".podcast-logo");
-    if (podcast.logoUrl) {
-      logoElement.src = podcast.logoUrl;
-    }
-    logoElement.alt = podcast.podName || "Podcast Logo";
-  } catch (error) {
-    console.error("Error fetching podcast details:", error);
-  }
-}
-
-async function populateGuestList(card, episode) {
-  try {
-    const guestList = card.querySelector(".guest-list");
-    if (!guestList) return;
-
-    const guests = await fetchGuestsByEpisode(episode.id || episode._id);
-
-    guestList.innerHTML = "";
-    if (guests.length > 0) {
-      guests.forEach((guest) => {
-        const li = document.createElement("li");
-        li.textContent = guest.name;
-        guestList.appendChild(li);
-      });
-    } else {
-      const noGuestMsg = document.createElement("li");
-      noGuestMsg.textContent = "No guests available";
-      guestList.appendChild(noGuestMsg);
-    }
-  } catch (error) {
-    console.error("Error fetching guests for episode:", error);
-    const guestList = card.querySelector(".guest-list");
-    if (guestList) {
-      guestList.innerHTML = "<li>Error loading guest information</li>";
+      // Fallback if the element is not found, though it should be in header.html
+      document.title = title; // Sets the browser tab title
     }
   }
-}
 
-async function fetchAndDisplayActivities() {
-  try {
-    const timelineContainer = document.querySelector(".activity-timeline");
-    if (!timelineContainer) {
-      console.error(
-        "Activity timeline container not found. Ensure .activity-timeline exists in the DOM."
-      );
-      return;
-    }
+  // Set the page title for the dashboard
+  setPageTitle("Dashboard");
 
-    const activities = await getActivitiesRequest();
-    timelineContainer.innerHTML = "";
-
-    if (activities.length === 0) {
-      timelineContainer.innerHTML = `<p class="no-activities-message">No recent activities found.</p>`;
-      return;
-    }
-
-    // Only show the first 5 activities, but allow scroll for more
-    activities.slice(0, 5).forEach((activity) => {
-      const iconClass = getActivityIconClass(activity.type);
-      const timelineItem = `
-                <div class="timeline-item">
-                    <div class="timeline-icon ${iconClass}">
-                        <span class="svg-placeholder ${iconClass}-icon"></span>
-                    </div>
-                    <div class="timeline-content">
-                        <h4>${formatActivityType(activity.type)}</h4>
-                        <p>${activity.description}</p>
-                        <span class="timeline-time">${formatDate(
-                          activity.createdAt
-                        )}</span>
-                    </div>
-                </div>
-            `;
-      timelineContainer.insertAdjacentHTML("beforeend", timelineItem);
-    });
-
-    // If there are more than 5, show the rest (hidden by scroll)
-    if (activities.length > 5) {
-      activities.slice(5).forEach((activity) => {
-        const iconClass = getActivityIconClass(activity.type);
-        const timelineItem = `
-                  <div class="timeline-item">
-                      <div class="timeline-icon ${iconClass}">
-                          <span class="svg-placeholder ${iconClass}-icon"></span>
-                      </div>
-                      <div class="timeline-content">
-                          <h4>${formatActivityType(activity.type)}</h4>
-                          <p>${activity.description}</p>
-                          <span class="timeline-time">${formatDate(
-                            activity.createdAt
-                          )}</span>
-                      </div>
-                  </div>
-              `;
-        timelineContainer.insertAdjacentHTML("beforeend", timelineItem);
-      });
-    }
-
-    initializeSvgIcons();
-  } catch (error) {
-    console.error("Error fetching activities:", error);
-    const timelineContainer = document.querySelector(".activity-timeline");
-    if (timelineContainer) {
-      timelineContainer.innerHTML = `<p class="error-message">Error loading activities. Please try again later.</p>`;
-    } else {
-      console.error("Activity timeline container not found in error handler.");
-    }
-  }
-}
-
-function getActivityIconClass(activityType) {
-  const iconMap = {
-    episode_created: "episode-created",
-    episode_updated: "episode-updated",
-    episode_deleted: "episode-deleted",
-    team_created: "team-created",
-    team_deleted: "team-deleted",
-    tasks_added: "tasks-added",
-    podcast_created: "podcast-created",
-    podcast_deleted: "podcast-deleted"
-  };
-  return iconMap[activityType] || "pending";
-}
-
-function formatActivityType(type) {
-  if (type === "podcast_created") return "Podcast Created";
-  return type
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-async function fetchPendingGuests() {
-  try {
-    const response = await fetch("/get_pending_guests");
-    const result = await response.json();
-
-    if (response.ok && result.success) {
-      return result.data; // Return the list of pending guests
-    } else {
-      console.error("Failed to fetch pending guests:", result.error);
-      return [];
-    }
-  } catch (error) {
-    console.error("Error fetching pending guests:", error);
-    return [];
-  }
-}
-
-// Function to check for pending guests and display a notification
-async function checkForPendingGuests() {
-  const pendingGuests = await fetchPendingGuests();
-
-  if (pendingGuests.length > 0) {
-    // Create a notification icon
-    const notificationIcon = document.createElement("div");
-    notificationIcon.className = "notification-icon";
-    notificationIcon.innerHTML = `
-      <span class="notification-count">${pendingGuests.length}</span>
-      <i class="fas fa-bell"></i>
-    `;
-
-    // Add click event to show pending guests
-    notificationIcon.addEventListener("click", () => {
-      showPendingGuestsPopup(pendingGuests);
-    });
-
-    // Append the notification icon to the Guests card
-    const notificationContainer = document.querySelector(
-      ".stat-card .notification-container"
-    );
-    if (notificationContainer) {
-      notificationContainer.appendChild(notificationIcon);
-    } else {
-      console.error("Notification container not found in Guests card.");
-    }
-  }
-}
-
-// Function to display a popup with pending guests
-function showPendingGuestsPopup(pendingGuests) {
-  // Get the popup container
-  const popup = document.getElementById("pending-guests-popup");
-  const popupList = popup.querySelector(".pending-guests-list");
-
-  // Populate the list with pending guests
-  popupList.innerHTML = pendingGuests
-    .map(
-      (guest) => `
-      <li class="field-group full-width">
-        <strong>${guest.name}</strong> (${guest.email})<br>
-        Requested Date: ${guest.recordingDate} at ${guest.recordingTime}
-        <div class="form-actions">
-          <button class="accept-btn save-btn" data-id="${guest.id}">Accept</button>
-          <button class="decline-btn cancel-btn" data-id="${guest.id}">Decline</button>
-        </div>
-      </li>
-    `
-    )
-    .join("");
-
-  // Show the popup
-  popup.style.display = "flex";
-
-  // Close popup event
-  const closeBtn = popup.querySelector("#close-pending-guests-popup");
-  closeBtn.addEventListener("click", () => {
-    popup.style.display = "none";
-  });
-
-  // Add event listeners for accept and decline buttons
-  popup.querySelectorAll(".accept-btn").forEach((button) => {
-    button.addEventListener("click", (event) => {
-      const guestId = event.target.dataset.id;
-        // Find the guest data from the pendingGuests array
-      const guest = pendingGuests.find((g) => g.id === guestId);
-
-      if (guest) {
-        const { recordingDate, recordingTime } = guest;
-        handleAcceptGuest(guestId, recordingDate, recordingTime);
-      } else {
-        console.error("Guest data not found for ID:", guestId);
-      }
-    });
-  });
-
-  popup.querySelectorAll(".decline-btn").forEach((button) => {
-    button.addEventListener("click", (event) => {
-      const guestId = event.target.dataset.id;
-      handleDeclineGuest(guestId);
-    });
-  });
-}
-export async function refreshDashboardStats() {
-  await Promise.all([
-    fetchAndDisplayPodcastCount(),
-    fetchAndDisplayEpisodeCount(),
-    fetchAndDisplayGuestCount(),
-    // Add more stat refreshers if needed
-  ]);
-  updateStatCounts();
-}
- async function handleAcceptGuest(guestId, recordingDate, recordingTime) {
-  try {
-    console.log("Guest ID being sent:", guestId);
-
-    // Combine the recording date and time into a single field
-    const recordingAt = `${recordingDate} ${recordingTime}`;
-
-    // Prepare the payload for accepting the guest
-    const payload = {
-      status: "accepted",
-      recordingAt: recordingAt, // Dynamically set the recordingAt field
-    };
-
-    // Call the existing editGuestRequest function
-    const response = await editGuestRequest(guestId, payload);
-
-    if (response.message === "Guest updated successfully") {
-      alert("Guest accepted successfully!");
-
-      // Extract the episode ID from the response
-      const episodeId = response.episode_id; // Ensure this is populated
-      if (!episodeId) {
-        console.warn("Episode ID is missing in the response. Skipping episode update.");
-        location.reload(); // Refresh the page to reflect changes
-        return;
-      }
-
-      // Prepare the payload for updating the episode
-      const episodeUpdatePayload = { recordingAt };
-
-      // Call the updateEpisode method with the correct payload
-      const episodeUpdateResponse = await fetch(`/update_episodes/${episodeId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: JSON.stringify(episodeUpdatePayload),
-      });
-
-      if (episodeUpdateResponse.ok) {
-        const result = await episodeUpdateResponse.json();
-        console.log("Episode recordingAt updated successfully!", result);
-      } else {
-        const errorData = await episodeUpdateResponse.json();
-        console.error("Failed to update episode recordingAt:", errorData.error);
-        alert("Guest accepted, but failed to update episode recording time.");
-      }
-
-      location.reload(); // Refresh the page to reflect changes
-    } else {
-      throw new Error(response.error || "Failed to accept guest.");
-    }
-  } catch (error) {
-    console.error("Error accepting guest:", error);
-    alert("Failed to accept guest.");
-  }
-}
-  async function handleDeclineGuest(guestId) {
+  // Function to fetch user account data
+  async function fetchUserAccount() {
     try {
-      // Prepare the payload for declining the guest
-      const payload = {
-        status: "declined",
-      };
-
-      // Call the existing editGuestRequest function
-      const response = await editGuestRequest(guestId, payload);
-
-      if (response.message === "Guest updated successfully") {
-        alert("Guest declined successfully!");
-        location.reload(); // Refresh the page to reflect changes
+      const accountData = await fetchAccount();
+      if (accountData && accountData.account) {
+        // console.log("User account data:", accountData.account);
+        // You can use accountData.account here to display user-specific info if needed
       } else {
-        throw new Error(response.error || "Failed to decline guest.");
+        console.error("Failed to fetch user account data or account data is missing.");
       }
     } catch (error) {
-      console.error("Error declining guest:", error);
-      alert("Failed to decline guest.");
+      console.error("Error fetching user account:", error);
     }
   }
+
+  // Call the function to fetch user account data
+  fetchUserAccount();
+
+  // Function to fetch dashboard data from the backend
+  async function fetchDashboardData() {
+    try {
+      const response = await fetch("/dashboard/data");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      // console.log("Fetched dashboard data:", data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      // Display an error message to the user on the dashboard
+      if (episodesContainer) episodesContainer.innerHTML = "<p>Error loading episodes.</p>";
+      if (activityTimeline) activityTimeline.innerHTML = "<p>Error loading activity.</p>";
+      // Potentially update stat cards to show error or 'N/A'
+      if (podcastCountElement) podcastCountElement.textContent = "N/A";
+      if (episodeCountElement) episodeCountElement.textContent = "N/A";
+      if (guestCountElement) guestCountElement.textContent = "N/A";
+      if (taskCountElement) taskCountElement.textContent = "N/A";
+      return null; // Return null or an empty structure to prevent further errors
+    }
+  }
+
+  // Function to render stat cards
+  function renderStats(data) {
+    if (!data) return; // Guard clause if data fetching failed
+
+    if (podcastCountElement) podcastCountElement.textContent = data.podcast_count || 0;
+    if (episodeCountElement) episodeCountElement.textContent = data.episode_count || 0;
+    if (guestCountElement) guestCountElement.textContent = data.guest_count || 0;
+    if (taskCountElement) taskCountElement.textContent = data.task_count || 0;
+
+    // Handle pending guests notification
+    if (data.pending_guests && data.pending_guests.length > 0 && guestStatCard) {
+      const notificationIcon = document.createElement("div");
+      notificationIcon.className = "notification-icon active"; // 'active' class makes it visible
+      notificationIcon.textContent = data.pending_guests.length;
+      notificationIcon.title = `${data.pending_guests.length} pending guest invitations`;
+
+      // Append to the notification container within the guest stat card
+      const notificationContainer = guestStatCard.querySelector(".notification-container");
+      if (notificationContainer) {
+        notificationContainer.innerHTML = ""; // Clear previous icon
+        notificationContainer.appendChild(notificationIcon);
+
+        // Make the guest stat card clickable to show the popup
+        guestStatCard.classList.add("clickable");
+        guestStatCard.addEventListener("click", () => {
+          renderPendingGuestsPopup(data.pending_guests);
+          if (pendingGuestsPopup) pendingGuestsPopup.style.display = "flex";
+        });
+      } else {
+        console.warn("Notification container not found in guest stat card.");
+      }
+    } else if (guestStatCard) {
+      // Clear any existing notification if no pending guests
+      const notificationContainer = guestStatCard.querySelector(".notification-container");
+      if (notificationContainer) {
+        notificationContainer.innerHTML = "";
+      }
+      guestStatCard.classList.remove("clickable");
+      // Potentially remove event listener if it was added
+    }
+  }
+
+  // Function to render pending guests in the popup
+  function renderPendingGuestsPopup(pendingGuests) {
+    if (!pendingGuestsList) {
+      console.error("Pending guests list element not found.");
+      return;
+    }
+    pendingGuestsList.innerHTML = ""; // Clear previous list
+
+    if (pendingGuests.length === 0) {
+      pendingGuestsList.innerHTML = "<li>No pending guest invitations.</li>";
+      return;
+    }
+
+    pendingGuests.forEach((guest) => {
+      const listItem = document.createElement("li");
+      listItem.className = "pending-guest-item";
+
+      const guestName = document.createElement("span");
+      guestName.className = "guest-name";
+      guestName.textContent = guest.name || "Unnamed Guest";
+
+      const guestEmail = document.createElement("span");
+      guestEmail.className = "guest-email";
+      guestEmail.textContent = guest.email ? `(${guest.email})` : "(No email)";
+      
+      const guestStatus = document.createElement("span");
+      guestStatus.className = `guest-status status-${(guest.status || 'pending').toLowerCase().replace(/\s+/g, '-')}`;
+      guestStatus.textContent = guest.status || "Pending";
+
+      listItem.appendChild(guestName);
+      listItem.appendChild(guestEmail);
+      listItem.appendChild(guestStatus);
+      pendingGuestsList.appendChild(listItem);
+    });
+  }
+
+  // Function to render episode cards
+  function renderEpisodes(episodes) {
+    if (!episodesContainer) {
+      console.warn("Episodes container not found. Skipping episode rendering.");
+      return;
+    }
+    episodesContainer.innerHTML = ""; // Clear existing episodes
+
+    if (!episodes || episodes.length === 0) {
+      episodesContainer.innerHTML = "<p>No episodes found.</p>";
+      return;
+    }
+
+    // Sort episodes by creation date, newest first
+    const sortedEpisodes = episodes.sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at),
+    );
+
+    sortedEpisodes.slice(0, 3).forEach((episode) => {
+      // Limit to 3 episodes
+      const card = document.createElement("div");
+      card.className = "episode-card";
+      card.dataset.episodeId = episode._id; // Use _id for dataset
+
+      const imageSrc = episode.imageUrl || "/static/images/default.png"; // Use imageUrl, fallback to default
+
+      // Determine status color
+      let statusColorClass = "";
+      switch ((episode.status || "Unknown").toLowerCase()) {
+        case "published":
+          statusColorClass = "status-published";
+          break;
+        case "editing":
+        case "edited":
+          statusColorClass = "status-editing";
+          break;
+        case "recorded":
+          statusColorClass = "status-recorded";
+          break;
+        case "not recorded":
+        case "not scheduled":
+          statusColorClass = "status-not-recorded";
+          break;
+        default:
+          statusColorClass = "status-unknown";
+      }
+
+      card.innerHTML = `
+        <div class="episode-card-image" style="background-image: url('${imageSrc}');"></div>
+        <div class="episode-card-content">
+          <h4 class="episode-card-title">${episode.title || "Untitled Episode"}</h4>
+          <p class="episode-card-podcast">${episode.podcast_title || "Unknown Podcast"}</p>
+          <div class="episode-card-footer">
+            <span class="episode-card-status ${statusColorClass}">${episode.status || "Unknown"}</span>
+            <span class="episode-card-date">${
+              episode.publishDate
+                ? new Date(episode.publishDate).toLocaleDateString()
+                : "N/A"
+            }</span>
+          </div>
+        </div>
+        <div class="episode-card-actions">
+          <button class="action-btn view-details" title="View Details">${svgIcons.view}</button>
+          <button class="action-btn edit-episode" title="Edit Episode">${svgIcons.edit}</button>
+        </div>
+      `;
+
+      // Add event listeners for action buttons
+      const viewButton = card.querySelector(".view-details");
+      if (viewButton) {
+        viewButton.addEventListener("click", (e) => {
+          e.stopPropagation(); // Prevent card click event
+          // console.log("View details for episode:", episode._id);
+          // Store episode ID and redirect
+          sessionStorage.setItem("selected_episode_id_from_dashboard", episode._id);
+          sessionStorage.setItem("selected_podcast_id_from_dashboard", episode.podcast_id);
+          window.location.href = "/podcastmanagement"; // Navigate to podcast management page
+        });
+      }
+
+      const editButton = card.querySelector(".edit-episode");
+      if (editButton) {
+        editButton.addEventListener("click", (e) => {
+          e.stopPropagation(); // Prevent card click event
+          // console.log("Edit episode:", episode._id);
+          // Store episode ID and redirect for editing
+          sessionStorage.setItem("edit_episode_id_from_dashboard", episode._id);
+          sessionStorage.setItem("selected_podcast_id_from_dashboard", episode.podcast_id);
+          window.location.href = "/podcastmanagement"; // Navigate to podcast management page
+        });
+      }
+      
+      // Add click event listener to the card itself to navigate
+      card.addEventListener("click", () => {
+        // console.log("Card clicked for episode:", episode._id);
+        sessionStorage.setItem("selected_episode_id_from_dashboard", episode._id);
+        sessionStorage.setItem("selected_podcast_id_from_dashboard", episode.podcast_id);
+        window.location.href = "/podcastmanagement";
+      });
+
+
+      if (episodesContainer) episodesContainer.appendChild(card);
+    });
+  }
+
+  // Function to render activity timeline
+  function renderActivity(activities) {
+    if (!activityTimeline) {
+      console.warn("Activity timeline container not found. Ensure .activity-timeline exists in the DOM.");
+      return;
+    }
+    activityTimeline.innerHTML = ""; // Clear existing activities
+
+    if (!activities || activities.length === 0) {
+      const noActivityMessage = document.createElement("p");
+      noActivityMessage.textContent = "No recent activity.";
+      noActivityMessage.className = "no-activity-message";
+      activityTimeline.appendChild(noActivityMessage);
+      return;
+    }
+    
+    // Sort activities by timestamp, newest first
+    const sortedActivities = activities.sort(
+      (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
+    );
+
+    sortedActivities.forEach((activity) => {
+      const item = document.createElement("div");
+      item.className = "activity-item";
+
+      const iconContainer = document.createElement("div");
+      iconContainer.className = "activity-icon-container";
+      
+      let iconSvg = svgIcons.default_activity; // Default icon
+
+      if (activity.type) {
+        switch (activity.type.toLowerCase()) {
+            case "episode_created":
+            case "new_episode":
+                iconSvg = svgIcons.episode_created;
+                break;
+            case "episode_updated":
+            case "update_episode":
+                iconSvg = svgIcons.episode_updated;
+                break;
+            case "episode_deleted":
+                iconSvg = svgIcons.episode_deleted;
+                break;
+            case "podcast_created":
+                iconSvg = svgIcons.podcast_created;
+                break;
+            case "podcast_updated":
+                iconSvg = svgIcons.podcast_updated;
+                break;
+            case "guest_invited":
+            case "guest_added":
+                iconSvg = svgIcons.guest_invited;
+                break;
+            case "task_completed":
+                iconSvg = svgIcons.task_completed;
+                break;
+            case "user_login":
+                 iconSvg = svgIcons.user_login;
+                 break;
+            case "user_logout":
+                 iconSvg = svgIcons.user_logout;
+                 break;
+            // Add more cases as needed for different activity types
+        }
+      }
+      iconContainer.innerHTML = iconSvg;
+
+
+      const content = document.createElement("div");
+      content.className = "activity-content";
+
+      const description = document.createElement("p");
+      description.className = "activity-description";
+      description.textContent = activity.description || "No description provided.";
+
+      const timestamp = document.createElement("span");
+      timestamp.className = "activity-timestamp";
+      timestamp.textContent = new Date(activity.timestamp).toLocaleString();
+
+      content.appendChild(description);
+      content.appendChild(timestamp);
+      item.appendChild(iconContainer);
+      item.appendChild(content);
+      activityTimeline.appendChild(item);
+    });
+  }
+
+  // Function to initialize the dashboard
+  async function initializeDashboard() {
+    const data = await fetchDashboardData();
+    if (data) {
+      renderStats(data);
+      renderEpisodes(data.episodes); // Make sure data.episodes is passed
+      renderActivity(data.activities);
+    } else {
+      // Handle the case where data is null (e.g., due to a fetch error)
+      console.error("Dashboard initialization failed: No data received.");
+      // Optionally, display a more prominent error message on the dashboard
+      const mainContent = document.querySelector(".main-content");
+      if (mainContent) {
+        mainContent.innerHTML = `
+          <div class="error-container" style="padding: 20px; text-align: center;">
+            <h2>Oops! Something went wrong.</h2>
+            <p>We couldn't load your dashboard data. Please try refreshing the page or check back later.</p>
+          </div>
+        `;
+      }
+    }
+  }
+
+  // Event Listeners
+  if (createEpisodeButton) {
+    createEpisodeButton.addEventListener("click", () => {
+      // console.log("Create new episode button clicked");
+      sessionStorage.setItem("triggerCreateEpisodeModal", "true");
+      window.location.href = "/podcastmanagement";
+    });
+  }
+
+  if (viewAllEpisodesLink) {
+    viewAllEpisodesLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      // console.log("View all episodes link clicked");
+      window.location.href = "/podcastmanagement"; // Navigate to the main podcast management page
+    });
+  }
+
+  if (closePendingGuestsPopup) {
+    closePendingGuestsPopup.addEventListener("click", () => {
+      if (pendingGuestsPopup) pendingGuestsPopup.style.display = "none";
+    });
+  }
+
+  // Click outside popup to close
+  if (pendingGuestsPopup) {
+    pendingGuestsPopup.addEventListener("click", (event) => {
+      if (event.target === pendingGuestsPopup) {
+        pendingGuestsPopup.style.display = "none";
+      }
+    });
+  }
+  
+  // Placeholder for SVG icons - these should be actual SVG strings or loaded from a file
+  // Example: svgIcons.podcast = '<svg>...</svg>';
+  const statIcons = document.querySelectorAll(".stat-icon .svg-placeholder");
+  statIcons.forEach((placeholder) => {
+    if (placeholder.classList.contains("podcast-icon")) {
+      placeholder.innerHTML = svgIcons.podcast;
+    } else if (placeholder.classList.contains("episode-icon")) {
+      placeholder.innerHTML = svgIcons.episode;
+    } else if (placeholder.classList.contains("guest-icon")) {
+      placeholder.innerHTML = svgIcons.guest;
+    } else if (placeholder.classList.contains("task-icon")) {
+      placeholder.innerHTML = svgIcons.task;
+    } else if (placeholder.classList.contains("team-leaderboard-trophy")) {
+      placeholder.innerHTML = svgIcons.team_leaderboard_trophy;
+    }
+  });
+
+  // Initialize the dashboard when the script runs
+  initializeDashboard();
+});
