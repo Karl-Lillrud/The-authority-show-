@@ -1,6 +1,6 @@
 // src/Frontend/static/js/recordingstudio/recording_studio.js
 import { showNotification } from '../components/notifications.js';
-import { fetchEpisode, updateEpisode } from '../../../static/requests/episodeRequest.js';
+import { fetchEpisode} from '../../../static/requests/episodeRequest.js';
 import { fetchGuestsByEpisode } from '../../../static/requests/guestRequests.js';
 import { initializeDevices, tryInitializeMicrophone, startCamera, toggleCamera, toggleMicrophone } from './device_manager.js';
 import { setupWebRTC, addParticipantStream } from './webrtc_manager.js';
