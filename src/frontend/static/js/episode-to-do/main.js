@@ -1,7 +1,7 @@
 "use client"
 
 import { fetchPodcasts } from "/static/requests/podcastRequests.js"
-import { fetchAllEpisodes, fetchEpisodesByPodcast } from "/static/requests/episodeRequest.js"
+import { fetchAllEpisodes, fetchUnpublishedEpisodesByPodcast } from "/static/requests/episodeRequest.js"
 import { fetchTasks, fetchLocalDefaultTasks } from "/static/requests/podtaskRequest.js"
 
 // Import components
@@ -63,9 +63,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (state.podcasts.length > 0) {
         state.activePodcast = state.podcasts[0]
 
-        // Fetch episodes for the active podcast
-        const episodesData = await fetchEpisodesByPodcast(state.activePodcast._id) // Note: using _id instead of id based on your other files
-        console.log("Episodes data:", episodesData)
+        // Fetch episodes for the active podcast - USE NEW FUNCTION TO GET ONLY UNPUBLISHED EPISODES
+        const episodesData = await fetchUnpublishedEpisodesByPodcast(state.activePodcast._id)
+        console.log("Unpublished episodes data:", episodesData)
         state.episodes = episodesData || []
 
         if (state.episodes.length > 0) {

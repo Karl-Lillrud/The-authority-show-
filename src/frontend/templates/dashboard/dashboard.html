@@ -87,6 +87,17 @@ endblock %} {% block content %}
       <!-- Dashboard Content -->
       <div class="dashboard-content">
         <div class="dashboard-grid">
+          <!-- Recent Episodes -->
+          <section class="episodes-section">
+            <div class="section-header">
+              <h2>Active Episodes</h2>
+              <a href="#" class="view-all">View All</a>
+            </div>
+            <div class="cards-container">
+              <!-- Episodes will be loaded here dynamically -->
+            </div>
+          </section>
+
           <!-- Team Leaderboard -->
           <section class="leaderboard-section">
             <div class="section-header">
@@ -126,17 +137,6 @@ endblock %} {% block content %}
             </div>
             <div class="activity-timeline activity-timeline-scroll">
               <!-- Dynamic content will be loaded here -->
-            </div>
-          </section>
-
-          <!-- Recent Episodes -->
-          <section class="episodes-section">
-            <div class="section-header">
-              <h2>Active Episodes</h2>
-              <a href="#" class="view-all">View All</a>
-            </div>
-            <div class="cards-container">
-              <!-- Episodes will be loaded here dynamically -->
             </div>
           </section>
         </div>

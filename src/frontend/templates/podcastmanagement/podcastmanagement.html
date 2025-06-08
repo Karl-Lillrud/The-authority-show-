@@ -4,6 +4,7 @@ endblock %} {% block content %}
 <head>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/file-inputs.css') }}" />
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
@@ -122,7 +123,7 @@ endblock %} {% block content %}
         <form id="register-podcast-form">
           <div class="form-grid">
             <div class="field-group">
-              <label for="pod-name">Podcast Name</label>
+              <label for="pod-name">Podcast Name *</label>
               <input type="text" id="pod-name" name="podName" autocomplete="off" required />
             </div>
             <div class="field-group">
@@ -139,11 +140,24 @@ endblock %} {% block content %}
             </div>
             <div class="field-group">
               <label for="logo">Album Art</label>
-              <input type="file" id="logo" name="logo" accept="image/*" />
+              <div class="file-input-container">
+                <input type="file" id="logo" name="logo" accept="image/*" />
+                <div id="logo-name-display" class="file-name-display"></div>
+              </div>
             </div>
             <div class="field-group">
               <label for="banner">Podcast Banner</label>
-              <input type="file" id="banner" name="banner" accept="image/*" />
+              <div class="file-input-container">
+                <input type="file" id="banner" name="banner" accept="image/*" />
+                <div id="banner-name-display" class="file-name-display"></div>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="host-image">Profile Picture</label>
+              <div class="file-input-container">
+                <input type="file" id="host-image" name="hostImage" accept="image/*" />
+                <div id="host-image-name-display" class="file-name-display"></div>
+              </div>
             </div>
             <div class="field-group">
               <label for="google-cal">Google Calendar URL</label>
@@ -156,7 +170,7 @@ endblock %} {% block content %}
               </div>
               -->
             <div class="field-group">
-              <label for="email">Podcast's Email Address</label>
+              <label for="email">Podcast Email Address</label>
               <input type="email" id="email" name="email" />
             </div>
             <div class="field-group full-width">
@@ -164,7 +178,7 @@ endblock %} {% block content %}
               <textarea id="description" name="description" rows="3"></textarea>
             </div>
             <div class="field-group">
-              <label for="category">Category (Required)</label>
+              <label for="category">Category *</label>
               <select id="category" name="category" required>
                 <option value="">Select a category</option>
                 <option value="Comedy">Comedy</option>
@@ -202,8 +216,9 @@ endblock %} {% block content %}
               <input type="text" id="hostBio" name="hostBio" />
             </div>
             <div class="field-group">
-              <label for="host-image">Host Image</label>
-              <input type="file" id="host-image" name="hostImage" accept="image/*" />
+              <label for="host-image">Profile Picture</label>
+              <input type="file" id="host-image" name="host-image" accept="image/*" />
+              <small>Optional: Upload an image of the podcast host</small>
             </div>
           </div>
 

@@ -336,42 +336,41 @@ def register_socketio_events(socketio: SocketIO):
         emit('greenroom_joined', {'room': room, 'users': users}, room=room)
         emit('participant_update', {'users': users}, room=room)
 
-    # WebRTC Signaling Events - Fixed for targeted communication
-    @socketio.on('offer')
-    def handle_offer(data):
-        room = data.get('room')
-        target_user_id = data.get('targetUserId')
-        from_user_id = data.get('fromUserId')
-        offer = data.get('offer')
+    @socketio.on('webrtc_offer')
+    def handle_webrtc_offer(data):
+            room = data.get('room')
+            target_user_id = data.get('targetUserId')
+            from_user_id = data.get('fromUserId')
+            offer = data.get('offer')
 
-        if not all([room, target_user_id, from_user_id, offer]):
-            logger.error(f"Invalid offer data: {data}")
-            emit('error', {'error': 'missing_fields', 'message': 'Room, targetUserId, fromUserId, and offer required'}, to=request.sid)
-            return
+            if not all([room, target_user_id, from_user_id, offer]):
+                logger.error(f"Invalid webrtc_offer data: {data}")
+                emit('error', {'error': 'missing_fields', 'message': 'Room, targetUserId, fromUserId, and offer required'}, to=request.sid)
+                return
 
-        target_participant = get_participant_by_user_id(room, target_user_id)
-        if not target_participant:
-            logger.error(f"Target participant {target_user_id} not found in room {room}")
-            emit('error', {'error': 'participant_not_found', 'message': 'Target participant not found'}, to=request.sid)
-            return
+            target_participant = get_participant_by_user_id(room, target_user_id)
+            if not target_participant:
+                logger.error(f"Target participant {target_user_id} not found in room {room}")
+                emit('error', {'error': 'participant_not_found', 'message': 'Target participant not found'}, to=request.sid)
+                return
 
-        logger.info(f"Forwarding WebRTC offer from {from_user_id} to {target_user_id} in room {room}")
-        emit('offer', {
-            'fromUserId': from_user_id,
-            'targetUserId': target_user_id,
-            'offer': offer,
-            'room': room
-        }, to=target_participant['socketId'])
+            logger.info(f"Forwarding WebRTC offer from {from_user_id} to {target_user_id} in room {room}")
+            emit('webrtc_offer', {
+                'fromUserId': from_user_id,
+                'targetUserId': target_user_id,
+                'offer': offer,
+                'room': room
+            }, to=target_participant['socketId'])
 
-    @socketio.on('answer')
-    def handle_answer(data):
+    @socketio.on('webrtc_answer')
+    def handle_webrtc_answer(data):
         room = data.get('room')
         target_user_id = data.get('targetUserId')
         from_user_id = data.get('fromUserId')
         answer = data.get('answer')
 
         if not all([room, target_user_id, from_user_id, answer]):
-            logger.error(f"Invalid answer data: {data}")
+            logger.error(f"Invalid webrtc_answer data: {data}")
             emit('error', {'error': 'missing_fields', 'message': 'Room, targetUserId, fromUserId, and answer required'}, to=request.sid)
             return
 
@@ -382,7 +381,7 @@ def register_socketio_events(socketio: SocketIO):
             return
 
         logger.info(f"Forwarding WebRTC answer from {from_user_id} to {target_user_id} in room {room}")
-        emit('answer', {
+        emit('webrtc_answer', {
             'fromUserId': from_user_id,
             'targetUserId': target_user_id,
             'answer': answer,
@@ -435,6 +434,19 @@ def register_socketio_events(socketio: SocketIO):
             'guestName': guestName,
             'streamType': stream_type
         }, room=room)
+        
+        
+    @socketio.on('offer')
+    def handle_offer_legacy(data):
+        # Legacy handler - redirect to new format
+        logger.warning("Using legacy 'offer' event, consider updating to 'webrtc_offer'")
+        handle_webrtc_offer(data)
+
+    @socketio.on('answer')
+    def handle_answer_legacy(data):
+        # Legacy handler - redirect to new format
+        logger.warning("Using legacy 'answer' event, consider updating to 'webrtc_answer'")
+        handle_webrtc_answer(data)
 
     @socketio.on('stream_ready')
     def handle_stream_ready(data):

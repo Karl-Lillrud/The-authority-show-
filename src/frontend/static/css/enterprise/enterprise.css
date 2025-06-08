@@ -233,17 +233,169 @@ input:focus {
     display: none;
 }
 
-/* Footer Styles */
-footer {
-    background-color: var(--white);
-    padding: 20px 0;
-    text-align: center;
-    color: var(--dark-gray);
-    font-size: 14px;
-    margin-top: 40px;
+/* Phone Input Styling */
+.phone-input-container {
+    display: flex;
+    width: 100%;
+    position: relative;
 }
 
-/* Responsive Styles */
+.country-selector {
+    position: relative;
+    min-width: 90px;
+    z-index: 10;
+}
+
+.selected-flag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 12px;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius) 0 0 var(--border-radius);
+    background-color: #f9f9f9;
+    cursor: pointer;
+    height: 100%;
+}
+
+.selected-flag:hover {
+    background-color: #f0f0f0;
+}
+
+.flag {
+    width: 20px;
+    height: 15px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 2px;
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+.flag.us {
+    background-image: url('https://flagcdn.com/w20/us.png');
+}
+
+.country-code {
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 30px;
+}
+
+.arrow-down {
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #888;
+    margin-left: auto;
+}
+
+.country-list-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    width: 300px;
+    max-height: 0;
+    overflow: hidden;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: max-height 0.3s ease-out, opacity 0.3s ease;
+    opacity: 0;
+}
+
+.country-selector.open .country-list-container {
+    max-height: 300px;
+    opacity: 1;
+    overflow-y: auto;
+    border: 1px solid var(--medium-gray);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.search-container {
+    padding: 10px;
+    position: sticky;
+    top: 0;
+    background-color: white;
+    border-bottom: 1px solid var(--medium-gray);
+    z-index: 1;
+}
+
+#country-search {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+}
+
+.country-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.country-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+.country-list li:hover {
+    background-color: #f5f5f5;
+}
+
+.country-list .flag {
+    width: 20px;
+    height: 15px;
+}
+
+.country-list .country-name {
+    font-size: 14px;
+    flex-grow: 1;
+}
+
+.country-list .dial-code {
+    font-size: 13px;
+    color: var(--dark-gray);
+}
+
+#phone {
+    flex-grow: 1;
+    border-left: 0;
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    font-size: 16px; /* Larger font size for better usability */
+    letter-spacing: 0.5px; /* Better readability for numbers */
+    -moz-appearance: textfield; /* Firefox - removes spinner */
+}
+
+/* Remove spinner for webkit browsers */
+#phone::-webkit-outer-spin-button,
+#phone::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Responsive styles for phone input */
+@media (max-width: 480px) {
+    .phone-input-container {
+        flex-direction: column;
+    }
+    
+    .selected-flag {
+        border-radius: var(--border-radius);
+        margin-bottom: 10px;
+    }
+    
+    #phone {
+        border-left: 1px solid var(--medium-gray);
+        border-radius: var(--border-radius);
+    }
+}
+
 @media (max-width: 768px) {
     .card-content {
         padding: 30px 20px;
@@ -267,4 +419,44 @@ footer {
     .beta-badge {
         font-size: 8px;
     }
+}
+
+/* Ensure phone input is numbers only and has proper styling */
+#phone {
+    flex-grow: 1;
+    border-left: 0;
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    font-size: 16px; /* Larger font size for better usability */
+    letter-spacing: 0.5px; /* Better readability for numbers */
+    -moz-appearance: textfield; /* Firefox - removes spinner */
+}
+
+/* Fix dropdown cutoff - ensure it extends beyond container */
+.country-list-container {
+    /* Other properties remain the same */
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+}
+
+.country-selector.open .country-list-container {
+    max-height: 300px;
+    opacity: 1;
+    overflow-y: auto;
+    border: 1px solid var(--medium-gray);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Override any container overflow that might be clipping the dropdown */
+.form-group {
+    overflow: visible !important;
+}
+
+.card-content {
+    overflow: visible !important;
+}
+
+.enterprise-card {
+    overflow: visible !important;
 }

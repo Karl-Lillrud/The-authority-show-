@@ -46,6 +46,7 @@ from backend.routes.edit_routes import edit_bp
 from backend.routes.enterprise import enterprise_bp
 from backend.routes.lia import lia_bp
 from backend.routes.index import index_bp
+from backend.routes.email_change import email_change_bp
 from backend.sockets.recording_events import register_socketio_events
 from backend.routes.recording_studio import recording_studio_bp
 from backend.routes.audio_pipeline import audio_pipeline_bp
@@ -112,6 +113,7 @@ def create_app():
     app.register_blueprint(recording_studio_bp)
     app.register_blueprint(publish_bp)
     app.register_blueprint(audio_pipeline_bp)
+    app.register_blueprint(email_change_bp)
 
     @app.before_request
     def load_user():

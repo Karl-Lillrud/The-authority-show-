@@ -1,101 +1,114 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recording Studio - PodManager</title>
 
-{% block title %}Recording Studio - PodManager{% endblock %}
+  <!-- Fonts & Icons -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/recordingstudio/recording_studio.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-{% block head_extra %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/recordingstudio/recording_studio.css') }}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-{% endblock %}
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
 
-{% block content %}
-<div class="studio-container">
+  <div class="studio-container">
     <div class="control-header">
-        <div class="header-left">
-            <div class="episode-info">
-                <div id="episode-id-display" style="display:none;">
-                    {{ request.args.get('episode_id') or episode_id or request.args.get('episodeId') }}
-                </div>
-                <div class="recording-status">
-                    <span class="status-indicator"></span>
-                    <span class="status-text">Ready to Record</span>
-                </div>
-            </div>
+      <div class="header-left">
+        <div class="episode-info">
+          <div id="episode-id-display" style="display:none;">
+            {{ request.args.get('episode_id') or episode_id or request.args.get('episodeId') }}
+          </div>
+          <div class="recording-status">
+            <span class="status-indicator"></span>
+            <span class="status-text">Ready to Record</span>
+          </div>
         </div>
-        <div class="header-right">
-            <div class="timer">
-                <span id="recordingTime">00:00:00</span>
-            </div>
-            <div class="host-controls" id="hostControls" style="display: none;">
-            <div class="recording-controls">
-                <button id="startRecordingBtn" class="control-button record" title="Start Recording">
-    <i class="fas fa-circle-play"></i>
-        </button>
-        <button id="pauseButton" class="control-button pause" disabled title="Pause/Resume Recording">
-            <i class="fas fa-pause"></i>
-        </button>
-        <button id="stopRecordingBtn" class="control-button stop" disabled title="Stop Recording">
-            <i class="fas fa-stop"></i>
-        </button>
-        <button id="saveRecording" class="control-button save" disabled title="Save Recording">
-            <i class="fas fa-save"></i>
-        </button>
-        <button id="discardRecording" class="control-button discard" disabled title="Discard Recording">
-            <i class="fas fa-trash"></i>
-        </button>
+      </div>
 
-            </div>
-            <div class="media-settings">
-                <select id="videoQuality" class="device-select" title="Select Video Quality">
-                    <option value="1080p">1080p</option>
-                    <option value="720p">720p</option>
-                    <option value="480p">480p</option>
-                </select>
-            </div>
+      <div class="header-right">
+        <div class="timer">
+          <span id="recordingTime">00:00:00</span>
         </div>
+
+        <div class="host-controls" id="hostControls" style="display: none;">
+          <div class="recording-controls">
+            <button id="startRecordingBtn" class="control-button record" title="Start Recording">
+              <i class="fas fa-circle-play"></i>
+            </button>
+            <button id="pauseButton" class="control-button pause" disabled title="Pause/Resume Recording">
+              <i class="fas fa-pause"></i>
+            </button>
+            <button id="stopRecordingBtn" class="control-button stop" disabled title="Stop Recording">
+              <i class="fas fa-stop"></i>
+            </button>
+            <button id="saveRecording" class="control-button save" disabled title="Save Recording">
+              <i class="fas fa-save"></i>
+            </button>
+            <button id="discardRecording" class="control-button discard" disabled title="Discard Recording">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+
+          <div class="media-settings">
+            <select id="videoQuality" class="device-select" title="Select Video Quality">
+              <option value="1080p">1080p</option>
+              <option value="720p">720p</option>
+              <option value="480p">480p</option>
+            </select>
+          </div>
+        </div>
+
         <div class="shared-controls">
-            <select id="cameraSelect" class="device-select" title="Select Camera">
-                <option value="">Camera</option>
-            </select>
-            <select id="microphoneSelect" class="device-select" title="Select Microphone">
-                <option value="">Microphone</option>
-            </select>
-            <select id="speakerSelect" class="device-select" title="Select Speaker">
-                <option value="">Speaker</option>
-            </select>
-            <button id="toggle-camera" class="control-button toggle-camera" title="Toggle Camera">
-                <i class="fas fa-video"></i> Camera
-            </button>
-            <button id="toggle-mic" class="control-button toggle-mic" title="Toggle Microphone">
-                <i class="fas fa-microphone"></i> Microphone
-            </button>
+          <select id="cameraSelect" class="device-select" title="Select Camera">
+            <option value="">Camera</option>
+          </select>
+          <select id="microphoneSelect" class="device-select" title="Select Microphone">
+            <option value="">Microphone</option>
+          </select>
+          <select id="speakerSelect" class="device-select" title="Select Speaker">
+            <option value="">Speaker</option>
+          </select>
+          <button id="toggle-camera" class="control-button toggle-camera" title="Toggle Camera">
+            <i class="fas fa-video"></i> Camera
+          </button>
+          <button id="toggle-mic" class="control-button toggle-mic" title="Toggle Microphone">
+            <i class="fas fa-microphone"></i> Microphone
+          </button>
         </div>
-            </div>
-        </div>
+      </div>
     </div>
 
     <div class="video-container">
-        <div class="split-screen" id="splitScreen">
-            <div class="video-wrapper local-video">
-                <video id="videoPreview" autoplay muted playsinline></video>
-                <div class="status-indicators">
-                    <span id="videoIndicator" class="indicator video-indicator" title="Video Status"></span>
-                    <span id="audioIndicator" class="indicator audio-indicator" title="Audio Status"></span>
-                </div>
-            </div>
-            <div class="video-wrapper remote-video" id="remoteVideoWrapper">
-                <video id="remoteVideo" autoplay playsinline></video>
-            </div>
+      <div class="split-screen" id="splitScreen">
+        <div class="video-wrapper local-video">
+          <video id="videoPreview" autoplay muted playsinline></video>
+          <div class="status-indicators">
+            <span id="videoIndicator" class="indicator video-indicator" title="Video Status"></span>
+            <span id="audioIndicator" class="indicator audio-indicator" title="Audio Status"></span>
+          </div>
         </div>
-        <div class="participants-list" id="participantsContainer"></div>
+        <div class="video-wrapper remote-video" id="remoteVideoWrapper">
+          <video id="remoteVideo" autoplay playsinline></video>
+        </div>
+      </div>
+      <div class="participants-list" id="participantsContainer"></div>
     </div>
 
     <div id="joinRequestModal" class="modal">
-        <div class="modal-content"></div>
+      <div class="modal-content"></div>
     </div>
-</div>
-{% endblock %}
+  </div>
 
-{% block scripts %}
-<script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
-<script type="module" src="{{ url_for('static', filename='js/recordingstudio/recording_studio.js') }}"></script>
-{% endblock %}
+  <!-- Scripts -->
+  <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+  <script type="module" src="{{ url_for('static', filename='js/recordingstudio/recording_studio.js') }}"></script>
+</body>
+</html>

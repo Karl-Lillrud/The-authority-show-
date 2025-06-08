@@ -253,17 +253,12 @@ class GuestRepository:
             return {"error": f"Failed to update guest: {str(e)}"}, 500
 
     def delete_guest(self, guest_id, user_id):
-        """
-        Delete a guest by ID
-        """
+        """ Delete a guest by ID """
         try:
-            user_id_str = str(user_id)
-            result = self.collection.delete_one(
-                {"_id": guest_id, "user_id": user_id_str}
-            )
+            result = self.collection.delete_one({"_id": guest_id})
             if result.deleted_count == 0:
-                return {"error": "Guest not found or unauthorized"}, 404
-
+                return {"error": "Guest not found"}, 404
+            
             # --- Log activity for guest deleted ---
             try:
                 self.activity_service.log_activity(
@@ -274,22 +269,21 @@ class GuestRepository:
                 )
             except Exception as act_err:
                 logger.error(
-                    f"Failed to log guest_deleted activity: {act_err}", exc_info=True
+                    f"Failed to log guest_deleted activity: {act_err}",
+                    exc_info=True
                 )
             # --- End activity log ---
-
+            
             return {"message": "Guest deleted successfully"}, 200
-
         except Exception as e:
             logger.exception("❌ ERROR: Failed to delete guest")
             return {"error": f"Failed to delete guest: {str(e)}"}, 500
 
+
     def get_guests_by_episode(self, episode_id):
-        """
-        Get all guests for a specific episode
-        """
+  
         try:
-            # Fetch guests for the specific episode
+  
             guests_cursor = self.collection.find({"episodeId": episode_id})
             guest_list = []
             for guest in guests_cursor:

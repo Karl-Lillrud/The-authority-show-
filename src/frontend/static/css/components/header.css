@@ -48,27 +48,59 @@ img {
   fill: var(--highlight-color);
 }
 
+/* Landing page icon styling */
+.landing-page-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.landing-page-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.landing-page-icon:hover {
+  transform: translateY(-2px);
+}
+
+.landing-page-icon svg g path {
+  stroke: var(--text-color-light);
+  transition: stroke 0.3s ease;
+}
+
+.landing-page-icon:hover svg g path {
+  stroke: var(--highlight-color);
+}
+
+/* Landing page dropdown */
 .dropdown-lp-content {
   display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 200px;
+  background: white;
+  border-radius: var(--radius-small);
+  box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.1), 0 0px 10px rgba(0, 0, 0, 0.05);
+  padding: var(--spacing-xs) 0;
+  z-index: 1000;
 }
 
-.dropdown-lp-options {
-  padding-left: 5px;
-}
-
-/* Style to make the menu bigger when dropdown is visible */
-.menu.expanded {
-  height: auto; /* Allow for expansion */
-}
-
-.dropdown-lp-content a {
+.dropdown-lp-options a {
   display: block;
-  text-decoration: none;
+  padding: var(--spacing-sm) var(--spacing-md);
   color: var(--text-color-light);
-  font-family: var(--font-primary);
+  text-decoration: none;
   font-size: 0.85rem;
-  padding: var(--spacing-xs) var(--spacing-md);
-  transition: color var(--transition-normal);
+  transition: all 0.2s ease;
+}
+
+.dropdown-lp-options a:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+  color: var(--highlight-color);
 }
 
 /* Triangle styles */
@@ -495,7 +527,20 @@ header #header-wrapper {
   color: var(--highlight-color);
   box-shadow: 0px 0px 6px rgba(255, 100, 0, 0.8);
   border-color: var(--highlight-color);
+  border-top-color: white;
  }
+
+.disabled-link {
+  color: #b0b0b0 !important; /* Grey out the text */
+  pointer-events: none !important; /* Disable click events */
+  cursor: default !important; /* Change cursor to default */
+  text-decoration: none !important; /* Remove underline if any */
+}
+
+.disabled-link:hover {
+  color: #b0b0b0 !important; /* Keep it grey on hover */
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1) !important; /* Keep original shadow or remove */
+}
 
 .credits-info {
   padding: 8px 12px;

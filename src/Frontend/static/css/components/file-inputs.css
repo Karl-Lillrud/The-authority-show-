@@ -1,0 +1,30 @@
+/* File Input Styling */
+.file-input-container {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.file-name-display {
+  font-size: 0.85rem;
+  margin-top: 5px;
+  color: #666;
+  background-color: #f7f7f7;
+  border-radius: 4px;
+  padding: 5px 8px;
+  display: none;
+  word-break: break-all;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-left: 3px solid var(--highlight-color, #FF7F3F);
+}
+
+.file-name-display.has-file {
+  display: block;
+}
+
+input[type="file"] {
+  position: relative;
+  z-index: 1;
+}

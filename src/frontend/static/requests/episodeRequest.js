@@ -176,7 +176,7 @@ export async function fetchEpisodesByPodcast(podcastId) {
   try {
     const response = await fetch(`/episodes/by_podcast/${podcastId}`)
     const data = await response.json()
-    console.log("Fetched episodes with additional fields:", data.episodes) // Log episodes
+    console.log("Fetched episodes with additional fields:", data.episodes)
     if (response.ok) {
       return data.episodes
     } else {
@@ -186,6 +186,31 @@ export async function fetchEpisodesByPodcast(podcastId) {
   } catch (error) {
     console.error("Error fetching episodes:", error)
     alert("Failed to fetch episodes.")
+  }
+}
+
+/**
+ * Fetches episodes by podcast ID, excluding episodes with "published" status
+ * This function is specifically used by the episode-to-do page
+ * @param {string} podcastId - The podcast ID to fetch episodes for
+ * @returns {Array} - Array of unpublished episodes
+ */
+export async function fetchUnpublishedEpisodesByPodcast(podcastId) {
+  try {
+    const response = await fetch(`/episodes/by_podcast/${podcastId}?exclude_statuses=published`)
+    const data = await response.json()
+    console.log("Fetched unpublished episodes:", data.episodes)
+    if (response.ok) {
+      return data.episodes || []
+    } else {
+      console.error("Failed to fetch unpublished episodes:", data.error)
+      alert("Failed to fetch episodes: " + data.error)
+      return []
+    }
+  } catch (error) {
+    console.error("Error fetching unpublished episodes:", error)
+    alert("Failed to fetch episodes.")
+    return []
   }
 }
 

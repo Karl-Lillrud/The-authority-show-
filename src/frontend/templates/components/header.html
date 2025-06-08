@@ -16,12 +16,35 @@
     <span id="page-title" class="page-title"></span>
   </div>
   <nav class="header-nav">
-    <!-- New Credits Display Field -->
-    <!-- Credits & Buy Button -->
-    <!--<div class="credits-wrapper">
+    <!-- Credits display moved to header area above the icons -->
+    <div class="credits-wrapper">
       <span class="credit-text"><span id="user-credits">Loading...</span></span>
       <button id="buy-credits-btn">Buy Credits</button>
-    </div>-->
+    </div>
+
+    <!-- Landing Page Link -->
+    <div class="landing-page-wrapper">
+      <a href="#" class="dropdown-trigger landing-page-icon" onclick="toggleLandingPage()">
+        <svg width="54px" height="54px" viewBox="-4.8 -4.8 33.60 33.60" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#000000">
+          <g id="SVGRepo_iconCarrier">
+            <!-- Computer monitor design -->
+            <rect x="2" y="3" width="20" height="14" rx="2" stroke="var(--text-color-light)" stroke-width="1.2"/>
+            <path d="M8 21H16" stroke="var(--text-color-light)" stroke-width="1.2" stroke-linecap="round"/>
+            <path d="M12 17V21" stroke="var(--text-color-light)" stroke-width="1.2" stroke-linecap="round"/>
+            <!-- Screen content -->
+            <path d="M2 7H22" stroke="var(--text-color-light)" stroke-width="1.2" stroke-linejoin="round"/>
+            <rect x="5" y="10" width="14" height="1" rx="0.5" stroke="none" fill="var(--text-color-light)"/>
+            <rect x="5" y="13" width="14" height="1" rx="0.5" stroke="none" fill="var(--text-color-light)"/>
+          </g>
+        </svg>
+      </a>
+      <!-- Dropdown content for landing pages -->
+      <div class="dropdown-lp-content" id="dropdown-lp-content">
+        <div class="dropdown-lp-options">
+          <!-- Podcast options will be inserted here dynamically -->
+        </div>
+      </div>
+    </div>
 
     <div class="store-wrapper">
       <a href="{{ url_for('dashboard_bp.store') }}">
@@ -46,20 +69,8 @@
     const currentUserID = "{{ session['user_id'] or '' }}";
   </script>
     <div class="menu" id="menu">
-      <div class="credits-wrapper">
-        <span class="credit-text"><span id="user-credits">Loading...</span></span>
-        <button id="buy-credits-btn">Buy Credits</button>
-      </div>
       <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
       <a href="{{ url_for('dashboard_bp.team') }}">Team Management</a>
-    
-      <a href="#" class="dropdown-trigger" onclick="toggleLandingPage()">Landing Pages<span id="triangle" class="triangle-down"></span></a>
-      <!-- Dropdown content that will appear next to the "Landing Page" link -->
-      <div class="dropdown-lp-content" id="dropdown-lp-content">
-        <div class="dropdown-lp-options">
-          <!-- Podcast options will be inserted here dynamically -->
-        </div>
-      </div>
       <a href="#" id="logout-link">Log out</a>
     </div>
   </div>
@@ -68,9 +79,9 @@
       <ul>
         <li><a href="/dashboard">Dashboard</a></li>
         <li><a href="/podcastmanagement">Create</a></li>
-        <li><a href="/studio">Record</a></li>
+        <li><span title="Coming Soon!"><a href="/studio" class="disabled-link">Record</a></span></li>
         <li><a href="/episode-to-do">Edit</a></li>
-        <li><a href="/publish">Publish</a></li>
+        <li><a href="/publish/">Publish</a></li>
       </ul>
     </nav>
   </div>

@@ -3,6 +3,11 @@ import { sendInvitationEmail } from "../../requests/invitationRequests.js";
 import { registerEpisode } from "../../requests/episodeRequest.js";
 import { createLoadingBar } from "../../js/components/loading-bar.js";
 import { fetchAccount, updateAccount } from "/static/requests/accountRequests.js";
+import { fetchPodcast } from "/static/requests/podcastRequests.js";
+import { fetchEpisodesByPodcast } from "/static/requests/episodeRequest.js";
+import { fetchGuestsRequest } from "/static/requests/guestRequests.js";
+import { fetchTasks } from "/static/requests/podtaskRequest.js";
+import { getTeamsRequest } from "/static/requests/teamRequests.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   // DOM Elements
@@ -795,7 +800,87 @@ for (const payload of episodePayloads) {
       timeout = setTimeout(() => func.apply(this, args), wait);
     };
   }
+
+  const podcastId = localStorage.getItem("selectedPodcastId");
+  if (!podcastId) {
+    console.error("No podcast selected. Cannot load podprofile page.");
+    // Optionally, redirect or show an error message to the user
+    // document.body.innerHTML = "<p>Error: No podcast selected. Please select a podcast first.</p>";
+    return;
+  }
+
+  try {
+    const podcastData = await fetchPodcast(podcastId);
+    if (!podcastData || !podcastData.podcast) {
+      console.error("Failed to fetch podcast details for podprofile.");
+      return;
+    }
+    const podcast = podcastData.podcast;
+
+    // Display main podcast info (example)
+    const podcastContainer = document.getElementById("podcast-container");
+    if (podcastContainer) {
+      podcastContainer.innerHTML = `
+        <img src="${podcast.imageUrl || podcast.logoUrl || podcast.rssImage || '/static/images/default-podcast-logo.png'}" alt="${podcast.podName}" class="podcast-logo" />
+        <div class="podcast-info">
+          <h1>${podcast.podName || "Podcast Title"}</h1>
+          <p class="category">${podcast.category || "Uncategorized"}</p>
+          <p class="host">Hosted by ${podcast.author || "Unknown Host"}</p>
+          <p class="description">${podcast.description || "No description available."}</p>
+        </div>
+      `;
+    }
+    
+    // Update Calendar Button
+    // window.calendarConnected is set by the backend template
+    // podcast.googleCal is from the fetched podcast data
+    updateCalendarButton(window.calendarConnected && podcast.googleCal, podcast.googleCal);
+
+    // Load other sections like episodes, guests, tasks, team if needed
+    // Example: loadEpisodes(podcastId);
+    // Example: loadGuests(podcastId);
+
+  } catch (error) {
+    console.error("Error loading podprofile page:", error);
+  }
 });
+
+function updateCalendarButton(isConnected, calendarUrl) {
+  const calendarBtn = document.getElementById("calendar-connect-btn");
+  if (!calendarBtn) return;
+
+  if (isConnected && calendarUrl) {
+    calendarBtn.textContent = "Calendar Connected";
+    calendarBtn.classList.remove("add-btn"); // Remove default styling class
+    calendarBtn.classList.add("calendar-connected-btn"); // Add connected styling class
+    calendarBtn.onclick = () => {
+      if (calendarUrl) {
+        window.open(calendarUrl, '_blank');
+      }
+    };
+  } else {
+    calendarBtn.textContent = "Connect Calendar";
+    calendarBtn.classList.add("add-btn"); // Ensure default styling class
+    calendarBtn.classList.remove("calendar-connected-btn"); // Remove connected styling class
+    calendarBtn.onclick = () => {
+      window.location.href = '/connect_calendar'; // Redirect to OAuth flow
+    };
+  }
+}
+
+// Placeholder functions for loading other content - implement as needed
+// async function loadEpisodes(podcastId) {
+//   const episodesContainer = document.getElementById("episodes-container");
+//   if (episodesContainer) episodesContainer.innerHTML = "<p>Loading episodes...</p>";
+//   // Fetch and render episodes
+// }
+
+// async function loadGuests(podcastId) {
+//   const guestsContainer = document.getElementById("guests-container");
+//   if (guestsContainer) guestsContainer.innerHTML = "<p>Loading guests...</p>";
+//   // Fetch and render guests
+// }
+;
 
 function initCreatepodcastButton() {
   const createPodcastButton = document.getElementById("createPodcast");
