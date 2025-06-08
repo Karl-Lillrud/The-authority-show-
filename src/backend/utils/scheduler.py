@@ -342,7 +342,7 @@ class Scheduler:
 
     def start(self):
         """Start the scheduler in a background thread."""
-        thread = threading.Thread(target=self.run_foreever, daemon=True)
+        thread = threading.Thread(target=self.run_forever, daemon=True)
         thread.start()
         logger.info("Scheduler: Started in background thread")
         return thread
