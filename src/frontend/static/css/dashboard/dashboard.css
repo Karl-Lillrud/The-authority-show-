@@ -355,6 +355,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  align-self: stretch;
 }
 
 .timeline-item {
@@ -452,7 +453,7 @@
 }
 
 .activity-timeline-scroll {
-  max-height: 600px; /* Adjust height for ~5 items depending on your item height */
+ max-height: 900px; /* Adjust height for ~5 items depending on your item height */
   overflow-y: auto;
   padding-right: 4px; /* For scrollbar space */
 }
