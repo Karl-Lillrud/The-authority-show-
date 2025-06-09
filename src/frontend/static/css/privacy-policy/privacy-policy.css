@@ -37,3 +37,8 @@
     max-width: 200px;
     height: auto;
   }
+
+
+  #dot-list {
+    padding-left: 20px;
+  }
