@@ -26,7 +26,7 @@ PLAN_BENEFITS = {
         "extra_slot_cost": 5000,
         "max_slots": 6,
         "landing_page": "Free or custom domain",
-        "transcription_limit": 120 * 60
+        "": 120 * 60
 
     },
     "ENTERPRISE": {

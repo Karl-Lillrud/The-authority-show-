@@ -15,9 +15,9 @@ class AudioToEpisodeService:
 
     def upload_episode_audio(self, account_id, episode_id, audio_file, podcast_id):
         try:
-            if not audio_file:
-                logger.warning("No audio file provided for upload")
-                return None
+        #     if not audio_file:
+        #         logger.warning("No audio file provided for upload")
+        #         return None
 
             valid_mimes = [
                 # Audio

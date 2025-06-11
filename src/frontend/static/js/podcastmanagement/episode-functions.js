@@ -173,21 +173,21 @@ export function renderEpisodeDetail(episode) {
     
     <!-- Audio Section Wrapper - Only contains the main player now -->
     <div class="audio-section-wrapper" style="margin-top: 1.5rem;">
-      <!-- Main Audio Player -->
-      <div class="main-audio-player">
-        <h3>Main Episode Audio</h3>
+      <!-- Main Media Player -->
+      <div class="main-media-player">
+        <h3>Media Player</h3>
         ${
           episode.audioUrl
             ? `<audio controls style="width: 20%;">
                  <source src="${episode.audioUrl}" type="${fileType || "audio/mpeg"}">
                  Your browser does not support the audio element.
                </audio>`
-            : "<p>No audio available for this episode.</p>"
+            : "<p>No media available for this episode.</p>"
         }
       </div>
     </div>
 
-    <!-- Saved Audio Edits -->
+    <!-- Saved Media Edits -->
     ${
       episode.audioEdits && episode.audioEdits.length > 0
         ? `<div class="audio-edits" style="margin-top: 1.5rem;">
@@ -579,20 +579,20 @@ popupContent.innerHTML = `
       </select>
     </div>
 
-    <h3 class="form-section-heading">Audio</h3>
+    <h3 class="form-section-heading">Media</h3>
     <div class="field-group full-width">
       <label for="upd-episode-audio" ${isAudioUploadDisabled ? 'style="color: #aaa;"' : ""}>
-        Upload New Audio (Optional)
+        Upload New Media (Optional)
       </label>
-      <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/mp3,audio/wav,audio/mpeg" ${
+      <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/mp3,audio/wav,audio/mpeg,video/mp4" ${
         isAudioUploadDisabled ? 'disabled style="background-color: #eee;"' : ""
       }>
       ${
         isAudioUploadDisabled
-          ? '<p style="font-size: 0.8em; color: #888; margin-top: 5px;">Audio upload disabled for imported episodes.</p>'
+          ? '<p style="font-size: 0.8em; color: #888; margin-top: 5px;">Media upload disabled for imported episodes.</p>'
           : episode.audioUrl
-            ? `<p style="font-size: 0.8em; margin-top: 5px;">Current audio: <a href="${episode.audioUrl}" target="_blank">Listen</a></p>`
-            : '<p style="font-size: 0.8em; margin-top: 5px;">No current audio file.</p>'
+            ? `<p style="font-size: 0.8em; margin-top: 5px;">Current media: <a href="${episode.audioUrl}" target="_blank">Listen</a></p>`
+            : '<p style="font-size: 0.8em; margin-top: 5px;">No current media file.</p>'
       }
     </div>
 
@@ -684,13 +684,13 @@ popup.querySelector("#update-episode-form").addEventListener("submit", async (e)
     if (!file || file.size === 0 || isAudioUploadDisabled) {
       return null;
     }
-    const validTypes = ['audio/mp3', 'audio/wav', 'audio/mpeg'];
+    const validTypes = ['audio/mp3', 'audio/wav', 'audio/mpeg', 'video/mp4'];
     if (!validTypes.includes(file.type)) {
-      return "Audio file must be MP3 or WAV format";
+      return "Media is not a valid file type. (Allowed types: mp3, wav, mpeg, mp4)";
     }
     const maxSize = 500 * 1024 * 1024; // 500MB
     if (file.size > maxSize) {
-      return "Audio file size cannot exceed 500MB";
+      return "Media file size cannot exceed 500MB";
     }
     return null;
   };
