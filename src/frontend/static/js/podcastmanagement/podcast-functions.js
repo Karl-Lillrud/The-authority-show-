@@ -227,9 +227,6 @@ export async function renderPodcastList() {
     <button class="footer-link landing-page-link" data-id="${
           podcast._id
         }">Landing Page </button>
-    <button class="footer-link view-details-link" data-id="${
-          podcast._id
-        }">View Details </button>
       </div>`;
 /*
   <span class="footer-link landing-page-link" data-id="${
