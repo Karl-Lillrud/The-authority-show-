@@ -383,7 +383,7 @@ function createEpisodeCard(episode) {
                     <div class="progress" style="width: ${getRandomProgress()}%"></div>
                 </div>
             </div>
-            <button class="toggle-tasks" aria-label="Toggle tasks">+</button>
+            <button class="toggle-tasks" aria-label="Toggle tasks">Add Task</button>
         </div>
         <div class="tasks-container" style="display: none;">
             <h4>Tasks</h4>
