@@ -2225,3 +2225,99 @@ select#episode-id option {
   opacity: 1 !important;
 }
 
+/* Calendar Button and Tooltip Styles */
+.calendar-button-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.calendar-button {
+  background-color: #ff7f3f !important;
+  color: white !important;
+  border: none !important;
+  padding: 10px 18px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 8px rgba(255, 127, 63, 0.2) !important;
+}
+
+.calendar-button:hover {
+  background-color: #e06a2c !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 12px rgba(255, 127, 63, 0.3) !important;
+}
+
+.calendar-connected-btn {
+  background-color: rgba(255, 127, 63, 0.15) !important;
+  color: #ff7f3f !important;
+  border: 1px solid rgba(255, 127, 63, 0.4) !important;
+}
+
+.calendar-connected-btn:hover {
+  background-color: rgba(255, 127, 63, 0.25) !important;
+}
+
+/* Simple question mark tooltip button */
+.tooltip-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.tooltip-btn:hover {
+  background-color: #e0e0e0;
+  color: #444;
+}
+
+/* Tooltip content that appears on click */
+.tooltip-content {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  width: 280px;
+  background-color: #333;
+  color: white;
+  padding: 10px 12px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 0.9rem;
+  text-align: left;
+  line-height: 1.4;
+  z-index: 100;
+}
+
+/* Arrow for the tooltip */
+.tooltip-content::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 15px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #333;
+}
+
+/* Show tooltip when active */
+.tooltip-content.active {
+  display: block;
+}
+

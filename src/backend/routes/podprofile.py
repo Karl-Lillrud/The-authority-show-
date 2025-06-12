@@ -24,35 +24,18 @@ def podprofile():
         return redirect(url_for("signin"))
 
     try:
-        user_email = session.get("email")  # Keep for potential use
-        if not user_email:  # Should not happen if g.user_id is set, but good check
+        user_email = session.get("email")
+        if not user_email:
             current_app.logger.warning(
                 "User email not in session for podprofile, redirecting to signin."
             )
             return redirect(url_for("signin"))
 
-        # Determine if Google Calendar is connected by checking for tokens
-        calendar_connected = False
-        user_repo = UserRepository()
-        user_details = user_repo.get_user_by_id(g.user_id)  # Fetch full user details
-
-        if user_details and user_details.get("google_access_token"):
-            calendar_connected = True
-            current_app.logger.info(
-                f"User {g.user_id} has Google Calendar connected (access token found)."
-            )
-        else:
-            current_app.logger.info(
-                f"User {g.user_id} does not have Google Calendar connected (no access token)."
-            )
-
-        # The actual podcast data (like pod_rss or googleCal URL)
-        # will be fetched by podprofile.js using selectedPodcastId.
-        # We only need to pass the connection status for the button logic.
+        # Calendar connection status is no longer determined here for this page
         return render_template(
             "podprofile/podprofile.html",
-            user_email=user_email,  # Pass for potential display or other uses
-            calendar_connected=calendar_connected,  # Pass OAuth connection status
+            user_email=user_email
+            # calendar_connected is removed
         )
 
     except Exception as e:
@@ -171,20 +154,21 @@ def connect_calendar():
     try:
         # Redirect user to the calendar integration service (e.g., Google OAuth)
         calendar_auth_url = getenv("GOOGLE_AUTH_URI")
+        # Ensure GOOGLE_REDIRECT_URI in your .env file is correctly set up in your Google Cloud Console
         params = {
-            "client_id": getenv("GOOGLE_CLIENT_ID"),  # Fetch from .env
-            "redirect_uri": getenv("GOOGLE_REDIRECT_URI"),  # Fetch from .env
+            "client_id": getenv("GOOGLE_CLIENT_ID"),
+            "redirect_uri": getenv("GOOGLE_REDIRECT_URI"),
             "response_type": "code",
             "scope": "https://www.googleapis.com/auth/calendar.events",
-            # https://www.googleapis.com/auth/calendar Main scope for Google Calendar API
-            # Can take multiple weeks for access to be granted
-            "access_type": "offline",
+            "access_type": "offline",  # To get a refresh token
+            "prompt": "consent",  # Optional: forces the consent screen every time, useful for testing refresh token acquisition
         }
         auth_url = f"{calendar_auth_url}?{requests.compat.urlencode(params)}"
         return redirect(auth_url)
     except Exception as e:
-        current_app.logger.error(f"Error connecting calendar: {e}")
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.error(f"Error initiating calendar connection: {e}", exc_info=True)
+        # You might want to redirect to an error page or flash a message
+        return jsonify({"error": f"Could not connect to calendar service: {str(e)}"}), 500
 
 
 @podprofile_bp.route("/calendar_callback", methods=["GET"])
@@ -193,19 +177,21 @@ def calendar_callback():
         # Get the code from the request
         code = request.args.get("code")
         if not code:
-            current_app.logger.error("Authorization code missing in callback")
-            return jsonify({"error": "Authorization code missing"}), 400
+            current_app.logger.error("Authorization code missing in Google Calendar callback.")
+            # Flash a message or redirect to an error page
+            return redirect(url_for("pod_management.podcast_management_page", error="calendar_auth_failed"))
 
         # Get user ID from session
         user_id = session.get("user_id")
         if not user_id:
             current_app.logger.error(
-                "User ID not found in session during calendar callback"
+                "User ID not found in session during calendar callback."
             )
-            return jsonify({"error": "User not authenticated"}), 401
+            # Flash a message or redirect
+            return redirect(url_for("signin_bp.signin_page", error="auth_required"))  # Adjust to your signin route
 
         # Exchange code for tokens
-        token_url = "https://oauth2.googleapis.com/token"
+        token_url = getenv("GOOGLE_TOKEN_URI", "https://oauth2.googleapis.com/token")
         data = {
             "code": code,
             "client_id": getenv("GOOGLE_CLIENT_ID"),
@@ -214,25 +200,37 @@ def calendar_callback():
             "grant_type": "authorization_code",
         }
         response = requests.post(token_url, data=data)
-        response.raise_for_status()
+        response.raise_for_status()  # Will raise an HTTPError for bad responses (4xx or 5xx)
         tokens = response.json()
 
-        # Save tokens to the database using UserRepository
-        from backend.repository.user_repository import UserRepository
+        access_token = tokens.get("access_token")
+        refresh_token = tokens.get("refresh_token")  # Google often only sends this on the first authorization
+
+        if not access_token:
+            current_app.logger.error(f"Access token not found in Google response for user {user_id}. Tokens: {tokens}")
+            return redirect(url_for("pod_management.podcast_management_page", error="token_exchange_failed"))
 
         user_repo = UserRepository()
+        # If refresh_token is None, save_tokens should handle it (e.g., not update it if it already exists)
         save_result = user_repo.save_tokens(
-            user_id, tokens["access_token"], tokens["refresh_token"]
+            user_id, access_token, refresh_token
         )
 
         if "error" in save_result:
-            current_app.logger.error(f"Error saving tokens: {save_result['error']}")
-            return jsonify(save_result), 500
+            current_app.logger.error(f"Error saving Google tokens for user {user_id}: {save_result['error']}")
+            return redirect(url_for("pod_management.podcast_management_page", error="token_save_failed"))
 
         current_app.logger.info(
-            f"Successfully saved Google Calendar tokens for user {user_id}"
+            f"Successfully saved Google Calendar tokens for user {user_id}."
         )
-        return redirect(url_for("podprofile_bp.podprofile"))
+        flash("Google Calendar connected successfully!", "success")
+        # Redirect to the podcast management page where the modal is
+        return redirect(url_for("pod_management.podcast_management_page")) 
+    except requests.exceptions.HTTPError as http_err:
+        current_app.logger.error(f"HTTP error during Google token exchange: {http_err} - Response: {http_err.response.text}", exc_info=True)
+        flash("Failed to connect Google Calendar due to a server error.", "error")
+        return redirect(url_for("pod_management.podcast_management_page", error="google_server_error"))
     except Exception as e:
-        current_app.logger.error(f"Error in calendar callback: {e}", exc_info=True)
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.error(f"Error in Google Calendar callback: {e}", exc_info=True)
+        flash("An unexpected error occurred while connecting Google Calendar.", "error")
+        return redirect(url_for("pod_management.podcast_management_page", error="calendar_callback_error"))
