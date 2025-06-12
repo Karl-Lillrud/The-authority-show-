@@ -90,11 +90,11 @@ export function renderEpisodeDetail(episode) {
   const durationSeconds = episode.duration % 60;
   const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
 
-  const episodeType = episode.episodeType || "Unknown";
-  const link = episode.link || "No link available";
+  const episodeType = episode.episodeType ? episode.episodeType : '<em>Edit episode to choose "type"</em>';
+  const link = episode.link ? episode.link : "<em>Your RSS Feed URL when published</em>";
   const host = episode.author || "Unknown"; // Changed "author" to "host"
-  const fileSize = episode.fileSize || "Unknown";
-  const fileType = episode.fileType || "Unknown";
+  const fileSize = episode.fileSize ? episode.fileSize : "<em>Upload or Record media</em>";
+  const fileType = episode.fileType ? episode.fileType : "<em>Upload or Record media</em>";
 
   episodeDetailElement.innerHTML = `
 <div class="detail-header">
@@ -140,7 +140,7 @@ export function renderEpisodeDetail(episode) {
     <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${episode._id}">\n      ${shared.svgpodcastmanagement.edit}\n    </button>\n    <button class="action-btn delete-btn" id="delete-episode-btn" data-id="${episode._id}">\n      <span class="icon">${shared.svgpodcastmanagement.delete}</span>\n    </button>\n  </div>
 </div>
 
-<div class="podcast-detail-container"></div>
+<div class="podcast-detail-container">
   <!-- Header section with image and basic info -->
   <div class="podcast-header-section">
     <div class="podcast-image-container">
@@ -173,21 +173,21 @@ export function renderEpisodeDetail(episode) {
     
     <!-- Audio Section Wrapper - Only contains the main player now -->
     <div class="audio-section-wrapper" style="margin-top: 1.5rem;">
-      <!-- Main Audio Player -->
-      <div class="main-audio-player">
-        <h3>Main Episode Audio</h3>
+      <!-- Main Media Player -->
+      <div class="main-media-player">
+        <h3>Media Player</h3>
         ${
           episode.audioUrl
             ? `<audio controls style="width: 20%;">
                  <source src="${episode.audioUrl}" type="${fileType || "audio/mpeg"}">
                  Your browser does not support the audio element.
                </audio>`
-            : "<p>No audio available for this episode.</p>"
+            : "<p><em>Upload or Record media</em></p>"
         }
       </div>
     </div>
 
-    <!-- Saved Audio Edits -->
+    <!-- Saved Media Edits -->
     ${
       episode.audioEdits && episode.audioEdits.length > 0
         ? `<div class="audio-edits" style="margin-top: 1.5rem;">
@@ -215,27 +215,25 @@ export function renderEpisodeDetail(episode) {
     }
   </div>
 
-  <!-- Additional details section -->
-  <div class="podcast-details-section">
-    <div class="details-column">
-      <h2 class="section-title">Episode Details</h2>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <h3>Episode Type</h3>
-          <p>${episodeType}</p>
-        </div>
-        <div class="detail-item">
-          <h3>File Size</h3>
-          <p>${fileSize}</p>
-        </div>
-        <div class="detail-item">
-          <h3>File Type</h3>
-          <p>${fileType}</p>
-        </div>
-        <div class="detail-item">
-          <h3>Link</h3>
-          ${link !== "No link available" ? `<a href="${link}" target="_blank">${link}</a>` : `<p>${link}</p>`}
-        </div>
+  <!-- Episode Details section -->
+  <div class="podcast-about-section">
+    <h2 class="section-title">Episode Details</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <h3>Episode Type</h3>
+        <p>${episodeType}</p>
+      </div>
+      <div class="detail-item">
+        <h3>File Size</h3>
+        <p>${fileSize}</p>
+      </div>
+      <div class="detail-item">
+        <h3>File Type</h3>
+        <p>${fileType}</p>
+      </div>
+      <div class="detail-item">
+        <h3>Link</h3>
+        ${link !== "<em>Your RSS Feed URL when published</em>" && link !== "No link available" ? `<a href="${link}" target="_blank">${link}</a>` : `<p>${link}</p>`}
       </div>
     </div>
   </div>
@@ -270,12 +268,10 @@ if (studioButton && !studioButton.disabled) {
   if (aiEditButton) {
     aiEditButton.addEventListener("click", () => {
       const episodeId = aiEditButton.getAttribute("data-id");
-      const episodeTitle = episode.title || "Untitled Episode";
-      let aiEditUrl = `/transcription/ai_edits?episodeId=${episodeId}&episodeTitle=${encodeURIComponent(episodeTitle)}`;
-      if (episode.audioUrl && episode.isImported === false) {
-        aiEditUrl += `&audioUrl=${encodeURIComponent(episode.audioUrl)}`;
-      }
-      window.location.href = aiEditUrl;
+      // Redirect to the Episode To-Do page, opening the AI Workspace tab.
+      // The episode-to-do page should handle the episodeId and openTab parameters.
+      const aiWorkspaceUrl = `/episode-to-do?episodeId=${episodeId}&openTab=workspace`;
+      window.location.href = aiWorkspaceUrl;
     });
   }
 
@@ -579,20 +575,20 @@ popupContent.innerHTML = `
       </select>
     </div>
 
-    <h3 class="form-section-heading">Audio</h3>
+    <h3 class="form-section-heading">Media</h3>
     <div class="field-group full-width">
       <label for="upd-episode-audio" ${isAudioUploadDisabled ? 'style="color: #aaa;"' : ""}>
-        Upload New Audio (Optional)
+        Upload New Media (Optional)
       </label>
-      <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/mp3,audio/wav,audio/mpeg" ${
+      <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/mp3,audio/wav,audio/mpeg,video/mp4" ${
         isAudioUploadDisabled ? 'disabled style="background-color: #eee;"' : ""
       }>
       ${
         isAudioUploadDisabled
-          ? '<p style="font-size: 0.8em; color: #888; margin-top: 5px;">Audio upload disabled for imported episodes.</p>'
+          ? '<p style="font-size: 0.8em; color: #888; margin-top: 5px;">Media upload disabled for imported episodes.</p>'
           : episode.audioUrl
-            ? `<p style="font-size: 0.8em; margin-top: 5px;">Current audio: <a href="${episode.audioUrl}" target="_blank">Listen</a></p>`
-            : '<p style="font-size: 0.8em; margin-top: 5px;">No current audio file.</p>'
+            ? `<p style="font-size: 0.8em; margin-top: 5px;">Current media: <a href="${episode.audioUrl}" target="_blank">Listen</a></p>`
+            : '<p style="font-size: 0.8em; margin-top: 5px;">No current media file.</p>'
       }
     </div>
 
@@ -684,13 +680,13 @@ popup.querySelector("#update-episode-form").addEventListener("submit", async (e)
     if (!file || file.size === 0 || isAudioUploadDisabled) {
       return null;
     }
-    const validTypes = ['audio/mp3', 'audio/wav', 'audio/mpeg'];
+    const validTypes = ['audio/mp3', 'audio/wav', 'audio/mpeg', 'video/mp4'];
     if (!validTypes.includes(file.type)) {
-      return "Audio file must be MP3 or WAV format";
+      return "Media is not a valid file type. (Allowed types: mp3, wav, mpeg, mp4)";
     }
     const maxSize = 500 * 1024 * 1024; // 500MB
     if (file.size > maxSize) {
-      return "Audio file size cannot exceed 500MB";
+      return "Media file size cannot exceed 500MB";
     }
     return null;
   };

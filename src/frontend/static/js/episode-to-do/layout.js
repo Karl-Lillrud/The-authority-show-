@@ -1,125 +1,6 @@
 "use client"
 import { fetchEpisodesByPodcast } from "/static/requests/episodeRequest.js"
 import { fetchTasks } from "/static/requests/podtaskRequest.js"
-import { formatDueDate } from "/static/js/episode-to-do/utils.js"
-
-// Timeline functionality
-export function renderTimeline(state) {
-  const timeline = document.getElementById("timeline")
-  if (!timeline) return
-
-  timeline.innerHTML = ""
-
-  if (!state.selectedEpisode) {
-    timeline.innerHTML = "<p>No episode selected</p>"
-    return
-  }
-
-  // Update timeline header dates
-  const timelineRecordingDate = document.getElementById("timelineRecordingDate")
-  const timelineReleaseDate = document.getElementById("timelineReleaseDate")
-
-  if (timelineRecordingDate) {
-    timelineRecordingDate.textContent =
-      state.selectedEpisode.recordingDate || state.selectedEpisode.recordingAt || "Not scheduled"
-  }
-
-  if (timelineReleaseDate) {
-    timelineReleaseDate.textContent =
-      state.selectedEpisode.releaseDate || state.selectedEpisode.publishDate || "Not scheduled"
-  }
-
-  // Check if we have tasks for the selected episode
-  const episodeTasks = state.tasks.filter(
-    (task) => task.episodeId === state.selectedEpisode._id || task.episodeId === state.selectedEpisode?.id,
-  )
-
-  // Only use tasks that belong to the current episode
-  const tasksToRender = episodeTasks
-
-  // Group tasks by due date
-  const tasksByDueDate = {}
-  tasksToRender.forEach((task) => {
-    if (!task.dueDate) return
-
-    if (!tasksByDueDate[task.dueDate]) {
-      tasksByDueDate[task.dueDate] = []
-    }
-    tasksByDueDate[task.dueDate].push(task)
-  })
-
-  // Sort dates for timeline
-  const sortedDates = Object.keys(tasksByDueDate).sort((a, b) => {
-    // Sort "before" dates first
-    if (a.includes("before") && b.includes("after")) return -1
-    if (a.includes("after") && b.includes("before")) return 1
-
-    // Extract number of days
-    const daysA = Number.parseInt(a.match(/\d+/)?.[0] || "0")
-    const daysB = Number.parseInt(b.match(/\d+/)?.[0] || "0")
-
-    // For "before" dates, higher number comes first
-    if (a.includes("before") && b.includes("before")) return daysB - daysA
-
-    // For "after" dates, lower number comes first
-    if (a.includes("after") && b.includes("after")) return daysA - daysB
-
-    // Recording day is in the middle
-    if (a === "Recording day") return b.includes("before") ? 1 : -1
-    if (b === "Recording day") return a.includes("before") ? -1 : 1
-
-    // If both are actual dates, sort chronologically
-    try {
-      const dateA = new Date(a)
-      const dateB = new Date(b)
-      if (!isNaN(dateA) && !isNaN(dateB)) {
-        return dateA - dateB
-      }
-    } catch (e) {
-      // If date parsing fails, fall back to string comparison
-    }
-
-    return 0
-  })
-
-  if (sortedDates.length === 0) {
-    timeline.innerHTML = "<p>No tasks with due dates available</p>"
-    return
-  }
-
-  sortedDates.forEach((date) => {
-    const timelineItem = document.createElement("div")
-    timelineItem.className = "timeline-item"
-
-    const isRecordingDay = date === "Recording day"
-    const formattedDate = formatDueDate(date)
-
-    timelineItem.innerHTML = `
-      <div class="timeline-node ${isRecordingDay ? "recording-day" : ""}">
-        ${isRecordingDay ? '<i class="fas fa-circle"></i>' : ""}
-      </div>
-      <div class="timeline-date">${formattedDate}</div>
-      <div class="timeline-tasks">
-        ${tasksByDueDate[date]
-          .map(
-            (task) => `
-          <div class="timeline-task ${task.status === "completed" ? "completed" : ""}">
-            ${
-              task.status === "completed"
-                ? '<i class="fas fa-check-circle text-success"></i>'
-                : '<i class="far fa-circle text-muted"></i>'
-            }
-            <span>${task.name}</span>
-          </div>
-        `,
-          )
-          .join("")}
-      </div>
-    `
-
-    timeline.appendChild(timelineItem)
-  })
-}
 
 export function updateProgressBar(state) {
   if (!state.selectedEpisode) return
@@ -161,25 +42,6 @@ export function updateProgressBar(state) {
   }
 }
 
-export function setupTimelineToggle(state) {
-  const toggleBtn = document.getElementById("toggleTimelineBtn")
-  const sidebar = document.getElementById("timelineSidebar")
-
-  if (!toggleBtn || !sidebar) return
-
-  toggleBtn.addEventListener("click", () => {
-    state.showTimeline = !state.showTimeline
-
-    if (state.showTimeline) {
-      sidebar.classList.remove("collapsed")
-      toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>'
-    } else {
-      sidebar.classList.add("collapsed")
-      toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>'
-    }
-  })
-}
-
 export function updateEpisodeDisplay(state) {
   if (!state.selectedEpisode) return
 
@@ -205,9 +67,6 @@ export function updateEpisodeDisplay(state) {
 
   // Update progress bar
   updateProgressBar(state)
-
-  // Update timeline
-  renderTimeline(state)
 }
 
 export async function selectEpisode(episode, state, updateUI) {

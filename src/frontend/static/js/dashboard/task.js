@@ -29,7 +29,7 @@ function handleToggleTasks(event) {
     loadTasksForEpisode(episodeId, tasksContainer);
   } else {
     tasksContainer.style.display = "none";
-    button.textContent = "+";
+    button.textContent = "Add Task";
   }
 }
 

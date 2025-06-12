@@ -355,6 +355,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  align-self: stretch;
 }
 
 .timeline-item {
@@ -452,7 +453,7 @@
 }
 
 .activity-timeline-scroll {
-  max-height: 600px; /* Adjust height for ~5 items depending on your item height */
+ max-height: 900px; /* Adjust height for ~5 items depending on your item height */
   overflow-y: auto;
   padding-right: 4px; /* For scrollbar space */
 }
@@ -577,6 +578,41 @@
   border-bottom: none;
 }
 
+.no-guests-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Adjust as needed */
+  width: 100%;
+}
+
+.no-guests-container span {
+  flex-grow: 1;
+}
+
+.add-guest-dashboard-btn {
+  background-color: var(--highlight-color);
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: bold;
+  transition: all var(--transition-normal);
+  margin-left: var(--spacing-sm); /* Add some space */
+  flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+.add-guest-dashboard-btn:hover {
+  background-color: var(--highlight-hover);
+  transform: scale(1.1);
+}
+
+
 .card-footer {
   padding: var(--spacing-md) var(--spacing-lg);
   background-color: rgba(0, 0, 0, 0.01);
@@ -590,22 +626,23 @@
   background-color: var(--highlight-color);
   color: white;
   border: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  padding: var(--spacing-xs) var(--spacing-md); /* Adjust padding for text */
+  border-radius: var(--radius-medium); /* Make it a rounded rectangle */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.85rem; /* Adjust font size if needed */
+  font-weight: 600; /* Adjust font weight */
   transition: all var(--transition-normal);
   box-shadow: var(--button-shadow);
+  min-width: 80px; /* Ensure a minimum width for "Add Task" */
+  text-align: center;
 }
 
 .toggle-tasks:hover {
   background-color: var(--highlight-hover);
-  transform: scale(1.1);
+  transform: scale(1.05); /* Slight scale up on hover */
   box-shadow: 0 6px 10px -3px rgba(0, 0, 0, 0.2);
 }
 

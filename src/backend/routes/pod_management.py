@@ -1,4 +1,4 @@
-from flask import (render_template, jsonify, Blueprint, g, request, redirect, url_for, flash)
+from flask import (render_template, jsonify, Blueprint, g, request, redirect, url_for, flash, session, current_app)
 from backend.database.mongo_connection import database, collection, collection as team_collection
 from datetime import datetime
 import logging
@@ -6,6 +6,7 @@ import json
 import os
 from backend.utils.scheduler import render_email_content  # Import the reusable function
 from backend.utils.trigger_config import TRIGGERS
+from backend.repository.user_repository import UserRepository # Import UserRepository
 
 dashboardmanagement_bp = Blueprint("dashboardmanagement_bp", __name__)
 pod_management_bp = Blueprint("pod_management", __name__)
@@ -175,3 +176,27 @@ def get_trigger_config():
     except Exception as e:
         logging.error(f"Error fetching trigger configuration: {str(e)}")
         return jsonify({"success": False, "error": str(e)})
+
+# Assuming you have a route to render the podcast management page
+@pod_management_bp.route("/podcast-management", methods=["GET"]) # Example route
+def podcast_management_page():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return redirect(url_for("signin_bp.signin_page")) # Or your signin route
+
+    calendar_connected = False
+    try:
+        user_repo = UserRepository()
+        user_details = user_repo.get_user_by_id(g.user_id)
+        if user_details and user_details.get("google_access_token"):
+            calendar_connected = True
+            current_app.logger.info(
+                f"User {g.user_id} has Google Calendar connected for podcast management page."
+            )
+        else:
+            current_app.logger.info(
+                f"User {g.user_id} does not have Google Calendar connected for podcast management page."
+            )
+    except Exception as e:
+        current_app.logger.error(f"Error checking calendar status for user {g.user_id} on podcast management page: {e}")
+
+    return render_template("podcastmanagement/podcastmanagement.html", calendar_connected=calendar_connected)

@@ -142,6 +142,28 @@ document.addEventListener("DOMContentLoaded", () => {
       createEpisodeButton.click() // Simulate a click to open the popup
     }
   }
+
+  // Check for 'openAddGuest' query parameter
+  const openAddGuest = urlParams.get("openAddGuest");
+  const episodeIdFromQuery = urlParams.get("episodeId");
+  const podcastIdFromQuery = urlParams.get("podcastId");
+
+  if (openAddGuest === "true") {
+    if (episodeIdFromQuery) {
+      shared.selectedEpisodeIdForGuestModal = episodeIdFromQuery;
+    }
+    if (podcastIdFromQuery) {
+      shared.selectedPodcastIdForGuestModal = podcastIdFromQuery;
+    }
+    
+    const addGuestButton = document.getElementById("add-guest-btn"); // The button in the sidebar
+    if (addGuestButton) {
+      addGuestButton.click(); // Simulate click to open the popup via existing mechanism
+    }
+    // Clean up query params to prevent re-triggering on refresh if not desired
+    // Consider if this is needed or if the modal clearing shared vars is enough
+    // window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+  }
  
   // Highlight editing logic
   function showHighlightPopup(highlight) {
@@ -368,10 +390,164 @@ function setupMobileSidebar() {
 // Export shared utilities and variables
 export const shared = {
   selectedPodcastId: null,
+  selectedEpisodeIdForGuestModal: null, 
+  selectedPodcastIdForGuestModal: null, 
   svgpodcastmanagement,
 }
  
 document.getElementById("guests-link").addEventListener("click", (event) => {
   event.preventDefault()
 })
- 
+
+document.addEventListener("DOMContentLoaded", function () {
+  const addPodcastModal = document.getElementById("addPodcastModal");
+  const openAddPodcastModalBtn = document.getElementById(
+    "openAddPodcastModalBtn"
+  );
+  const closeAddPodcastModalBtn = document.getElementById(
+    "closeAddPodcastModalBtn"
+  );
+  const cancelAddPodcastBtn = document.getElementById("cancelAddPodcastBtn");
+  const connectCalendarModalBtn = document.getElementById(
+    "connect-calendar-modal-btn" // This ID must match the button in your HTML
+  );
+  const addPodcastForm = document.getElementById("addPodcastForm");
+
+  if (openAddPodcastModalBtn) {
+    openAddPodcastModalBtn.addEventListener("click", function () {
+      if (addPodcastModal) addPodcastModal.style.display = "flex";
+    });
+  }
+
+  if (closeAddPodcastModalBtn) {
+    closeAddPodcastModalBtn.addEventListener("click", function () {
+      if (addPodcastModal) addPodcastModal.style.display = "none";
+    });
+  }
+
+  if (cancelAddPodcastBtn) {
+    cancelAddPodcastBtn.addEventListener("click", function () {
+      if (addPodcastModal) addPodcastModal.style.display = "none";
+    });
+  }
+
+  // Close modal if clicked outside the form-box
+  if (addPodcastModal) {
+    addPodcastModal.addEventListener("click", function (event) {
+      if (event.target === addPodcastModal) {
+        addPodcastModal.style.display = "none";
+      }
+    });
+  }
+
+  // Event listener for the "Connect Google Calendar" button in the modal
+  if (connectCalendarModalBtn) {
+    connectCalendarModalBtn.addEventListener("click", function() {
+      // Redirect to the Google Calendar OAuth flow
+      window.location.href = "/connect_calendar";
+    });
+  }
+  
+  // Calendar info button and tooltip functionality
+  const calendarInfoBtn = document.getElementById("calendar-info-btn");
+  const calendarInfoTooltip = document.getElementById("calendar-info-tooltip");
+  const tooltipCloseBtn = document.querySelector(".tooltip-close-btn");
+  
+  if (calendarInfoBtn && calendarInfoTooltip) {
+    // Show tooltip when info button is clicked
+    calendarInfoBtn.addEventListener("click", function(event) {
+      event.stopPropagation(); // Prevent click from bubbling to document
+      calendarInfoTooltip.style.display = "block";
+    });
+    
+    // Hide tooltip when close button is clicked
+    if (tooltipCloseBtn) {
+      tooltipCloseBtn.addEventListener("click", function(event) {
+        event.stopPropagation(); // Prevent click from bubbling
+        calendarInfoTooltip.style.display = "none";
+      });
+    }
+    
+    // Hide tooltip when clicking outside
+    document.addEventListener("click", function(event) {
+      if (calendarInfoTooltip.style.display === "block" && 
+          !calendarInfoTooltip.contains(event.target) && 
+          event.target !== calendarInfoBtn) {
+        calendarInfoTooltip.style.display = "none";
+      }
+    });
+  }
+  
+  if (addPodcastForm) {
+    addPodcastForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      // Logic to handle new podcast submission
+      // This is placeholder logic, adapt to your actual implementation
+      const formData = new FormData(addPodcastForm);
+      const data = Object.fromEntries(formData.entries());
+      console.log("Submitting new podcast:", data);
+      // Example fetch:
+      // fetch('/api/podcasts', { 
+      //   method: 'POST', 
+      //   body: JSON.stringify(data), 
+      //   headers: {'Content-Type': 'application/json'} 
+      // })
+      // .then(response => response.json())
+      // .then(result => {
+      //   console.log('Podcast created:', result);
+      //   if (addPodcastModal) addPodcastModal.style.display = 'none';
+      //   // Optionally, refresh podcast list or give user feedback
+      // })
+      // .catch(error => console.error('Error creating podcast:', error));
+      alert("Podcast creation logic needs to be implemented here.");
+    });
+  }
+
+  // Placeholder for any other functions like loading podcasts
+  // function loadPodcasts() {
+  //   console.log("Loading podcasts...");
+  //   // Fetch and display podcasts
+  // }
+  // if (document.getElementById("podcastListContainer")) {
+  //    loadPodcasts();
+  // }
+});
+
+// Add this to your DOMContentLoaded event handler
+document.addEventListener("DOMContentLoaded", function() {
+  // Event listener for the Connect Google Calendar button
+  const connectCalendarModalBtn = document.getElementById("connect-calendar-modal-btn");
+  if (connectCalendarModalBtn) {
+    connectCalendarModalBtn.addEventListener("click", function() {
+      window.location.href = "/connect_calendar";
+    });
+  }
+  
+  // Question mark tooltip functionality
+  const calendarInfoBtn = document.getElementById("calendar-info-btn");
+  const tooltipContent = document.getElementById("calendar-tooltip-content");
+  
+  if (calendarInfoBtn && tooltipContent) {
+    let tooltipVisible = false;
+    
+    // Toggle tooltip display on question mark click
+    calendarInfoBtn.addEventListener("click", function(event) {
+      event.stopPropagation();
+      tooltipVisible = !tooltipVisible;
+      
+      if (tooltipVisible) {
+        tooltipContent.classList.add("active");
+      } else {
+        tooltipContent.classList.remove("active");
+      }
+    });
+    
+    // Hide tooltip when clicking elsewhere
+    document.addEventListener("click", function(event) {
+      if (tooltipVisible && event.target !== calendarInfoBtn && !tooltipContent.contains(event.target)) {
+        tooltipContent.classList.remove("active");
+        tooltipVisible = false;
+      }
+    });
+  }
+});

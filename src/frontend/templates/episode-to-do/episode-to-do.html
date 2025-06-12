@@ -40,10 +40,10 @@
       <div class="progress-tracker">
         <div class="progress-header">
           <span class="progress-label">Episode Progress</span>
-          <span id="progressText" class="progress-text">8 of 15 tasks completed (53%)</span>
+          <span id="progressText" class="progress-text"></span>
         </div>
         <div class="progress-bar-bg">
-          <div id="progressBar" class="progress-bar" style="width: 53%"></div>
+          <div id="progressBar" class="progress-bar"></div>
         </div>
       </div>
     </header>
@@ -192,10 +192,51 @@
   <script>
      window.CURRENT_USER_ID = "{{ user_id }}";
   localStorage.setItem("user_id", "{{ user_id }}");
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const openTab = urlParams.get('openTab');
+    const episodeIdFromUrl = urlParams.get('episodeId');
+
+    if (openTab) {
+        // Find all tab buttons and panes
+        const tabButtons = document.querySelectorAll('.tabs-list .tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-content .tab-pane');
+
+        // Deactivate all current active tabs and panes
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabPanes.forEach(pane => pane.classList.remove('active'));
+
+        // Activate the target tab and pane
+        const targetTabButton = document.querySelector(`.tab-btn[data-tab="${openTab}"]`);
+        const targetTabPane = document.getElementById(`${openTab}-tab`);
+
+        if (targetTabButton && targetTabPane) {
+            targetTabButton.classList.add('active');
+            targetTabPane.classList.add('active');
+            console.log(`Switched to tab: ${openTab}`);
+
+            // If the opened tab is 'workspace' and we have an episodeId,
+            // ensure the iframe source is correctly set if needed.
+            // For now, we assume the server correctly populates {{ episode_id }}
+            // in the iframe src based on the episodeIdFromUrl.
+            if (openTab === 'workspace' && episodeIdFromUrl) {
+                const iframe = targetTabPane.querySelector('iframe');
+                if (iframe) {
+                    // Example: if server didn't set {{ episode_id }} from query param:
+                    // const expectedSrc = `/transcription/ai_edits_index?episodeId=${episodeIdFromUrl}`;
+                    // if (!iframe.src.includes(`episodeId=${episodeIdFromUrl}`)) {
+                    //    iframe.src = expectedSrc;
+                    //    console.log(`Updated iframe src to: ${iframe.src}`);
+                    // }
+                }
+            }
+        } else {
+            console.warn(`Tab or pane not found for: ${openTab}`);
+        }
+    }
+  });
   </script>
   <script src="/static/js/landingpage/audio-player.js"></script>
-  <script src="/static/js/ai_edits/ai_edits.js"></script>
-  </script>
-  
 </body>
 </html>

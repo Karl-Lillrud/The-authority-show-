@@ -113,31 +113,6 @@ body {
     margin-bottom: 0.8rem;
 }
 
-/* Styles for the "Calendar Connected" button */
-#calendar-connect-btn.calendar-connected-btn {
-    background-color: rgba(255, 115, 0, 0.15) !important; /* Pale orange */
-    color: #FF7300 !important; /* Highlight color text */
-    border: 1px solid rgba(255, 115, 0, 0.3) !important;
-    cursor: pointer !important; /* Make it clickable to open calendar */
-    font-weight: 500;
-    padding: 8px 16px !important;
-    border-radius: 20px !important;
-    font-size: 0.9rem !important;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-#calendar-connect-btn.calendar-connected-btn:hover {
-    background-color: rgba(255, 115, 0, 0.25) !important;
-    transform: translateY(-1px);
-}
-
-#calendar-connect-btn.calendar-connected-btn::before {
-    content: "✓"; /* Checkmark */
-    font-weight: bold;
-}
-
 /* Header and Logo */
 header {
   position: relative;
@@ -335,9 +310,9 @@ body.dark-mode .button-secondary:hover {
 }
 
 .help-button {
-  width: 16px; /* Reduced from 20px */
-  height: 16px; /* Reduced from 20px */
-  font-size: 12px; /* Reduced from 16px */
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
   background-color: var(--text-color-light);
   color: white;
   font-weight: bold;
@@ -347,8 +322,8 @@ body.dark-mode .button-secondary:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  vertical-align: middle; /* Align with the label */
-  transform: translate(-4mm, -1mm); /* Moved 2mm up and 2mm left */
+  vertical-align: middle;
+  transform: translate(0mm, -1mm); /* Adjusted from 4mm to 0mm, which is halfway back */
 }
 
 .help-text {
@@ -491,7 +466,7 @@ body.dark-mode .help-button {
   position: relative;
   display: flex; /* Changed from inline-flex to flex */
   align-items: center; 
-  gap: 0.5rem; /* Increased gap for better spacing */
+  gap: 0.75rem; /* Adjusted from 1rem to 0.75rem, which is halfway back to 0.5rem */
 }
 
 .label-group .help-button {
@@ -507,6 +482,7 @@ body.dark-mode .help-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  margin-left: 6px; /* Adjusted from 12px to 6px, which is halfway back */
 }
 
 .label-group .help-text {
@@ -1195,65 +1171,6 @@ body.dark-mode .error-container {
   .popup-content {
     padding: var(--spacing-lg);
   }
-}
-
-#connectCalendar {
-  margin-top: var(--spacing-sm); /* Add spacing above the button */
-  margin-bottom: calc(var(--spacing-md) * 0.5); /* Reduced by 50% from var(--spacing-md) */
-  width: auto; /* Change from 100% to auto to make it fit content */
-  max-width: 80%; /* Limit maximum width */
-}
-
-.connect-calendar-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  padding-right: 10px;
-}
-
-.calendar-help-button {
-  font-size: 0.8rem;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 16px; /* Increased from 8px to 16px to move it further to the right */
-  position: relative; /* Changed from absolute positioning */
-}
-
-.calendar-help-text {
-  visibility: hidden;
-  opacity: 0;
-  position: absolute;
-  top: 30px; /* Position below the button */
-  right: 0; /* Align with right side of the help button */
-  width: 300px;
-  background-color: #333;
-  color: white;
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius-sm);
-  font-size: 0.9rem;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-  z-index: 100;
-  text-align: left;
-  transition: opacity 0.3s, visibility 0.3s;
-}
-
-.calendar-help-button:hover .calendar-help-text,
-.calendar-help-button:hover + .help-text {
-  visibility: visible;
-  opacity: 1;
-}
-
-#rssLabel {
-  margin-right: var(--spacing-md);
-}
-
-#rss-help-button {
-  margin-bottom: calc(var(--spacing-xs) * -1);
 }
 
 #get-started-btn {

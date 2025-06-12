@@ -73,32 +73,15 @@
       <div class="container" id="pod-name-section">
         <h1 class="fancy-heading">POD INFO</h1>
         
-        <!-- Connect Your Calendar Button -->
-        <div class="form-group">
-          <div class="label-group">
-            <button id="connectCalendar" class="button-primary">
-              Connect Google Calendar
-            </button>
-            <button class="help-button calendar-help-button" title="Click to learn more">?</button>
-            <span class="help-text">
-              To connect your Google Calendar, click the button below and follow the
-              authorization steps. This will allow us to sync your podcast schedule
-              with your calendar.
-            </span>
-          </div>
-        </div>
-
         <form id="podNameForm">
           <div class="form-group">
             <div class="label-group">
               <label for="podRss" id="rssLabel">RSS</label>
-              <button class="help-button" id="rss-help-button">?</button>
-              <span class="help-text">
-                To find your podcast RSS feed URL, log in to your podcast
-                hosting platform, navigate to your podcast settings or
-                distribution options, and look for the "RSS Feed" section and
-                paste that URL here.
-              </span>
+              <button type="button" class="help-button" style="margin-left: 4px;">?</button>
+              <div class="help-text">
+                Enter the URL of your podcast's RSS feed. This is how podcast platforms like 
+                Spotify and Apple Podcasts find and distribute your podcast.
+              </div>
             </div>
             <input
               type="text"
