@@ -578,6 +578,41 @@
   border-bottom: none;
 }
 
+.no-guests-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Adjust as needed */
+  width: 100%;
+}
+
+.no-guests-container span {
+  flex-grow: 1;
+}
+
+.add-guest-dashboard-btn {
+  background-color: var(--highlight-color);
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: bold;
+  transition: all var(--transition-normal);
+  margin-left: var(--spacing-sm); /* Add some space */
+  flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+.add-guest-dashboard-btn:hover {
+  background-color: var(--highlight-hover);
+  transform: scale(1.1);
+}
+
+
 .card-footer {
   padding: var(--spacing-md) var(--spacing-lg);
   background-color: rgba(0, 0, 0, 0.01);

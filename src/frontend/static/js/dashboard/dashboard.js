@@ -442,6 +442,8 @@ async function populateGuestList(card, episode) {
     if (!guestList) return;
 
     const guests = await fetchGuestsByEpisode(episode.id || episode._id);
+    const currentEpisodeId = episode.id || episode._id;
+    const currentPodcastId = episode.podcastId || episode.podcast_id;
 
     guestList.innerHTML = "";
     if (guests.length > 0) {
@@ -451,9 +453,36 @@ async function populateGuestList(card, episode) {
         guestList.appendChild(li);
       });
     } else {
-      const noGuestMsg = document.createElement("li");
-      noGuestMsg.textContent = "No guests available";
-      guestList.appendChild(noGuestMsg);
+      const noGuestMsgContainer = document.createElement("div");
+      noGuestMsgContainer.classList.add("no-guests-container");
+
+      const noGuestMsg = document.createElement("span");
+      noGuestMsg.textContent = "No guests available. ";
+      noGuestMsgContainer.appendChild(noGuestMsg);
+
+      const addGuestBtn = document.createElement("button");
+      addGuestBtn.classList.add("add-guest-dashboard-btn");
+      addGuestBtn.innerHTML = "+";
+      addGuestBtn.title = "Add Guest";
+      addGuestBtn.dataset.episodeId = currentEpisodeId;
+      addGuestBtn.dataset.podcastId = currentPodcastId;
+
+      addGuestBtn.addEventListener("click", () => {
+        const episodeId = addGuestBtn.dataset.episodeId;
+        const podcastId = addGuestBtn.dataset.podcastId;
+        if (episodeId && podcastId) {
+          window.location.href = `/podcastmanagement?openAddGuest=true&episodeId=${episodeId}&podcastId=${podcastId}`;
+        } else {
+          console.error("Episode ID or Podcast ID is missing for Add Guest button.");
+          // Optionally, redirect to a generic add guest page or show an error
+          window.location.href = `/podcastmanagement?openAddGuest=true`;
+        }
+      });
+
+      noGuestMsgContainer.appendChild(addGuestBtn);
+      const listItem = document.createElement("li");
+      listItem.appendChild(noGuestMsgContainer);
+      guestList.appendChild(listItem);
     }
   } catch (error) {
     console.error("Error fetching guests for episode:", error);
