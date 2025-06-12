@@ -54,6 +54,7 @@ from backend.utils.scheduler import start_scheduler
 from backend.utils.credit_scheduler import init_credit_scheduler
 from backend.utils import venvupdate
 from backend.services.activateVerificationService import verify_activation_file_exists
+from backend.utils.email_clicks import email_clicks_bp
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -114,6 +115,7 @@ def create_app():
     app.register_blueprint(publish_bp)
     app.register_blueprint(audio_pipeline_bp)
     app.register_blueprint(email_change_bp)
+    app.register_blueprint(email_clicks_bp, url_prefix='/tracking')
 
     @app.before_request
     def load_user():
