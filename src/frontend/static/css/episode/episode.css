@@ -196,3 +196,21 @@ audio {
 #guest-about-social a.youtube {
   color: #ff0000;
 }
+
+/* Greenroom Countdown Timer Styles */
+/* You might want to create a greenroom.css if styles become more specific */
+.countdown-container-greenroom {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: #e8f5e9; /* A slightly different color for greenroom */
+    border: 1px solid #c8e6c9;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 1em;
+    color: #1b5e20; /* Dark green text */
+}
+
+.countdown-container-greenroom span {
+    font-weight: bold;
+    color: #2e7d32; /* Medium green for the timer itself */
+}

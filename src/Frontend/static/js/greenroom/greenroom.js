@@ -342,3 +342,17 @@ initializeDevices();
 if (episodeId) {
     loadGuestsForEpisode(episodeId);
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    // The countdown timer for '#greenroom-countdown-timer' and '#greenroom-countdown-container'
+    // is initialized by an inline script in greenroom.html.
+    // Ensure no logic here attempts to re-initialize or manage that specific countdown.
+
+    console.log("Greenroom main DOM content loaded. Inline script handled early countdown for the main timer.");
+
+    // Other DOM-dependent initializations for the greenroom page can remain here.
+    // For example, fetching guest lists, setting up device previews, Socket.IO for greenroom events, etc.
+    // initializeDeviceSelectors();
+    // loadGuestList();
+    // connectToGreenroomSocket();
+});

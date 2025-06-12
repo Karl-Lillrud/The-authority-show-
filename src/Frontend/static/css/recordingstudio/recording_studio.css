@@ -553,6 +553,23 @@ html, body {
   display: block;
 }
 
+/* Countdown Timer Styles */
+.countdown-container-studio {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 1em;
+  color: #333;
+}
+
+.countdown-container-studio span {
+  font-weight: bold;
+  color: #d219b9; /* Example color, adjust as needed */
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .header-left h1 {

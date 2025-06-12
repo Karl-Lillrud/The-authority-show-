@@ -232,4 +232,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             token
         });
     }
+
+    console.log("Recording studio main DOM content loaded. The main countdown timer is handled by an inline script in the HTML.");
+
+    // Other DOM-dependent initializations specific to the recording studio page functionality 
+    // (e.g., WebRTC setup, participant list management, media controls, Socket.IO event listeners) 
+    // should be placed here.
+
+    // Example:
+    // if (typeof initializeWebRTC === 'function') {
+    //   initializeWebRTC();
+    // }
+    // if (typeof initializeSocketConnections === 'function') {
+    //   initializeSocketConnections();
+    // }
+    // if (typeof setupStudioUIEventListeners === 'function') {
+    //   setupStudioUIEventListeners();
+    // }
 });
+
+// The startLiveCountdown function, if it was previously defined in this file
+// for the main page timer, is no longer needed here as that timer is handled
+// by an inline script in recording_studio.html.
+// If this function was a general utility for other timers on this page,
+// it could remain, but it must not be called for the main countdown elements.
+// For clarity and to resolve the reported error, ensure no code in this file
+// attempts to access or manipulate 'countdown-timer' or 'countdown-timer-container'.
