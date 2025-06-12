@@ -192,7 +192,7 @@ def send_email(to_email, subject, body, image_path=None):
         # Create the email message
         msg = MIMEMultipart("alternative")
         # Set the From header with display name and email address
-        msg["From"] = formataddr(("PodManager.ai", EMAIL_USER))
+        msg["From"] = formataddr(("PodManager.AI", EMAIL_USER))
         msg["To"] = to_email
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "html"))
@@ -386,13 +386,13 @@ def send_podcaster_activation_email(email, activation_link):
     Sends an activation email specifically for podcasters found by the scraper.
     """
     try:
-        subject = "🚀 Activate Your Free PodManager.ai Account!"
+        subject = "🚀 Activate Your Free PodManager.AI Account!"
         # Email body using the requested text
         body = f"""
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <p>Hello,</p>
-                <p>Have you heard about <strong>PodManager.ai</strong>? The best platform on the planet for Podcasters. The platform where you can do everything in one place.</p>
+                <p>Have you heard about <strong>PodManager.AI</strong>? The best platform on the planet for Podcasters. The platform where you can do everything in one place.</p>
                 <p>We got you! We've found your podcast and prepared an account for you.</p>
                 <p>Just press the link below and you are automatically registered to the PodManager platform! It’s completely free, and if you choose to stay with us, you will be rewarded!</p>
                 <p style="margin: 20px 0;">
@@ -401,7 +401,7 @@ def send_podcaster_activation_email(email, activation_link):
                     </a>
                 </p>
                 <p>This link is unique to you and will handle the activation.</p>
-                <p>Best regards,<br>The PodManager.ai Team</p>
+                <p>Best regards,<br>The PodManager.AI Team</p>
             </body>
         </html>
         """
@@ -485,7 +485,7 @@ def send_beta_invite_email(email, user_name=None):
     Sends the PodManager beta invite email using the correct HTML template.
     """
     
-    subject = "🎉 Welcome to PodManager.ai Beta – New Features Unlocked!"
+    subject = "🎉 Welcome to PodManager.AI Beta – New Features Unlocked!"
     # Render the correct template for the beta invite
     body = render_template(
         "emails/podmanager-beta-invite.html",
