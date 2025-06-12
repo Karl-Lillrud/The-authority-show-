@@ -270,12 +270,10 @@ if (studioButton && !studioButton.disabled) {
   if (aiEditButton) {
     aiEditButton.addEventListener("click", () => {
       const episodeId = aiEditButton.getAttribute("data-id");
-      const episodeTitle = episode.title || "Untitled Episode";
-      let aiEditUrl = `/transcription/ai_edits?episodeId=${episodeId}&episodeTitle=${encodeURIComponent(episodeTitle)}`;
-      if (episode.audioUrl && episode.isImported === false) {
-        aiEditUrl += `&audioUrl=${encodeURIComponent(episode.audioUrl)}`;
-      }
-      window.location.href = aiEditUrl;
+      // Redirect to the Episode To-Do page, opening the AI Workspace tab.
+      // The episode-to-do page should handle the episodeId and openTab parameters.
+      const aiWorkspaceUrl = `/episode-to-do?episodeId=${episodeId}&openTab=workspace`;
+      window.location.href = aiWorkspaceUrl;
     });
   }
 
