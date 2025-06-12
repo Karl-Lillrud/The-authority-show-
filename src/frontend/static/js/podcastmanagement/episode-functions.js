@@ -90,11 +90,11 @@ export function renderEpisodeDetail(episode) {
   const durationSeconds = episode.duration % 60;
   const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
 
-  const episodeType = episode.episodeType || "Unknown";
-  const link = episode.link || "No link available";
+  const episodeType = episode.episodeType ? episode.episodeType : '<em>Edit episode to choose "type"</em>';
+  const link = episode.link ? episode.link : "<em>Your RSS Feed URL when published</em>";
   const host = episode.author || "Unknown"; // Changed "author" to "host"
-  const fileSize = episode.fileSize || "Unknown";
-  const fileType = episode.fileType || "Unknown";
+  const fileSize = episode.fileSize ? episode.fileSize : "<em>Upload or Record media</em>";
+  const fileType = episode.fileType ? episode.fileType : "<em>Upload or Record media</em>";
 
   episodeDetailElement.innerHTML = `
 <div class="detail-header">
@@ -140,7 +140,7 @@ export function renderEpisodeDetail(episode) {
     <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${episode._id}">\n      ${shared.svgpodcastmanagement.edit}\n    </button>\n    <button class="action-btn delete-btn" id="delete-episode-btn" data-id="${episode._id}">\n      <span class="icon">${shared.svgpodcastmanagement.delete}</span>\n    </button>\n  </div>
 </div>
 
-<div class="podcast-detail-container"></div>
+<div class="podcast-detail-container">
   <!-- Header section with image and basic info -->
   <div class="podcast-header-section">
     <div class="podcast-image-container">
@@ -182,7 +182,7 @@ export function renderEpisodeDetail(episode) {
                  <source src="${episode.audioUrl}" type="${fileType || "audio/mpeg"}">
                  Your browser does not support the audio element.
                </audio>`
-            : "<p>No media available for this episode.</p>"
+            : "<p><em>Upload or Record media</em></p>"
         }
       </div>
     </div>
@@ -215,27 +215,25 @@ export function renderEpisodeDetail(episode) {
     }
   </div>
 
-  <!-- Additional details section -->
-  <div class="podcast-details-section">
-    <div class="details-column">
-      <h2 class="section-title">Episode Details</h2>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <h3>Episode Type</h3>
-          <p>${episodeType}</p>
-        </div>
-        <div class="detail-item">
-          <h3>File Size</h3>
-          <p>${fileSize}</p>
-        </div>
-        <div class="detail-item">
-          <h3>File Type</h3>
-          <p>${fileType}</p>
-        </div>
-        <div class="detail-item">
-          <h3>Link</h3>
-          ${link !== "No link available" ? `<a href="${link}" target="_blank">${link}</a>` : `<p>${link}</p>`}
-        </div>
+  <!-- Episode Details section -->
+  <div class="podcast-about-section">
+    <h2 class="section-title">Episode Details</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <h3>Episode Type</h3>
+        <p>${episodeType}</p>
+      </div>
+      <div class="detail-item">
+        <h3>File Size</h3>
+        <p>${fileSize}</p>
+      </div>
+      <div class="detail-item">
+        <h3>File Type</h3>
+        <p>${fileType}</p>
+      </div>
+      <div class="detail-item">
+        <h3>Link</h3>
+        ${link !== "<em>Your RSS Feed URL when published</em>" && link !== "No link available" ? `<a href="${link}" target="_blank">${link}</a>` : `<p>${link}</p>`}
       </div>
     </div>
   </div>
