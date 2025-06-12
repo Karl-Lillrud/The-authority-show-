@@ -160,8 +160,28 @@ endblock %} {% block content %}
               </div>
             </div>
             <div class="field-group">
-              <label for="google-cal">Google Calendar URL</label>
-              <input type="url" id="google-cal" name="googleCal" />
+              <label for="google-cal">Connect Google Calendar</label>
+              <div class="calendar-button-container">
+                <button 
+                  type="button" 
+                  id="connect-calendar-modal-btn" 
+                  class="button-primary calendar-button {% if calendar_connected %}calendar-connected-btn{% endif %}"
+                >
+                  {% if calendar_connected %}
+                    <span>Calendar Connected</span>
+                    <i class="fas fa-check"></i>
+                  {% else %}
+                    <span>Connect Google Calendar</span>
+                    <i class="fas fa-calendar-plus"></i>
+                  {% endif %}
+                </button>
+                
+                <button type="button" class="tooltip-btn" id="calendar-info-btn">?</button>
+                
+                <div class="tooltip-content" id="calendar-tooltip-content">
+                  Connect your Google Calendar to automatically schedule and manage podcast recordings and guest appearances. This will allow PodManager to create events and send invitations.
+                </div>
+              </div>
             </div>
             <!--
               <div class="field-group">
@@ -424,6 +444,63 @@ endblock %} {% block content %}
         </div>
       </div>
     </div>
+
+    <!-- Add New Podcast Modal -->
+    <div id="addPodcastModal" class="popup" style="display: none">
+      <div class="form-box">
+        <span class="close-btn" id="closeAddPodcastModalBtn">&times;</span>
+        <h2 class="form-title">Add New Podcast</h2>
+        <form id="addPodcastForm">
+          <div class="field-group">
+            <label for="new-podcast-name">Podcast Name</label>
+            <input
+              type="text"
+              id="new-podcast-name"
+              name="podcastName"
+              required
+            />
+          </div>
+          <div class="field-group">
+            <label for="new-podcast-rss">RSS Feed URL</label>
+            <input type="url" id="new-podcast-rss" name="rssFeed" required />
+          </div>
+          
+
+          <div class="field-group">
+            <label for="connect-calendar-modal-btn">Calendar Integration</label>
+            <div class="calendar-button-container">
+              <button 
+                type="button" 
+                id="connect-calendar-modal-btn" 
+                class="calendar-button {% if calendar_connected %}calendar-connected-btn{% endif %}"
+              >
+                {% if calendar_connected %} Calendar Connected
+                <i class="fas fa-check"></i>
+                {% else %} Connect Google Calendar
+                <i class="fas fa-calendar-plus"></i>
+                {% endif %}
+              </button>
+              
+              <button type="button" class="tooltip-btn" id="calendar-info-btn">?</button>
+              
+              <div class="tooltip-content" id="calendar-tooltip-content">
+                Connect your Google Calendar to automatically schedule and manage podcast recordings and guest appearances. This will allow PodManager to create events and send invitations.
+              </div>
+            </div>
+          </div>
+          
+          <!-- Other fields for podcast details: description, image, category, author etc. -->
+          
+          <div class="form-actions">
+            <button type="button" class="cancel-btn" id="cancelAddPodcastBtn">
+              Cancel
+            </button>
+            <button type="submit" class="save-btn">Create Podcast</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </main>
 </div>
 
