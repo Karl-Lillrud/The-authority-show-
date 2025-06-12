@@ -245,7 +245,7 @@ async function fetchAndDisplayEpisodesWithGuests() {
       console.warn("Cards container not found.");
       return;
     }
-    const initialEpisodes = activeEpisodes.slice(0, 3);
+    const initialEpisodes = activeEpisodes.slice(0, 2);
     let isExpanded = false;
 
     await displayEpisodes(initialEpisodes, container);
@@ -362,12 +362,15 @@ function createEpisodeCard(episode) {
         <div class="card-header">
             <img class="podcast-logo" src="/static/images/default-podcast-logo.png" alt="Podcast Logo">
             <div class="card-title">
-                <h3>${episode.title}</h3>
+                <h3>${episode.title.slice(0, 30)}</h3>
                 <div class="episode-meta">
-                    <span class="episode-status ${statusClass}">${englishStatus}</span>
-                    <span class="episode-date">${formatDate(
-                      episode.recordingDate || episode.createdAt || new Date()
-                    )}</span>
+
+                
+
+                <span class="episode-status ${statusClass}">${englishStatus}</span>
+                <span class="episode-date">${formatDate(
+                  episode.recordingDate || episode.createdAt || new Date()
+                )}</span>
                 </div>
             </div>
         </div>
