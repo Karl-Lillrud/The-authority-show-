@@ -1,7 +1,7 @@
 "use client"
 
 import { fetchPodcasts } from "/static/requests/podcastRequests.js"
-import { fetchAllEpisodes, fetchUnpublishedEpisodesByPodcast } from "/static/requests/episodeRequest.js"
+import { fetchAllEpisodes } from "/static/requests/episodeRequest.js"
 import { fetchTasks, fetchLocalDefaultTasks } from "/static/requests/podtaskRequest.js"
 
 // Import components
@@ -9,14 +9,13 @@ import { initTaskPageWithComments, renderEnhancedTaskList } from "/static/js/epi
 import { renderKanbanBoard } from "/static/js/episode-to-do/kanban-page.js"
 import { renderWorkflowEditor } from "/static/js/episode-to-do/workflow-page.js"
 import {
-  renderTimeline,
   updateProgressBar,
-  setupTimelineToggle,
   updateEpisodeDisplay,
   populateEpisodesList,
   populateEpisodeDropdown,
   setupEpisodeDropdown,
   populatePodcastSelector,
+  selectPodcast,
 } from "/static/js/episode-to-do/layout.js"
 import {
   setupTabs,
@@ -63,40 +62,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (state.podcasts.length > 0) {
         state.activePodcast = state.podcasts[0]
 
-        // Fetch episodes for the active podcast - USE NEW FUNCTION TO GET ONLY UNPUBLISHED EPISODES
-        const episodesData = await fetchUnpublishedEpisodesByPodcast(state.activePodcast._id)
-        console.log("Unpublished episodes data:", episodesData)
-        state.episodes = episodesData || []
-
-        if (state.episodes.length > 0) {
-          state.selectedEpisode = state.episodes[0]
-
-          // Fetch tasks for the selected episode
-          const tasksData = await fetchTasks()
-          console.log("Tasks data:", tasksData)
-
-          // Filter tasks for the selected episode
-          state.tasks = tasksData
-            ? tasksData.filter(
-                (task) => task.episodeId === state.selectedEpisode._id || task.episodeId === state.selectedEpisode.id,
-              )
-            : []
-
-          // Load comments for each task
-          if (state.tasks.length > 0) {
-            console.log("Loading comments for tasks...")
-            for (const task of state.tasks) {
-              try {
-                // We'll load comments when tasks are expanded to avoid too many requests at once
-                if (!task.comments) {
-                  task.comments = []
-                }
-              } catch (commentError) {
-                console.error("Error initializing comments for task:", commentError)
-              }
-            }
-          }
-        }
+        // IMPORTANT FIX: Instead of initializing data here, we'll use the same
+        // selectPodcast function that's used when clicking a podcast
+        // This ensures consistent behavior between initial load and manual selection
+        await selectPodcast(state.activePodcast, state, () => {
+          console.log("Initial podcast selection complete")
+        })
       } else {
         // If no podcasts, try to fetch all episodes
         const allEpisodes = await fetchAllEpisodes()
@@ -228,9 +199,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Populate kanban board
       renderKanbanBoard(state, updateUI)
 
-      // Populate timeline
-      renderTimeline(state)
-
       // Update episode display
       updateEpisodeDisplay(state)
 
@@ -245,9 +213,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Set up tab switching
     setupTabs(state, updateUI)
-
-    // Set up timeline toggle
-    setupTimelineToggle(state)
 
     // Set up episode dropdown
     setupEpisodeDropdown(state)

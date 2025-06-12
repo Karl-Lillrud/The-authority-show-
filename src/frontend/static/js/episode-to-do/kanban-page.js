@@ -214,6 +214,9 @@ export async function updateTaskStatus(taskId, columnId, state, updateUI) {
   // Update task status
   task.status = newStatus
 
+  // FIX 2: Also update the completedTasks state to keep it in sync
+  state.completedTasks[taskId] = newStatus === "completed"
+
   // If this is a real task (not a template task), update it in the database
   if (task.episodeId) {
     try {
