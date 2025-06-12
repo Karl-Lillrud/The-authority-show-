@@ -583,11 +583,15 @@
 /* Adjust the episodes list container height to show about 3 episodes */
 .episodes-list-container {
   max-height: 300px;
-  overflow-y: auto;
-  border-radius: var(--radius-medium);
-  background-color: rgba(0, 0, 0, 0.02);
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  display: flex;
+  gap: var(--spacing-xs);
   padding: var(--spacing-xs);
-  margin-top: var(--spacing-sm);
+  max-width: 100%;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: var(--radius-medium);
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) white;
 }
@@ -609,9 +613,11 @@
 
 /* Episode Card */
 .episode-card {
+   flex: 0 0 calc(25% - var(--spacing-xs)); /* Visa 4 kort per rad (100% / 4) */
+  box-sizing: border-box;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: flex-start;
   padding: 12px;
   border-radius: var(--radius-medium);
   background-color: white;
@@ -619,7 +625,10 @@
   transition: all var(--transition-normal);
   cursor: pointer;
   border-left: 2px solid var(--highlight-color);
-  margin-bottom: var(--spacing-xs);
+  position: relative;
+  height: 160px;
+  min-width: 220px;
+  max-width: 260px;
 }
 
 .episode-card:hover {
@@ -629,6 +638,7 @@
 
 .episode-content {
   flex: 1;
+  overflow: hidden;
   margin-right: 12px;
 }
 
@@ -1564,7 +1574,7 @@ select option:disabled {
 
 /* Replace the episodes grid styles with these vertical list styles */
 .episodes-list-container {
-  max-height: 450px;
+  max-height: 600px;
   overflow-y: auto;
   border-radius: var(--radius-medium);
   background-color: rgba(0, 0, 0, 0.02);
@@ -1590,6 +1600,8 @@ select option:disabled {
 }
 
 .episode-list-item {
+  height: 110px;
+  width: 25%;
   background-color: white;
   border-radius: var(--radius-medium);
   box-shadow: var(--podcastmanagement-card-shadow);
@@ -1623,47 +1635,59 @@ select option:disabled {
   margin-right: var(--spacing-sm);
 }
 
+/*
 .episode-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--spacing-xs);
   margin-bottom: var(--spacing-xs);
+}*/
+
+.episode-header {
+  position: relative;
+  padding-right: 80px;
 }
 
 .episode-status {
+  position: relative;
+  top: 0;
+  right: 0;
+  background-color: var(--highlight-color);
+  color: white;
+  padding: 2px 8px;
+  border-radius: var(--radius-small);
   font-size: 0.7rem;
-  padding: 3px 6px;
-  margin-top: 4px;
-  background-color: rgba(255, 127, 63, 0.1);
-  color: var(--highlight-color);
-  border-radius: 10px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .episode-meta {
-  display: flex;
-  gap: var(--spacing-sm);
-  font-size: 0.7rem;
+   font-size: 0.7rem;
   color: var(--text-color-light);
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .episode-description {
-  font-size: 0.8rem;
+    font-size: 0.75rem;
   color: var(--text-color-light);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;
+  margin-bottom: 8px;
 }
 
 .episode-actions {
-  display: flex;
+    display: flex;
+  justify-content: flex-end;
   align-items: center;
-  gap: var(--spacing-xs);
-  flex-shrink: 0;
+  gap: 8px;
+  margin-top: auto;
 }
 
 /* Additional details section */

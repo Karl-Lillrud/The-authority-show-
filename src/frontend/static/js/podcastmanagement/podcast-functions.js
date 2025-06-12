@@ -760,7 +760,7 @@ fetchEpisodesByPodcast(podcast._id)
         episodeCard.innerHTML = `
           <div class="episode-content">
             <div class="episode-header">
-              <h3 class="episode-title">${ep.title}</h3>
+              <h3 class="episode-title">${ep.title.slice(0, 25)}</h3>
               ${
                 ep.status
                   ? `<span class="episode-status">${ep.status}</span>`
@@ -771,7 +771,7 @@ fetchEpisodesByPodcast(podcast._id)
               <span class="episode-date">Published: ${publishDate}</span>
               <span class="episode-duration">${formattedDuration}</span>
             </div>
-            <div class="episode-description">${description}</div>
+            <div class="episode-description">${description.slice(0, 25)}</div>
           </div>
           <div class="episode-actions">
             ${
