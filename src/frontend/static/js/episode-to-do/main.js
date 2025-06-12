@@ -9,9 +9,7 @@ import { initTaskPageWithComments, renderEnhancedTaskList } from "/static/js/epi
 import { renderKanbanBoard } from "/static/js/episode-to-do/kanban-page.js"
 import { renderWorkflowEditor } from "/static/js/episode-to-do/workflow-page.js"
 import {
-  renderTimeline,
   updateProgressBar,
-  setupTimelineToggle,
   updateEpisodeDisplay,
   populateEpisodesList,
   populateEpisodeDropdown,
@@ -69,6 +67,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         state.episodes = episodesData || []
 
         if (state.episodes.length > 0) {
+          // FIX 1: Automatically select the first episode
           state.selectedEpisode = state.episodes[0]
 
           // Fetch tasks for the selected episode
@@ -228,9 +227,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Populate kanban board
       renderKanbanBoard(state, updateUI)
 
-      // Populate timeline
-      renderTimeline(state)
-
       // Update episode display
       updateEpisodeDisplay(state)
 
@@ -246,13 +242,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Set up tab switching
     setupTabs(state, updateUI)
 
-    // Set up timeline toggle
-    setupTimelineToggle(state)
-
     // Set up episode dropdown
     setupEpisodeDropdown(state)
 
-    // Initial UI update
+    // Initial UI update - FIX 1: This will now show the first episode automatically
     updateUI()
 
     // Initialize the task page with comment functionality

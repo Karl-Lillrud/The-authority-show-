@@ -405,8 +405,15 @@ export async function toggleTaskCompletion(taskId, state, updateUI) {
     }
   }
 
+  // FIX 2: Improved toggle logic - handle both database status and local state
+  const currentStatus = task.status || "not-started"
+  const isCurrentlyCompleted = currentStatus === "completed" || state.completedTasks[taskId]
+
   // Toggle completion state
-  const newStatus = task.status === "completed" ? "incomplete" : "completed"
+  const newStatus = isCurrentlyCompleted ? "not-started" : "completed"
+
+  // Update both the task object and local state immediately
+  task.status = newStatus
   state.completedTasks[taskId] = newStatus === "completed"
 
   // If this is a real task (not a template task), update it in the database
@@ -417,11 +424,12 @@ export async function toggleTaskCompletion(taskId, state, updateUI) {
     } catch (error) {
       console.error("Error updating task status:", error)
       // Revert the state change if the API call fails
-      state.completedTasks[taskId] = !state.completedTasks[taskId]
+      task.status = currentStatus
+      state.completedTasks[taskId] = isCurrentlyCompleted
     }
   }
 
-  // Update UI
+  // Update UI immediately
   updateUI()
 }
 
@@ -825,10 +833,6 @@ export function showAddTaskModal(state, updateUI) {
                 <option value="video-editing">Video Editing</option>
               </select>
               <small class="help-text">Select an AI tool to assist with this task</small>
-                <option value="audio-editing">Audio Editing</option>
-                <option value="video-editing">Video Editing</option>
-              </select>
-              <small class="help-text">Select an AI tool to assist with this task</small>
             </div>
             <div class="form-group">
               <label for="task-dependencies">Dependencies</label>
@@ -838,10 +842,6 @@ export function showAddTaskModal(state, updateUI) {
                     allTasks.length > 0
                       ? allTasks.map((task) => `<option value="${task.id || task._id}">${task.name}</option>`).join("")
                       : "<option disabled>No tasks available for dependencies</option>"
-                  }
-                </select>
-                <p class="help-text">Hold Ctrl/Cmd to select multiple tasks. This task will only be available when all selected tasks are completed.</p>
-                <div class="dependency-preview" id="dependency-preview"></div>
                   }
                 </select>
                 <p class="help-text">Hold Ctrl/Cmd to select multiple tasks. This task will only be available when all selected tasks are completed.</p>
@@ -947,10 +947,11 @@ export function showAddTaskModal(state, updateUI) {
       await saveTask(taskData)
       closePopup(popup)
 
-      // Refresh tasks
+      // FIX 3: Refresh tasks and update UI to show new task in Kanban board
       const tasksData = await fetchTasks()
       state.tasks = tasksData ? tasksData.filter((task) => task.episodeId === episodeId) : []
 
+      // Force a complete UI update to ensure the new task appears everywhere
       updateUI()
     } catch (error) {
       console.error("Error saving task:", error)
@@ -1095,12 +1096,13 @@ export async function showImportTasksModal(state, updateUI) {
             description: `Default task: ${taskObj.name}`,
             episodeId: episodeId,
             dependencies: taskObj.dependencies,
+            status: "not-started", // FIX 3: Ensure new tasks have proper status
           })
         }
 
         closePopup(popup)
 
-        // Refresh tasks
+        // FIX 3: Refresh tasks and force UI update
         const tasksData = await fetchTasks()
         state.tasks = tasksData ? tasksData.filter((task) => task.episodeId === episodeId) : []
 
@@ -1281,8 +1283,8 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
   function updateComments() {
     const commentsHTML = `
       ${
-      task.comments && task.comments.length > 0
-        ? `
+        task.comments && task.comments.length > 0
+          ? `
           <h4>Comments (${task.comments.length}):</h4>
           <div class="comments-list">
             ${task.comments
@@ -1300,16 +1302,15 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
               .join("")}
           </div>
         `
-        : `<p>No comments yet</p>`
+          : `<p>No comments yet</p>`
       }
     `
     const taskComments = document.getElementById("task-details-comments")
-    if (!taskComments)
-    {
+    if (!taskComments) {
       alert("didn't find section")
     }
     taskComments.innerHTML = commentsHTML
-    if (commentsCount != task.comment.length) {
+    if (commentsCount != task.comments.length) {
       updateUI()
     }
   }
@@ -1317,8 +1318,7 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
   // Add class to animate in
   setTimeout(() => {
     popup.querySelector(".popup-content").classList.add("show")
-    import("/static/js/episode-to-do/comment-utils.js")
-    .then((module) => {
+    import("/static/js/episode-to-do/comment-utils.js").then((module) => {
       module.loadTaskComments(taskId, state, updateComments)
     })
   }, 10)
