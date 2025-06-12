@@ -403,6 +403,10 @@ export async function showAddGuestPopup() {
     episodeSelect.innerHTML = '<option value="">Select Podcast First</option>';
     episodeSelect.disabled = true;
 
+    // Determine which podcast ID to preselect
+    const preselectPodcastId = shared.selectedPodcastIdForGuestModal || shared.selectedPodcastId;
+    const preselectEpisodeId = shared.selectedEpisodeIdForGuestModal;
+
     const podcastData = await fetchPodcasts();
     if (podcastData && podcastData.podcast && podcastData.podcast.length > 0) {
       podcastSelect.innerHTML = '<option value="">Select Podcast</option>';
@@ -410,10 +414,16 @@ export async function showAddGuestPopup() {
         const option = document.createElement("option");
         option.value = podcast._id;
         option.textContent = podcast.podName;
+        if (preselectPodcastId && podcast._id === preselectPodcastId) {
+          option.selected = true;
+        }
         podcastSelect.appendChild(option);
       });
 
-      if (shared.selectedPodcastId) {
+      if (preselectPodcastId) {
+        podcastSelect.value = preselectPodcastId; // Ensure value is set
+        await loadEpisodesForPodcast(preselectPodcastId, episodeSelect, preselectEpisodeId);
+      } else if (shared.selectedPodcastId) { // Fallback to general selected podcast
         podcastSelect.value = shared.selectedPodcastId;
         await loadEpisodesForPodcast(shared.selectedPodcastId, episodeSelect);
       }
@@ -424,9 +434,17 @@ export async function showAddGuestPopup() {
 
     podcastSelect.removeEventListener("change", handlePodcastSelectChange);
     podcastSelect.addEventListener("change", handlePodcastSelectChange);
+
+    // Clear modal-specific shared values after they've been used
+    shared.selectedPodcastIdForGuestModal = null;
+    shared.selectedEpisodeIdForGuestModal = null;
+
   } catch (error) {
     console.error("[guest-functions.js] Error populating dropdowns in guest popup:", error);
     showNotification("Error", "Could not load data for guest form.", "error");
+    // Clear modal-specific shared values even on error to prevent stickiness
+    shared.selectedPodcastIdForGuestModal = null;
+    shared.selectedEpisodeIdForGuestModal = null;
   }
 }
 
@@ -434,8 +452,11 @@ export async function showAddGuestPopup() {
 async function handlePodcastSelectChange(event) {
   const episodeSelect = document.getElementById("episode-id");
   const selectedPodcastId = event.target.value;
+  // When user manually changes podcast, we don't have a preselectEpisodeId from dashboard context for *this specific* change
+  const preselectEpisodeId = (shared.selectedPodcastIdForGuestModal === selectedPodcastId) ? shared.selectedEpisodeIdForGuestModal : null;
+
   if (selectedPodcastId) {
-    await loadEpisodesForPodcast(selectedPodcastId, episodeSelect);
+    await loadEpisodesForPodcast(selectedPodcastId, episodeSelect, preselectEpisodeId);
   } else {
     episodeSelect.innerHTML = '<option value="">Select Podcast First</option>';
     episodeSelect.disabled = true;
@@ -443,7 +464,7 @@ async function handlePodcastSelectChange(event) {
 }
 
 // Load episodes for a podcast
-async function loadEpisodesForPodcast(podcastId, episodeSelectElement) {
+async function loadEpisodesForPodcast(podcastId, episodeSelectElement, preselectEpisodeId = null) {
   if (!podcastId || !episodeSelectElement) return;
 
   episodeSelectElement.innerHTML = '<option value="">Loading Episodes...</option>';
@@ -468,9 +489,19 @@ async function loadEpisodesForPodcast(podcastId, episodeSelectElement) {
           option.value = episode._id;
           option.textContent = episode.title;
           option.className = "non-published";
+          if (preselectEpisodeId && episode._id === preselectEpisodeId) {
+            option.selected = true;
+          }
           episodeSelectElement.appendChild(option);
         });
         episodeSelectElement.disabled = false;
+        if (preselectEpisodeId) {
+           // Attempt to set the value directly as well, in case .selected didn't trigger a UI update for the select
+          const exists = Array.from(episodeSelectElement.options).some(opt => opt.value === preselectEpisodeId);
+          if (exists) {
+            episodeSelectElement.value = preselectEpisodeId;
+          }
+        }
       } else {
         episodeSelectElement.innerHTML = '<option value="">No Unpublished Episodes Available</option>';
         episodeSelectElement.disabled = true;

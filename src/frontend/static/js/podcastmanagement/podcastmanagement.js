@@ -142,6 +142,28 @@ document.addEventListener("DOMContentLoaded", () => {
       createEpisodeButton.click() // Simulate a click to open the popup
     }
   }
+
+  // Check for 'openAddGuest' query parameter
+  const openAddGuest = urlParams.get("openAddGuest");
+  const episodeIdFromQuery = urlParams.get("episodeId");
+  const podcastIdFromQuery = urlParams.get("podcastId");
+
+  if (openAddGuest === "true") {
+    if (episodeIdFromQuery) {
+      shared.selectedEpisodeIdForGuestModal = episodeIdFromQuery;
+    }
+    if (podcastIdFromQuery) {
+      shared.selectedPodcastIdForGuestModal = podcastIdFromQuery;
+    }
+    
+    const addGuestButton = document.getElementById("add-guest-btn"); // The button in the sidebar
+    if (addGuestButton) {
+      addGuestButton.click(); // Simulate click to open the popup via existing mechanism
+    }
+    // Clean up query params to prevent re-triggering on refresh if not desired
+    // Consider if this is needed or if the modal clearing shared vars is enough
+    // window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+  }
  
   // Highlight editing logic
   function showHighlightPopup(highlight) {
@@ -368,10 +390,11 @@ function setupMobileSidebar() {
 // Export shared utilities and variables
 export const shared = {
   selectedPodcastId: null,
+  selectedEpisodeIdForGuestModal: null, 
+  selectedPodcastIdForGuestModal: null, 
   svgpodcastmanagement,
 }
  
 document.getElementById("guests-link").addEventListener("click", (event) => {
   event.preventDefault()
 })
- 
