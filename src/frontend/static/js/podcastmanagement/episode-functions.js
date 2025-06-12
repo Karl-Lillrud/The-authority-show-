@@ -107,27 +107,32 @@ export function renderEpisodeDetail(episode) {
     ${(() => {
       const now = new Date();
       let isStudioEnabled = false;
-      let timeLeft = "";
+      let timeLeftHtml = ""; // To store HTML for the time left message
+
       if (episode.recordingAt) {
         const recordingTime = new Date(episode.recordingAt);
         if (recordingTime > now) {
           const diffMs = recordingTime - now;
           const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
           const diffMin = Math.floor((diffMs / (1000 * 60)) % 60);
-          timeLeft = `${diffHrs}h ${diffMin}m left`;
+          const timeLeftText = `${diffHrs}h ${diffMin}m left`;
+          timeLeftHtml = `<span class="time-left-studio">${timeLeftText}</span>`;
         } else {
           isStudioEnabled = true;
         }
       }
+
+      let buttonHtml = "";
       if (isStudioEnabled) {
-        return `<button class="studio-btn studio-btn-on" id="studio-btn" style="border: 1px solid #d219b9" data-podcast-id="${episode.podcastId || episode.podcast_id}" data-episode-id="${episode._id}">
+        buttonHtml = `<button class="studio-btn studio-btn-on" id="studio-btn" style="border: 1px solid #d219b9" data-podcast-id="${episode.podcastId || episode.podcast_id}" data-episode-id="${episode._id}">
           <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M19 10V12C19 15.866 15.866 19 12 19M5 10V12C5 15.866 8.13401 19 12 19M12 19V22M8 22H16M15 6H13M15 10H13M12 15C10.3431 15 9 13.6569 9 12V5C9 3.34315 10.3431 2 12 2C13.6569 2 15 3.34315 15 5V12C15 13.6569 13.6569 15 12 15Z" stroke="#d219b9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
         </button>`;
       } else {
-        return `<button class="studio-btn studio-btn-off" id="studio-btn" style="cursor: not-allowed; border: 1px solid #616161" disabled>
+        buttonHtml = `<button class="studio-btn studio-btn-off" id="studio-btn" style="cursor: not-allowed; border: 1px solid #616161" disabled>
           <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M15 9.4V5C15 3.34315 13.6569 2 12 2C10.8224 2 9.80325 2.67852 9.3122 3.66593M12 19V22M8 22H16M3 3L21 21M5.00043 10C5.00043 10 3.50062 19 12.0401 19C14.51 19 16.1333 18.2471 17.1933 17.1768M19.0317 13C19.2365 11.3477 19 10 19 10M15 6H13M12 15C10.3431 15 9 13.6569 9 12V9L14.1226 14.12C13.5796 14.6637 12.8291 15 12 15Z" stroke="#616161" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
         </button>`;
       }
+      return timeLeftHtml + buttonHtml; // Prepend time left HTML to button HTML
     })()}
     ${
       !episode.isImported

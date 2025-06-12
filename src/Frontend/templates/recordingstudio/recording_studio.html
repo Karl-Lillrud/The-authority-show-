@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Recording Studio - PodManager</title>
+  <title>{{ episode_title }} - Recording Studio</title>
 
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/recordingstudio/recording_studio.css') }}">
@@ -18,6 +18,61 @@
   </style>
 </head>
 <body>
+    {% if recording_at_iso %}
+    <div id="countdown-timer-container" class="countdown-container-studio" style="display: none;"> <!-- Initially hidden, script will show it -->
+        Time until recording session: <span id="countdown-timer" data-recording-at="{{ recording_at_iso }}">Loading...</span>
+    </div>
+    <script>
+        (function() { // IIFE to avoid polluting global scope
+            const displayElement = document.getElementById('countdown-timer');
+            const countdownContainer = document.getElementById('countdown-timer-container');
+
+            if (displayElement && countdownContainer) {
+                const recordingAtISO = displayElement.dataset.recordingAt;
+                if (recordingAtISO) {
+                    countdownContainer.style.display = 'block'; // Show the container
+                    const targetDate = new Date(recordingAtISO);
+
+                    if (isNaN(targetDate.getTime())) {
+                        countdownContainer.style.display = 'none';
+                        console.error("Early Countdown (Studio): Invalid target date.");
+                        return;
+                    }
+
+                    let intervalId; // Declare intervalId here
+
+                    const updateCountdown = () => {
+                        const now = new Date().getTime();
+                        const distance = targetDate - now;
+
+                        if (distance < 0) {
+                            clearInterval(intervalId);
+                            displayElement.textContent = "Session has started!";
+                            return;
+                        }
+
+                        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                        let countdownText = "";
+                        if (days > 0) countdownText += days + "d ";
+                        if (hours > 0 || (days > 0 && hours === 0)) countdownText += hours + "h ";
+                        if (minutes > 0 || ((hours > 0 || days > 0) && minutes === 0)) countdownText += minutes + "m ";
+                        countdownText += seconds + "s";
+
+                        displayElement.textContent = countdownText.trim();
+                    };
+                    updateCountdown(); // Initial call
+                    intervalId = setInterval(updateCountdown, 1000); // Assign to intervalId
+                } else {
+                    countdownContainer.style.display = 'none';
+                }
+            }
+        })();
+    </script>
+    {% endif %}
 
   <div class="studio-container">
     <div class="control-header">

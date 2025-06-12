@@ -283,6 +283,20 @@
   stroke: var(--danger-color);
 }
 
+/* Styling for the time left before studio opens */
+.time-left-studio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white; /* Contrasts with the orange header */
+  font-size: 0.85rem; /* Slightly smaller than button tooltips */
+  font-weight: 500;
+  padding: 5px 8px; /* Adjust padding as needed */
+  background-color: rgba(0, 0, 0, 0.2); /* Subtle background to distinguish */
+  border-radius: var(--radius-small);
+  white-space: nowrap;
+}
+
 /* Studio button styling */
 .top-right-actions .studio-btn-on:hover {
   transform: translateY(-2px);

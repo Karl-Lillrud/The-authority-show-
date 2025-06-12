@@ -1,78 +1,82 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Green Room - Pod Manager</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/greenroom/greenroom.css') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>{{ episode_title }} - Green Room</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/episode/episode.css') }}"> <!-- Assuming greenroom shares styles or has its own -->
+    <!-- Add any greenroom specific CSS here -->
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Left Panel - Device Settings -->
-            <div class="col-md-4 device-settings-panel">
-                <h3>Device Settings</h3>
-                <div class="device-settings">
-                    <!-- Camera Settings -->
-                    <div class="setting-group">
-                        <h4>Camera</h4>
-                        <select id="cameraSelect" class="form-select">
-                            <option value="">Select Camera</option>
-                        </select>
-                        <div class="camera-preview">
-                            <video id="cameraPreview" autoplay muted playsinline></video>
-                        </div>
-                    </div>
-
-                    <!-- Microphone Settings -->
-                    <div class="setting-group">
-                        <h4>Microphone</h4>
-                        <select id="microphoneSelect" class="form-select">
-                            <option value="">Select Microphone</option>
-                        </select>
-                        <div class="audio-level">
-                            <div class="audio-meter"></div>
-                        </div>
-                    </div>
-
-                    <!-- Speaker Settings -->
-                    <div class="setting-group">
-                        <h4>Speaker</h4>
-                        <select id="speakerSelect" class="form-select">
-                            <option value="">Select Speaker</option>
-                        </select>
-                        <button id="testSpeaker" class="btn btn-secondary">Test Speaker</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Panel - Waiting Room -->
-            <div class="col-md-8 waiting-room-panel">
-                <div class="waiting-room-header">
-                    <h2>Waiting Room</h2>
-                    <div id="roomStatus" class="room-status">
-                        <span class="status-indicator"></span>
-                        <span class="status-text">Waiting for host...</span>
-                    </div>
-                </div>
-
-                <!-- Notification Area -->
-                <div id="notification-area" class="notification-area"></div>
-
-                <div class="participants-list">
-                    <h3>Guests</h3>
-                    <div id="participantsContainer" class="participants-grid">
-                        <!-- Guests will be inserted here dynamically -->
-                    </div>
-                </div>
-            </div>
-        </div>
+    {% if recording_at_iso %}
+    <div id="greenroom-countdown-container" class="countdown-container-greenroom" style="display: none;"> <!-- Initially hidden -->
+        Time until recording session: <span id="greenroom-countdown-timer" data-recording-at="{{ recording_at_iso }}">Loading...</span>
     </div>
+    <script>
+        (function() { // IIFE
+            const displayElement = document.getElementById('greenroom-countdown-timer');
+            const countdownContainer = document.getElementById('greenroom-countdown-container');
 
-    <!-- Scripts -->
-    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
-    <script type="module" src="{{ url_for('static', filename='js/greenroom/greenroom.js') }}"></script>
+            if (displayElement && countdownContainer) {
+                const recordingAtISO = displayElement.dataset.recordingAt;
+                if (recordingAtISO) {
+                    countdownContainer.style.display = 'block'; // Show the container
+                    const targetDate = new Date(recordingAtISO);
+
+                    if (isNaN(targetDate.getTime())) {
+                        countdownContainer.style.display = 'none';
+                        console.error("Early Countdown (Greenroom): Invalid target date.");
+                        return;
+                    }
+                    
+                    let intervalId; // Declare intervalId
+
+                    const updateCountdown = () => {
+                        const now = new Date().getTime();
+                        const distance = targetDate - now;
+
+                        if (distance < 0) {
+                            clearInterval(intervalId);
+                            displayElement.textContent = "Session has started!";
+                            return;
+                        }
+
+                        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                        let countdownText = "";
+                        if (days > 0) countdownText += days + "d ";
+                        if (hours > 0 || (days > 0 && hours === 0)) countdownText += hours + "h ";
+                        if (minutes > 0 || ((hours > 0 || days > 0) && minutes === 0)) countdownText += minutes + "m ";
+                        countdownText += seconds + "s";
+
+                        displayElement.textContent = countdownText.trim();
+                    };
+                    updateCountdown(); // Initial call
+                    intervalId = setInterval(updateCountdown, 1000); // Assign to intervalId
+                } else {
+                    countdownContainer.style.display = 'none';
+                }
+            }
+        })();
+    </script>
+    {% endif %}
+
+    <header>
+        <h1>Green Room: {{ episode_title }}</h1>
+    </header>
+    <main>
+        <p>Welcome to the green room for episode ID: {{ episode_id }}.</p>
+        <!-- Greenroom specific content: participant list, readiness status, chat etc. -->
+        <!-- Example: <div id="participantsContainer"></div> -->
+    </main>
+
+    <footer>
+        <!-- Footer content -->
+    </footer>
+    <script src="{{ url_for('static', filename='js/greenroom/greenroom.js') }}"></script>
+    <!-- Other necessary JS files -->
 </body>
 </html>
