@@ -3,16 +3,13 @@ import {
   fetchPodcasts,
   fetchPodcast,
   updatePodcast,
-  deletePodcast
+  deletePodcast,
 } from "../../../static/requests/podcastRequests.js";
 import {
   fetchEpisodesByPodcast,
-  fetchEpisode
+  fetchEpisode,
 } from "../../../static/requests/episodeRequest.js";
-import {
-  updateEditButtons,
-  shared
-} from "./podcastmanagement.js";
+import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { createPlayButton, playAudio } from "./episode-functions.js";
 import { renderEpisodeDetail } from "./episode-functions.js";
 import { showNotification } from "../components/notifications.js";
@@ -29,11 +26,11 @@ function resetForm() {
   const form = document.getElementById("register-podcast-form");
   form.reset();
   shared.selectedPodcastId = null;
-  
+
   // Reset file name displays
-  document.querySelectorAll('.file-name-display').forEach(display => {
-    display.textContent = '';
-    display.classList.remove('has-file');
+  document.querySelectorAll(".file-name-display").forEach((display) => {
+    display.textContent = "";
+    display.classList.remove("has-file");
   });
 }
 
@@ -108,26 +105,28 @@ function displayPodcastDetails(podcast) {
 
   // Show indicators for existing images
   if (podcast.logoUrl || podcast.rssImage) {
-    const logoNameDisplay = document.getElementById('logo-name-display');
+    const logoNameDisplay = document.getElementById("logo-name-display");
     if (logoNameDisplay) {
       logoNameDisplay.textContent = "Current image selected";
-      logoNameDisplay.classList.add('has-file');
+      logoNameDisplay.classList.add("has-file");
     }
   }
 
   if (podcast.bannerUrl) {
-    const bannerNameDisplay = document.getElementById('banner-name-display');
+    const bannerNameDisplay = document.getElementById("banner-name-display");
     if (bannerNameDisplay) {
       bannerNameDisplay.textContent = "Current image selected";
-      bannerNameDisplay.classList.add('has-file');
+      bannerNameDisplay.classList.add("has-file");
     }
   }
 
   if (podcast.hostImage) {
-    const hostImageNameDisplay = document.getElementById('host-image-name-display');
+    const hostImageNameDisplay = document.getElementById(
+      "host-image-name-display"
+    );
     if (hostImageNameDisplay) {
       hostImageNameDisplay.textContent = "Current image selected";
-      hostImageNameDisplay.classList.add('has-file');
+      hostImageNameDisplay.classList.add("has-file");
     }
   }
 }
@@ -161,10 +160,10 @@ export async function renderPodcastList() {
 
     if (podcasts.length === 0) {
       podcastListElement.innerHTML += `
-      <div class="empty-state">
-        <p>No podcasts found. Click "Add Podcast" to create your first podcast.</p>
-      </div>
-    `;
+        <div class="empty-state">
+          <p>No podcasts found. Click "Add Podcast" to create your first podcast.</p>
+        </div>
+      `;
       return;
     }
 
@@ -177,233 +176,214 @@ export async function renderPodcastList() {
 
       // Create the basic podcast card structure
       podcastCard.innerHTML = `
-      <div class="podcast-content">
-        <div class="podcast-image" style="background-image: url('${imageUrl}')" data-id="${
+        <div class="podcast-content">
+          <div class="podcast-image" style="background-image: url('${imageUrl}')" data-id="${
         podcast._id
       }"></div>
-        <div class="podcast-info">
-          <div class="podcast-header">
-            <div>
-              <h2 class="podcast-title">${podcast.podName}</h2>
-              <p class="podcast-meta"><h4 class="meta-label">Category:</h4> ${
-                podcast.category || "Uncategorized"
-              }</p>
-              <p class="podcast-meta"><h4 class="meta-label">Host:</h4> ${
-                podcast.author || "Not specified"
-              }</p>
-              <p class="podcast-meta"><h4 class="meta-label">Language:</h4> ${
-                podcast.language && podcast.language.toLowerCase() === "en"
-                  ? "English"
-                  : podcast.language || "Not specified"
-              }</p>
+          <div class="podcast-info">
+            <div class="podcast-header">
+              <div>
+                <h2 class="podcast-title">${podcast.podName}</h2>
+                <p class="podcast-meta"><h4 class="meta-label">Category:</h4> ${
+                  podcast.category || "Uncategorized"
+                }</p>
+                <p class="podcast-meta"><h4 class="meta-label">Host:</h4> ${
+                  podcast.author || "Not specified"
+                }</p>
+                <p class="podcast-meta"><h4 class="meta-label">Language:</h4> ${
+                  podcast.language?.toLowerCase() === "en"
+                    ? "English"
+                    : podcast.language || "Not specified"
+                }</p>
+              </div>
+              <div class="podcast-actions">
+                <button class="action-btn view-btn" title="View podcast details" data-id="${
+                  podcast._id
+                }">${shared.svgpodcastmanagement.view}</button>
+                <button class="action-btn delete-btn-home" title="Delete podcast" data-id="${
+                  podcast._id
+                }"><span class="icon">${
+        shared.svgpodcastmanagement.delete
+      }</span></button>
+              </div>
             </div>
-            <div class="podcast-actions">
-              <button class="action-btn view-btn" title="View podcast details" data-id="${
-                podcast._id
-              }">
-                ${shared.svgpodcastmanagement.view}
-              </button>
-              <button class="action-btn delete-btn-home" title="Delete podcast" data-id="${
-                podcast._id
-              }">
-                <span class="icon">${shared.svgpodcastmanagement.delete}</span>
-              </button>
+            <p class="podcast-description"><h4 class="meta-label">Description: </h4>${
+              podcast.description || "No description available."
+            }</p>
+            <div class="podcast-episodes-preview" id="episodes-preview-${
+              podcast._id
+            }">
+              <div class="episodes-title-row">
+                <h3 class="episodes-preview-title">Episodes</h3>
+                <div class="view-all-link" style="display: none;"></div>
+              </div>
+              <div class="episodes-loading">Loading episodes...</div>
             </div>
-          </div>
-          <p class="podcast-description"><h4 class="meta-label">Description: </h4>${
-            podcast.description || "No description available."
-          }</p>
-          
-          <!-- Add episodes preview section -->
-          <div class="podcast-episodes-preview" id="episodes-preview-${
-            podcast._id
-          }">
-            <h3 class="episodes-preview-title">Episodes</h3>
-            <div class="episodes-loading">Loading episodes...</div>
           </div>
         </div>
-      </div>
-      <div class="podcast-footer">
-    <button class="footer-link landing-page-link" data-id="${
-          podcast._id
-        }">Landing Page </button>
-      </div>`;
-/*
-  <span class="footer-link landing-page-link" data-id="${
-          podcast._id
-        }">Landing Page</span>
-        <span class="footer-separator">|</span>
-        <span class="footer-link view-details-link" data-id="${
-          podcast._id
-        }">View Details</span>
-        <span class="footer-separator">|</span>
-        <span class="footer-link email-config-link" data-id="${
-          podcast._id
-        }">Email Config</span> 
-        */
-      
+        <div class="podcast-footer">
+          <button class="footer-link landing-page-link" data-id="${
+            podcast._id
+          }">Landing Page</button>
+        </div>`;
+
       podcastListElement.appendChild(podcastCard);
 
       // Redirect to the landing page with the specific podcastId
       const landingPageBtn = podcastCard.querySelector(".landing-page-link");
       landingPageBtn.addEventListener("click", (e) => {
-        const podcastId = e.target.dataset.id; // Get podcast ID
+        const podcastId = e.target.dataset.id;
         window.location.href = `/landingpage/${podcastId}`;
       });
 
-      // Add event listener for the "Email Config" button
-      const emailConfigBtn = podcastCard.querySelector(".email-config-link");
-      if (emailConfigBtn) { // Check if the element exists
-        emailConfigBtn.addEventListener("click", (e) => {
-          const podcastId = e.target.dataset.id; // Get podcast ID
-          openEmailConfigPopup(podcastId); // Pass podcast ID to the popup
-        });
-      }
-
       // Fetch episodes for this podcast and add them to the preview
-try {
-  const episodes = await fetchEpisodesByPodcast(podcast._id);
-  const episodesPreviewEl = document.getElementById(
-    `episodes-preview-${podcast._id}`
-  );
+      try {
+        const episodes = await fetchEpisodesByPodcast(podcast._id);
+        const episodesPreviewEl = document.getElementById(
+          `episodes-preview-${podcast._id}`
+        );
 
-  if (episodesPreviewEl) {
-    if (episodes && episodes.length > 0) {
-      const episodesContainer = document.createElement("div");
-      episodesContainer.className = "episodes-container";
+        if (episodesPreviewEl) {
+          if (episodes && episodes.length > 0) {
+            episodesPreviewEl.innerHTML = "";
 
-      // Sort episodes by createdAt date (newest first)
-      const sortedEpisodes = episodes.sort((a, b) => {
-      const aDate = Date.parse(a.created_at || a.createdAt || 0);
-      const bDate = Date.parse(b.created_at || b.createdAt || 0);
-      return bDate - aDate;
-    });
+            const titleRow = document.createElement("div");
+            titleRow.className = "episodes-title-row";
 
+            const title = document.createElement("h3");
+            title.className = "episodes-preview-title";
+            title.textContent = "Episodes";
 
-      // Show up to 3 episodes in the preview
-      const previewEpisodes = sortedEpisodes.slice(0, 3);
+            const viewAllLink = document.createElement("div");
+            viewAllLink.className = "view-all-link";
+            viewAllLink.style.display = "none";
 
-      previewEpisodes.forEach((episode) => {
-        const episodeItem = document.createElement("div");
-        episodeItem.className = "podcast-episode-item";
-        episodeItem.setAttribute("data-episode-id", episode._id);
+            titleRow.appendChild(title);
+            titleRow.appendChild(viewAllLink);
+            episodesPreviewEl.appendChild(titleRow);
 
-        // Continue to display publishDate in the UI
-        const publishDate = episode.publishDate
-          ? new Date(episode.publishDate).toLocaleDateString()
-          : "No date";
+            const sortedEpisodes = episodes.sort(
+              (a, b) =>
+                Date.parse(b.created_at || b.createdAt || 0) -
+                Date.parse(a.created_at || a.createdAt || 0)
+            );
+            const previewEpisodes = sortedEpisodes.slice(0, 3);
+            const episodesContainer = document.createElement("div");
+            episodesContainer.className = "episodes-container";
 
-        // Create episode content div
-        const episodeContent = document.createElement("div");
-        episodeContent.className = "podcast-episode-content";
-        episodeContent.innerHTML = `
-        <h4 class="podcast-episode-title">${episode.title.slice(0, 20)}</h4>
-        <div class="podcast-episode-description">${
-          episode.description.slice(0, 50) || "No description available."
-        }</div>
-      `;
+            previewEpisodes.forEach((episode) => {
+              const episodeItem = document.createElement("div");
+              episodeItem.className = "podcast-episode-item";
+              episodeItem.setAttribute("data-episode-id", episode._id);
 
-        // Create episode actions div with play button and date
-        const episodeActions = document.createElement("div");
-        episodeActions.className = "podcast-episode-actions";
+              const publishDate = episode.publishDate
+                ? new Date(episode.publishDate).toLocaleDateString()
+                : "No date";
 
-        // Create play button if audio URL exists
-        if (episode.audioUrl) {
-          const playButton = createPlayButton("small");
-          playButton.addEventListener("click", (e) => {
-            e.stopPropagation();
-            playAudio(episode.audioUrl, episode.title);
-          });
-          episodeActions.appendChild(playButton);
-        }
+              const episodeContent = document.createElement("div");
+              episodeContent.className = "podcast-episode-content";
+              episodeContent.innerHTML = `
+                <h4 class="podcast-episode-title">${episode.title.slice(
+                  0,
+                  20
+                )}</h4>
+                <div class="podcast-episode-description">${
+                  episode.description?.slice(0, 50) ||
+                  "No description available."
+                }</div>`;
 
-        // Add date (still showing publishDate)
-        const dateDiv = document.createElement("div");
-        dateDiv.className = "podcast-episode-date";
-        dateDiv.textContent = publishDate;
-        episodeActions.appendChild(dateDiv);
+              // Create episode actions div with play button and date
+              const episodeActions = document.createElement("div");
+              episodeActions.className = "podcast-episode-actions";
 
-        // Assemble the episode item
-        episodeItem.appendChild(episodeContent);
-        episodeItem.appendChild(episodeActions);
-
-        // Make episode item navigate to episode details
-        episodeItem.addEventListener("click", async (e) => {
-          if (!e.target.closest(".podcast-episode-play")) {
-            try {
-              const episodeId = episode._id; // Get the episode ID
-              const response = await fetchEpisode(episodeId); // Fetch full episode details
-              if (response) {
-                renderEpisodeDetail({
-                  ...response,
-                  podcastId: podcast._id // Pass podcast ID
+              // Create play button if audio URL exists
+              if (episode.audioUrl) {
+                const playButton = createPlayButton("small");
+                playButton.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  playAudio(episode.audioUrl, episode.title);
                 });
-                document.getElementById("podcast-list").style.display =
-                  "none";
-                document.getElementById("podcast-detail").style.display =
-                  "block";
-              } else {
-                showNotification(
-                  "Error",
-                  "Failed to load episode details.",
-                  "error"
-                );
+                episodeActions.appendChild(playButton);
               }
-            } catch (error) {
-              console.error("Error fetching episode details:", error);
-              showNotification(
-                "Error",
-                "Failed to load episode details.",
-                "error"
-              );
+
+              // Add date (still showing publishDate)
+              const dateDiv = document.createElement("div");
+              dateDiv.className = "podcast-episode-date";
+              dateDiv.textContent = publishDate;
+              episodeActions.appendChild(dateDiv);
+
+              // Assemble the episode item
+              episodeItem.appendChild(episodeContent);
+              episodeItem.appendChild(episodeActions);
+
+              // Make episode item navigate to episode details
+              episodeItem.addEventListener("click", async (e) => {
+                if (!e.target.closest(".podcast-episode-play")) {
+                  try {
+                    const response = await fetchEpisode(episode._id); // Get the episode ID
+                    if (response) {
+                      renderEpisodeDetail({
+                        ...response,
+                        podcastId: podcast._id, // Pass podcast ID
+                      });
+                      document.getElementById("podcast-list").style.display =
+                        "none";
+                      document.getElementById("podcast-detail").style.display =
+                        "block";
+                    } else {
+                      showNotification(
+                        "Error",
+                        "Failed to load episode details.",
+                        "error"
+                      );
+                    }
+                  } catch (error) {
+                    console.error("Error fetching episode details:", error);
+                    showNotification(
+                      "Error",
+                      "Failed to load episode details.",
+                      "error"
+                    );
+                  }
+                }
+              });
+
+              episodesContainer.appendChild(episodeItem);
+            });
+
+            episodesPreviewEl.appendChild(episodesContainer);
+
+            // Add "View all" link if there are more than 3 episodes
+            if (episodes.length > 3) {
+              viewAllLink.textContent = `View all ${episodes.length} episodes`;
+              viewAllLink.style.display = "block";
+              viewAllLink.addEventListener("click", (e) => {
+                e.stopPropagation();
+                viewPodcast(podcast._id);
+              });
             }
+          } else {
+            episodesPreviewEl.innerHTML =
+              '<p class="no-episodes-message">No episodes available</p>';
           }
-        });
-
-        episodesContainer.appendChild(episodeItem);
-      });
-
-      // Replace loading message with episodes
-      episodesPreviewEl.querySelector(".episodes-loading").remove();
-      episodesPreviewEl.appendChild(episodesContainer);
-
-      // Add "View all" link if there are more than 3 episodes
-      if (episodes.length > 3) {
-        const viewAllLink = document.createElement("div");
-        viewAllLink.className = "view-all-link";
-        viewAllLink.textContent = `View all ${episodes.length} episodes`;
-
-        viewAllLink.addEventListener("click", (e) => {
-          e.stopPropagation();
-          viewPodcast(podcast._id);
-        });
-
-        episodesPreviewEl.appendChild(viewAllLink);
+        }
+      } catch (error) {
+        console.error("Error fetching episodes for podcast preview:", error);
+        const episodesPreviewEl = document.getElementById(
+          `episodes-preview-${podcast._id}`
+        );
+        if (episodesPreviewEl) {
+          episodesPreviewEl.innerHTML =
+            '<p class="episodes-error-message">Failed to load episodes</p>';
+        }
       }
-    } else {
-      episodesPreviewEl.innerHTML =
-        '<p class="no-episodes-message">No episodes available</p>';
-    }
-  }
-} catch (error) {
-  console.error("Error fetching episodes for podcast preview:", error);
-  const episodesPreviewEl = document.getElementById(
-    `episodes-preview-${podcast._id}`
-  );
-  if (episodesPreviewEl) {
-    episodesPreviewEl.innerHTML =
-      '<p class="episodes-error-message">Failed to load episodes</p>';
-  }
-}
 
       // Add event listener to the image to view details
       podcastCard
         .querySelector(".podcast-image")
         .addEventListener("click", (e) => {
           const podcastId = e.target.getAttribute("data-id");
-          if (podcastId) {
-            viewPodcast(podcastId);
-          }
+          if (podcastId) viewPodcast(podcastId);
         });
 
       // Add event listeners for the footer links
@@ -414,68 +394,38 @@ try {
           window.location.href = `/landingpage/${podcastId}`;
         });
 
-      podcastCard
-        .querySelector(".view-details-link")
-        .addEventListener("click", (e) => {
+      const viewDetailsLink = podcastCard.querySelector(".view-details-link");
+      if (viewDetailsLink) {
+        viewDetailsLink.addEventListener("click", (e) => {
           const podcastId = e.target.dataset.id;
           viewPodcast(podcastId);
         });
+      }
     });
 
-    // Add event listeners for action buttons
     document
       .querySelectorAll(".view-btn, .view-details-btn")
       .forEach((button) => {
         button.addEventListener("click", (e) => {
-          const btn = e.target.closest("button");
-          const podcastId = btn ? btn.getAttribute("data-id") : null;
-          if (podcastId) {
-            viewPodcast(podcastId);
-          }
+          const podcastId = e.target.closest("button")?.getAttribute("data-id");
+          if (podcastId) viewPodcast(podcastId);
         });
       });
 
+    // Add event listeners for action buttons
     document.querySelectorAll(".edit-btn").forEach((button) => {
       button.addEventListener("click", (e) => {
-        const podcastId = e.target.closest("button").getAttribute("data-id");
-        if (podcastId) {
-          viewPodcast(podcastId);
-        }
+        const podcastId = e.target.closest("button")?.getAttribute("data-id");
+        if (podcastId) viewPodcast(podcastId);
       });
     });
 
-    document.querySelectorAll(".delete-btn").forEach((button) => {
-      button.addEventListener("click", async (e) => {
-        const podcastId = e.target.closest("button").getAttribute("data-id");
-        if (confirm("Are you sure you want to delete this podcast?")) {
-          try {
-            await deletePodcast(podcastId);
-            showNotification(
-              "Success",
-              "Podcast deleted successfully!",
-              "success"
-            );
-            e.target.closest(".podcast-card")?.remove();
-
-            // Check if there are no more podcasts
-            if (document.querySelectorAll(".podcast-card").length === 0) {
-              renderPodcastList(); // This will show the empty state
-            }
-            await refreshDashboardStats();
-          } catch (error) {
-            showNotification("Error", "Failed to delete podcast.", "error");
-          }
-        }
-      });
-    });
-
-    // Added event listener for elements with class "delete-btn-home"
-    document.querySelectorAll(".delete-btn-home").forEach((button) => {
-      button.addEventListener("click", async (e) => {
-        const podcastId = e.target.closest("button").getAttribute("data-id");
-        showDeleteConfirmationModal(
-          "Are you sure you want to delete this podcast?",
-          async () => {
+    document
+      .querySelectorAll(".delete-btn, .delete-btn-home")
+      .forEach((button) => {
+        button.addEventListener("click", async (e) => {
+          const podcastId = e.target.closest("button")?.getAttribute("data-id");
+          if (confirm("Are you sure you want to delete this podcast?")) {
             try {
               await deletePodcast(podcastId);
               showNotification(
@@ -484,17 +434,17 @@ try {
                 "success"
               );
               e.target.closest(".podcast-card")?.remove();
-              if (document.querySelectorAll(".podcast-card").length === 0) {
+
+              // Check if there are no more podcasts
+              if (document.querySelectorAll(".podcast-card").length === 0)
                 renderPodcastList();
-              }
               await refreshDashboardStats();
             } catch (error) {
               showNotification("Error", "Failed to delete podcast.", "error");
             }
           }
-        );
+        });
       });
-    });
   } catch (error) {
     console.error("Error rendering podcast list:", error);
     showNotification("Error", "Failed to load podcasts.", "error");
@@ -711,13 +661,17 @@ export function renderPodcastDetail(podcast) {
             .getAttribute("data-id");
           try {
             await deletePodcast(podcastId);
-            showNotification("Success", "Podcast deleted successfully!", "success");
+            showNotification(
+              "Success",
+              "Podcast deleted successfully!",
+              "success"
+            );
             // hide detail and refresh list
             document.getElementById("podcast-detail").style.display = "none";
             renderPodcastList();
             document.getElementById("podcast-list").style.display = "flex";
             await refreshDashboardStats();
-        } catch (err) {
+          } catch (err) {
             showNotification("Error", "Failed to delete podcast.", "error");
           }
         }
@@ -725,42 +679,40 @@ export function renderPodcastDetail(podcast) {
       );
     });
 
-// Render episodes in a vertical list
-fetchEpisodesByPodcast(podcast._id)
-  .then((episodes) => {
-    const episodesContainer = document.getElementById("episodes-container");
-    episodesContainer.innerHTML = "";
+  // Render episodes in a vertical list
+  fetchEpisodesByPodcast(podcast._id)
+    .then((episodes) => {
+      const episodesContainer = document.getElementById("episodes-container");
+      episodesContainer.innerHTML = "";
 
-    if (episodes && episodes.length) {
-          
-            episodes.sort((a, b) => {
-        const aDate = new Date(a.created_at || a.createdAt || 0);
-        const bDate = new Date(b.created_at || b.createdAt || 0);
-        return bDate - aDate;
-      });
+      if (episodes && episodes.length) {
+        episodes.sort((a, b) => {
+          const aDate = new Date(a.created_at || a.createdAt || 0);
+          const bDate = new Date(b.created_at || b.createdAt || 0);
+          return bDate - aDate;
+        });
 
+        episodes.forEach((ep) => {
+          const episodeCard = document.createElement("div");
+          episodeCard.className = "episode-list-item";
+          episodeCard.setAttribute("data-episode-id", ep._id);
 
-      episodes.forEach((ep) => {
-        const episodeCard = document.createElement("div");
-        episodeCard.className = "episode-list-item";
-        episodeCard.setAttribute("data-episode-id", ep._id);
+          const publishDate = ep.publishDate
+            ? new Date(ep.publishDate).toLocaleDateString()
+            : "No date";
 
-        const publishDate = ep.publishDate
-          ? new Date(ep.publishDate).toLocaleDateString()
-          : "No date";
+          const durationMinutes = Math.floor(ep.duration / 60);
+          const durationSeconds = ep.duration % 60;
+          const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
 
-        const durationMinutes = Math.floor(ep.duration / 60);
-        const durationSeconds = ep.duration % 60;
-        const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
+          const description = ep.description
+            ? ep.description
+            : "No description available.";
 
-        const description = ep.description
-          ? ep.description
-          : "No description available.";
-
-        episodeCard.innerHTML = `
+          episodeCard.innerHTML = `
           <div class="episode-content">
             <div class="episode-header">
-              <h3 class="episode-title">${ep.title}</h3>
+              <h3 class="episode-title">${ep.title.slice(0, 25)}</h3>
               ${
                 ep.status
                   ? `<span class="episode-status">${ep.status}</span>`
@@ -771,7 +723,7 @@ fetchEpisodesByPodcast(podcast._id)
               <span class="episode-date">Published: ${publishDate}</span>
               <span class="episode-duration">${formattedDuration}</span>
             </div>
-            <div class="episode-description">${description}</div>
+            <div class="episode-description">${description.slice(0, 25)}</div>
           </div>
           <div class="episode-actions">
             ${
@@ -783,43 +735,43 @@ fetchEpisodesByPodcast(podcast._id)
           </div>
         `;
 
-        if (ep.audioUrl) {
+          if (ep.audioUrl) {
+            episodeCard
+              .querySelector(".episode-play-btn")
+              .addEventListener("click", (e) => {
+                e.stopPropagation();
+                playAudio(ep.audioUrl, ep.title);
+              });
+          }
           episodeCard
-            .querySelector(".episode-play-btn")
+            .querySelector(".view-episode-btn")
             .addEventListener("click", (e) => {
               e.stopPropagation();
-              playAudio(ep.audioUrl, ep.title);
+              renderEpisodeDetail(ep);
             });
-        }
-        episodeCard
-          .querySelector(".view-episode-btn")
-          .addEventListener("click", (e) => {
-            e.stopPropagation();
-            renderEpisodeDetail(ep);
+          episodeCard.addEventListener("click", (e) => {
+            if (!e.target.closest("button")) {
+              renderEpisodeDetail(ep);
+            }
           });
-        episodeCard.addEventListener("click", (e) => {
-          if (!e.target.closest("button")) {
-            renderEpisodeDetail(ep);
-          }
-        });
 
-        episodesContainer.appendChild(episodeCard);
-      });
-    } else {
-      const noEpisodes = document.createElement("p");
-      noEpisodes.className = "no-episodes-message";
-      noEpisodes.textContent = "No episodes available.";
-      episodesContainer.appendChild(noEpisodes);
-    }
-  })
-  .catch((error) => {
-    console.error("Error fetching episodes:", error);
-    const episodesContainer = document.getElementById("episodes-container");
-    if (episodesContainer) {
-      episodesContainer.innerHTML =
-        '<p class="error-message">Failed to load episodes.</p>';
-    }
-  });
+          episodesContainer.appendChild(episodeCard);
+        });
+      } else {
+        const noEpisodes = document.createElement("p");
+        noEpisodes.className = "no-episodes-message";
+        noEpisodes.textContent = "No episodes available.";
+        episodesContainer.appendChild(noEpisodes);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching episodes:", error);
+      const episodesContainer = document.getElementById("episodes-container");
+      if (episodesContainer) {
+        episodesContainer.innerHTML =
+          '<p class="error-message">Failed to load episodes.</p>';
+      }
+    });
   // Update edit buttons after rendering
   updateEditButtons();
 }
@@ -827,21 +779,21 @@ fetchEpisodesByPodcast(podcast._id)
 // Function to handle podcast form submission
 function handlePodcastFormSubmission() {
   const form = document.getElementById("register-podcast-form");
-  
+
   // Set up file input event listeners for displaying filenames
-  const fileInputs = ['logo', 'banner', 'host-image'];
-  fileInputs.forEach(inputId => {
+  const fileInputs = ["logo", "banner", "host-image"];
+  fileInputs.forEach((inputId) => {
     const fileInput = document.getElementById(inputId);
     const nameDisplay = document.getElementById(`${inputId}-name-display`);
-    
+
     if (fileInput && nameDisplay) {
-      fileInput.addEventListener('change', () => {
+      fileInput.addEventListener("change", () => {
         if (fileInput.files.length > 0) {
           nameDisplay.textContent = fileInput.files[0].name;
-          nameDisplay.classList.add('has-file');
+          nameDisplay.classList.add("has-file");
         } else {
-          nameDisplay.textContent = '';
-          nameDisplay.classList.remove('has-file');
+          nameDisplay.textContent = "";
+          nameDisplay.classList.remove("has-file");
         }
       });
     }
@@ -850,7 +802,7 @@ function handlePodcastFormSubmission() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     console.log("Form submitted");
-    
+
     // Retrieve regular input values
     const podName = document.getElementById("pod-name")?.value.trim() || "";
     const email = document.getElementById("email")?.value.trim() || "";
@@ -890,8 +842,8 @@ function handlePodcastFormSubmission() {
         document.getElementById("twitter")?.value.trim() || " ",
         document.getElementById("tiktok")?.value.trim() || " ",
         document.getElementById("pinterest")?.value.trim() || " ",
-        document.getElementById("youtube")?.value.trim() || " "
-      ].filter((link) => link)
+        document.getElementById("youtube")?.value.trim() || " ",
+      ].filter((link) => link),
     };
 
     // If there's an RSS feed URL, fetch the RSS data to get the image
@@ -1022,7 +974,7 @@ function handlePodcastFormSubmission() {
       const [logoChanged, bannerChanged, hostImageChanged] = await Promise.all([
         logoPromise,
         bannerPromise,
-        hostImagePromise
+        hostImagePromise,
       ]);
 
       // Submit podcast data
