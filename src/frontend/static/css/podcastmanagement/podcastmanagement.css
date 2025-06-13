@@ -61,7 +61,7 @@
 
 .podcast-info {
   padding: var(--spacing-lg);
-  flex-grow: 1;
+  flex-grow: 1; 
 }
 
 .podcast-header {
@@ -719,7 +719,6 @@
 .podcast-episodes-preview {
   margin-top: 12px;
   max-height: 120px;
-  overflow-y: auto;
   padding: var(--spacing-sm);
   background-color: rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-medium);
@@ -737,8 +736,25 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all var(--transition-normal);
   cursor: pointer;
-  border-left: 2px solid var(--highlight-color);
-  width: fit-content;
+  border: 2px solid var(--highlight-color);
+  width: 120px;
+  height: 90px;
+}
+
+.episodes-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.episodes-preview-title {
+  margin: 0;
+}
+
+.view-all-link {
+  cursor: pointer;
+  color: #007bff;
+  font-size: 0.9rem;
 }
 
 .podcast-episode-actions {
@@ -1660,6 +1676,12 @@ select option:disabled {
   font-size: 0.7rem;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.episodes-container {
+  display: flex;
+  gap: var(--spacing-sm);
+height: 200px;
 }
 
 .episode-meta {
